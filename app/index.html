@@ -1,0 +1,1049 @@
+﻿<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clode</title>
+  <link rel="stylesheet" href="styles.css?v=20260407-01">
+</head>
+<body>
+  <div class="app-shell">
+    <main class="workspace">
+      <section id="homeView" class="app-view is-active home-view">
+        <div class="home-stage">
+          <img class="home-logo" src="assets/agz-logo-home-v2.png?v=20260330-19" alt="AGZ">
+          <div class="home-copy">
+            <h1>System zarz&#261;dzania firm&#261;</h1>
+          </div>
+          <section class="home-login-card">
+            <h2>Logowanie</h2>
+            <div class="home-login-grid">
+              <label class="toolbar-field home-login-field">
+                <span>U&#380;ytkownik</span>
+                <input id="loginUsernameInput" type="text" autocomplete="username" placeholder="Login u&#380;ytkownika">
+              </label>
+              <label class="toolbar-field home-login-field">
+                <span>Has&#322;o</span>
+                <input id="loginPasswordInput" type="password" autocomplete="current-password" placeholder="Has&#322;o">
+              </label>
+              <div class="home-login-actions">
+                <button id="forgotPasswordButton" class="home-link-button" type="button">Zapomnia&#322;em has&#322;a</button>
+                <button id="loginButton" class="primary-button home-login-button" type="button">Zaloguj</button>
+              </div>
+            </div>
+            <p id="loginStatusMessage" class="form-status-message" aria-live="polite"></p>
+          </section>
+        </div>
+      </section>
+
+      <section id="dashboardView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h1>Dashboard</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <h2>Podsumowanie</h2>
+            <div class="stats-grid section-grid metrics-grid--6">
+              <article class="stat"><span>Faktury kosztowe</span><strong id="totalMaterial">-</strong></article>
+              <article class="stat"><span>Koszt wynagrodzeń</span><strong id="totalLabor">-</strong></article>
+              <article class="stat"><span>Łączny koszt</span><strong id="totalCost">-</strong></article>
+              <article class="stat"><span>Faktury sprzedażowe</span><strong id="totalSales">-</strong></article>
+              <article class="stat"><span>Liczba kontraktów</span><strong id="investmentsCount">-</strong></article>
+              <article class="stat"><span>Łączna marża</span><strong id="totalMargin">-</strong></article>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <div class="inline-actions compact-actions dashboard-mode-tabs" id="dashboardModeTabs">
+                <button class="secondary-button is-active" data-dashboard-mode="contracts" type="button">Kontrakty</button>
+                <button class="secondary-button" data-dashboard-mode="unassigned" type="button">Nieprzypisane</button>
+              </div>
+              <input id="searchInput" class="dashboard-search" type="search" placeholder="Szukaj kontraktu">
+            </div>
+            <div id="investmentsTable"></div>
+            <div id="dashboardUnassignedPanel" class="dashboard-unassigned-panel" hidden>
+              <div id="dashboardUnassignedStats" class="stats-grid compact-stats-grid section-grid metrics-grid--6"></div>
+
+              <section class="subsection-block">
+                <div class="section-head">
+                  <h3>Nieprzypisane faktury</h3>
+                </div>
+                <div id="dashboardUnassignedInvoices"></div>
+              </section>
+
+              <section class="subsection-block">
+                <div class="section-head">
+                  <h3>Koszt wynagrodzeń poza kontraktami</h3>
+                </div>
+                <div id="dashboardUnmatchedHours"></div>
+              </section>
+            </div>
+          </section>
+
+          <section class="panel panel-wide detail-card" id="detailSection">
+            <div class="detail-head">
+              <div>
+                <p class="eyebrow">Szczegóły kontraktu</p>
+                <h2 id="detailName">-</h2>
+                <p id="detailSubline" class="hero-copy"></p>
+              </div>
+            </div>
+
+            <div class="detail-stats" id="detailStats"></div>
+
+            <div class="detail-layout">
+              <div class="chart-panel">
+                <h3>Struktura kosztów i faktur sprzedażowych</h3>
+                <div id="detailStructureChart"></div>
+              </div>
+              <div class="analysis-panel">
+                <h3>Miesięczny rozkład wartości</h3>
+                <div id="detailMonthlyChart"></div>
+              </div>
+            </div>
+
+            <section class="subsection-block">
+              <div class="section-head">
+                <h3>Miesięczne rozbicie</h3>
+              </div>
+              <div id="detailMonthlyTable"></div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <section id="contractsView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Kontrakty</p>
+            <h1>Rejestr kontraktów</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div class="section-head section-head-inline">
+                <div>
+                  <h2>Formularz kontraktu</h2>
+                  <p class="hero-copy form-copy">
+                    Dodaj lub zaktualizuj kontrakt. Jeśli wpiszesz tę samą nazwę ponownie, dane kontraktu zostaną nadpisane.
+                  </p>
+                </div>
+                <div class="inline-actions compact-actions">
+                  <button id="newContractButton" class="secondary-button" type="button">+ Nowy kontrakt</button>
+                </div>
+              </div>
+              <div class="toolbar-grid investment-form-grid contract-form-grid section-grid form-grid--6">
+                <label class="toolbar-field">
+                  <span>Nazwa kontraktu</span>
+                  <input id="contractNameInput" type="text" placeholder="Np. BCU">
+                </label>
+                <label class="toolbar-field">
+                  <span>Zamawiający / inwestor</span>
+                  <input id="contractInvestorInput" type="text" placeholder="Nazwa inwestora">
+                </label>
+                <label class="toolbar-field">
+                  <span>Data podpisania umowy</span>
+                  <input id="contractSignedInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Termin zakończenia inwestycji</span>
+                  <input id="contractEndInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Kwota ryczałtowa</span>
+                  <input id="contractValueInput" type="number" step="0.01" min="0" placeholder="0.00">
+                </label>
+                <label class="toolbar-field">
+                  <span>Status</span>
+                  <select id="contractStatusInput">
+                    <option value="active">W realizacji</option>
+                    <option value="completed">Zakończona</option>
+                  </select>
+                </label>
+                <div class="toolbar-field align-end contract-form-action-tile">
+                  <span>&nbsp;</span>
+                  <button id="saveContractButton" class="primary-button" type="button">Zapisz kontrakt</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Spis kontraktów</h2>
+              <div class="inline-actions">
+                <input id="contractSearchInput" type="search" placeholder="Szukaj kontraktu">
+                <button id="deleteSelectedContractsButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
+              </div>
+            </div>
+            <div id="contractsRegistryTable"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="planningView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Kadry</p>
+            <h1>Planowanie zasobów</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2>Sterowanie planem</h2>
+                <p class="hero-copy form-copy">
+                  Wybierz datę planu. Przypisania zapisują się automatycznie do wybranego dnia
+                  i budują dzienny harmonogram dla aktywnych kontraktów.
+                </p>
+              </div>
+              <div class="toolbar-grid planning-toolbar-grid section-grid controls-grid--3">
+                <label class="toolbar-field">
+                  <span>Data planu</span>
+                  <input id="planningDateInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Szukaj pracownika</span>
+                  <input id="planningSearchInput" type="search" placeholder="Nazwisko lub imię">
+                </label>
+                <div class="toolbar-field align-end">
+                  <span>&nbsp;</span>
+                  <button id="planningCopyPreviousButton" class="secondary-button" type="button">Skopiuj poprzedni dzień</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-third">
+            <div class="section-head">
+              <h2>Kalendarz planowania</h2>
+              <div class="inline-actions compact-actions">
+                <button id="planningCalendarPrevButton" class="secondary-button" type="button">Poprzedni</button>
+                <button id="planningCalendarTodayButton" class="secondary-button" type="button">Dzisiaj</button>
+                <button id="planningCalendarNextButton" class="secondary-button" type="button">Następny</button>
+              </div>
+            </div>
+            <div id="planningCalendarLabel" class="calendar-label">-</div>
+            <div id="planningCalendarLegend" class="calendar-legend"></div>
+            <div id="planningCalendarGrid" class="planning-calendar"></div>
+          </section>
+
+          <section class="panel panel-two-thirds">
+            <div class="section-head">
+              <h2>Obsada kontraktów</h2>
+              <p class="hero-copy form-copy">
+                Tu widzisz, kto jest przypisany do którego kontraktu oraz czy na wybrany dzień wszyscy są już rozdysponowani lub niedostępni.
+              </p>
+            </div>
+            <div id="planningContractsSummary"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div id="planningSummaryStats" class="stats-grid compact-stats-grid section-grid metrics-grid--4"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Przypisanie pracowników</h2>
+              <p class="hero-copy form-copy">
+                Pracownik z zatwierdzonym urlopem albo L4 jest automatycznie wyłączony z planowania na dany dzień.
+              </p>
+            </div>
+            <div id="planningAssignmentsTable"></div>
+          </section>
+
+        </div>
+      </section>
+
+      <section id="hoursView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Finanse</p>
+            <h1>Ewidencja czasu pracy</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2>Sterowanie miesiącem</h2>
+              </div>
+              <div class="toolbar-grid hours-toolbar-grid section-grid controls-grid--5">
+                <label class="toolbar-field">
+                  <span>Miesiąc</span>
+                  <select id="monthSelect"></select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Nowy miesiąc</span>
+                  <div class="inline-actions month-add-actions">
+                    <select id="newMonthMonthSelect"></select>
+                    <input id="newMonthYearInput" type="number" min="2020" max="2100" step="1" placeholder="Rok">
+                    <button id="addMonthButton" class="secondary-button" type="button">Dodaj miesiąc</button>
+                  </div>
+                </label>
+                <label class="toolbar-field">
+                  <span>Usuń miesiące</span>
+                  <div class="inline-actions month-delete-actions">
+                    <select id="monthDeleteSelect"></select>
+                    <button id="deleteSelectedMonthsButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
+                  </div>
+                </label>
+                <label class="toolbar-field">
+                  <span>Szukaj pracownika</span>
+                  <input id="employeeSearchInput" type="search" placeholder="Nazwisko lub imię">
+                </label>
+                <label class="toolbar-field">
+                  <span>Dodaj pracownika</span>
+                  <div class="inline-actions">
+                    <input id="hoursEmployeeNameInput" type="text" list="hoursEmployeeSuggestions" placeholder="Nazwisko Imię">
+                    <datalist id="hoursEmployeeSuggestions"></datalist>
+                    <button id="addHoursEmployeeButton" class="secondary-button" type="button">Dodaj pracownika</button>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <div>
+                <h2>Koszty miesiąca</h2>
+              </div>
+              <div id="monthFinancePanel" class="finance-panel"></div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <div>
+                <h2>Aktywne kontrakty w miesiącu</h2>
+                <p class="hero-copy form-copy">
+                  Zaznacz tylko te inwestycje, które były realizowane w wybranym miesiącu.
+                </p>
+              </div>
+              <div id="currentInvestmentsPills" class="pill-list"></div>
+            </div>
+            <div id="monthlyContractsSelector" class="contracts-selector"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Godziny pracowników</h2>
+            </div>
+            <div class="form-table-shell">
+              <div id="hoursFormTable"></div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Roczne podsumowanie inwestycji</h2>
+              <div class="inline-actions compact-actions">
+                <button class="secondary-button" type="button" data-collapse-target="yearProjectSummaryPanel">Rozwiń</button>
+                <button class="secondary-button" type="button" data-pdf-target="yearProjectSummary">PDF</button>
+              </div>
+            </div>
+            <div id="yearProjectSummaryPanel" hidden>
+              <div id="yearProjectSummary"></div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Roczne podsumowanie pracowników</h2>
+              <div class="inline-actions compact-actions">
+                <button class="secondary-button" type="button" data-collapse-target="yearEmployeeSummaryPanel">Rozwiń</button>
+                <button class="secondary-button" type="button" data-pdf-target="yearEmployeeSummary">PDF</button>
+              </div>
+            </div>
+            <div id="yearEmployeeSummaryPanel" hidden>
+              <div id="yearEmployeeSummary"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="invoicesView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Finanse</p>
+            <h1>Rejestr faktur</h1>
+          </div>
+        </header>
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2>Analiza kontraktu</h2>
+              </div>
+              <div class="toolbar-grid invoice-filter-grid section-grid controls-grid--5">
+                <label class="toolbar-field">
+                  <span>Szukaj kontraktu</span>
+                  <input id="invoiceContractSearchInput" type="search" placeholder="Szukaj kontraktu">
+                </label>
+                <label class="toolbar-field toolbar-field--span-2">
+                  <span>Kontrakt</span>
+                  <select id="invoiceContractSelect"></select>
+                </label>
+                <div class="toolbar-field invoice-segment-field">
+                  <span>Zakres analizy</span>
+                  <div id="invoiceScopeTabs" class="invoice-segmented-control">
+                    <button class="secondary-button is-active" data-invoice-scope="all" type="button">Całość</button>
+                    <button class="secondary-button" data-invoice-scope="year" type="button">Rok</button>
+                    <button class="secondary-button" data-invoice-scope="month" type="button">Miesiąc</button>
+                  </div>
+                </div>
+                <label class="toolbar-field" id="invoiceYearField" hidden>
+                  <span>Rok</span>
+                  <select id="invoiceYearSelect"></select>
+                </label>
+                <label class="toolbar-field" id="invoiceMonthField" hidden>
+                  <span>Miesiąc</span>
+                  <select id="invoiceMonthSelect"></select>
+                </label>
+              </div>
+            </div>
+
+            <section class="subsection-block invoice-contract-overview">
+              <div class="section-head">
+                <div>
+                  <p class="eyebrow">Wybrany kontrakt</p>
+                  <h3 id="invoiceContractHeading">Wybierz kontrakt</h3>
+                  <p id="invoiceContractSubline" class="hero-copy form-copy"></p>
+                </div>
+              </div>
+              <div id="invoiceStatsBar" class="stats-grid compact-stats-grid section-grid metrics-grid--5 invoice-stats-bar"></div>
+            </section>
+
+            <section class="subsection-block">
+              <div class="section-head invoice-table-toolbar">
+                <div>
+                  <h3 id="invoiceTableHeading">Faktury kosztowe</h3>
+                  <p id="invoiceScopeCaption" class="hero-copy form-copy"></p>
+                </div>
+                <div class="inline-actions compact-actions">
+                  <label class="toolbar-field toolbar-field--compact">
+                    <span>Status płatności</span>
+                    <select id="invoicePaymentStatusFilter">
+                      <option value="">Wszystkie</option>
+                      <option value="unpaid">Nieopłacone</option>
+                      <option value="paid">Opłacone</option>
+                      <option value="overdue">Przeterminowane</option>
+                    </select>
+                  </label>
+                  <span id="invoiceSelectedCount" class="invoice-selected-count">Zaznaczone: 0</span>
+                  <button id="invoiceBulkDeleteButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
+                  <button id="toggleInvoiceFormButton" class="primary-button" type="button">+ Dodaj fakturę</button>
+                </div>
+              </div>
+
+              <div id="invoiceTypeTabs" class="invoice-type-tabs" role="tablist" aria-label="Typ faktur">
+                <button class="secondary-button is-active" data-invoice-type="cost" type="button">Faktury kosztowe</button>
+                <button class="secondary-button" data-invoice-type="sales" type="button">Faktury sprzedażowe</button>
+              </div>
+
+              <section id="invoiceEntryEditor" class="subsection-block invoice-entry-editor" hidden>
+                <div class="section-head section-head-stack">
+                  <div>
+                    <h3 id="invoiceFormHeading">Dodaj fakturę</h3>
+                    <p id="invoiceFormContext" class="hero-copy form-copy"></p>
+                  </div>
+                  <div class="investment-form-grid invoice-entry-grid section-grid form-grid--6">
+                    <label class="toolbar-field">
+                      <span>Typ faktury</span>
+                      <select id="invoiceTypeInput">
+                        <option value="cost">Kosztowa</option>
+                        <option value="sales">Faktura sprzedażowa</option>
+                      </select>
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Data wystawienia</span>
+                      <input id="invoiceDateInput" type="date">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Numer faktury</span>
+                      <input id="invoiceNumberInput" type="text" placeholder="Np. FV/03/2026">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Kontrahent</span>
+                      <input id="invoicePartyInput" type="text" placeholder="Nazwa kontrahenta">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Kategoria</span>
+                      <input id="invoiceCategoryInput" type="text" placeholder="Np. materiały / podwykonawca">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Opis</span>
+                      <input id="invoiceDescriptionInput" type="text" placeholder="Krótki opis">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Netto</span>
+                      <input id="invoiceNetInput" type="number" min="0" step="0.01" placeholder="0.00">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>VAT</span>
+                      <select id="invoiceVatRateSelect">
+                        <option value="23" selected>23%</option>
+                        <option value="none">Bez VAT</option>
+                        <option value="custom">Inny</option>
+                      </select>
+                    </label>
+                    <label class="toolbar-field" id="invoiceVatCustomField" hidden>
+                      <span>Inna stawka VAT %</span>
+                      <input id="invoiceVatRateCustomInput" type="number" min="0" step="0.01" placeholder="Np. 8">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Kwota VAT</span>
+                      <input id="invoiceVatInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Brutto</span>
+                      <input id="invoiceGrossInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Termin płatności</span>
+                      <input id="invoiceDueDateInput" type="date">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Data płatności</span>
+                      <input id="invoicePaymentDateInput" type="date">
+                    </label>
+                    <label class="toolbar-field">
+                      <span>Status płatności</span>
+                      <select id="invoicePaymentStatusInput">
+                        <option value="unpaid">Nieopłacona</option>
+                        <option value="paid">Opłacona</option>
+                        <option value="overdue">Przeterminowana</option>
+                      </select>
+                    </label>
+                    <div class="toolbar-field align-end toolbar-field--action-stack invoice-form-action-tile">
+                      <span>&nbsp;</span>
+                      <div class="inline-actions">
+                        <button id="cancelInvoiceButton" class="secondary-button" type="button">Anuluj</button>
+                        <button id="saveAndNextInvoiceButton" class="secondary-button" type="button">Zapisz i dodaj następną</button>
+                        <button id="saveInvoiceButton" class="primary-button" type="button">Zapisz</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <div class="form-table-shell invoice-table-shell">
+                <div id="invoiceEntriesTable"></div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </section>
+
+      <section id="employeesView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Kadry</p>
+            <h1>Kartoteka pracowników</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2 id="employeeFormHeading">Dane pracownika</h2>
+              </div>
+              <div class="inline-actions compact-actions">
+                <button id="newEmployeeButton" class="secondary-button" type="button">+ Nowy pracownik</button>
+              </div>
+              <div class="investment-form-grid employee-form-grid section-grid form-grid--6">
+                <label class="toolbar-field">
+                  <span>Imię</span>
+                  <input id="employeeFirstNameInput" type="text" placeholder="Imię">
+                </label>
+                <label class="toolbar-field">
+                  <span>Nazwisko</span>
+                  <input id="employeeLastNameInput" type="text" placeholder="Nazwisko">
+                </label>
+                <label class="toolbar-field">
+                  <span>Stanowisko</span>
+                  <input id="employeePositionInput" type="text" placeholder="Np. monter">
+                </label>
+                <label class="toolbar-field">
+                  <span>Zatrudniony od</span>
+                  <input id="employeeStartDateInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Status</span>
+                  <select id="employeeStatusInput">
+                    <option value="active">Aktywny</option>
+                    <option value="inactive">Zakończone zatrudnienie</option>
+                  </select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Zakończenie pracy</span>
+                  <input id="employeeEndDateInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Adres</span>
+                  <input id="employeeStreetInput" type="text" placeholder="Ulica i numer">
+                </label>
+                <label class="toolbar-field">
+                  <span>Kod i miejscowość</span>
+                  <input id="employeeCityInput" type="text" placeholder="00-000 Miejscowość">
+                </label>
+                <label class="toolbar-field">
+                  <span>Telefon</span>
+                  <input id="employeePhoneInput" type="text" placeholder="+48 000 000 000">
+                </label>
+                <label class="toolbar-field">
+                  <span>Badania ważne do</span>
+                  <input id="employeeMedicalExamValidUntilInput" type="date">
+                </label>
+                <div class="toolbar-field align-end toolbar-field--action-stack employee-form-action-tile">
+                  <span>&nbsp;</span>
+                  <div class="inline-actions">
+                    <button id="deleteEmployeeButton" class="secondary-button" type="button">Usuń pracownika</button>
+                    <button id="saveEmployeeButton" class="primary-button" type="button">Zapisz pracownika</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Spis pracowników</h2>
+              <input id="employeeRegistrySearchInput" type="search" placeholder="Szukaj pracownika">
+            </div>
+            <div id="employeeRegistryTable"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div id="employeeCardView"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="workwearView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Kadry</p>
+            <h1>Odzież robocza</h1>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2 id="workwearFormHeading">Nowe wydanie</h2>
+                <p class="hero-copy form-copy">
+                  Dodaj pozycję wydania dla pracownika. Historia wydań buduje się automatycznie w karcie pracownika.
+                </p>
+              </div>
+              <div class="inline-actions compact-actions">
+                <button id="newWorkwearButton" class="secondary-button" type="button">+ Nowe wydanie</button>
+              </div>
+              <div class="investment-form-grid workwear-form-grid section-grid form-grid--7">
+                <label class="toolbar-field">
+                  <span>Pracownik</span>
+                  <select id="workwearEmployeeSelect"></select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Data wydania</span>
+                  <input id="workwearIssueDateInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Produkt</span>
+                  <select id="workwearProductSelect"></select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Rozmiar</span>
+                  <select id="workwearSizeSelect"></select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Ilość</span>
+                  <input id="workwearQtyInput" type="number" min="1" step="1" placeholder="1">
+                </label>
+                <label class="toolbar-field">
+                  <span>Uwagi</span>
+                  <input id="workwearNotesInput" type="text" placeholder="Dodatkowa informacja">
+                </label>
+                <div class="toolbar-field align-end workwear-form-action-tile">
+                  <span>&nbsp;</span>
+                  <button id="saveWorkwearButton" class="primary-button" type="button">Zapisz wydanie</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2>Katalog odzieży</h2>
+                <p class="hero-copy form-copy">
+                  Utrzymujesz standardową listę odzieży i wyposażenia. Przy wydaniu wybierasz później tylko produkt, rozmiar i datę.
+                </p>
+              </div>
+              <div class="inline-actions compact-actions">
+                <button id="newWorkwearCatalogButton" class="secondary-button" type="button">+ Nowa pozycja</button>
+              </div>
+              <div class="investment-form-grid workwear-catalog-grid section-grid form-grid--4">
+                <label class="toolbar-field">
+                  <span>Nazwa pozycji</span>
+                  <input id="workwearCatalogNameInput" type="text" placeholder="Np. kurtka zimowa">
+                </label>
+                <label class="toolbar-field">
+                  <span>Kategoria</span>
+                  <input id="workwearCatalogCategoryInput" type="text" placeholder="Np. odzież wierzchnia">
+                </label>
+                <label class="toolbar-field">
+                  <span>Opis standardu</span>
+                  <input id="workwearCatalogNotesInput" type="text" placeholder="Np. wydanie sezonowe">
+                </label>
+                <div class="toolbar-field align-end">
+                  <span>&nbsp;</span>
+                  <button id="saveWorkwearCatalogButton" class="primary-button" type="button">Zapisz pozycję</button>
+                </div>
+              </div>
+            </div>
+            <div id="workwearCatalogTable"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Pracownicy</h2>
+              <input id="workwearSearchInput" type="search" placeholder="Szukaj pracownika">
+            </div>
+            <div id="workwearEmployeesTable"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div id="workwearCardView"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="vacationsView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Kadry</p>
+            <h1>Urlopy i nieobecności</h1>
+          </div>
+        </header>
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div id="vacationSummaryStats" class="stats-grid compact-stats-grid section-grid metrics-grid--4"></div>
+          </section>
+
+          <section class="panel panel-third">
+            <div class="section-head">
+              <h2>Pracownicy</h2>
+              <input id="vacationEmployeeSearchInput" type="search" placeholder="Szukaj pracownika">
+            </div>
+            <div class="form-table-shell">
+              <div id="vacationEmployeeTable"></div>
+            </div>
+          </section>
+
+          <section class="panel panel-two-thirds">
+            <div class="section-head section-head-stack">
+              <div>
+                <p class="eyebrow">Karta urlopowa</p>
+                <h2 id="vacationEmployeeHeading">Wybierz pracownika</h2>
+                <p id="vacationEmployeeSubline" class="hero-copy form-copy"></p>
+              </div>
+              <div class="investment-form-grid vacation-balance-grid section-grid controls-grid--4">
+                <label class="toolbar-field">
+                  <span>Limit roczny</span>
+                  <input id="vacationBaseInput" type="number" min="0" step="0.5" placeholder="0">
+                </label>
+                <label class="toolbar-field">
+                  <span>Urlop zaległy</span>
+                  <input id="vacationCarryInput" type="number" min="0" step="0.5" placeholder="0">
+                </label>
+                <label class="toolbar-field">
+                  <span>Dodatkowa pula</span>
+                  <input id="vacationExtraInput" type="number" min="0" step="0.5" placeholder="0">
+                </label>
+                <div class="toolbar-field align-end">
+                  <span>&nbsp;</span>
+                  <button id="saveVacationBalanceButton" class="primary-button" type="button">Zapisz pulę</button>
+                </div>
+              </div>
+            </div>
+
+            <div id="vacationBalanceStats" class="stats-grid compact-stats-grid section-grid metrics-grid--6"></div>
+
+            <section class="subsection-block">
+              <div class="section-head section-head-stack">
+                <div>
+                  <h3 id="vacationRequestFormHeading">Nowy wniosek / nieobecność</h3>
+                  <p class="hero-copy form-copy">
+                    Osoba uprawniona wpisuje wniosek, a później zmienia jego status na zatwierdzony albo odrzucony.
+                  </p>
+                </div>
+                <div class="inline-actions compact-actions">
+                  <button id="newVacationRequestButton" class="secondary-button" type="button">+ Nowy wniosek</button>
+                </div>
+                <div class="investment-form-grid vacation-request-grid section-grid form-grid--4">
+                  <label class="toolbar-field">
+                    <span>Pracownik</span>
+                    <select id="vacationRequestEmployeeSelect"></select>
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Rodzaj</span>
+                    <select id="vacationTypeInput">
+                      <option value="vacation">Urlop wypoczynkowy</option>
+                      <option value="on_demand">Urlop na żądanie</option>
+                      <option value="l4">L4</option>
+                      <option value="other">Inna nieobecność</option>
+                    </select>
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Od</span>
+                    <input id="vacationStartInput" type="date">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Do</span>
+                    <input id="vacationEndInput" type="date">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Liczba dni</span>
+                    <input id="vacationDaysInput" type="number" min="0" step="0.5" placeholder="0">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Wprowadza</span>
+                    <input id="vacationRequestedByInput" type="text" placeholder="Imię i nazwisko">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Uwagi</span>
+                    <input id="vacationNotesInput" type="text" placeholder="Opcjonalna uwaga">
+                  </label>
+                  <div class="toolbar-field align-end">
+                    <span>&nbsp;</span>
+                    <button id="saveVacationRequestButton" class="primary-button" type="button">Dodaj wniosek</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="subsection-block">
+              <div class="section-head">
+                <h3>Historia pracownika</h3>
+              </div>
+              <div class="form-table-shell">
+                <div id="vacationEmployeeHistory"></div>
+              </div>
+            </section>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Wnioski do akceptacji</h2>
+            </div>
+            <div class="form-table-shell">
+              <div id="vacationApprovalTable"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="settingsView" class="app-view">
+        <header class="view-hero">
+          <div>
+            <p class="eyebrow">Administracja</p>
+            <h1>Ustawienia systemu</h1>
+            <p class="hero-copy">
+              Zarządzasz kontami użytkowników, uprawnieniami do modułów, obiegiem akceptacji oraz rejestrem zmian wprowadzanych w systemie.
+            </p>
+          </div>
+        </header>
+
+        <div class="view-grid">
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <div>
+                <h2>Konto bieżące</h2>
+                <p class="hero-copy form-copy">To konto jest aktualnie używane do pracy w aplikacji.</p>
+              </div>
+            </div>
+            <div id="settingsCurrentUserCard" class="detail-meta-grid section-grid metrics-grid--4"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head section-head-stack">
+              <div>
+                <h2 id="settingsUserFormHeading">Nowe konto użytkownika</h2>
+                <p class="hero-copy form-copy">
+                  Administrator tworzy konta i przypisuje widoczność konkretnych modułów oraz uprawnienia do akceptacji urlopów.
+                </p>
+              </div>
+              <div class="inline-actions compact-actions">
+                <button id="newUserButton" class="secondary-button" type="button">+ Nowe konto</button>
+              </div>
+              <div class="investment-form-grid settings-user-grid section-grid form-grid--4">
+                <label class="toolbar-field">
+                  <span>Imię i nazwisko</span>
+                  <input id="settingsUserNameInput" type="text" placeholder="Np. Jakub Zarzycki">
+                </label>
+                <label class="toolbar-field">
+                  <span>Login</span>
+                  <input id="settingsUserUsernameInput" type="text" placeholder="Np. j.zarzycki">
+                </label>
+                <label class="toolbar-field">
+                  <span>Adres e-mail</span>
+                  <input id="settingsUserEmailInput" type="email" placeholder="adres@firma.pl">
+                </label>
+                <label class="toolbar-field">
+                  <span>Hasło</span>
+                  <input id="settingsUserPasswordInput" type="text" placeholder="Hasło tymczasowe">
+                </label>
+                <label class="toolbar-field">
+                  <span>Rola</span>
+                  <select id="settingsUserRoleInput">
+                    <option value="admin">Administrator</option>
+                    <option value="kierownik">Kierownik</option>
+                    <option value="księgowość">Księgowość</option>
+                    <option value="read-only">Tylko odczyt</option>
+                  </select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Status konta</span>
+                  <select id="settingsUserStatusInput">
+                    <option value="active">Aktywne</option>
+                    <option value="inactive">Nieaktywne</option>
+                  </select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Akceptacja urlopów</span>
+                  <select id="settingsUserVacationApprovalInput">
+                    <option value="yes">Tak</option>
+                    <option value="no">Nie</option>
+                  </select>
+                </label>
+                <div class="toolbar-field align-end toolbar-field--action-stack">
+                  <span>&nbsp;</span>
+                  <div class="inline-actions">
+                    <button id="deleteUserButton" class="secondary-button" type="button">Usuń konto</button>
+                    <button id="saveUserButton" class="primary-button" type="button">Zapisz konto</button>
+                  </div>
+                </div>
+              </div>
+              <div class="settings-permissions">
+                <p class="eyebrow">Uprawnienia do modułów</p>
+                <div id="settingsPermissionGrid" class="permission-grid"></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Lista użytkowników</h2>
+              <input id="settingsUserSearchInput" type="search" placeholder="Szukaj użytkownika">
+            </div>
+            <div id="settingsUsersTable"></div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <div>
+                <h2>Reguły obiegu</h2>
+                <p class="hero-copy form-copy">
+                  Ustawiasz zasady akceptacji wniosków i działania modułów administracyjnych.
+                </p>
+              </div>
+            </div>
+            <div class="investment-form-grid settings-workflow-grid section-grid controls-grid--3">
+              <label class="toolbar-field">
+                <span>Akceptacja urlopów</span>
+                <select id="settingsVacationApprovalModeInput">
+                  <option value="permission">Tylko osoby z uprawnieniem</option>
+                  <option value="admin">Tylko administrator</option>
+                </select>
+              </label>
+              <label class="toolbar-field">
+                <span>Powiadomienia o nowych wnioskach</span>
+                <select id="settingsVacationNotificationInput">
+                  <option value="on">Włączone</option>
+                  <option value="off">Wyłączone</option>
+                </select>
+              </label>
+              <div class="toolbar-field align-end">
+                <span>&nbsp;</span>
+                <button id="saveWorkflowSettingsButton" class="primary-button" type="button">Zapisz ustawienia</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="section-head">
+              <h2>Rejestr zmian</h2>
+              <input id="settingsAuditSearchInput" type="search" placeholder="Szukaj wpisu w rejestrze">
+            </div>
+            <div id="settingsAuditTable"></div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <aside class="app-rail">
+      <button class="rail-brand rail-brand-button" data-view="homeView" type="button">
+        <span class="rail-dot"></span>
+        <div>
+          <strong>Clode</strong>
+          <small>Zarządzanie firmą</small>
+        </div>
+      </button>
+      <nav class="rail-nav">
+        <button class="rail-main-link" data-view="dashboardView" type="button">Dashboard</button>
+        <button class="rail-main-link" data-view="contractsView" type="button">Rejestr kontraktów</button>
+        <button class="rail-main-link" data-view="invoicesView" type="button">Rejestr faktur</button>
+        <button class="rail-main-link" data-view="hoursView" type="button">Ewidencja czasu pracy</button>
+        <button class="rail-main-link" data-view="employeesView" type="button">Kartoteka pracowników</button>
+        <button class="rail-main-link" data-view="planningView" type="button">Planowanie zasobów</button>
+        <button class="rail-main-link" data-view="vacationsView" type="button">Urlopy i nieobecności</button>
+        <button class="rail-main-link" data-view="workwearView" type="button">Odzież robocza</button>
+      </nav>
+      <div class="rail-footer">
+        <button id="railSettingsButton" class="rail-account-button" data-view="settingsView" type="button">
+          <div class="rail-user-card">
+            <span class="rail-user-label">Konto</span>
+            <strong id="railCurrentUserName">Jakub Zarzycki</strong>
+            <small id="railCurrentUserRole">Administrator</small>
+          </div>
+          <div class="rail-account-icon-wrap">
+            <span id="railNotificationsBadge" class="notification-badge" hidden>0</span>
+            <span class="rail-account-icon" aria-hidden="true">&#9881;</span>
+          </div>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <script>window.__APP_MODULE_VERSION__ = "20260408-01";</script>
+  <script src="../frontend/src/data/storage-keys.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/adapters/local-storage-adapter.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/adapters/api-adapter.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/data-access.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/auth-client.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/contract-client.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/invoice-client.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/time-entry-client.js?v=20260408-01"></script>
+  <script src="../frontend/src/data/migration-tools.js?v=20260408-01"></script>
+  <script src="../data/app-data.js?v=20260408-01"></script>
+  <script src="../data/hours-form-seed.js?v=20260408-01"></script>
+  <script src="../data/demo-seed.js?v=20260408-01"></script>
+  <script src="shell.js?v=20260408-01"></script>
+  <script src="app.js?v=20260408-01"></script>
+</body>
+</html>
+

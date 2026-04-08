@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Employee",
+  "type": "object",
+  "required": ["id", "name", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "first_name": { "type": "string" },
+    "last_name": { "type": "string" },
+    "position": { "type": "string" },
+    "status": { "enum": ["active", "inactive"] },
+    "employment_date": { "type": "string" },
+    "employment_end_date": { "type": "string" },
+    "street": { "type": "string" },
+    "city": { "type": "string" },
+    "phone": { "type": "string" },
+    "medical_exam_valid_until": { "type": "string" }
+  }
+}

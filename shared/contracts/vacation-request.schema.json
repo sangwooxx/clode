@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VacationRequest",
+  "type": "object",
+  "required": ["id", "employee_name", "request_type", "start_date", "end_date", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "employee_name": { "type": "string" },
+    "request_type": { "type": "string" },
+    "start_date": { "type": "string" },
+    "end_date": { "type": "string" },
+    "days": { "type": "number" },
+    "status": { "type": "string" },
+    "requested_by": { "type": "string" },
+    "notes": { "type": "string" },
+    "created_at": { "type": "string" }
+  }
+}

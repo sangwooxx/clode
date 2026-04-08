@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Notification",
+  "type": "object",
+  "required": ["id", "created_at", "notification_type", "title", "message"],
+  "properties": {
+    "id": { "type": "string" },
+    "created_at": { "type": "string" },
+    "notification_type": { "type": "string" },
+    "title": { "type": "string" },
+    "message": { "type": "string" },
+    "meta": { "type": "object" },
+    "read": { "type": "boolean" }
+  }
+}

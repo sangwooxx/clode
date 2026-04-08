@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HoursMonth",
+  "type": "object",
+  "required": ["month_key", "month_label", "workers"],
+  "properties": {
+    "month_key": { "type": "string" },
+    "month_label": { "type": "string" },
+    "visible_investments": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "finance": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["employee_name", "project_hours"],
+        "properties": {
+          "employee_name": { "type": "string" },
+          "worker_code": { "type": "string" },
+          "project_hours": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          }
+        }
+      }
+    }
+  }
+}

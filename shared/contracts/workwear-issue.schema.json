@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkwearIssue",
+  "type": "object",
+  "required": ["id", "employee_name", "issue_date", "item_name"],
+  "properties": {
+    "id": { "type": "string" },
+    "employee_name": { "type": "string" },
+    "issue_date": { "type": "string" },
+    "item_id": { "type": "string" },
+    "item_name": { "type": "string" },
+    "size": { "type": "string" },
+    "quantity": { "type": "number" },
+    "notes": { "type": "string" }
+  }
+}

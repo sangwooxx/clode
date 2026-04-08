@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "User",
+  "type": "object",
+  "required": ["id", "name", "username", "role", "status", "is_active"],
+  "properties": {
+    "id": { "type": "string" },
+    "name": { "type": "string" },
+    "displayName": { "type": "string" },
+    "username": { "type": "string" },
+    "email": { "type": "string" },
+    "role": { "type": "string" },
+    "status": { "type": "string" },
+    "is_active": { "type": "boolean" },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "canApproveVacations": { "type": "boolean" },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" },
+    "last_login_at": { "type": "string" }
+  }
+}

@@ -1,0 +1,49 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp
+*.bak
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime
+tmp/
+*.log
+frontend-http.stderr.log
+frontend-http.stdout.log
+
+# Browser / QA harness artifacts
+*.har
+playwright-report/
+test-results/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# SQLite runtime copies
+backend/var/*.db-wal
+backend/var/*.db-shm
+backend/var/qa_*.db
+backend/var/agent-test-*.db
+backend/var/migration-smoke-*.db
+backend/var/smoke-*.db
+
+# Node-like caches if introduced later
+node_modules/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/

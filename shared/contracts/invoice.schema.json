@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Invoice",
+  "type": "object",
+  "required": ["id", "contract_id", "invoice_type", "issue_date", "document_number"],
+  "properties": {
+    "id": { "type": "string" },
+    "contract_id": { "type": ["string", "null"] },
+    "contract_name": { "type": "string" },
+    "invoice_type": { "enum": ["cost", "sales"] },
+    "issue_date": { "type": "string" },
+    "document_number": { "type": "string" },
+    "party": { "type": "string" },
+    "category": { "type": "string" },
+    "cost_category": { "enum": ["materials", "labor", "equipment", "transport", "services", "other", ""] },
+    "description": { "type": "string" },
+    "net_amount": { "type": "number" },
+    "vat_rate": { "type": "number" },
+    "gross_amount": { "type": "number" },
+    "due_date": { "type": "string" },
+    "payment_date": { "type": "string" },
+    "payment_status": { "enum": ["unpaid", "paid", "overdue"] }
+  }
+}

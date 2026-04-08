@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AuditLog",
+  "type": "object",
+  "required": ["id", "timestamp", "module", "action", "subject", "user_id"],
+  "properties": {
+    "id": { "type": "string" },
+    "timestamp": { "type": "string" },
+    "module": { "type": "string" },
+    "action": { "type": "string" },
+    "subject": { "type": "string" },
+    "details": { "type": "string" },
+    "user_id": { "type": "string" },
+    "user_name": { "type": "string" }
+  }
+}

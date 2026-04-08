@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Contract",
+  "type": "object",
+  "required": ["id", "name", "status", "created_at", "updated_at"],
+  "properties": {
+    "id": { "type": "string" },
+    "contract_number": { "type": "string" },
+    "name": { "type": "string" },
+    "investor": { "type": "string" },
+    "signed_date": { "type": "string" },
+    "end_date": { "type": "string" },
+    "contract_value": { "type": "number" },
+    "status": { "enum": ["active", "archived"] },
+    "created_at": { "type": "string" },
+    "updated_at": { "type": "string" }
+  }
+}

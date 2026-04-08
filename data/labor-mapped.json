@@ -1,0 +1,2632 @@
+[
+  {
+    "id": "time-2026-02-emp-demo-001-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-001-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-001-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-002-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-002-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 24.0,
+    "cost_amount": 1746.24
+  },
+  {
+    "id": "time-2026-02-emp-demo-002-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 48.0,
+    "cost_amount": 3492.48
+  },
+  {
+    "id": "time-2026-02-emp-demo-003-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-003",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 144.0,
+    "cost_amount": 10477.44
+  },
+  {
+    "id": "time-2026-02-emp-demo-004-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-004-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-004-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 16.0,
+    "cost_amount": 1164.16
+  },
+  {
+    "id": "time-2026-02-emp-demo-005-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-005-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 112.0,
+    "cost_amount": 8149.12
+  },
+  {
+    "id": "time-2026-02-emp-demo-006-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-006",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 32.0,
+    "cost_amount": 2328.32
+  },
+  {
+    "id": "time-2026-02-emp-demo-006-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-006",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-006-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-006",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-007-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-007",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-007-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-007",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 48.0,
+    "cost_amount": 3492.48
+  },
+  {
+    "id": "time-2026-02-emp-demo-007-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-007",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-008-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-008",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-008-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-008",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-009-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-009",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 152.0,
+    "cost_amount": 11059.52
+  },
+  {
+    "id": "time-2026-02-emp-demo-010-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-010-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 48.0,
+    "cost_amount": 3492.48
+  },
+  {
+    "id": "time-2026-02-emp-demo-010-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-011-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-011",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 168.0,
+    "cost_amount": 12223.68
+  },
+  {
+    "id": "time-2026-02-emp-demo-012-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-012",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 176.0,
+    "cost_amount": 12805.76
+  },
+  {
+    "id": "time-2026-02-emp-demo-013-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-013",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 160.0,
+    "cost_amount": 11641.6
+  },
+  {
+    "id": "time-2026-02-emp-demo-015-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-015",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 152.0,
+    "cost_amount": 11059.52
+  },
+  {
+    "id": "time-2026-02-emp-demo-016-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 184.0,
+    "cost_amount": 13387.84
+  },
+  {
+    "id": "time-2026-02-emp-demo-017-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-017",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 152.0,
+    "cost_amount": 11059.52
+  },
+  {
+    "id": "time-2026-02-emp-demo-018-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-018",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-018-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-018",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-019-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-019-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-020-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-020-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-021-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-021",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 176.0,
+    "cost_amount": 12805.76
+  },
+  {
+    "id": "time-2026-02-emp-demo-022-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-022",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 32.0,
+    "cost_amount": 2328.32
+  },
+  {
+    "id": "time-2026-02-emp-demo-022-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-022",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 144.0,
+    "cost_amount": 10477.44
+  },
+  {
+    "id": "time-2026-02-emp-demo-023-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 104.0,
+    "cost_amount": 7567.04
+  },
+  {
+    "id": "time-2026-02-emp-demo-023-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-024-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-024",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-024-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-024",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-024-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-024",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 16.0,
+    "cost_amount": 1164.16
+  },
+  {
+    "id": "time-2026-02-emp-demo-025-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-025-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 112.0,
+    "cost_amount": 8149.12
+  },
+  {
+    "id": "time-2026-02-emp-demo-026-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-026-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-027-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-027",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-027-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-027",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-028-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-028",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 120.0,
+    "cost_amount": 8731.2
+  },
+  {
+    "id": "time-2026-02-emp-demo-028-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-028",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-029-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-029",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-029-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-029",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-032-contract-demo-006",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 48.0,
+    "cost_amount": 3492.48
+  },
+  {
+    "id": "time-2026-02-emp-demo-032-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 104.0,
+    "cost_amount": 7567.04
+  },
+  {
+    "id": "time-2026-02-emp-demo-033-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-033",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-033-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-033",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-034-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-034",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 184.0,
+    "cost_amount": 13387.84
+  },
+  {
+    "id": "time-2026-02-emp-demo-035-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-035-contract-demo-005",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 104.0,
+    "cost_amount": 7567.04
+  },
+  {
+    "id": "time-2026-02-emp-demo-036-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-036",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 48.0,
+    "cost_amount": 3492.48
+  },
+  {
+    "id": "time-2026-02-emp-demo-036-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-036",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 120.0,
+    "cost_amount": 8731.2
+  },
+  {
+    "id": "time-2026-02-emp-demo-037-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 120.0,
+    "cost_amount": 8731.2
+  },
+  {
+    "id": "time-2026-02-emp-demo-037-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-038-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-038",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 160.0,
+    "cost_amount": 11641.6
+  },
+  {
+    "id": "time-2026-02-emp-demo-039-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-039-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-040-contract-demo-001",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 24.0,
+    "cost_amount": 1746.24
+  },
+  {
+    "id": "time-2026-02-emp-demo-040-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-040-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-041-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-041",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-041-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-041",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-042-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-042",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 144.0,
+    "cost_amount": 10477.44
+  },
+  {
+    "id": "time-2026-02-emp-demo-043-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 5238.72
+  },
+  {
+    "id": "time-2026-02-emp-demo-043-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 96.0,
+    "cost_amount": 6984.96
+  },
+  {
+    "id": "time-2026-02-emp-demo-044-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-044",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 160.0,
+    "cost_amount": 11641.6
+  },
+  {
+    "id": "time-2026-02-emp-demo-045-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 32.0,
+    "cost_amount": 2328.32
+  },
+  {
+    "id": "time-2026-02-emp-demo-045-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 112.0,
+    "cost_amount": 8149.12
+  },
+  {
+    "id": "time-2026-02-emp-demo-045-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 24.0,
+    "cost_amount": 1746.24
+  },
+  {
+    "id": "time-2026-02-emp-demo-046-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-046-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 88.0,
+    "cost_amount": 6402.88
+  },
+  {
+    "id": "time-2026-02-emp-demo-047-contract-demo-007",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 136.0,
+    "cost_amount": 9895.36
+  },
+  {
+    "id": "time-2026-02-emp-demo-047-contract-demo-009",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-048-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-048-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 80.0,
+    "cost_amount": 5820.8
+  },
+  {
+    "id": "time-2026-02-emp-demo-048-contract-demo-008",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 32.0,
+    "cost_amount": 2328.32
+  },
+  {
+    "id": "time-2026-02-emp-demo-049-contract-demo-004",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 64.0,
+    "cost_amount": 4656.64
+  },
+  {
+    "id": "time-2026-02-emp-demo-049-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-02-emp-demo-049-contract-demo-003",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 56.0,
+    "cost_amount": 4074.56
+  },
+  {
+    "id": "time-2026-02-emp-demo-050-contract-demo-002",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 120.0,
+    "cost_amount": 8731.2
+  },
+  {
+    "id": "time-2026-02-emp-demo-050-contract-demo-010",
+    "month_id": "hours-month-2026-02",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 40.0,
+    "cost_amount": 2910.4
+  },
+  {
+    "id": "time-2026-03-emp-demo-001-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-001-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-002-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 96.0,
+    "cost_amount": 5608.32
+  },
+  {
+    "id": "time-2026-03-emp-demo-002-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-003-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-003",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 168.0,
+    "cost_amount": 9814.56
+  },
+  {
+    "id": "time-2026-03-emp-demo-004-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 96.0,
+    "cost_amount": 5608.32
+  },
+  {
+    "id": "time-2026-03-emp-demo-004-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-005-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-005-contract-demo-001",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-007-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-007",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 168.0,
+    "cost_amount": 9814.56
+  },
+  {
+    "id": "time-2026-03-emp-demo-008-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-008",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 144.0,
+    "cost_amount": 8412.48
+  },
+  {
+    "id": "time-2026-03-emp-demo-009-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-009",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-009-contract-demo-001",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-009",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-010-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 24.0,
+    "cost_amount": 1402.08
+  },
+  {
+    "id": "time-2026-03-emp-demo-010-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 56.0,
+    "cost_amount": 3271.52
+  },
+  {
+    "id": "time-2026-03-emp-demo-010-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-010",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-011-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-011",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 168.0,
+    "cost_amount": 9814.56
+  },
+  {
+    "id": "time-2026-03-emp-demo-012-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-012",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 184.0,
+    "cost_amount": 10749.28
+  },
+  {
+    "id": "time-2026-03-emp-demo-014-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-014",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 24.0,
+    "cost_amount": 1402.08
+  },
+  {
+    "id": "time-2026-03-emp-demo-014-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-014",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-014-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-014",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-015-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-015",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-015-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-015",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-016-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-016-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-016-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-017-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-017",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 112.0,
+    "cost_amount": 6543.04
+  },
+  {
+    "id": "time-2026-03-emp-demo-017-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-017",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-018-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-018",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 152.0,
+    "cost_amount": 8879.84
+  },
+  {
+    "id": "time-2026-03-emp-demo-019-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-019-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-020-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-020-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-021-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-021",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-021-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-021",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 24.0,
+    "cost_amount": 1402.08
+  },
+  {
+    "id": "time-2026-03-emp-demo-021-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-021",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-022-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-022",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 168.0,
+    "cost_amount": 9814.56
+  },
+  {
+    "id": "time-2026-03-emp-demo-023-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-023-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-023-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-024-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-024",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 144.0,
+    "cost_amount": 8412.48
+  },
+  {
+    "id": "time-2026-03-emp-demo-025-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 32.0,
+    "cost_amount": 1869.44
+  },
+  {
+    "id": "time-2026-03-emp-demo-025-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 96.0,
+    "cost_amount": 5608.32
+  },
+  {
+    "id": "time-2026-03-emp-demo-025-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-026-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-026-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 40.0,
+    "cost_amount": 2336.8
+  },
+  {
+    "id": "time-2026-03-emp-demo-026-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-027-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-027",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 56.0,
+    "cost_amount": 3271.52
+  },
+  {
+    "id": "time-2026-03-emp-demo-027-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-027",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-028-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-028",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 40.0,
+    "cost_amount": 2336.8
+  },
+  {
+    "id": "time-2026-03-emp-demo-028-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-028",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-028-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-028",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 56.0,
+    "cost_amount": 3271.52
+  },
+  {
+    "id": "time-2026-03-emp-demo-029-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-029",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 184.0,
+    "cost_amount": 10749.28
+  },
+  {
+    "id": "time-2026-03-emp-demo-031-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-031",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-031-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-031",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 56.0,
+    "cost_amount": 3271.52
+  },
+  {
+    "id": "time-2026-03-emp-demo-032-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-032-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-034-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-034",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-034-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-034",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-035-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-035-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-035-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-036-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-036",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 152.0,
+    "cost_amount": 8879.84
+  },
+  {
+    "id": "time-2026-03-emp-demo-037-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 32.0,
+    "cost_amount": 1869.44
+  },
+  {
+    "id": "time-2026-03-emp-demo-037-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 120.0,
+    "cost_amount": 7010.4
+  },
+  {
+    "id": "time-2026-03-emp-demo-038-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-038",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-038-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-038",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-039-contract-demo-002",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 96.0,
+    "cost_amount": 5608.32
+  },
+  {
+    "id": "time-2026-03-emp-demo-039-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-040-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-040-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-041-contract-demo-001",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-041",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 112.0,
+    "cost_amount": 6543.04
+  },
+  {
+    "id": "time-2026-03-emp-demo-041-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-041",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 32.0,
+    "cost_amount": 1869.44
+  },
+  {
+    "id": "time-2026-03-emp-demo-042-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-042",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-042-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-042",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-043-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 72.0,
+    "cost_amount": 4206.24
+  },
+  {
+    "id": "time-2026-03-emp-demo-043-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 112.0,
+    "cost_amount": 6543.04
+  },
+  {
+    "id": "time-2026-03-emp-demo-044-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-044",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 168.0,
+    "cost_amount": 9814.56
+  },
+  {
+    "id": "time-2026-03-emp-demo-045-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 96.0,
+    "cost_amount": 5608.32
+  },
+  {
+    "id": "time-2026-03-emp-demo-045-contract-demo-003",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-046-contract-demo-008",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 40.0,
+    "cost_amount": 2336.8
+  },
+  {
+    "id": "time-2026-03-emp-demo-046-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 48.0,
+    "cost_amount": 2804.16
+  },
+  {
+    "id": "time-2026-03-emp-demo-046-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 64.0,
+    "cost_amount": 3738.88
+  },
+  {
+    "id": "time-2026-03-emp-demo-047-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 56.0,
+    "cost_amount": 3271.52
+  },
+  {
+    "id": "time-2026-03-emp-demo-047-contract-demo-009",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 104.0,
+    "cost_amount": 6075.68
+  },
+  {
+    "id": "time-2026-03-emp-demo-048-contract-demo-004",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 144.0,
+    "cost_amount": 8412.48
+  },
+  {
+    "id": "time-2026-03-emp-demo-049-contract-demo-007",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 88.0,
+    "cost_amount": 5140.96
+  },
+  {
+    "id": "time-2026-03-emp-demo-049-contract-demo-010",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 80.0,
+    "cost_amount": 4673.6
+  },
+  {
+    "id": "time-2026-03-emp-demo-050-contract-demo-006",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 112.0,
+    "cost_amount": 6543.04
+  },
+  {
+    "id": "time-2026-03-emp-demo-050-contract-demo-005",
+    "month_id": "hours-month-2026-03",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 40.0,
+    "cost_amount": 2336.8
+  },
+  {
+    "id": "time-2026-04-emp-demo-001-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-001-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-001-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-001",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-002-contract-demo-002",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-002-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-002",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-003-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-003",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-003-contract-demo-009",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-003",
+    "employee_name": "Zieli?ski Micha?",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 104.0,
+    "cost_amount": 8220.16
+  },
+  {
+    "id": "time-2026-04-emp-demo-004-contract-demo-009",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 104.0,
+    "cost_amount": 8220.16
+  },
+  {
+    "id": "time-2026-04-emp-demo-004-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-004",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-005-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-005-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-005",
+    "employee_name": "Mazur Tomasz",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-006-contract-demo-007",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-006",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-006-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-006",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-008-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-008",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-009-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-009",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-009-contract-demo-002",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-009",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-011-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-011",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-011-contract-demo-007",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-011",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-012-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-012",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 112.0,
+    "cost_amount": 8852.48
+  },
+  {
+    "id": "time-2026-04-emp-demo-012-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-012",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 32.0,
+    "cost_amount": 2529.28
+  },
+  {
+    "id": "time-2026-04-emp-demo-013-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-013",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 136.0,
+    "cost_amount": 10749.44
+  },
+  {
+    "id": "time-2026-04-emp-demo-013-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-013",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 32.0,
+    "cost_amount": 2529.28
+  },
+  {
+    "id": "time-2026-04-emp-demo-015-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-015",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-015-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-015",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-016-contract-demo-002",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 112.0,
+    "cost_amount": 8852.48
+  },
+  {
+    "id": "time-2026-04-emp-demo-016-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-016",
+    "employee_name": "Jab?o?ski Damian",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-017-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-017",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-017-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-017",
+    "employee_name": "Walczak Marcin",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-018-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-018",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-018-contract-demo-007",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-018",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-019-contract-demo-009",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 128.0,
+    "cost_amount": 10117.12
+  },
+  {
+    "id": "time-2026-04-emp-demo-019-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-019",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-020-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 48.0,
+    "cost_amount": 3793.92
+  },
+  {
+    "id": "time-2026-04-emp-demo-020-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-020",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 104.0,
+    "cost_amount": 8220.16
+  },
+  {
+    "id": "time-2026-04-emp-demo-021-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-021",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 176.0,
+    "cost_amount": 13911.04
+  },
+  {
+    "id": "time-2026-04-emp-demo-022-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-022",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-023-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-023-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-023-contract-demo-002",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-023",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-024-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-024",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 168.0,
+    "cost_amount": 13278.72
+  },
+  {
+    "id": "time-2026-04-emp-demo-025-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-025-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-025",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-026-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-026-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-026",
+    "employee_name": "Nowak Jan",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 104.0,
+    "cost_amount": 8220.16
+  },
+  {
+    "id": "time-2026-04-emp-demo-027-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-027",
+    "employee_name": "W?jcik Piotr",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-029-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-029",
+    "employee_name": "D?browski Pawe?",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 176.0,
+    "cost_amount": 13911.04
+  },
+  {
+    "id": "time-2026-04-emp-demo-031-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-031",
+    "employee_name": "Grabowski Adam",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-032-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-032-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-032",
+    "employee_name": "Kr?l Marek",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-033-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-033",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-033-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-033",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-033-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-033",
+    "employee_name": "Adamczyk Krzysztof",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 24.0,
+    "cost_amount": 1896.96
+  },
+  {
+    "id": "time-2026-04-emp-demo-034-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-034",
+    "employee_name": "St?pie? ?ukasz",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-035-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-035",
+    "employee_name": "Wi?niewski Mateusz",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 176.0,
+    "cost_amount": 13911.04
+  },
+  {
+    "id": "time-2026-04-emp-demo-036-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-036",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-036-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-036",
+    "employee_name": "Kowalczyk Jakub",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 104.0,
+    "cost_amount": 8220.16
+  },
+  {
+    "id": "time-2026-04-emp-demo-037-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-037-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-037",
+    "employee_name": "Wo?niak Szymon",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-038-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-038",
+    "employee_name": "Jankowski Filip",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 184.0,
+    "cost_amount": 14543.36
+  },
+  {
+    "id": "time-2026-04-emp-demo-039-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-039-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-039",
+    "employee_name": "Piotrowski Kamil",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-040-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 112.0,
+    "cost_amount": 8852.48
+  },
+  {
+    "id": "time-2026-04-emp-demo-040-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-040",
+    "employee_name": "Michalak Sebastian",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 72.0,
+    "cost_amount": 5690.88
+  },
+  {
+    "id": "time-2026-04-emp-demo-043-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-043-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-043",
+    "employee_name": "Kowalski Patryk",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-044-contract-demo-007",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-044",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 24.0,
+    "cost_amount": 1896.96
+  },
+  {
+    "id": "time-2026-04-emp-demo-044-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-044",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 80.0,
+    "cost_amount": 6323.2
+  },
+  {
+    "id": "time-2026-04-emp-demo-044-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-044",
+    "employee_name": "Kami?ski Dawid",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-045-contract-demo-007",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-045",
+    "employee_name": "Szyma?ski Konrad",
+    "contract_id": "contract-demo-007",
+    "contract_name": "W?ze? Eta",
+    "hours": 184.0,
+    "cost_amount": 14543.36
+  },
+  {
+    "id": "time-2026-04-emp-demo-046-contract-demo-009",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-009",
+    "contract_name": "Kompleks Iota",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-046-contract-demo-005",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-005",
+    "contract_name": "Budynek Epsilon",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-046-contract-demo-008",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-046",
+    "employee_name": "Koz?owski Artur",
+    "contract_id": "contract-demo-008",
+    "contract_name": "Obiekt Theta",
+    "hours": 40.0,
+    "cost_amount": 3161.6
+  },
+  {
+    "id": "time-2026-04-emp-demo-047-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 24.0,
+    "cost_amount": 1896.96
+  },
+  {
+    "id": "time-2026-04-emp-demo-047-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 64.0,
+    "cost_amount": 5058.56
+  },
+  {
+    "id": "time-2026-04-emp-demo-047-contract-demo-001",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-047",
+    "employee_name": "Krawczyk Karol",
+    "contract_id": "contract-demo-001",
+    "contract_name": "Centrum Alfa",
+    "hours": 88.0,
+    "cost_amount": 6955.52
+  },
+  {
+    "id": "time-2026-04-emp-demo-048-contract-demo-010",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-010",
+    "contract_name": "Zak?ad Kappa",
+    "hours": 96.0,
+    "cost_amount": 7587.84
+  },
+  {
+    "id": "time-2026-04-emp-demo-048-contract-demo-006",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-006",
+    "contract_name": "Magazyn Zeta",
+    "hours": 32.0,
+    "cost_amount": 2529.28
+  },
+  {
+    "id": "time-2026-04-emp-demo-048-contract-demo-002",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-048",
+    "employee_name": "Pawlak Wojciech",
+    "contract_id": "contract-demo-002",
+    "contract_name": "Terminal Beta",
+    "hours": 56.0,
+    "cost_amount": 4426.24
+  },
+  {
+    "id": "time-2026-04-emp-demo-049-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-049",
+    "employee_name": "Wieczorek Bartosz",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 144.0,
+    "cost_amount": 11381.76
+  },
+  {
+    "id": "time-2026-04-emp-demo-050-contract-demo-004",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-004",
+    "contract_name": "Park Delta",
+    "hours": 48.0,
+    "cost_amount": 3793.92
+  },
+  {
+    "id": "time-2026-04-emp-demo-050-contract-demo-003",
+    "month_id": "hours-month-2026-04",
+    "employee_id": "emp-demo-050",
+    "employee_name": "Dudek Hubert",
+    "contract_id": "contract-demo-003",
+    "contract_name": "Hala Gamma",
+    "hours": 136.0,
+    "cost_amount": 10749.44
+  }
+]

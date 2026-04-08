@@ -1,0 +1,15 @@
+﻿{
+  "stores": {
+    "contracts": [{"name": "TEST", "contract_number": "001", "investor": "Demo", "signed_date": "2026-04-01", "end_date": "2026-12-31", "contract_value": 1000, "status": "active"}],
+    "employees": [{"name": "Kowalski Jan", "first_name": "Jan", "last_name": "Kowalski", "status": "active"}],
+    "invoices": {"entries": [{"id": "inv-1", "contract_name": "TEST", "type": "cost", "issue_date": "2026-04-01", "document_number": "FV/1", "party": "Dostawca", "category": "Materiały", "description": "Test", "net_amount": 100, "vat_rate": 23}]},
+    "hours": {"selected_month_key": "2026-04", "months": {"2026-04": {"month_key": "2026-04", "month_label": "kwiecień 2026", "visible_investments": ["TEST"], "finance": {"payouts": 1000}, "workers": [{"employee_name": "Kowalski Jan", "project_hours": {"TEST": 10}}]}}},
+    "vacations": {"balances": {}, "requests": []},
+    "planning": {"assignments": {}},
+    "workwearIssues": [],
+    "workwearCatalog": [],
+    "settings": {"users": []},
+    "auditLogs": [],
+    "notifications": []
+  }
+}
