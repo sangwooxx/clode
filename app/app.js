@@ -1,5 +1,5 @@
-﻿const DASHBOARD_INVOICE_STORAGE_KEY = "agentManualInvoicesV1";
-const DASHBOARD_HOURS_STORAGE_KEY = "agentHoursFormV2";
+﻿const DASHBOARD_INVOICE_STORAGE_KEY = "clodeInvoiceRegistryV1";
+const DASHBOARD_HOURS_STORAGE_KEY = "clodeHoursRegistryV2";
 
 const state = {
   data: null,
@@ -11,6 +11,8 @@ const state = {
   sorts: {
     investments: { key: "margin", direction: "desc" },
     detailMonthly: { key: "month_key", direction: "asc" },
+    unassignedInvoices: { key: "issue_date", direction: "desc" },
+    unmatchedHours: { key: "labor_cost", direction: "desc" },
   },
 };
 
@@ -20,8 +22,17 @@ const currency = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
 });
 
+const moneyMetricFormatter = new Intl.NumberFormat("pl-PL", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 1,
+});
+
+const integerFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 0,
 });
 
 const investmentColumns = {
@@ -43,6 +54,29 @@ const investmentColumns = {
   },
 };
 
+const unassignedInvoiceColumns = {
+  issue_date: { type: "date", defaultDirection: "desc" },
+  type: { type: "string", defaultDirection: "asc" },
+  document_number: { type: "string", defaultDirection: "asc" },
+  contract_name: { type: "string", defaultDirection: "asc" },
+  party: { type: "string", defaultDirection: "asc" },
+  category_or_description: {
+    type: "string",
+    defaultDirection: "asc",
+    getValue: (item) => [item?.category, item?.description].filter(Boolean).join(" ").trim(),
+  },
+  net_amount: { type: "number", defaultDirection: "desc" },
+  vat_rate: { type: "number", defaultDirection: "desc" },
+  gross_amount: { type: "number", defaultDirection: "desc" },
+};
+
+const unmatchedHoursColumns = {
+  source_name: { type: "string", defaultDirection: "asc" },
+  entries: { type: "number", defaultDirection: "desc" },
+  labor_hours: { type: "number", defaultDirection: "desc" },
+  labor_cost: { type: "number", defaultDirection: "desc" },
+};
+
 const detailMonthlyColumns = {
   month_key: { type: "string", defaultDirection: "asc" },
   sales: { type: "number", defaultDirection: "desc" },
@@ -61,8 +95,45 @@ function formatNumber(value) {
   return numberFormatter.format(Number(value || 0));
 }
 
+function escapeHtml(value) {
+  if (window.ClodeTableUtils?.escapeHtml) {
+    return window.ClodeTableUtils.escapeHtml(String(value ?? ""));
+  }
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function formatMetricMarkup(value, type = "money") {
+  const numeric = Number(value || 0);
+
+  if (type === "money") {
+    return `
+      <span class="metric-value metric-value--money">
+        <span class="metric-value__amount">${escapeHtml(moneyMetricFormatter.format(numeric))}</span>
+        <span class="metric-value__currency">zł</span>
+      </span>
+    `;
+  }
+
+  const formattedValue = type === "count"
+    ? integerFormatter.format(numeric)
+    : formatNumber(numeric);
+
+  return `
+    <span class="metric-value metric-value--number">
+      <span class="metric-value__amount">${escapeHtml(formattedValue)}</span>
+    </span>
+  `;
+}
+
 function formatDate(value) {
-  return value ? new Date(value).toLocaleString("pl-PL") : "-";
+  if (!value) return "-";
+  // Accept both ISO date and datetime, but display date-only in the dashboard tables.
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.toLocaleDateString("pl-PL") : "-";
 }
 
 function emptyDashboardData() {
@@ -115,9 +186,9 @@ function numberValue(value) {
 }
 
 function getDashboardApi() {
-  if (!window.AgentContractApi?.create) return null;
-  return window.AgentContractApi.create({
-    baseUrl: window.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+  if (!window.ClodeContractApi?.create) return null;
+  return window.ClodeContractApi.create({
+    baseUrl: window.__CLODE_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
   });
 }
 
@@ -136,8 +207,8 @@ function monthLabel(monthKey) {
 }
 
 function loadInvoiceStore() {
-  const parsed = window.AgentDataAccess?.legacy
-    ? window.AgentDataAccess.legacy.read(DASHBOARD_INVOICE_STORAGE_KEY, null)
+  const parsed = window.ClodeDataAccess?.legacy
+    ? window.ClodeDataAccess.legacy.read(DASHBOARD_INVOICE_STORAGE_KEY, null)
     : null;
   if (parsed && typeof parsed === "object") {
     return { entries: Array.isArray(parsed.entries) ? parsed.entries : [] };
@@ -146,8 +217,8 @@ function loadInvoiceStore() {
 }
 
 function loadHoursStore() {
-  const parsed = window.AgentDataAccess?.legacy
-    ? window.AgentDataAccess.legacy.read(DASHBOARD_HOURS_STORAGE_KEY, null)
+  const parsed = window.ClodeDataAccess?.legacy
+    ? window.ClodeDataAccess.legacy.read(DASHBOARD_HOURS_STORAGE_KEY, null)
     : null;
   if (parsed && typeof parsed === "object") {
     return { months: parsed.months && typeof parsed.months === "object" ? parsed.months : {} };
@@ -730,7 +801,7 @@ function getSelectedInvestment() {
 }
 
 async function loadData() {
-  if (!window.AgentAuthClient?.isAuthenticated?.()) {
+  if (!window.ClodeAuthClient?.isAuthenticated?.()) {
     state.data = emptyDashboardData();
     state.errorMessage = "";
     window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
@@ -812,7 +883,7 @@ function renderRankList(containerId, items, positive) {
     const el = document.createElement("article");
     el.className = "rank-item";
     el.innerHTML = `
-      <strong>${window.AgentTableUtils.escapeHtml(item.investment_name)}</strong>
+      <strong>${window.ClodeTableUtils.escapeHtml(item.investment_name)}</strong>
       <small>Faktury sprzedażowe: ${formatMoney(item.sales_revenue)} | Faktury kosztowe: ${formatMoney(item.material_cost)}</small>
       <div class="${positive ? "status-good" : "status-bad"}">${formatMoney(item.margin_value)}</div>
     `;
@@ -835,8 +906,8 @@ function renderAlerts() {
       const el = document.createElement("article");
       el.className = "alert-item";
       el.innerHTML = `
-        <strong>${window.AgentTableUtils.escapeHtml(alert.investment_name)}</strong>
-        <small>${window.AgentTableUtils.escapeHtml(alert.issues.join(", "))}</small>
+        <strong>${window.ClodeTableUtils.escapeHtml(alert.investment_name)}</strong>
+        <small>${window.ClodeTableUtils.escapeHtml(alert.issues.join(", "))}</small>
         <div class="status-bad">${formatMoney(alert.margin_value)}</div>
       `;
       alerts.appendChild(el);
@@ -851,7 +922,7 @@ function renderAlerts() {
   state.data.recommendations.forEach((text) => {
     const el = document.createElement("article");
     el.className = "recommendation-item";
-    el.innerHTML = `<small>${window.AgentTableUtils.escapeHtml(text)}</small>`;
+    el.innerHTML = `<small>${window.ClodeTableUtils.escapeHtml(text)}</small>`;
     recommendations.appendChild(el);
   });
 }
@@ -868,7 +939,7 @@ function getSortedInvestments() {
       item.status === "completed" ? "zakończony" : "w realizacji",
     ].some((value) => String(value || "").toLowerCase().includes(query));
   });
-  return window.AgentTableUtils.sortItems(filtered, state.sorts.investments, investmentColumns);
+  return window.ClodeTableUtils.sortItems(filtered, state.sorts.investments, investmentColumns);
 }
 
 function renderInvestments() {
@@ -876,7 +947,7 @@ function renderInvestments() {
   if (!target) return;
 
   if (state.errorMessage) {
-    target.innerHTML = `<p>${window.AgentTableUtils.escapeHtml(state.errorMessage)}</p>`;
+    target.innerHTML = `<p>${window.ClodeTableUtils.escapeHtml(state.errorMessage)}</p>`;
     return;
   }
   if (state.loading && !(state.data?.investments || []).length) {
@@ -894,43 +965,50 @@ function renderInvestments() {
     state.selectedInvestmentId = items[0].id;
   }
 
+  const shell = document.createElement("div");
+  shell.className = "form-table-shell dashboard-table-shell";
+
   const table = document.createElement("table");
+  table.className = "data-table invoice-module-table dashboard-investments-table";
   table.innerHTML = `
     <thead>
       <tr>
-        <th>${window.AgentTableUtils.renderHeader("Kontrakt", "investments", "name", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Faktury sprzedażowe", "investments", "sales", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Faktury kosztowe", "investments", "material_cost", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "investments", "labor_cost", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Łączny koszt", "investments", "total_cost", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Godziny", "investments", "labor_hours", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Marża", "investments", "margin", state.sorts.investments)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Trend", "investments", "trend", state.sorts.investments)}</th>
+        <th>Lp.</th>
+        <th>${window.ClodeTableUtils.renderHeader("Kontrakt", "investments", "name", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Faktury sprzedażowe", "investments", "sales", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Faktury kosztowe", "investments", "material_cost", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "investments", "labor_cost", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Łączny koszt", "investments", "total_cost", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Godziny", "investments", "labor_hours", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Marża", "investments", "margin", state.sorts.investments)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Trend", "investments", "trend", state.sorts.investments)}</th>
       </tr>
     </thead>
   `;
 
   const tbody = document.createElement("tbody");
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     const row = document.createElement("tr");
     row.className = item.id === state.selectedInvestmentId ? "investment-row is-selected" : "investment-row";
     row.dataset.investmentId = item.id;
     row.innerHTML = `
-      <td><strong>${window.AgentTableUtils.escapeHtml(item.report_label)}</strong></td>
-      <td>${formatMoney(item.sales)}</td>
-      <td>${formatMoney(item.material_cost)}</td>
-      <td>${formatMoney(item.labor_cost)}</td>
-      <td>${formatMoney(item.total_cost)}</td>
-      <td>${formatNumber(item.labor_hours)}</td>
-      <td class="${item.margin < 0 ? "status-bad" : "status-good"}">${formatMoney(item.margin)}</td>
-      <td>${formatMoney((item.monthly_breakdown || []).slice(-1)[0]?.total_cost || 0)}</td>
+      <td>${index + 1}</td>
+      <td><strong>${window.ClodeTableUtils.escapeHtml(item.report_label)}</strong></td>
+      <td class="text-right">${formatMoney(item.sales)}</td>
+      <td class="text-right">${formatMoney(item.material_cost)}</td>
+      <td class="text-right">${formatMoney(item.labor_cost)}</td>
+      <td class="text-right">${formatMoney(item.total_cost)}</td>
+      <td class="text-right">${formatNumber(item.labor_hours)}</td>
+      <td class="text-right ${item.margin < 0 ? "status-bad" : "status-good"}">${formatMoney(item.margin)}</td>
+      <td class="text-right">${formatMoney((item.monthly_breakdown || []).slice(-1)[0]?.total_cost || 0)}</td>
     `;
     tbody.appendChild(row);
   });
 
   table.appendChild(tbody);
   target.innerHTML = "";
-  target.appendChild(table);
+  shell.appendChild(table);
+  target.appendChild(shell);
 }
 
 function renderSummary() {
@@ -959,6 +1037,11 @@ function getFilteredUnassignedInvoices() {
   );
 }
 
+function getSortedUnassignedInvoices() {
+  const filtered = getFilteredUnassignedInvoices();
+  return window.ClodeTableUtils.sortItems(filtered, state.sorts.unassignedInvoices, unassignedInvoiceColumns);
+}
+
 function getFilteredUnmatchedHours() {
   const query = state.search.trim().toLowerCase();
   const items = state.data?.unmatched_hours || [];
@@ -967,6 +1050,11 @@ function getFilteredUnmatchedHours() {
     [entry.source_name, entry.entries, entry.labor_hours, entry.labor_cost]
       .some((value) => String(value || "").toLowerCase().includes(query))
   );
+}
+
+function getSortedUnmatchedHours() {
+  const filtered = getFilteredUnmatchedHours();
+  return window.ClodeTableUtils.sortItems(filtered, state.sorts.unmatchedHours, unmatchedHoursColumns);
 }
 
 function renderDashboardMode() {
@@ -994,16 +1082,16 @@ function renderDetailStats(investment) {
   target.innerHTML = "";
 
   [
-    ["Faktury sprzedażowe", formatMoney(investment.sales)],
-    ["Faktury kosztowe", formatMoney(investment.material_cost)],
-    ["Koszt wynagrodzeń", formatMoney(investment.labor_cost)],
-    ["Łączny koszt", formatMoney(investment.total_cost)],
-    ["Roboczogodziny", formatNumber(investment.labor_hours)],
-    ["Marża", formatMoney(investment.margin)],
-  ].forEach(([label, value]) => {
+    ["Faktury sprzedażowe", investment.sales, "money"],
+    ["Faktury kosztowe", investment.material_cost, "money"],
+    ["Koszt wynagrodzeń", investment.labor_cost, "money"],
+    ["Łączny koszt", investment.total_cost, "money"],
+    ["Roboczogodziny", investment.labor_hours, "hours"],
+    ["Marża", investment.margin, "money"],
+  ].forEach(([label, value, type]) => {
     const card = document.createElement("article");
     card.className = "stat";
-    card.innerHTML = `<span>${window.AgentTableUtils.escapeHtml(label)}</span><strong>${value}</strong>`;
+    card.innerHTML = `<span>${escapeHtml(label)}</span><strong>${formatMetricMarkup(value, type)}</strong>`;
     target.appendChild(card);
   });
 }
@@ -1026,7 +1114,7 @@ function renderDetailChart(investment) {
     card.className = "recommendation-item";
     card.innerHTML = `
       <small>
-        ${window.AgentTableUtils.escapeHtml(item.month_label || item.month_key)}:
+        ${window.ClodeTableUtils.escapeHtml(item.month_label || item.month_key)}:
         faktury sprzedażowe ${formatMoney(item.sales)},
         faktury kosztowe ${formatMoney(item.material_cost)},
         koszt wynagrodzeń ${formatMoney(item.labor_cost)}
@@ -1045,7 +1133,7 @@ function renderDetailAnalyses(investment) {
   (investment.analyses || []).forEach((line) => {
     const card = document.createElement("article");
     card.className = "recommendation-item";
-    card.innerHTML = `<small>${window.AgentTableUtils.escapeHtml(line)}</small>`;
+    card.innerHTML = `<small>${window.ClodeTableUtils.escapeHtml(line)}</small>`;
     target.appendChild(card);
   });
 }
@@ -1072,7 +1160,7 @@ function renderDetailStructureChart(investment) {
     return `
       <article class="detail-structure-row">
         <div class="detail-structure-head">
-          <strong>${window.AgentTableUtils.escapeHtml(row.label)}</strong>
+          <strong>${window.ClodeTableUtils.escapeHtml(row.label)}</strong>
           <span>${formatMoney(row.value)} • ${formatNumber(share)}%</span>
         </div>
         <div class="detail-structure-track">
@@ -1103,7 +1191,7 @@ function renderDetailMonthlyChart(investment) {
     <div class="detail-monthly-bars">
       ${rows.map((row) => `
         <article class="detail-monthly-row">
-          <div class="detail-monthly-label">${window.AgentTableUtils.escapeHtml(row.month_label || row.month_key)}</div>
+          <div class="detail-monthly-label">${window.ClodeTableUtils.escapeHtml(row.month_label || row.month_key)}</div>
           <div class="detail-monthly-series">
             <span class="detail-monthly-bar tone-material" style="width:${(Number(row.material_cost || 0) / maxValue) * 100}%"></span>
             <span class="detail-monthly-bar tone-labor" style="width:${(Number(row.labor_cost || 0) / maxValue) * 100}%"></span>
@@ -1133,7 +1221,7 @@ function renderDetailTable(investment) {
   const target = document.getElementById("detailMonthlyTable");
   if (!target) return;
 
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     investment.monthly_breakdown || [],
     state.sorts.detailMonthly,
     detailMonthlyColumns
@@ -1144,39 +1232,46 @@ function renderDetailTable(investment) {
     return;
   }
 
+  const shell = document.createElement("div");
+  shell.className = "form-table-shell dashboard-table-shell";
+
   const table = document.createElement("table");
+  table.className = "data-table invoice-module-table dashboard-detail-table";
   table.innerHTML = `
     <thead>
       <tr>
-        <th>${window.AgentTableUtils.renderHeader("Miesiąc", "detailMonthly", "month_key", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Faktury sprzedażowe", "detailMonthly", "sales", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Faktury kosztowe", "detailMonthly", "material_cost", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "detailMonthly", "labor_cost", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Godziny", "detailMonthly", "labor_hours", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Łączny koszt", "detailMonthly", "total_cost", state.sorts.detailMonthly)}</th>
-        <th>${window.AgentTableUtils.renderHeader("Marża", "detailMonthly", "margin", state.sorts.detailMonthly)}</th>
+        <th>Lp.</th>
+        <th>${window.ClodeTableUtils.renderHeader("Miesiąc", "detailMonthly", "month_key", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Faktury sprzedażowe", "detailMonthly", "sales", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Faktury kosztowe", "detailMonthly", "material_cost", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "detailMonthly", "labor_cost", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Godziny", "detailMonthly", "labor_hours", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Łączny koszt", "detailMonthly", "total_cost", state.sorts.detailMonthly)}</th>
+        <th class="text-right">${window.ClodeTableUtils.renderHeader("Marża", "detailMonthly", "margin", state.sorts.detailMonthly)}</th>
       </tr>
     </thead>
   `;
 
   const tbody = document.createElement("tbody");
-  rows.forEach((item) => {
+  rows.forEach((item, index) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td>${window.AgentTableUtils.escapeHtml(item.month_label || item.month_key)}</td>
-      <td>${formatMoney(item.sales)}</td>
-      <td>${formatMoney(item.material_cost)}</td>
-      <td>${formatMoney(item.labor_cost)}</td>
-      <td>${formatNumber(item.labor_hours)}</td>
-      <td>${formatMoney(item.total_cost)}</td>
-      <td class="${item.margin < 0 ? "status-bad" : "status-good"}">${formatMoney(item.margin)}</td>
+      <td>${index + 1}</td>
+      <td>${window.ClodeTableUtils.escapeHtml(item.month_label || item.month_key)}</td>
+      <td class="text-right">${formatMoney(item.sales)}</td>
+      <td class="text-right">${formatMoney(item.material_cost)}</td>
+      <td class="text-right">${formatMoney(item.labor_cost)}</td>
+      <td class="text-right">${formatNumber(item.labor_hours)}</td>
+      <td class="text-right">${formatMoney(item.total_cost)}</td>
+      <td class="text-right ${item.margin < 0 ? "status-bad" : "status-good"}">${formatMoney(item.margin)}</td>
     `;
     tbody.appendChild(row);
   });
 
   table.appendChild(tbody);
   target.innerHTML = "";
-  target.appendChild(table);
+  shell.appendChild(table);
+  target.appendChild(shell);
 }
 
 function legacyRenderUnmatchedHours() {
@@ -1193,8 +1288,8 @@ function legacyRenderUnmatchedHours() {
     const card = document.createElement("article");
     card.className = "alert-item";
     card.innerHTML = `
-      <strong>${window.AgentTableUtils.escapeHtml(item.source_name)}</strong>
-      <small>${window.AgentTableUtils.escapeHtml(String(item.entries))} zapisów | ${formatNumber(item.labor_hours)} godz.</small>
+      <strong>${window.ClodeTableUtils.escapeHtml(item.source_name)}</strong>
+      <small>${window.ClodeTableUtils.escapeHtml(String(item.entries))} zapisów | ${formatNumber(item.labor_hours)} godz.</small>
       <div class="status-bad">${formatMoney(item.labor_cost)}</div>
     `;
     target.appendChild(card);
@@ -1206,7 +1301,7 @@ function renderUnassignedStats() {
   if (!target) return;
 
   if (state.errorMessage) {
-    target.innerHTML = `<p>${window.AgentTableUtils.escapeHtml(state.errorMessage)}</p>`;
+    target.innerHTML = `<p>${window.ClodeTableUtils.escapeHtml(state.errorMessage)}</p>`;
     return;
   }
 
@@ -1224,12 +1319,12 @@ function renderUnassignedStats() {
   const laborCost = hoursItems.reduce((sum, entry) => sum + numberValue(entry.labor_cost), 0);
 
   target.innerHTML = `
-    <article class="stat"><span>Faktury kosztowe</span><strong>${costInvoiceCount}</strong></article>
-    <article class="stat"><span>Koszty netto</span><strong>${formatMoney(costNet)}</strong></article>
-    <article class="stat"><span>Faktury sprzedażowe</span><strong>${salesInvoiceCount}</strong></article>
-    <article class="stat"><span>Faktury sprzedażowe netto</span><strong>${formatMoney(salesNet)}</strong></article>
-    <article class="stat"><span>Godziny poza kontraktami</span><strong>${formatNumber(laborHours)}</strong></article>
-    <article class="stat"><span>Koszt wynagrodzeń</span><strong>${formatMoney(laborCost)}</strong></article>
+    <article class="stat"><span>Faktury kosztowe</span><strong>${formatMetricMarkup(costInvoiceCount, "count")}</strong></article>
+    <article class="stat"><span>Koszty netto</span><strong>${formatMetricMarkup(costNet, "money")}</strong></article>
+    <article class="stat"><span>Faktury sprzedażowe</span><strong>${formatMetricMarkup(salesInvoiceCount, "count")}</strong></article>
+    <article class="stat"><span>Faktury sprzedażowe netto</span><strong>${formatMetricMarkup(salesNet, "money")}</strong></article>
+    <article class="stat"><span>Godziny poza kontraktami</span><strong>${formatMetricMarkup(laborHours, "hours")}</strong></article>
+    <article class="stat"><span>Koszt wynagrodzeń</span><strong>${formatMetricMarkup(laborCost, "money")}</strong></article>
   `;
 }
 
@@ -1238,11 +1333,11 @@ function renderUnassignedInvoices() {
   if (!target) return;
 
   if (state.errorMessage) {
-    target.innerHTML = `<p>${window.AgentTableUtils.escapeHtml(state.errorMessage)}</p>`;
+    target.innerHTML = `<p>${window.ClodeTableUtils.escapeHtml(state.errorMessage)}</p>`;
     return;
   }
 
-  const items = getFilteredUnassignedInvoices();
+  const items = getSortedUnassignedInvoices();
   if (!items.length) {
     target.innerHTML = "<p>Brak nieprzypisanych faktur dla bieżącego filtra.</p>";
     return;
@@ -1253,36 +1348,45 @@ function renderUnassignedInvoices() {
 
   target.innerHTML = `
     <div class="form-table-shell dashboard-table-shell">
-      <table class="module-table">
+      <table class="data-table invoice-module-table">
         <thead>
           <tr>
             <th>Lp.</th>
-            <th>Data wystawienia</th>
-            <th>Typ</th>
-            <th>Numer faktury</th>
-            <th>Wpisany kontrakt</th>
-            <th>Kontrahent</th>
-            <th>Kategoria / opis</th>
-            <th>Netto</th>
-            <th>VAT</th>
-            <th>Brutto</th>
+            <th>${window.ClodeTableUtils.renderHeader("Data wystawienia", "unassignedInvoices", "issue_date", state.sorts.unassignedInvoices)}</th>
+            <th>${window.ClodeTableUtils.renderHeader("Typ", "unassignedInvoices", "type", state.sorts.unassignedInvoices)}</th>
+            <th>${window.ClodeTableUtils.renderHeader("Numer faktury", "unassignedInvoices", "document_number", state.sorts.unassignedInvoices)}</th>
+            <th>${window.ClodeTableUtils.renderHeader("Wpisany kontrakt", "unassignedInvoices", "contract_name", state.sorts.unassignedInvoices)}</th>
+            <th>${window.ClodeTableUtils.renderHeader("Kontrahent", "unassignedInvoices", "party", state.sorts.unassignedInvoices)}</th>
+            <th>${window.ClodeTableUtils.renderHeader("Kategoria / opis", "unassignedInvoices", "category_or_description", state.sorts.unassignedInvoices)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("Netto", "unassignedInvoices", "net_amount", state.sorts.unassignedInvoices)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("VAT", "unassignedInvoices", "vat_rate", state.sorts.unassignedInvoices)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("Brutto", "unassignedInvoices", "gross_amount", state.sorts.unassignedInvoices)}</th>
           </tr>
         </thead>
         <tbody>
           ${items.map((entry, index) => {
             const description = [entry.category, entry.description].filter(Boolean).join(" • ") || "-";
+            const net = numberValue(entry.net_amount);
+            const gross = numberValue(entry.gross_amount);
+            const vatAmount = gross && net ? Math.max(0, gross - net) : 0;
+            const vatRateLabel = numberValue(entry.vat_rate) ? `${formatNumber(entry.vat_rate)}%` : "bez VAT";
             return `
               <tr>
                 <td>${index + 1}</td>
                 <td>${formatDate(entry.issue_date)}</td>
                 <td>${entry.type === "sales" ? "Faktura sprzedażowa" : "Faktura kosztowa"}</td>
-                <td>${window.AgentTableUtils.escapeHtml(entry.document_number || "-")}</td>
-                <td>${window.AgentTableUtils.escapeHtml(entry.contract_name || "Brak kontraktu")}</td>
-                <td>${window.AgentTableUtils.escapeHtml(entry.party || "-")}</td>
-                <td>${window.AgentTableUtils.escapeHtml(description)}</td>
-                <td>${formatMoney(entry.net_amount)}</td>
-                <td>${numberValue(entry.vat_rate) ? `${formatNumber(entry.vat_rate)}%` : "bez VAT"}</td>
-                <td>${formatMoney(entry.gross_amount)}</td>
+                <td>${window.ClodeTableUtils.escapeHtml(entry.document_number || "-")}</td>
+                <td>${window.ClodeTableUtils.escapeHtml(entry.contract_name || "Brak kontraktu")}</td>
+                <td>${window.ClodeTableUtils.escapeHtml(entry.party || "-")}</td>
+                <td class="invoice-description-cell">
+                  <div class="invoice-description-content">
+                    <strong>${window.ClodeTableUtils.escapeHtml(entry.category || "-")}</strong>
+                    ${entry.description ? `<small>${window.ClodeTableUtils.escapeHtml(entry.description)}</small>` : ""}
+                  </div>
+                </td>
+                <td class="text-right">${formatMoney(entry.net_amount)}</td>
+                <td class="text-right">${vatRateLabel}<br><small>${formatMoney(vatAmount)}</small></td>
+                <td class="text-right">${formatMoney(entry.gross_amount)}</td>
               </tr>
             `;
           }).join("")}
@@ -1290,9 +1394,9 @@ function renderUnassignedInvoices() {
         <tfoot>
           <tr class="invoice-summary-row">
             <td colspan="7">Suma dla bieżącego filtra</td>
-            <td>${formatMoney(totalNet)}</td>
-            <td>-</td>
-            <td>${formatMoney(totalGross)}</td>
+            <td class="text-right">${formatMoney(totalNet)}</td>
+            <td class="text-right">-</td>
+            <td class="text-right">${formatMoney(totalGross)}</td>
           </tr>
         </tfoot>
       </table>
@@ -1306,11 +1410,11 @@ function renderUnmatchedHours() {
   target.innerHTML = "";
 
   if (state.errorMessage) {
-    target.innerHTML = `<p>${window.AgentTableUtils.escapeHtml(state.errorMessage)}</p>`;
+    target.innerHTML = `<p>${window.ClodeTableUtils.escapeHtml(state.errorMessage)}</p>`;
     return;
   }
 
-  const items = getFilteredUnmatchedHours();
+  const items = getSortedUnmatchedHours();
   if (!items.length) {
     target.innerHTML = "<p>Nie wykryto roboczogodzin poza rejestrem kontraktów.</p>";
     return;
@@ -1318,24 +1422,24 @@ function renderUnmatchedHours() {
 
   target.innerHTML = `
     <div class="form-table-shell dashboard-table-shell">
-      <table class="module-table">
+      <table class="data-table invoice-module-table">
         <thead>
           <tr>
             <th>Lp.</th>
-            <th>Pozycja</th>
-            <th>Zapisy</th>
-            <th>Godziny</th>
-            <th>Koszt wynagrodzeń</th>
+            <th>${window.ClodeTableUtils.renderHeader("Pozycja", "unmatchedHours", "source_name", state.sorts.unmatchedHours)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("Zapisy", "unmatchedHours", "entries", state.sorts.unmatchedHours)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("Godziny", "unmatchedHours", "labor_hours", state.sorts.unmatchedHours)}</th>
+            <th class="text-right">${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "unmatchedHours", "labor_cost", state.sorts.unmatchedHours)}</th>
           </tr>
         </thead>
         <tbody>
           ${items.map((item, index) => `
             <tr>
               <td>${index + 1}</td>
-              <td>${window.AgentTableUtils.escapeHtml(item.source_name)}</td>
-              <td>${window.AgentTableUtils.escapeHtml(String(item.entries))}</td>
-              <td>${formatNumber(item.labor_hours)}</td>
-              <td class="status-bad">${formatMoney(item.labor_cost)}</td>
+              <td>${window.ClodeTableUtils.escapeHtml(item.source_name)}</td>
+              <td class="text-right">${window.ClodeTableUtils.escapeHtml(String(item.entries))}</td>
+              <td class="text-right">${formatNumber(item.labor_hours)}</td>
+              <td class="text-right status-bad">${formatMoney(item.labor_cost)}</td>
             </tr>
           `).join("")}
         </tbody>
@@ -1423,7 +1527,7 @@ function bindEvents() {
   document.getElementById("investmentsTable")?.addEventListener("click", (event) => {
     const sortButton = event.target.closest("button[data-sort-table='investments']");
     if (sortButton) {
-      state.sorts.investments = window.AgentTableUtils.nextSort(
+      state.sorts.investments = window.ClodeTableUtils.nextSort(
         state.sorts.investments,
         sortButton.dataset.sortKey,
         investmentColumns
@@ -1443,7 +1547,7 @@ function bindEvents() {
   document.getElementById("detailMonthlyTable")?.addEventListener("click", (event) => {
     const sortButton = event.target.closest("button[data-sort-table='detailMonthly']");
     if (!sortButton) return;
-    state.sorts.detailMonthly = window.AgentTableUtils.nextSort(
+    state.sorts.detailMonthly = window.ClodeTableUtils.nextSort(
       state.sorts.detailMonthly,
       sortButton.dataset.sortKey,
       detailMonthlyColumns
@@ -1451,7 +1555,29 @@ function bindEvents() {
     renderDetail();
   });
 
-  ["contract-registry-updated", "hours-registry-updated", "invoice-registry-updated", "agent-auth-changed"].forEach((eventName) => {
+  document.getElementById("dashboardUnassignedInvoices")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='unassignedInvoices']");
+    if (!sortButton) return;
+    state.sorts.unassignedInvoices = window.ClodeTableUtils.nextSort(
+      state.sorts.unassignedInvoices,
+      sortButton.dataset.sortKey,
+      unassignedInvoiceColumns
+    );
+    renderUnassignedInvoices();
+  });
+
+  document.getElementById("dashboardUnmatchedHours")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='unmatchedHours']");
+    if (!sortButton) return;
+    state.sorts.unmatchedHours = window.ClodeTableUtils.nextSort(
+      state.sorts.unmatchedHours,
+      sortButton.dataset.sortKey,
+      unmatchedHoursColumns
+    );
+    renderUnmatchedHours();
+  });
+
+  ["contract-registry-updated", "hours-registry-updated", "invoice-registry-updated", "clode-auth-changed"].forEach((eventName) => {
     window.addEventListener(eventName, () => {
       void loadData();
     });
@@ -1470,3 +1596,4 @@ function init() {
 }
 
 init();
+

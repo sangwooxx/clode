@@ -1,5 +1,5 @@
 param(
-    [string]$ProjectRoot = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp",
+    [string]$ProjectRoot = "",
     [int]$Port = 8082,
     [string]$BindHost = "127.0.0.1",
     [int]$StartupTimeoutSec = 20
@@ -8,8 +8,11 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
+
 $pythonCandidates = @(@(
-    "C:\Users\kubaz\AppData\Local\Programs\Python\Python312\python.exe",
     (Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
 ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique)
 
@@ -28,7 +31,7 @@ function Test-FrontendReady {
         if ($response.StatusCode -ne 200) {
             return $false
         }
-        return $response.Content -match "<title>Clode</title>" -and $response.Content -match "shell\.js"
+        return $response.Content -match "shell\.js" -and $response.Content -match "clode-logo\.svg"
     } catch {
         return $false
     }
@@ -83,4 +86,4 @@ if (-not (Wait-FrontendReady -Url $frontendUrl -TimeoutSec $StartupTimeoutSec)) 
     throw "Frontend nie zglosil gotowosci pod $frontendUrl w ciagu $StartupTimeoutSec s."
 }
 
-Write-Host "Uruchomiono frontend pod $frontendUrl"
+Write-Host "Uruchomiono frontend Clode pod $frontendUrl"

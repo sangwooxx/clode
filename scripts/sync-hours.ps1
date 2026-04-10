@@ -1,6 +1,6 @@
 param(
     [string]$HoursExcelPath = "",
-    [string]$OutputDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp\data"
+    [string]$OutputDir = ""
 )
 
 Set-StrictMode -Version Latest
@@ -8,9 +8,16 @@ $ErrorActionPreference = "Stop"
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
+$projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$workspaceRoot = Split-Path -Parent $projectRoot
+
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $OutputDir = Join-Path $projectRoot "data"
+}
+
 function Resolve-WorkspaceFile {
     param([string]$Pattern)
-    return Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+    return Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
         Where-Object { $_.Name -like $Pattern } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1

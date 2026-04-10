@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -11,11 +11,11 @@ SRC_DIR = PROJECT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from agent_backend.config import load_settings  # noqa: E402
-from agent_backend.db.bootstrap import ensure_database  # noqa: E402
-from agent_backend.db.connection import connect  # noqa: E402
-from agent_backend.repositories.store_repository import StoreRepository  # noqa: E402
-from agent_backend.validation.contracts import normalize_contract_status, normalize_cost_category  # noqa: E402
+from clode_backend.config import load_settings  # noqa: E402
+from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.db.connection import connect  # noqa: E402
+from clode_backend.repositories.store_repository import StoreRepository  # noqa: E402
+from clode_backend.validation.contracts import normalize_contract_status, normalize_cost_category  # noqa: E402
 
 
 def text(value) -> str:
@@ -539,3 +539,4 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit("Usage: python backend/scripts/import_legacy_snapshot.py <snapshot.json>")
     main(sys.argv[1])
+

@@ -1,0 +1,21 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Clode logo on dark background</title>
+  <desc>Simple Clode wordmark with a green C and light text on a dark background.</desc>
+  <rect width="420" height="120" rx="24" fill="#171717"/>
+  <text
+    x="32"
+    y="78"
+    font-family="Aptos, Segoe UI, Inter, Arial, sans-serif"
+    font-size="64"
+    font-weight="700"
+    letter-spacing="-1.8"
+    fill="#10A37F">C</text>
+  <text
+    x="74"
+    y="78"
+    font-family="Aptos, Segoe UI, Inter, Arial, sans-serif"
+    font-size="64"
+    font-weight="700"
+    letter-spacing="-1.8"
+    fill="#ECECEC">lode</text>
+</svg>

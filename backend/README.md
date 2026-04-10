@@ -1,31 +1,39 @@
-# Backend skeleton
+# Clode backend
 
-To jest etap przejściowy między frontendem opartym o `localStorage` a architekturą:
+To jest etap przejsciowy miedzy frontendem opartym o `localStorage` a architektura:
 
 `frontend -> API -> SQL`
 
-Założenia:
-- serwer jest uruchamialny bez zewnętrznych zależności,
-- warstwa API obsługuje przejściowe `store_documents`,
-- baza lokalna działa na SQLite,
-- docelowy model danych jest przygotowany pod relacyjną bazę SQL i dalsze przejście na PostgreSQL.
+Zalozenia:
+- serwer jest uruchamialny bez zewnetrznych zaleznosci,
+- warstwa API obsluguje przejsciowe `store_documents`,
+- baza lokalna dziala na SQLite,
+- docelowy model danych jest przygotowany pod relacyjna baze SQL i dalsze przejscie na PostgreSQL.
 
 ## Uruchomienie
 
+Z katalogu repozytorium:
+
 ```powershell
-C:\Users\kubaz\AppData\Local\Programs\Python\Python312\python.exe backend\run_server.py
+python .\backend\run_server.py
 ```
 
-Serwer domyślnie startuje na:
+albo przez skrypt:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
+```
+
+Serwer domyslnie startuje na:
 
 - `http://127.0.0.1:8787`
 - health: `http://127.0.0.1:8787/api/health`
 
 ## Co jest gotowe
 
-- konfiguracja środowiska,
+- konfiguracja srodowiska,
 - bootstrap bazy,
-- migracja SQL,
-- przejściowe endpointy `/api/v1/stores/*`,
+- migracje SQL,
+- przejsciowe endpointy `/api/v1/stores/*`,
 - modele domenowe,
 - import snapshotu wyeksportowanego z `localStorage`.

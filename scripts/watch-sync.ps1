@@ -1,11 +1,17 @@
 param(
-    [string]$RootDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp",
+    [string]$RootDir = "",
     [string]$ExcelPath = "",
     [string]$HoursExcelPath = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($RootDir)) {
+    $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
+
+$workspaceRoot = Split-Path -Parent $RootDir
 
 $syncScript = Join-Path $RootDir "scripts\sync-excel.ps1"
 $hoursScript = Join-Path $RootDir "scripts\sync-hours.ps1"
@@ -14,7 +20,7 @@ $buildScript = Join-Path $RootDir "scripts\build-app-data.ps1"
 $dataDir = Join-Path $RootDir "data"
 
 if ([string]::IsNullOrWhiteSpace($ExcelPath)) {
-    $match = Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+    $match = Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
         Where-Object { $_.Name -like "*2025*kopia*.xlsx" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
@@ -27,7 +33,7 @@ if ([string]::IsNullOrWhiteSpace($ExcelPath)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($HoursExcelPath)) {
-    $hoursMatch = Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+    $hoursMatch = Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
         Where-Object { $_.Name -like "Zestawienie godzin*" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
@@ -39,7 +45,7 @@ if ([string]::IsNullOrWhiteSpace($HoursExcelPath)) {
     $HoursExcelPath = $hoursMatch.FullName
 }
 
-$salesMatch = Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+$salesMatch = Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
     Where-Object { $_.Name -like "Plik sprzeda*AGZ*" } |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1

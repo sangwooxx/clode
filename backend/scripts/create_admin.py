@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 from pathlib import Path
@@ -11,11 +11,11 @@ SRC_DIR = PROJECT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from agent_backend.config import load_settings  # noqa: E402
-from agent_backend.db.bootstrap import ensure_database  # noqa: E402
-from agent_backend.repositories.store_repository import StoreRepository  # noqa: E402
-from agent_backend.repositories.user_repository import UserRepository  # noqa: E402
-from agent_backend.services.user_service import UserService  # noqa: E402
+from clode_backend.config import load_settings  # noqa: E402
+from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.repositories.store_repository import StoreRepository  # noqa: E402
+from clode_backend.repositories.user_repository import UserRepository  # noqa: E402
+from clode_backend.services.user_service import UserService  # noqa: E402
 
 
 def main() -> None:
@@ -45,3 +45,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

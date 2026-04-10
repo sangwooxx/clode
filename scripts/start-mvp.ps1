@@ -1,5 +1,5 @@
 param(
-    [string]$RootDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp",
+    [string]$RootDir = "",
     [string]$ExcelPath = "",
     [int]$Port = 8082,
     [string]$BindHost = "127.0.0.1"
@@ -7,6 +7,10 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($RootDir)) {
+    $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
 
 $watchScript = Join-Path $RootDir "scripts\watch-sync.ps1"
 $backendScript = Join-Path $RootDir "scripts\start-backend.ps1"
@@ -32,4 +36,4 @@ if ($LASTEXITCODE -ne 0) {
     throw "Frontend nie uruchomil sie poprawnie."
 }
 Start-Process "http://$BindHost`:$Port/app/index.html" | Out-Null
-Write-Host "Uruchomiono backend, watcher synchronizacji i lokalne MVP pod http://$BindHost`:$Port/app/index.html"
+Write-Host "Uruchomiono Clode MVP pod http://$BindHost`:$Port/app/index.html"

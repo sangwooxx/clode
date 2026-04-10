@@ -1,10 +1,10 @@
-﻿const APP_SHELL_VIEW_KEY = "agentFirmowyActiveView";
-const SHELL_CONTRACT_REGISTRY_KEY = "agentInvestmentCatalogV1";
-const SHELL_CONTRACT_DELETED_KEY = "agentInvestmentCatalogDeletedV1";
-const SETTINGS_STORAGE_KEY = "agentAppSettingsV1";
-const AUDIT_LOG_STORAGE_KEY = "agentAuditLogV1";
-const NOTIFICATION_STORAGE_KEY = "agentNotificationCenterV1";
-const APP_MODULE_VERSION = "20260408-01";
+﻿const APP_SHELL_VIEW_KEY = "clodeActiveViewV1";
+const SHELL_CONTRACT_REGISTRY_KEY = "clodeContractsV1";
+const SHELL_CONTRACT_DELETED_KEY = "clodeDeletedContractsV1";
+const SETTINGS_STORAGE_KEY = "clodeSettingsV1";
+const AUDIT_LOG_STORAGE_KEY = "clodeAuditLogV1";
+const NOTIFICATION_STORAGE_KEY = "clodeNotificationCenterV1";
+const APP_MODULE_VERSION = window.__APP_MODULE_VERSION__ || "20260408-13";
 
 const viewModuleMap = {
   hoursView: [`hours-lite.js?v=${APP_MODULE_VERSION}`],
@@ -40,11 +40,12 @@ const shellState = {
   contractRegistryLoaded: false,
   contractRegistryLoading: null,
   editingContractId: "",
+  selectedContractRowId: "",
 };
 
 function shellReadStore(storageKey, fallbackValue) {
-  if (window.AgentDataAccess?.legacy) {
-    return window.AgentDataAccess.legacy.read(storageKey, fallbackValue);
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.read(storageKey, fallbackValue);
   }
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -55,8 +56,8 @@ function shellReadStore(storageKey, fallbackValue) {
 }
 
 function shellWriteStore(storageKey, value, options = {}) {
-  if (window.AgentDataAccess?.legacy) {
-    return window.AgentDataAccess.legacy.write(storageKey, value, options);
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.write(storageKey, value, options);
   }
   window.localStorage.setItem(storageKey, JSON.stringify(value));
   if (options.eventName) {
@@ -66,9 +67,9 @@ function shellWriteStore(storageKey, value, options = {}) {
 }
 
 function getContractApi() {
-  if (!window.AgentContractApi?.create) return null;
-  return window.AgentContractApi.create({
-    baseUrl: window.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+  if (!window.ClodeContractApi?.create) return null;
+  return window.ClodeContractApi.create({
+    baseUrl: window.__CLODE_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
   });
 }
 
@@ -179,7 +180,7 @@ window.EmployeeNameUtils = {
   },
 };
 
-window.AgentTableUtils = {
+window.ClodeTableUtils = {
   escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -304,7 +305,7 @@ function createDefaultSettingsStore() {
 }
 
 function loadSettingsStore() {
-  const authClient = window.AgentAuthClient;
+  const authClient = window.ClodeAuthClient;
   const currentUser = authClient?.getCurrentUser?.() || null;
   const users = authClient?.getUsers?.() || [];
   const parsed = shellReadStore(SETTINGS_STORAGE_KEY, null);
@@ -327,7 +328,7 @@ function loadSettingsStore() {
 }
 
 function loadAuthSession() {
-  const currentUser = window.AgentAuthClient?.getCurrentUser?.() || null;
+  const currentUser = window.ClodeAuthClient?.getCurrentUser?.() || null;
   return {
     user_id: currentUser?.id || "",
     logged_in_at: currentUser?.last_login_at || "",
@@ -336,7 +337,7 @@ function loadAuthSession() {
 
 function saveAuthSession(userId = "") {
   if (!userId) {
-    window.AgentAuthClient?.logout?.().catch(() => {});
+    window.ClodeAuthClient?.logout?.().catch(() => {});
   }
 }
 
@@ -370,7 +371,7 @@ function saveNotifications(entries) {
 }
 
 function getSettingsUsers() {
-  return (window.AgentAuthClient?.getUsers?.() || [])
+  return (window.ClodeAuthClient?.getUsers?.() || [])
     .filter((user) => user.status !== "inactive")
     .sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "pl", {
       sensitivity: "base",
@@ -379,7 +380,7 @@ function getSettingsUsers() {
 }
 
 function getAllSettingsUsers() {
-  return (window.AgentAuthClient?.getUsers?.() || [])
+  return (window.ClodeAuthClient?.getUsers?.() || [])
     .sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "pl", {
       sensitivity: "base",
       numeric: true,
@@ -387,7 +388,7 @@ function getAllSettingsUsers() {
 }
 
 function getCurrentUser() {
-  return window.AgentAuthClient?.getCurrentUser?.() || null;
+  return window.ClodeAuthClient?.getCurrentUser?.() || null;
 }
 
 function setCurrentUser(userId) {
@@ -398,31 +399,31 @@ function setCurrentUser(userId) {
 }
 
 function isAuthenticated() {
-  return Boolean(window.AgentAuthClient?.isAuthenticated?.());
+  return Boolean(window.ClodeAuthClient?.isAuthenticated?.());
 }
 
 async function authenticateUser(usernameValue, passwordValue) {
-  if (!window.AgentAuthClient?.login) {
+  if (!window.ClodeAuthClient?.login) {
     return {
       ok: false,
       message: "Moduł logowania nie został załadowany.",
     };
   }
-  return window.AgentAuthClient.login(usernameValue, passwordValue);
+  return window.ClodeAuthClient.login(usernameValue, passwordValue);
 }
 
 async function requestPasswordReminder(usernameValue) {
-  if (!window.AgentAuthClient?.requestPasswordReminder) {
+  if (!window.ClodeAuthClient?.requestPasswordReminder) {
     return {
       ok: false,
       message: "Moduł resetu hasła nie został załadowany.",
     };
   }
-  return window.AgentAuthClient.requestPasswordReminder(usernameValue);
+  return window.ClodeAuthClient.requestPasswordReminder(usernameValue);
 }
 
 function canAccessView(viewId) {
-  return window.AgentAuthClient?.canAccessView?.(viewId) ?? viewId === "homeView";
+  return window.ClodeAuthClient?.canAccessView?.(viewId) ?? viewId === "homeView";
 }
 
 function canApproveVacationRequests() {
@@ -431,7 +432,7 @@ function canApproveVacationRequests() {
   if (!currentUser) return false;
   if (currentUser.role === "admin") return true;
   if (settings.workflow.vacationApprovalMode === "admin") return false;
-  return Boolean(window.AgentAuthClient?.canApproveVacations?.() ?? currentUser.canApproveVacations);
+  return Boolean(window.ClodeAuthClient?.canApproveVacations?.() ?? currentUser.canApproveVacations);
 }
 
 function recordAuditLog(moduleName, actionLabel, subjectLabel, details = "") {
@@ -680,6 +681,8 @@ function getContractReportLabelByName(name) {
 
 function resetContractForm() {
   shellState.editingContractId = "";
+  shellState.selectedContractRowId = "";
+  document.getElementById("contractNumberInput").value = "";
   document.getElementById("contractNameInput").value = "";
   document.getElementById("contractInvestorInput").value = "";
   document.getElementById("contractSignedInput").value = "";
@@ -738,27 +741,25 @@ async function deleteContracts(contractIds) {
   }
 
   const contractsById = new Map(getContractRegistry().map((item) => [item.id, item]));
-  const blocked = (await Promise.all(
+  const usageDetails = (await Promise.all(
     ids.map(async (id) => ({ id, contract: contractsById.get(id) || null, usage: await getContractOperationalUsage(id) }))
   )).filter(({ usage }) => usage.hours > 0 || usage.invoices > 0 || usage.planning > 0);
 
-  if (blocked.length) {
-    const lines = blocked.map(({ contract, usage }) => {
-      const details = [];
-      if (usage.hours) details.push(`godziny: ${usage.hours}`);
-      if (usage.invoices) details.push(`faktury: ${usage.invoices}`);
-      if (usage.planning) details.push(`planowanie: ${usage.planning}`);
-      return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
-    });
-    window.alert(`Nie można usunąć kontraktów z danymi operacyjnymi:\n${lines.join("\n")}`);
-    return;
-  }
-
   const names = ids.map((id) => contractsById.get(id)?.name || id);
+  const usageLines = usageDetails.map(({ contract, usage }) => {
+    const details = [];
+    if (usage.hours) details.push(`godziny: ${usage.hours}`);
+    if (usage.invoices) details.push(`faktury: ${usage.invoices}`);
+    if (usage.planning) details.push(`planowanie: ${usage.planning}`);
+    return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
+  });
   const label = ids.length === 1
     ? `Czy na pewno chcesz usunąć kontrakt "${names[0]}"?`
     : `Czy na pewno chcesz usunąć ${ids.length} zaznaczone kontrakty?`;
-  if (!window.confirm(label)) return;
+  const archiveNote = usageLines.length
+    ? `\n\nKontrakty mają dane historyczne i zostaną zarchiwizowane, a nie usunięte:\n${usageLines.join("\n")}`
+    : "";
+  if (!window.confirm(`${label}${archiveNote}`)) return;
 
   const api = getContractApi();
   if (!api) {
@@ -842,6 +843,7 @@ function setActiveView(viewId) {
   window.dispatchEvent(new CustomEvent("app-view-changed", {
     detail: { viewId },
   }));
+  syncShellChrome();
   renderRailFooter();
   ensureViewModuleLoaded(viewId).then(() => {
     runViewRenderHook(viewId);
@@ -852,7 +854,7 @@ function renderRegistryTable(targetId, tableName, sortState) {
   const target = document.getElementById(targetId);
   if (!target) return;
 
-  const registry = window.AgentTableUtils.sortItems(
+  const registry = window.ClodeTableUtils.sortItems(
     getContractRegistry(),
     sortState,
     contractColumns
@@ -873,38 +875,40 @@ function renderRegistryTable(targetId, tableName, sortState) {
   }
 
   target.innerHTML = `
-    <table class="entity-table module-table">
+    <table class="data-table invoice-module-table">
       <thead>
         <tr>
           <th class="control-col">
             <input id="contractSelectAll" type="checkbox" ${registry.length && registry.every((item) => isContractSelected(item.id)) ? "checked" : ""}>
           </th>
-          <th>${window.AgentTableUtils.renderHeader("Nr", tableName, "contract_number", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Nazwa kontraktu", tableName, "name", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Zamawiaj\u0105cy / inwestor", tableName, "investor", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Data podpisania", tableName, "signed_date", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Termin zako\u0144czenia", tableName, "end_date", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kwota rycza\u0142towa", tableName, "contract_value", sortState)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Status", tableName, "status", sortState)}</th>
+          <th>Lp.</th>
+          <th>${window.ClodeTableUtils.renderHeader("ID", tableName, "contract_number", sortState)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Nazwa kontraktu", tableName, "name", sortState)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Zamawiaj\u0105cy / inwestor", tableName, "investor", sortState)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Data podpisania", tableName, "signed_date", sortState)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Termin zako\u0144czenia", tableName, "end_date", sortState)}</th>
+          <th class="text-right">${window.ClodeTableUtils.renderHeader("Kwota rycza\u0142towa", tableName, "contract_value", sortState)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Status", tableName, "status", sortState)}</th>
           <th class="control-col">Akcje</th>
         </tr>
       </thead>
       <tbody>
-        ${registry.map((item) => `
-          <tr class="clickable-row" data-contract-id="${window.AgentTableUtils.escapeHtml(item.id || "")}">
+        ${registry.map((item, index) => `
+          <tr class="clickable-row${item.id === shellState.selectedContractRowId ? " is-selected" : ""}" data-contract-id="${window.ClodeTableUtils.escapeHtml(item.id || "")}">
             <td class="control-col">
-              <input type="checkbox" data-contract-select="${window.AgentTableUtils.escapeHtml(item.id || "")}" ${isContractSelected(item.id) ? "checked" : ""}>
+              <input type="checkbox" data-contract-select="${window.ClodeTableUtils.escapeHtml(item.id || "")}" ${isContractSelected(item.id) ? "checked" : ""}>
             </td>
-            <td>${window.AgentTableUtils.escapeHtml(item.contract_number || "-")}</td>
-            <td><strong>${window.AgentTableUtils.escapeHtml(item.name || "-")}</strong></td>
-            <td>${window.AgentTableUtils.escapeHtml(item.investor || "-")}</td>
-            <td>${window.AgentTableUtils.escapeHtml(item.signed_date || "-")}</td>
-            <td>${window.AgentTableUtils.escapeHtml(item.end_date || "-")}</td>
-            <td>${item.contract_value ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.contract_value) : "-"}</td>
-            <td>${window.AgentTableUtils.escapeHtml(item.status === "archived" ? "Zarchiwizowana" : "W realizacji")}</td>
+            <td>${index + 1}</td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.contract_number || "-")}</td>
+            <td><strong>${window.ClodeTableUtils.escapeHtml(item.name || "-")}</strong></td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.investor || "-")}</td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.signed_date || "-")}</td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.end_date || "-")}</td>
+            <td class="text-right">${item.contract_value ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.contract_value) : "-"}</td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.status === "archived" ? "Zarchiwizowana" : "W realizacji")}</td>
             <td class="action-cell">
-              <button class="table-action-button" type="button" title="Edytuj kontrakt" data-contract-edit="${window.AgentTableUtils.escapeHtml(item.id || "")}">Edytuj</button>
-              <button class="table-action-button danger-button" type="button" title="Usu\u0144 kontrakt" data-contract-delete="${window.AgentTableUtils.escapeHtml(item.id || "")}">Usu\u0144</button>
+              <button class="table-action-button" type="button" title="Edytuj kontrakt" data-contract-edit="${window.ClodeTableUtils.escapeHtml(item.id || "")}">Edytuj</button>
+              <button class="table-action-button danger-button" type="button" title="Usu\u0144 kontrakt" data-contract-delete="${window.ClodeTableUtils.escapeHtml(item.id || "")}">Usu\u0144</button>
             </td>
           </tr>
         `).join("")}
@@ -944,7 +948,7 @@ function renderInvoiceRegistry() {
   const target = document.getElementById("invoiceRegistryTable");
   if (!target) return;
 
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildInvoiceRegistryRows(),
     registrySorts.invoices,
     invoiceColumns
@@ -959,27 +963,27 @@ function renderInvoiceRegistry() {
     <table>
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Nr", "invoiceRegistry", "contract_number", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kontrakt", "invoiceRegistry", "name", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Faktury kosztowe", "invoiceRegistry", "material_cost", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "invoiceRegistry", "labor_cost", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("\u0141\u0105czny koszt", "invoiceRegistry", "total_cost", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Sprzeda\u017c", "invoiceRegistry", "sales", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Mar\u017ca", "invoiceRegistry", "margin", registrySorts.invoices)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba faktur", "invoiceRegistry", "invoice_count", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Nr", "invoiceRegistry", "contract_number", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kontrakt", "invoiceRegistry", "name", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Faktury kosztowe", "invoiceRegistry", "material_cost", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "invoiceRegistry", "labor_cost", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("\u0141\u0105czny koszt", "invoiceRegistry", "total_cost", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Sprzeda\u017c", "invoiceRegistry", "sales", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Mar\u017ca", "invoiceRegistry", "margin", registrySorts.invoices)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba faktur", "invoiceRegistry", "invoice_count", registrySorts.invoices)}</th>
         </tr>
       </thead>
       <tbody>
         ${rows.map((item) => `
           <tr>
-            <td>${window.AgentTableUtils.escapeHtml(item.contract_number || "-")}</td>
-            <td><strong>${window.AgentTableUtils.escapeHtml(item.name || "-")}</strong></td>
+            <td>${window.ClodeTableUtils.escapeHtml(item.contract_number || "-")}</td>
+            <td><strong>${window.ClodeTableUtils.escapeHtml(item.name || "-")}</strong></td>
             <td>${new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.material_cost || 0)}</td>
             <td>${new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.labor_cost || 0)}</td>
             <td>${new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.total_cost || 0)}</td>
             <td>${new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.sales || 0)}</td>
             <td>${new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(item.margin || 0)}</td>
-            <td>${window.AgentTableUtils.escapeHtml(String(item.invoice_count || 0))}</td>
+            <td>${window.ClodeTableUtils.escapeHtml(String(item.invoice_count || 0))}</td>
           </tr>
         `).join("")}
       </tbody>
@@ -988,6 +992,7 @@ function renderInvoiceRegistry() {
 }
 
 function renderRailAccess() {
+  syncShellChrome();
   document.querySelectorAll("[data-view]").forEach((button) => {
     const viewId = button.dataset.view;
     if (!viewId || viewId === "homeView") return;
@@ -999,9 +1004,29 @@ function renderRailAccess() {
     settingsButton.disabled = !isAuthenticated();
   }
 
+  const logoutButton = document.getElementById("railLogoutButton");
+  if (logoutButton) {
+    logoutButton.hidden = !isAuthenticated();
+    logoutButton.disabled = !isAuthenticated();
+  }
+
   const activeViewId = shellReadStore(APP_SHELL_VIEW_KEY, "homeView") || "homeView";
   if (!canAccessView(activeViewId) && activeViewId !== "homeView") {
     setActiveView("homeView");
+  }
+}
+
+function syncShellChrome() {
+  const shell = document.querySelector(".app-shell");
+  const rail = document.querySelector(".app-rail");
+  const authenticated = isAuthenticated();
+
+  if (shell) {
+    shell.classList.toggle("is-authenticated-shell", authenticated);
+  }
+
+  if (rail) {
+    rail.hidden = !authenticated;
   }
 }
 
@@ -1012,7 +1037,7 @@ function renderNotificationsPanel() {
 
   if (badge) {
     badge.hidden = unreadCount <= 0;
-    badge.textContent = String(unreadCount);
+    badge.textContent = unreadCount > 0 ? String(unreadCount) : "";
   }
 }
 
@@ -1072,9 +1097,18 @@ function bindLoginActions() {
     const result = await requestPasswordReminder(username);
     setLoginStatus(result.message, result.ok ? "info" : "error");
   });
+
+  document.getElementById("railLogoutButton")?.addEventListener("click", async () => {
+    if (!isAuthenticated()) return;
+    if (!window.confirm("Czy na pewno chcesz się wylogować?")) return;
+    await window.ClodeAuthClient?.logout?.();
+    setLoginStatus("Wylogowano z systemu.", "info");
+    setActiveView("homeView");
+  });
 }
 
 async function saveContractFromForm() {
+  const contractNumber = String(document.getElementById("contractNumberInput")?.value || "").trim();
   const name = String(document.getElementById("contractNameInput")?.value || "").trim();
   const investor = String(document.getElementById("contractInvestorInput")?.value || "").trim();
   const signedDate = String(document.getElementById("contractSignedInput")?.value || "").trim();
@@ -1115,11 +1149,7 @@ async function saveContractFromForm() {
     status,
   };
 
-  if (existing?.contract_number) {
-    payload.contract_number = existing.contract_number;
-  } else {
-    payload.contract_number = "";
-  }
+  payload.contract_number = contractNumber || existing?.contract_number || "";
 
   try {
     if (existing) {
@@ -1151,6 +1181,8 @@ function fillContractForm(contractId) {
   const contract = getContractById(contractId);
   if (!contract) return;
   shellState.editingContractId = contract.id;
+  shellState.selectedContractRowId = contract.id;
+  document.getElementById("contractNumberInput").value = contract.contract_number || "";
   document.getElementById("contractNameInput").value = contract.name || "";
   document.getElementById("contractInvestorInput").value = contract.investor || "";
   document.getElementById("contractSignedInput").value = contract.signed_date || "";
@@ -1175,7 +1207,7 @@ function bindRegistrySort(targetId, tableName, sortState) {
     const button = event.target.closest(`button[data-sort-table='${tableName}']`);
     if (!button) return;
 
-    const nextSort = window.AgentTableUtils.nextSort(
+    const nextSort = window.ClodeTableUtils.nextSort(
       sortState,
       button.dataset.sortKey,
       tableName === "contractsRegistry" ? contractColumns : invoiceColumns
@@ -1257,11 +1289,13 @@ async function initShell() {
     if (editButton) {
       event.stopPropagation();
       fillContractForm(editButton.dataset.contractEdit);
+      renderContractRegistry();
       return;
     }
     const row = event.target.closest("[data-contract-id]");
     if (!row) return;
     fillContractForm(row.dataset.contractId);
+    renderContractRegistry();
   });
   document.getElementById("contractsRegistryTable")?.addEventListener("change", (event) => {
     const checkbox = event.target.closest("[data-contract-select]");
@@ -1288,8 +1322,8 @@ async function initShell() {
     }
   });
 
-  if (window.AgentAuthClient?.bootstrap) {
-    const authResult = await window.AgentAuthClient.bootstrap();
+  if (window.ClodeAuthClient?.bootstrap) {
+    const authResult = await window.ClodeAuthClient.bootstrap();
     if (!authResult.ok && authResult.message) {
       setLoginStatus(authResult.message, "error");
     }
@@ -1350,3 +1384,4 @@ if (document.readyState === "loading") {
 } else {
   void initShell();
 }
+

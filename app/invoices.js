@@ -1,6 +1,7 @@
-const LEGACY_INVOICE_STORAGE_KEY = "agentManualInvoicesV1";
-const LEGACY_INVOICE_MIGRATION_KEY = "agentInvoicesSqlMigratedV1";
+﻿const LEGACY_INVOICE_STORAGE_KEY = "clodeInvoiceRegistryV1";
+const LEGACY_INVOICE_MIGRATION_KEY = "clodeInvoicesSqlMigratedV1";
 const INVOICE_UNASSIGNED_KEY = "__unassigned__";
+const INVOICE_SORT_STORAGE_KEY = "clodeInvoicesSortV1";
 
 const invoiceMonthLabels = [
   "styczeń",
@@ -29,7 +30,9 @@ const invoiceModuleState = {
   selectedMonth: String(new Date().getMonth() + 1).padStart(2, "0"),
   activeType: "cost",
   paymentStatus: "",
+  sort: { key: "issue_date", direction: "desc" },
   selectedIds: [],
+  selectedRowId: "",
   editingInvoiceId: "",
   formOpen: false,
   loading: false,
@@ -40,10 +43,58 @@ const invoiceModuleState = {
   availableMonths: [],
   errorMessage: "",
   migrationChecked: false,
-  ...(window.__agentInvoiceModuleState || {}),
+  ...(window.__clodeInvoiceModuleState || {}),
 };
 
-window.__agentInvoiceModuleState = invoiceModuleState;
+window.__clodeInvoiceModuleState = invoiceModuleState;
+
+const invoiceTableColumns = {
+  issue_date: { type: "date", defaultDirection: "desc" },
+  invoice_number: { type: "string", defaultDirection: "asc" },
+  counterparty_name: { type: "string", defaultDirection: "asc" },
+  category_or_description: { type: "string", defaultDirection: "asc" },
+  amount_net: { type: "number", defaultDirection: "desc" },
+  amount_vat: { type: "number", defaultDirection: "desc" },
+  amount_gross: { type: "number", defaultDirection: "desc" },
+  due_date: { type: "date", defaultDirection: "desc" },
+  payment_date: { type: "date", defaultDirection: "desc" },
+  payment_status: { type: "string", defaultDirection: "asc" },
+};
+
+function loadInvoiceSortPreference() {
+  try {
+    const raw = window.localStorage?.getItem(INVOICE_SORT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const key = String(parsed?.key || "").trim();
+    const direction = parsed?.direction === "desc" ? "desc" : "asc";
+    return key ? { key, direction } : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveInvoiceSortPreference(sortState) {
+  try {
+    if (!sortState?.key) return;
+    window.localStorage?.setItem(
+      INVOICE_SORT_STORAGE_KEY,
+      JSON.stringify({ key: String(sortState.key), direction: sortState.direction === "desc" ? "desc" : "asc" })
+    );
+  } catch {
+    // Ignore storage errors (private mode / disabled storage).
+  }
+}
+
+function ensureInvoiceSortState() {
+  const persisted = loadInvoiceSortPreference();
+  if (persisted?.key && invoiceTableColumns[persisted.key]) {
+    invoiceModuleState.sort = persisted;
+  }
+  if (!invoiceModuleState.sort || !invoiceTableColumns[invoiceModuleState.sort.key]) {
+    invoiceModuleState.sort = { key: "issue_date", direction: "desc" };
+  }
+}
 
 function invoiceText(value) {
   return String(value || "").trim();
@@ -108,15 +159,15 @@ function normalizeInvoiceRole(value) {
 }
 
 function getInvoiceApi() {
-  if (!window.AgentInvoiceApi?.create) return null;
-  return window.AgentInvoiceApi.create({
-    baseUrl: window.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+  if (!window.ClodeInvoiceApi?.create) return null;
+  return window.ClodeInvoiceApi.create({
+    baseUrl: window.__CLODE_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
   });
 }
 
 function readLegacyInvoiceStore() {
-  const parsed = window.AgentDataAccess?.legacy
-    ? window.AgentDataAccess.legacy.read(LEGACY_INVOICE_STORAGE_KEY, null)
+  const parsed = window.ClodeDataAccess?.legacy
+    ? window.ClodeDataAccess.legacy.read(LEGACY_INVOICE_STORAGE_KEY, null)
     : null;
   if (parsed && typeof parsed === "object") {
     return { entries: Array.isArray(parsed.entries) ? parsed.entries : [] };
@@ -264,14 +315,13 @@ function getInvoiceNodes() {
     statsBar: document.getElementById("invoiceStatsBar"),
     tableHeading: document.getElementById("invoiceTableHeading"),
     scopeCaption: document.getElementById("invoiceScopeCaption"),
-    paymentStatusFilter: document.getElementById("invoicePaymentStatusFilter"),
     selectedCount: document.getElementById("invoiceSelectedCount"),
     bulkDeleteButton: document.getElementById("invoiceBulkDeleteButton"),
-    toggleFormButton: document.getElementById("toggleInvoiceFormButton"),
     typeTabs: document.getElementById("invoiceTypeTabs"),
     entryEditor: document.getElementById("invoiceEntryEditor"),
     formHeading: document.getElementById("invoiceFormHeading"),
     formContext: document.getElementById("invoiceFormContext"),
+    entryFields: document.getElementById("invoiceEntryFields"),
     typeInput: document.getElementById("invoiceTypeInput"),
     dateInput: document.getElementById("invoiceDateInput"),
     numberInput: document.getElementById("invoiceNumberInput"),
@@ -288,7 +338,7 @@ function getInvoiceNodes() {
     paymentDateInput: document.getElementById("invoicePaymentDateInput"),
     paymentStatusInput: document.getElementById("invoicePaymentStatusInput"),
     cancelButton: document.getElementById("cancelInvoiceButton"),
-    saveAndNextButton: document.getElementById("saveAndNextInvoiceButton"),
+    newInvoiceButton: document.getElementById("newInvoiceButton"),
     saveButton: document.getElementById("saveInvoiceButton"),
     table: document.getElementById("invoiceEntriesTable"),
   };
@@ -312,7 +362,7 @@ function getMonthOptions() {
 }
 
 function getCurrentUser() {
-  return window.AgentAuthClient?.getCurrentUser?.() || null;
+  return window.ClodeAuthClient?.getCurrentUser?.() || null;
 }
 
 function userCanWriteInvoices() {
@@ -327,9 +377,6 @@ function buildInvoiceFilters() {
     type: invoiceModuleState.activeType,
   };
 
-  if (invoiceModuleState.paymentStatus) {
-    filters.payment_status = invoiceModuleState.paymentStatus;
-  }
   if (selectedContract?.is_unassigned) {
     filters.unassigned = "1";
   } else if (invoiceText(invoiceModuleState.selectedContractId)) {
@@ -362,6 +409,7 @@ function renderInvoiceFilterControls() {
   const selectedContract = ensureSelectedContract();
   const years = getAvailableYears();
   const months = getMonthOptions();
+  const filterGrid = document.querySelector("#invoicesView .invoice-filter-grid");
 
   if (nodes.contractSearchInput && nodes.contractSearchInput.value !== invoiceModuleState.contractSearch) {
     nodes.contractSearchInput.value = invoiceModuleState.contractSearch;
@@ -377,10 +425,6 @@ function renderInvoiceFilterControls() {
     label: invoiceMonthLabel(month),
   }));
 
-  if (nodes.paymentStatusFilter) {
-    nodes.paymentStatusFilter.value = invoiceModuleState.paymentStatus;
-  }
-
   [nodes.yearField, nodes.monthField].forEach((field) => {
     if (field) field.hidden = false;
   });
@@ -394,6 +438,11 @@ function renderInvoiceFilterControls() {
     const enabled = invoiceModuleState.timeScope === "month";
     nodes.monthField.classList.toggle("is-disabled", !enabled);
     if (nodes.monthSelect) nodes.monthSelect.disabled = !enabled;
+  }
+
+  if (filterGrid) {
+    const visibleTiles = Array.from(filterGrid.children).filter((element) => !element.hidden).length || 1;
+    filterGrid.style.gridTemplateColumns = `repeat(${visibleTiles}, minmax(0, 1fr))`;
   }
 
   document.querySelectorAll("#invoiceScopeTabs [data-invoice-scope]").forEach((button) => {
@@ -462,6 +511,8 @@ function renderInvoiceTable() {
   const nodes = getInvoiceNodes();
   if (!nodes.table) return;
 
+  ensureInvoiceSortState();
+
   if (nodes.tableHeading) {
     nodes.tableHeading.textContent = invoiceModuleState.activeType === "cost" ? "Faktury kosztowe" : "Faktury sprzedażowe";
   }
@@ -473,9 +524,9 @@ function renderInvoiceTable() {
   const selectedCount = invoiceModuleState.selectedIds.length;
   if (nodes.selectedCount) nodes.selectedCount.textContent = `Zaznaczone: ${selectedCount}`;
   if (nodes.bulkDeleteButton) nodes.bulkDeleteButton.disabled = !canWrite || !selectedCount;
-  if (nodes.toggleFormButton) {
+  if (nodes.newInvoiceButton) {
     const selectedContract = getSelectedContract();
-    nodes.toggleFormButton.disabled = !canWrite || !selectedContract || Boolean(selectedContract?.is_unassigned);
+    nodes.newInvoiceButton.disabled = !canWrite || !selectedContract || Boolean(selectedContract?.is_unassigned);
   }
 
   if (invoiceModuleState.loading) {
@@ -493,6 +544,9 @@ function renderInvoiceTable() {
 
   const summary = invoiceModuleState.summary || {};
   const allSelected = invoiceModuleState.items.length > 0 && invoiceModuleState.items.every((item) => invoiceModuleState.selectedIds.includes(item.id));
+  const rows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(invoiceModuleState.items, invoiceModuleState.sort, invoiceTableColumns)
+    : [...invoiceModuleState.items];
 
   nodes.table.innerHTML = `
     <table class="data-table invoice-module-table">
@@ -500,39 +554,41 @@ function renderInvoiceTable() {
         <tr>
           <th class="checkbox-cell"><input id="invoiceSelectAll" type="checkbox"${allSelected ? " checked" : ""}></th>
           <th>Lp.</th>
-          <th>Data wystawienia</th>
-          <th>Numer faktury</th>
-          <th>Kontrahent</th>
-          <th>Kategoria / opis</th>
-          <th class="text-right">Netto</th>
-          <th class="text-right">VAT</th>
-          <th class="text-right">Brutto</th>
-          <th>Termin płatności</th>
-          <th>Data płatności</th>
-          <th>Status</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Data wystawienia", "invoices", "issue_date", invoiceModuleState.sort) : "Data wystawienia"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Numer faktury", "invoices", "invoice_number", invoiceModuleState.sort) : "Numer faktury"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Kontrahent", "invoices", "counterparty_name", invoiceModuleState.sort) : "Kontrahent"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Kategoria / opis", "invoices", "category_or_description", invoiceModuleState.sort) : "Kategoria / opis"}</th>
+          <th class="text-right">${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Netto", "invoices", "amount_net", invoiceModuleState.sort) : "Netto"}</th>
+          <th class="text-right">${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("VAT", "invoices", "amount_vat", invoiceModuleState.sort) : "VAT"}</th>
+          <th class="text-right">${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Brutto", "invoices", "amount_gross", invoiceModuleState.sort) : "Brutto"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Termin płatności", "invoices", "due_date", invoiceModuleState.sort) : "Termin płatności"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Data płatności", "invoices", "payment_date", invoiceModuleState.sort) : "Data płatności"}</th>
+          <th>${window.ClodeTableUtils?.renderHeader ? window.ClodeTableUtils.renderHeader("Status", "invoices", "payment_status", invoiceModuleState.sort) : "Status"}</th>
           <th>Akcje</th>
         </tr>
       </thead>
       <tbody>
-        ${invoiceModuleState.items
+        ${rows
           .map((item, index) => {
             const checked = invoiceModuleState.selectedIds.includes(item.id) ? " checked" : "";
             const actions = canWrite
-              ? `<div class="action-cell">
-                   <button class="secondary-button" type="button" data-invoice-edit="${invoiceEscape(item.id)}">Edytuj</button>
-                   <button class="secondary-button danger-button" type="button" data-invoice-delete="${invoiceEscape(item.id)}">Usuń</button>
-                 </div>`
+              ? `
+                   <button class="table-action-button" type="button" title="Edytuj fakturę" data-invoice-edit="${invoiceEscape(item.id)}">Edytuj</button>
+                   <button class="table-action-button danger-button" type="button" title="Usuń fakturę" data-invoice-delete="${invoiceEscape(item.id)}">Usuń</button>
+                 `
               : "<span>-</span>";
             return `
-              <tr>
+              <tr class="clickable-row${item.id === invoiceModuleState.selectedRowId ? " is-selected" : ""}" data-invoice-row-id="${invoiceEscape(item.id)}">
                 <td class="checkbox-cell"><input type="checkbox" data-invoice-select="${invoiceEscape(item.id)}"${checked}></td>
                 <td>${index + 1}</td>
                 <td>${invoiceEscape(invoiceDateLabel(item.issue_date))}</td>
                 <td>${invoiceEscape(item.invoice_number)}</td>
                 <td>${invoiceEscape(item.counterparty_name || "-")}</td>
                 <td class="invoice-description-cell">
-                  <strong>${invoiceEscape(item.category_or_description || "-")}</strong>
-                  ${item.notes ? `<small>${invoiceEscape(item.notes)}</small>` : ""}
+                  <div class="invoice-description-content">
+                    <strong>${invoiceEscape(item.category_or_description || "-")}</strong>
+                    ${item.notes ? `<small>${invoiceEscape(item.notes)}</small>` : ""}
+                  </div>
                 </td>
                 <td class="text-right">${invoiceEscape(invoiceMoney(item.amount_net))}</td>
                 <td class="text-right">${invoiceEscape(invoiceVatLabel(item.vat_rate))}<br><small>${invoiceEscape(invoiceMoney(item.amount_vat))}</small></td>
@@ -540,7 +596,7 @@ function renderInvoiceTable() {
                 <td>${invoiceEscape(invoiceDateLabel(item.due_date))}</td>
                 <td>${invoiceEscape(invoiceDateLabel(item.payment_date))}</td>
                 <td>${invoiceEscape(invoicePaymentStatusLabel(item.payment_status))}</td>
-                <td>${actions}</td>
+                <td class="action-cell">${actions}</td>
               </tr>
             `;
           })
@@ -612,8 +668,9 @@ function resetInvoiceForm() {
 
 function renderInvoiceFormState() {
   const nodes = getInvoiceNodes();
-  if (!nodes.entryEditor) return;
-  nodes.entryEditor.hidden = !invoiceModuleState.formOpen;
+  if (nodes.entryFields) nodes.entryFields.hidden = !invoiceModuleState.formOpen;
+  if (nodes.cancelButton) nodes.cancelButton.hidden = !invoiceModuleState.formOpen;
+  if (nodes.saveButton) nodes.saveButton.hidden = !invoiceModuleState.formOpen;
 }
 
 function openInvoiceForm(invoice = null) {
@@ -700,7 +757,7 @@ async function refreshInvoiceModule() {
   try {
     await loadInvoiceContracts(api);
   } catch (error) {
-    invoiceModuleState.errorMessage = error?.message || "Nie udaÅ‚o siÄ™ pobraÄ‡ kontraktÃ³w z backendu.";
+    invoiceModuleState.errorMessage = error?.message || "Nie udało się pobrać kontraktów z backendu.";
     invoiceModuleState.items = [];
     invoiceModuleState.stats = { cost_count: 0, cost_net: 0, sales_count: 0, sales_net: 0, saldo_net: 0 };
     invoiceModuleState.summary = { count: 0, amount_net: 0, amount_vat: 0, amount_gross: 0 };
@@ -884,11 +941,6 @@ function bindInvoiceModule() {
     await refreshInvoiceModule();
   });
 
-  nodes.paymentStatusFilter?.addEventListener("change", async (event) => {
-    invoiceModuleState.paymentStatus = String(event.target.value || "");
-    await refreshInvoiceModule();
-  });
-
   nodes.typeTabs?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-invoice-type]");
     if (!button) return;
@@ -904,14 +956,6 @@ function bindInvoiceModule() {
     renderInvoiceTable();
   });
 
-  nodes.toggleFormButton?.addEventListener("click", () => {
-    if (invoiceModuleState.formOpen) {
-      closeInvoiceForm();
-      return;
-    }
-    openInvoiceForm();
-  });
-
   nodes.cancelButton?.addEventListener("click", closeInvoiceForm);
   nodes.netInput?.addEventListener("input", recalculateInvoiceFormTotals);
   nodes.vatRateSelect?.addEventListener("change", () => {
@@ -921,10 +965,31 @@ function bindInvoiceModule() {
   nodes.vatRateCustomInput?.addEventListener("input", recalculateInvoiceFormTotals);
 
   nodes.saveButton?.addEventListener("click", () => saveInvoice(false));
-  nodes.saveAndNextButton?.addEventListener("click", () => saveInvoice(true));
+  nodes.newInvoiceButton?.addEventListener("click", () => openInvoiceForm());
   nodes.bulkDeleteButton?.addEventListener("click", bulkDeleteInvoices);
 
   nodes.table?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='invoices']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      invoiceModuleState.sort = window.ClodeTableUtils.nextSort(
+        invoiceModuleState.sort,
+        sortButton.dataset.sortKey,
+        invoiceTableColumns
+      );
+      saveInvoiceSortPreference(invoiceModuleState.sort);
+      renderInvoiceTable();
+      return;
+    }
+
+    if (event.target.closest("input[type='checkbox']") || event.target.closest("button")) {
+      // Keep existing checkbox/buttons behavior without toggling row highlight.
+    } else {
+      const row = event.target.closest("[data-invoice-row-id]");
+      if (row?.dataset?.invoiceRowId) {
+        invoiceModuleState.selectedRowId = row.dataset.invoiceRowId;
+        renderInvoiceTable();
+      }
+    }
     const editButton = event.target.closest("[data-invoice-edit]");
     if (editButton) {
       editInvoice(editButton.dataset.invoiceEdit);
@@ -949,7 +1014,7 @@ function bindInvoiceModule() {
   });
 
   window.addEventListener("contract-registry-updated", refreshInvoiceModule);
-  window.addEventListener("agent-auth-changed", () => {
+  window.addEventListener("clode-auth-changed", () => {
     invoiceModuleState.contracts = [];
     refreshInvoiceModule();
   });
@@ -962,6 +1027,7 @@ function bindInvoiceModule() {
 
 function renderInvoiceModule() {
   bindInvoiceModule();
+  ensureInvoiceSortState();
   renderInvoiceFilterControls();
   renderInvoiceStats();
   renderInvoiceFormState();
@@ -973,3 +1039,4 @@ window.renderInvoiceModule = renderInvoiceModule;
 window.initInvoiceModule = bindInvoiceModule;
 
 bindInvoiceModule();
+

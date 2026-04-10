@@ -1,11 +1,11 @@
-# Frontend data layer
+﻿# Frontend data layer
 
 Etap 2 wprowadza warstwę dostępu do danych bez przepisywania UI od zera.
 
 Aktualny model przejściowy:
 
 - widoki dalej są renderowane przez istniejące pliki w `app/`,
-- dane przechodzą przez `window.AgentDataAccess`,
+- dane przechodzą przez `window.ClodeDataAccess`,
 - domyślnie źródłem jest `localStorage`,
 - backend API i SQL są już gotowe do dalszego przełączania modułów w Etapie 3.
 
@@ -16,3 +16,4 @@ Najważniejsze pliki:
 - `src/data/adapters/api-adapter.js`
 - `src/data/data-access.js`
 - `src/data/migration-tools.js`
+

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import sys
@@ -14,19 +14,19 @@ BACKEND_SRC = PROJECT_DIR / "backend" / "src"
 if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
-from agent_backend.config import load_settings  # noqa: E402
-from agent_backend.db.bootstrap import ensure_database  # noqa: E402
-from agent_backend.db.connection import connect  # noqa: E402
-from agent_backend.repositories.contract_repository import ContractRepository  # noqa: E402
-from agent_backend.repositories.time_entry_repository import TimeEntryRepository  # noqa: E402
-from agent_backend.services.time_entry_service import TimeEntryService, TimeEntryServiceError  # noqa: E402
+from clode_backend.config import load_settings  # noqa: E402
+from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.db.connection import connect  # noqa: E402
+from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
+from clode_backend.repositories.time_entry_repository import TimeEntryRepository  # noqa: E402
+from clode_backend.services.time_entry_service import TimeEntryService, TimeEntryServiceError  # noqa: E402
 
 
 class TimeEntriesBackendFirstTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.previous_database_url = os.environ.get("AGENT_DATABASE_URL")
-        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"agent-test-time-entries-{uuid4().hex}.db"
-        os.environ["AGENT_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
+        self.previous_database_url = os.environ.get("CLODE_DATABASE_URL")
+        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"clode-test-time-entries-{uuid4().hex}.db"
+        os.environ["CLODE_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
         self.settings = load_settings()
         ensure_database(self.settings)
         self.contract_repository = ContractRepository(self.settings)
@@ -37,9 +37,9 @@ class TimeEntriesBackendFirstTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         if self.previous_database_url is None:
-            os.environ.pop("AGENT_DATABASE_URL", None)
+            os.environ.pop("CLODE_DATABASE_URL", None)
         else:
-            os.environ["AGENT_DATABASE_URL"] = self.previous_database_url
+            os.environ["CLODE_DATABASE_URL"] = self.previous_database_url
 
     def _seed_data(self) -> None:
         with connect(self.settings) as connection:
@@ -140,6 +140,41 @@ class TimeEntriesBackendFirstTestCase(unittest.TestCase):
                 self.current_user,
             )
 
+    def test_archived_contract_id_is_rejected_for_new_entries(self) -> None:
+        with self.assertRaises(TimeEntryServiceError):
+            self.service.create_time_entry(
+                {
+                    "month_key": "2026-03",
+                    "employee_name": "Nowak Jan",
+                    "contract_id": "c-archived",
+                    "hours": 5,
+                },
+                self.current_user,
+            )
+
+    def test_archived_contract_id_is_rejected_on_update(self) -> None:
+        created = self.service.create_time_entry(
+            {
+                "month_key": "2026-03",
+                "employee_name": "Nowak Jan",
+                "contract_id": "c-active",
+                "hours": 5,
+            },
+            self.current_user,
+        )
+
+        with self.assertRaises(TimeEntryServiceError):
+            self.service.update_time_entry(
+                created["id"],
+                {
+                    "month_key": "2026-03",
+                    "employee_name": "Nowak Jan",
+                    "contract_id": "c-archived",
+                    "hours": 6,
+                },
+                self.current_user,
+            )
+
     def test_user_filter_returns_matching_entries(self) -> None:
         self.service.create_time_entry(
             {
@@ -174,16 +209,16 @@ class TimeEntriesBackendFirstTestCase(unittest.TestCase):
         self.assertEqual(month["visible_investments"], ["c-active", "c-archived"])
 
     def test_archived_contract_is_filtered_from_operational_month_but_history_can_stay(self) -> None:
-        created = self.service.create_time_entry(
-            {
-                "month_key": "2026-03",
-                "employee_name": "Nowak Jan",
-                "contract_id": "c-archived",
-                "hours": 6,
-            },
-            self.current_user,
-        )
-        self.assertEqual(created["contract_id"], "c-archived")
+        with connect(self.settings) as connection:
+            connection.execute(
+                """
+                INSERT INTO time_entries
+                (id, month_id, employee_id, employee_name, contract_id, contract_name, hours, cost_amount)
+                VALUES
+                ('te-archived-history', 'hm-2026-03', 'e-1', 'Nowak Jan', 'c-archived', 'Kontrakt Archiwalny', 6, 0)
+                """
+            )
+            connection.commit()
 
         updated_month = self.service.update_month(
             "2026-03",
@@ -201,3 +236,4 @@ class TimeEntriesBackendFirstTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

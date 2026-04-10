@@ -51,7 +51,8 @@
     };
   }
 
-  global.AgentApiAdapter = {
+  global.ClodeApiAdapter = {
     create: createApiAdapter,
   };
+  global.AgentApiAdapter = global.ClodeApiAdapter;
 })(window);

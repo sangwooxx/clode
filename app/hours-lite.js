@@ -1,6 +1,7 @@
-const HOURS_STORAGE_KEY = "agentHoursFormV2";
-const HOURS_EMPLOYEE_STORAGE_KEY = "agentEmployeeRegistryV1";
+const HOURS_STORAGE_KEY = "clodeHoursRegistryV2";
+const HOURS_EMPLOYEE_STORAGE_KEY = "clodeEmployeeRegistryV1";
 const HOURS_UNASSIGNED_KEY = "unassigned";
+const HOURS_SORTS_STORAGE_KEY = "clodeHoursLiteSortV1";
 
 const hoursMoneyFormatter = new Intl.NumberFormat("pl-PL", {
   style: "currency",
@@ -12,7 +13,7 @@ const hoursNumberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
 });
 
-const hoursState = window.__agentHoursLiteState || {
+const hoursState = window.__clodeHoursLiteState || {
   initialized: false,
   loading: false,
   loadedFromBackend: false,
@@ -20,15 +21,48 @@ const hoursState = window.__agentHoursLiteState || {
   employeeSearch: "",
   lastError: "",
   data: null,
+  sorts: null,
 };
 
-window.__agentHoursLiteState = hoursState;
+window.__clodeHoursLiteState = hoursState;
 
 const HOURS_MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => {
   const value = String(index + 1).padStart(2, "0");
   const label = new Date(2026, index, 1).toLocaleDateString("pl-PL", { month: "long" });
   return { value, label };
 });
+
+function hNormalizeSort(value, fallback) {
+  if (!value || typeof value !== "object") return { ...fallback };
+  const key = String(value.key || fallback.key || "").trim();
+  const direction = String(value.direction || fallback.direction || "asc").trim().toLowerCase();
+  if (!key) return { ...fallback };
+  if (direction !== "asc" && direction !== "desc") return { ...fallback };
+  return { key, direction };
+}
+
+function hDefaultSorts() {
+  return {
+    workers: { key: "last_name", direction: "asc" },
+    yearProjects: { key: "hours", direction: "desc" },
+    yearEmployees: { key: "last_name", direction: "asc" },
+  };
+}
+
+function hLoadSorts() {
+  const defaults = hDefaultSorts();
+  const parsed = hReadLegacyStore(HOURS_SORTS_STORAGE_KEY, null);
+  if (!parsed || typeof parsed !== "object") return defaults;
+  return {
+    workers: hNormalizeSort(parsed.workers, defaults.workers),
+    yearProjects: hNormalizeSort(parsed.yearProjects, defaults.yearProjects),
+    yearEmployees: hNormalizeSort(parsed.yearEmployees, defaults.yearEmployees),
+  };
+}
+
+function hSaveSorts() {
+  hWriteLegacyStore(HOURS_SORTS_STORAGE_KEY, hoursState.sorts || hDefaultSorts());
+}
 
 function hEmptyFinance() {
   return {
@@ -88,6 +122,55 @@ function hSort(left, right) {
   )) || 0;
 }
 
+function hRenderSortHeader(label, tableName, key, sortState) {
+  if (window.ClodeTableUtils?.renderHeader) {
+    return window.ClodeTableUtils.renderHeader(label, tableName, key, sortState);
+  }
+  return hEscape(label);
+}
+
+function hWorkerColumnMap(contractIds) {
+  const columnMap = {
+    last_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.lastName || "" },
+    first_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.firstName || "" },
+    employer_cost: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.employerCost || 0) },
+    total_hours: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.totalHours || 0) },
+  };
+
+  (contractIds || []).forEach((contractId) => {
+    const normalizedId = hText(contractId);
+    if (!normalizedId) return;
+    columnMap[normalizedId] = {
+      type: "number",
+      defaultDirection: "desc",
+      getValue: (row) => Number(row.contractHours?.[normalizedId] || 0),
+    };
+  });
+
+  return columnMap;
+}
+
+function hYearProjectColumnMap() {
+  return {
+    contract_code: { type: "string", defaultDirection: "asc", getValue: (row) => row.contract_code || "" },
+    contract_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.contract_name || "" },
+    hours: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.hours || 0) },
+    employer_cost: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.employer_cost || 0) },
+    months_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.months_count || 0) },
+  };
+}
+
+function hYearEmployeeColumnMap() {
+  return {
+    last_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.last_name || "" },
+    first_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.first_name || "" },
+    hours: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.hours || 0) },
+    employer_cost: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.employer_cost || 0) },
+    months_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.months_count || 0) },
+    contracts_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.contracts_count || 0) },
+  };
+}
+
 function hNameParts(value) {
   return window.EmployeeNameUtils?.split?.(value) || {
     firstName: "",
@@ -131,8 +214,8 @@ function hMonthLabel(monthKey) {
 }
 
 function hReadLegacyStore(storageKey, fallbackValue) {
-  if (window.AgentDataAccess?.legacy) {
-    return window.AgentDataAccess.legacy.read(storageKey, fallbackValue);
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.read(storageKey, fallbackValue);
   }
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -143,8 +226,8 @@ function hReadLegacyStore(storageKey, fallbackValue) {
 }
 
 function hWriteLegacyStore(storageKey, value, eventName = "") {
-  if (window.AgentDataAccess?.legacy) {
-    window.AgentDataAccess.legacy.write(storageKey, value, eventName ? { eventName } : {});
+  if (window.ClodeDataAccess?.legacy) {
+    window.ClodeDataAccess.legacy.write(storageKey, value, eventName ? { eventName } : {});
     return;
   }
   window.localStorage.setItem(storageKey, JSON.stringify(value));
@@ -269,9 +352,9 @@ function hSortContractIds(contractIds, contractNames = null) {
 }
 
 function hTimeEntryApi() {
-  if (!window.AgentTimeEntryApi?.create) return null;
-  return window.AgentTimeEntryApi.create({
-    baseUrl: window.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+  if (!window.ClodeTimeEntryApi?.create) return null;
+  return window.ClodeTimeEntryApi.create({
+    baseUrl: window.__CLODE_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
   });
 }
 
@@ -675,27 +758,17 @@ function hRenderFinancePanel() {
   const rhValue = hMonthRh(month);
 
   target.innerHTML = `
-    <div class="finance-grid">
-      <div class="finance-stack">
-        <label class="finance-field"><span>ZUS firma 1</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_1" value="${hEscape(finance.zus_company_1 || "")}"></label>
-        <label class="finance-field"><span>PIT-4 firma 1</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_1" value="${hEscape(finance.pit4_company_1 || "")}"></label>
-      </div>
-      <div class="finance-stack">
-        <label class="finance-field"><span>ZUS firma 2</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_2" value="${hEscape(finance.zus_company_2 || "")}"></label>
-        <label class="finance-field"><span>PIT-4 firma 2</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_2" value="${hEscape(finance.pit4_company_2 || "")}"></label>
-      </div>
-      <div class="finance-stack">
-        <label class="finance-field"><span>ZUS firma 3</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_3" value="${hEscape(finance.zus_company_3 || "")}"></label>
-        <label class="finance-field"><span>PIT-4 firma 3</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_3" value="${hEscape(finance.pit4_company_3 || "")}"></label>
-      </div>
-      <div class="finance-stack">
-        <label class="finance-field finance-field-emphasis"><span>Wypłaty</span><input type="number" step="0.01" min="0" data-finance-key="payouts" value="${hEscape(finance.payouts || "")}"></label>
-        <div class="finance-field finance-field-summary"><span>Wypłata + koszty</span><strong>${hEscape(hMoney(hMonthPayoutPlusCosts(month)))}</strong></div>
-      </div>
-      <div class="finance-stack">
-        <div class="finance-field finance-field-summary"><span>Godziny</span><strong>${hEscape(hValue(totalHours))}</strong></div>
-        <div class="finance-field finance-field-summary"><span>Roboczogodzina</span><strong>${hEscape(hMoney(rhValue))}</strong></div>
-      </div>
+    <div class="finance-grid finance-grid--hours">
+      <label class="finance-field"><span>ZUS firma 1</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_1" value="${hEscape(finance.zus_company_1 || "")}"></label>
+      <label class="finance-field"><span>ZUS firma 2</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_2" value="${hEscape(finance.zus_company_2 || "")}"></label>
+      <label class="finance-field"><span>ZUS firma 3</span><input type="number" step="0.01" min="0" data-finance-key="zus_company_3" value="${hEscape(finance.zus_company_3 || "")}"></label>
+      <label class="finance-field finance-field-emphasis"><span>Wypłaty</span><input type="number" step="0.01" min="0" data-finance-key="payouts" value="${hEscape(finance.payouts || "")}"></label>
+      <div class="finance-field finance-field-summary"><span>Godziny</span><strong>${hEscape(hValue(totalHours))}</strong></div>
+      <label class="finance-field"><span>PIT-4 firma 1</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_1" value="${hEscape(finance.pit4_company_1 || "")}"></label>
+      <label class="finance-field"><span>PIT-4 firma 2</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_2" value="${hEscape(finance.pit4_company_2 || "")}"></label>
+      <label class="finance-field"><span>PIT-4 firma 3</span><input type="number" step="0.01" min="0" data-finance-key="pit4_company_3" value="${hEscape(finance.pit4_company_3 || "")}"></label>
+      <div class="finance-field finance-field-summary"><span>Wypłata + koszty</span><strong>${hEscape(hMoney(hMonthPayoutPlusCosts(month)))}</strong></div>
+      <div class="finance-field finance-field-summary"><span>Roboczogodzina</span><strong>${hEscape(hMoney(rhValue))}</strong></div>
     </div>
   `;
 }
@@ -732,24 +805,48 @@ function hRenderTable() {
     return accumulator;
   }, {});
 
-  const body = employees.map((employeeName, index) => {
+  const workerRows = employees.map((employeeName) => {
     const worker = hEnsureWorker(month, employeeName, hText(hEmployeeProfileByName(employeeName)?.worker_code));
     const employeeProfile = hEmployeeProfileByName(employeeName);
     const nameParts = hNameParts(employeeName);
     const lastName = hText(employeeProfile?.last_name) || nameParts.lastName || "-";
     const firstName = hText(employeeProfile?.first_name) || nameParts.firstName || "-";
+    const contractHours = {};
     const totalHours = contractIds.reduce((sum, contractId) => {
       const value = hNumber(worker.project_hours?.[contractId]);
+      contractHours[contractId] = value;
       footerTotals[contractId] += value;
       return sum + value;
     }, 0);
     const employerCost = totalHours * rhValue;
 
+    return {
+      employeeName,
+      lastName,
+      firstName,
+      totalHours,
+      employerCost,
+      contractHours,
+      worker,
+    };
+  });
+
+  const workerColumnMap = hWorkerColumnMap(contractIds);
+  const workerSort = hoursState.sorts?.workers || hDefaultSorts().workers;
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(workerRows, workerSort, workerColumnMap)
+    : workerRows;
+
+  const body = sortedRows.map((row, index) => {
+    const employeeName = row.employeeName;
+    const worker = row.worker;
+    const totalHours = row.totalHours;
+    const employerCost = row.employerCost;
     return `
       <tr>
         <td class="table-emphasis">${index + 1}</td>
-        <td class="table-emphasis" title="${hEscape(employeeName)}">${hEscape(lastName)}</td>
-        <td class="table-emphasis" title="${hEscape(employeeName)}">${hEscape(firstName)}</td>
+        <td class="table-emphasis" title="${hEscape(employeeName)}">${hEscape(row.lastName)}</td>
+        <td class="table-emphasis" title="${hEscape(employeeName)}">${hEscape(row.firstName)}</td>
         <td class="table-emphasis" title="${hEscape(`${hValue(totalHours)} x ${hMoney(rhValue)}`)}">${hEscape(hMoney(employerCost))}</td>
         ${contractIds.map((contractId) => `
           <td>
@@ -779,15 +876,15 @@ function hRenderTable() {
       <thead>
         <tr>
           <th>Lp.</th>
-          <th>Nazwisko</th>
-          <th>Imię</th>
-          <th>Koszt wynagrodzeń</th>
+          <th>${hRenderSortHeader("Nazwisko", "hoursWorkers", "last_name", workerSort)}</th>
+          <th>${hRenderSortHeader("Imię", "hoursWorkers", "first_name", workerSort)}</th>
+          <th>${hRenderSortHeader("Koszt wynagrodzeń", "hoursWorkers", "employer_cost", workerSort)}</th>
           ${contractIds.map((contractId) => `
             <th title="${hEscape(hContractName(contractId))}">
-              ${hEscape(hContractCode(contractId))}
+              ${hRenderSortHeader(hContractCode(contractId), "hoursWorkers", hText(contractId), workerSort)}
             </th>
           `).join("")}
-          <th>Godziny</th>
+          <th>${hRenderSortHeader("Godziny", "hoursWorkers", "total_hours", workerSort)}</th>
           <th>Akcja</th>
         </tr>
       </thead>
@@ -810,16 +907,41 @@ function hRenderProjectSummary(force = false) {
   const target = document.getElementById("yearProjectSummary");
   if (!panel || !target) return;
   if (!force && panel.hidden) return;
-  const rows = hProjectSummaryRows();
-  target.innerHTML = rows.length
+  const rows = hProjectSummaryRows().map((row) => {
+    const normalizedId = hText(row.contract_id) || HOURS_UNASSIGNED_KEY;
+    return {
+      ...row,
+      contract_key: normalizedId,
+      contract_code: hContractCode(normalizedId),
+      contract_name: hContractName(normalizedId, row.contract_name),
+    };
+  });
+
+  const projectSort = hoursState.sorts?.yearProjects || hDefaultSorts().yearProjects;
+  const projectColumnMap = hYearProjectColumnMap();
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(rows, projectSort, projectColumnMap)
+    : rows;
+
+  target.innerHTML = sortedRows.length
     ? `
       <table class="entity-table compact-summary-table">
-        <thead><tr><th>Nr</th><th>Kontrakt</th><th>Godziny</th><th>Koszt wynagrodzeń</th><th>Miesiące</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Lp.</th>
+            <th>${hRenderSortHeader("ID", "yearProjects", "contract_code", projectSort)}</th>
+            <th>${hRenderSortHeader("Kontrakt", "yearProjects", "contract_name", projectSort)}</th>
+            <th>${hRenderSortHeader("Godziny", "yearProjects", "hours", projectSort)}</th>
+            <th>${hRenderSortHeader("Koszt wynagrodzeń", "yearProjects", "employer_cost", projectSort)}</th>
+            <th>${hRenderSortHeader("Miesiące", "yearProjects", "months_count", projectSort)}</th>
+          </tr>
+        </thead>
         <tbody>
-          ${rows.map((row) => `
+          ${sortedRows.map((row, index) => `
             <tr>
-              <td>${hEscape(hContractCode(row.contract_id || HOURS_UNASSIGNED_KEY))}</td>
-              <td>${hEscape(hContractName(row.contract_id || HOURS_UNASSIGNED_KEY, row.contract_name))}</td>
+              <td>${index + 1}</td>
+              <td>${hEscape(row.contract_code)}</td>
+              <td>${hEscape(row.contract_name)}</td>
               <td>${hEscape(hValue(row.hours))}</td>
               <td>${hEscape(hMoney(row.employer_cost))}</td>
               <td>${hEscape(String(row.months_count))}</td>
@@ -836,19 +958,43 @@ function hRenderEmployeeSummary(force = false) {
   const target = document.getElementById("yearEmployeeSummary");
   if (!panel || !target) return;
   if (!force && panel.hidden) return;
-  const rows = hEmployeeSummaryRows();
-  target.innerHTML = rows.length
+  const rows = hEmployeeSummaryRows().map((row) => {
+    const employeeProfile = hEmployeeProfileByName(row.employee_name);
+    const nameParts = hNameParts(row.employee_name);
+    return {
+      ...row,
+      last_name: hText(employeeProfile?.last_name) || nameParts.lastName || "-",
+      first_name: hText(employeeProfile?.first_name) || nameParts.firstName || "-",
+    };
+  });
+
+  const employeeSort = hoursState.sorts?.yearEmployees || hDefaultSorts().yearEmployees;
+  const employeeColumnMap = hYearEmployeeColumnMap();
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(rows, employeeSort, employeeColumnMap)
+    : rows;
+
+  target.innerHTML = sortedRows.length
     ? `
       <table class="entity-table compact-summary-table">
-        <thead><tr><th>Nazwisko</th><th>Imię</th><th>Godziny</th><th>Koszt wynagrodzeń</th><th>Miesiące</th><th>Kontrakty</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Lp.</th>
+            <th>${hRenderSortHeader("Nazwisko", "yearEmployees", "last_name", employeeSort)}</th>
+            <th>${hRenderSortHeader("Imię", "yearEmployees", "first_name", employeeSort)}</th>
+            <th>${hRenderSortHeader("Godziny", "yearEmployees", "hours", employeeSort)}</th>
+            <th>${hRenderSortHeader("Koszt wynagrodzeń", "yearEmployees", "employer_cost", employeeSort)}</th>
+            <th>${hRenderSortHeader("Miesiące", "yearEmployees", "months_count", employeeSort)}</th>
+            <th>${hRenderSortHeader("Kontrakty", "yearEmployees", "contracts_count", employeeSort)}</th>
+          </tr>
+        </thead>
         <tbody>
-          ${rows.map((row) => {
-            const employeeProfile = hEmployeeProfileByName(row.employee_name);
-            const nameParts = hNameParts(row.employee_name);
+          ${sortedRows.map((row, index) => {
             return `
               <tr>
-                <td>${hEscape(hText(employeeProfile?.last_name) || nameParts.lastName || "-")}</td>
-                <td>${hEscape(hText(employeeProfile?.first_name) || nameParts.firstName || "-")}</td>
+                <td>${index + 1}</td>
+                <td>${hEscape(row.last_name)}</td>
+                <td>${hEscape(row.first_name)}</td>
                 <td>${hEscape(hValue(row.hours))}</td>
                 <td>${hEscape(hMoney(row.employer_cost))}</td>
                 <td>${hEscape(String(row.months_count))}</td>
@@ -1072,6 +1218,10 @@ function hNewMonthKeyFromControls() {
 function initHoursLite() {
   if (hoursState.initialized || !document.getElementById("hoursView")) return;
 
+  if (!hoursState.sorts) {
+    hoursState.sorts = hLoadSorts();
+  }
+
   document.getElementById("monthSelect")?.addEventListener("change", (event) => {
     const monthKey = hMonthKey(event.target.value);
     if (!monthKey || !hoursState.data.months[monthKey]) return;
@@ -1182,10 +1332,54 @@ function initHoursLite() {
   });
 
   document.getElementById("hoursFormTable")?.addEventListener("click", async (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='hoursWorkers']");
+    if (sortButton) {
+      const month = hSelectedMonth();
+      if (!month || !window.ClodeTableUtils?.nextSort) return;
+      const contractIds = hDisplayedContractIds(month);
+      const next = window.ClodeTableUtils.nextSort(
+        hoursState.sorts?.workers || hDefaultSorts().workers,
+        sortButton.dataset.sortKey,
+        hWorkerColumnMap(contractIds)
+      );
+      hoursState.sorts = hoursState.sorts || hDefaultSorts();
+      hoursState.sorts.workers = next;
+      hSaveSorts();
+      hRenderTable();
+      return;
+    }
     const button = event.target.closest("button[data-remove-hours-employee]");
     if (!button) return;
     if (!window.confirm(`Czy na pewno chcesz usunąć pracownika ${button.dataset.removeHoursEmployee} z zestawienia godzin?`)) return;
     await hRemoveEmployee(button.dataset.removeHoursEmployee);
+  });
+
+  document.getElementById("yearProjectSummary")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='yearProjects']");
+    if (!sortButton || !window.ClodeTableUtils?.nextSort) return;
+    const next = window.ClodeTableUtils.nextSort(
+      hoursState.sorts?.yearProjects || hDefaultSorts().yearProjects,
+      sortButton.dataset.sortKey,
+      hYearProjectColumnMap()
+    );
+    hoursState.sorts = hoursState.sorts || hDefaultSorts();
+    hoursState.sorts.yearProjects = next;
+    hSaveSorts();
+    hRenderProjectSummary(true);
+  });
+
+  document.getElementById("yearEmployeeSummary")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='yearEmployees']");
+    if (!sortButton || !window.ClodeTableUtils?.nextSort) return;
+    const next = window.ClodeTableUtils.nextSort(
+      hoursState.sorts?.yearEmployees || hDefaultSorts().yearEmployees,
+      sortButton.dataset.sortKey,
+      hYearEmployeeColumnMap()
+    );
+    hoursState.sorts = hoursState.sorts || hDefaultSorts();
+    hoursState.sorts.yearEmployees = next;
+    hSaveSorts();
+    hRenderEmployeeSummary(true);
   });
 
   document.getElementById("exportJsonButton")?.addEventListener("click", () => {

@@ -1,9 +1,13 @@
 param(
-    [string]$RootDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp"
+    [string]$RootDir = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($RootDir)) {
+    $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
 
 $dataDir = Join-Path $RootDir "data"
 $hoursAliasPath = Join-Path $RootDir "config\hours-aliases.json"

@@ -1,4 +1,4 @@
-(function initAgentAuthClient(global) {
+(function initClodeAuthClient(global) {
   const AUTH_VIEW_IDS = [
     "dashboardView",
     "contractsView",
@@ -61,27 +61,34 @@
     readonly: "read-only",
   };
 
-  ROLE_DEFAULT_PERMISSIONS["księgowość"] = {
-    ...(ROLE_DEFAULT_PERMISSIONS["ksiÄ™gowoÅ›Ä‡"] || {}),
-  };
-  ROLE_ALIASES["księgowość"] = "księgowość";
-  ROLE_ALIASES.ksiegowosc = "księgowość";
-  ROLE_ALIASES["użytkownik"] = "read-only";
-
   const config = {
-    baseUrl: global.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+    baseUrl: global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
     timeoutMs: 7000,
   };
-  const SESSION_STORAGE_KEY = "agent_backend_session_token";
+  const SESSION_STORAGE_KEY = "clode_backend_session_token";
+  const LEGACY_SESSION_STORAGE_KEY = "agent_backend_session_token";
+  const LOCAL_SESSION_STORAGE_KEY = "clode_backend_persisted_session_token";
+  const LEGACY_LOCAL_SESSION_STORAGE_KEY = "agent_backend_persisted_session_token";
+  const AUTH_STATE_STORAGE_KEY = global.ClodeStorageKeys?.authSession || "clodeAuthSessionV1";
+  const LEGACY_AUTH_STATE_STORAGE_KEY = global.ClodeLegacyStorageKeys?.authSession || "agentAuthSessionV1";
 
-  const state = global.__AGENT_AUTH_STATE || {
+  const state = global.__CLODE_AUTH_STATE || global.__AGENT_AUTH_STATE || {
     initialized: false,
     backendAvailable: false,
     currentUser: null,
     users: [],
     sessionToken: "",
   };
+  global.__CLODE_AUTH_STATE = state;
   global.__AGENT_AUTH_STATE = state;
+
+  function getLocalStorage() {
+    try {
+      return global.localStorage;
+    } catch {
+      return null;
+    }
+  }
 
   function getSessionStorage() {
     try {
@@ -91,22 +98,55 @@
     }
   }
 
-  function loadStoredSessionToken() {
-    const storage = getSessionStorage();
+  function readStorageToken(storage, primaryKey, legacyKey) {
     if (!storage) return "";
-    return String(storage.getItem(SESSION_STORAGE_KEY) || "").trim();
+    return String(storage.getItem(primaryKey) || storage.getItem(legacyKey) || "").trim();
+  }
+
+  function loadStoredSessionToken() {
+    const sessionToken = readStorageToken(getSessionStorage(), SESSION_STORAGE_KEY, LEGACY_SESSION_STORAGE_KEY);
+    if (sessionToken) {
+      return sessionToken;
+    }
+    return readStorageToken(getLocalStorage(), LOCAL_SESSION_STORAGE_KEY, LEGACY_LOCAL_SESSION_STORAGE_KEY);
   }
 
   function storeSessionToken(token) {
     const normalized = String(token || "").trim();
     state.sessionToken = normalized;
-    const storage = getSessionStorage();
-    if (!storage) return;
-    if (normalized) {
-      storage.setItem(SESSION_STORAGE_KEY, normalized);
-    } else {
-      storage.removeItem(SESSION_STORAGE_KEY);
+    const storages = [
+      {
+        storage: getSessionStorage(),
+        primaryKey: SESSION_STORAGE_KEY,
+        legacyKey: LEGACY_SESSION_STORAGE_KEY,
+      },
+      {
+        storage: getLocalStorage(),
+        primaryKey: LOCAL_SESSION_STORAGE_KEY,
+        legacyKey: LEGACY_LOCAL_SESSION_STORAGE_KEY,
+      },
+    ];
+
+    storages.forEach(({ storage, primaryKey, legacyKey }) => {
+      if (!storage) return;
+      if (normalized) {
+        storage.setItem(primaryKey, normalized);
+        storage.setItem(legacyKey, normalized);
+      } else {
+        storage.removeItem(primaryKey);
+        storage.removeItem(legacyKey);
+      }
+    });
+  }
+
+  function syncSessionTokenFromStorage() {
+    const normalized = loadStoredSessionToken();
+    if (!normalized) {
+      storeSessionToken("");
+      return "";
     }
+    storeSessionToken(normalized);
+    return normalized;
   }
 
   function clone(value) {
@@ -146,13 +186,68 @@
     };
   }
 
+  function readStoredAuthSnapshot() {
+    const storage = getLocalStorage();
+    if (!storage) {
+      return { currentUser: null, users: [] };
+    }
+
+    try {
+      const raw = storage.getItem(AUTH_STATE_STORAGE_KEY) || storage.getItem(LEGACY_AUTH_STATE_STORAGE_KEY) || "";
+      if (!raw) {
+        return { currentUser: null, users: [] };
+      }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") {
+        return { currentUser: null, users: [] };
+      }
+      return {
+        currentUser: normalizeUser(parsed.currentUser || parsed.current_user || null),
+        users: Array.isArray(parsed.users) ? parsed.users.map(normalizeUser).filter(Boolean) : [],
+      };
+    } catch {
+      return { currentUser: null, users: [] };
+    }
+  }
+
+  function writeStoredAuthSnapshot() {
+    const storage = getLocalStorage();
+    if (!storage) return;
+
+    if (!state.currentUser) {
+      storage.removeItem(AUTH_STATE_STORAGE_KEY);
+      storage.removeItem(LEGACY_AUTH_STATE_STORAGE_KEY);
+      return;
+    }
+
+    const payload = JSON.stringify({
+      currentUser: clone(state.currentUser),
+      users: clone(state.users || []),
+      savedAt: new Date().toISOString(),
+    });
+    storage.setItem(AUTH_STATE_STORAGE_KEY, payload);
+    storage.setItem(LEGACY_AUTH_STATE_STORAGE_KEY, payload);
+  }
+
+  (function hydrateAuthStateFromSnapshot() {
+    if (state.currentUser) return;
+    const snapshot = readStoredAuthSnapshot();
+    if (snapshot.currentUser) {
+      state.currentUser = snapshot.currentUser;
+    }
+    if ((!Array.isArray(state.users) || !state.users.length) && snapshot.users.length) {
+      state.users = snapshot.users;
+    }
+  })();
+
   function dispatchChangeEvents() {
-    global.dispatchEvent(new CustomEvent("agent-auth-changed", {
-      detail: {
-        user: clone(state.currentUser),
-        backendAvailable: state.backendAvailable,
-      },
-    }));
+    writeStoredAuthSnapshot();
+    const detail = {
+      user: clone(state.currentUser),
+      backendAvailable: state.backendAvailable,
+    };
+    global.dispatchEvent(new CustomEvent("clode-auth-changed", { detail }));
+    global.dispatchEvent(new CustomEvent("agent-auth-changed", { detail }));
     global.dispatchEvent(new CustomEvent("current-user-changed"));
     global.dispatchEvent(new CustomEvent("settings-users-updated"));
   }
@@ -166,6 +261,7 @@
       };
       const token = state.sessionToken || loadStoredSessionToken();
       if (token) {
+        headers["X-Clode-Session"] = token;
         headers["X-Agent-Session"] = token;
       }
 
@@ -209,7 +305,7 @@
   async function refreshSession(options = {}) {
     try {
       if (!state.sessionToken) {
-        state.sessionToken = loadStoredSessionToken();
+        state.sessionToken = syncSessionTokenFromStorage();
       }
       const payload = await request("GET", "/auth/me");
       state.currentUser = normalizeUser(payload?.user);
@@ -219,10 +315,7 @@
         await loadUsers();
       }
       dispatchChangeEvents();
-      return {
-        ok: true,
-        user: clone(state.currentUser),
-      };
+      return { ok: true, user: clone(state.currentUser) };
     } catch (error) {
       state.currentUser = null;
       state.users = [];
@@ -324,7 +417,7 @@
     return { ok: true };
   }
 
-  global.AgentAuthClient = {
+  global.ClodeAuthClient = {
     bootstrap: refreshSession,
     refreshSession,
     login,
@@ -356,4 +449,5 @@
       return clone(state);
     },
   };
+  global.AgentAuthClient = global.ClodeAuthClient;
 })(window);

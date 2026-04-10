@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import sys
@@ -14,19 +14,19 @@ BACKEND_SRC = PROJECT_DIR / "backend" / "src"
 if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
-from agent_backend.config import load_settings  # noqa: E402
-from agent_backend.db.bootstrap import ensure_database  # noqa: E402
-from agent_backend.db.connection import connect  # noqa: E402
-from agent_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
-from agent_backend.repositories.contract_repository import ContractRepository  # noqa: E402
-from agent_backend.services.contract_service import ContractService  # noqa: E402
+from clode_backend.config import load_settings  # noqa: E402
+from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.db.connection import connect  # noqa: E402
+from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
+from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
+from clode_backend.services.contract_service import ContractService  # noqa: E402
 
 
 class ContractBackendSourceOfTruthTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.previous_database_url = os.environ.get("AGENT_DATABASE_URL")
-        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"agent-test-contract-backend-{uuid4().hex}.db"
-        os.environ["AGENT_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
+        self.previous_database_url = os.environ.get("CLODE_DATABASE_URL")
+        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"clode-test-contract-backend-{uuid4().hex}.db"
+        os.environ["CLODE_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
         self.settings = load_settings()
         ensure_database(self.settings)
         self.repository = ContractRepository(self.settings)
@@ -46,9 +46,9 @@ class ContractBackendSourceOfTruthTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         if self.previous_database_url is None:
-            os.environ.pop("AGENT_DATABASE_URL", None)
+            os.environ.pop("CLODE_DATABASE_URL", None)
         else:
-            os.environ["AGENT_DATABASE_URL"] = self.previous_database_url
+            os.environ["CLODE_DATABASE_URL"] = self.previous_database_url
 
     def test_create_update_and_bulk_archive_keep_backend_state_consistent(self) -> None:
         first = self.service.create_contract(
@@ -103,6 +103,54 @@ class ContractBackendSourceOfTruthTestCase(unittest.TestCase):
             {first["id"], second["id"]},
         )
 
+    def test_archive_contract_with_hours_keeps_history_and_changes_status(self) -> None:
+        contract = self.service.create_contract(
+            {
+                "name": "Kontrakt z godzinami",
+                "investor": "Inwestor H",
+                "signed_date": "2026-04-01",
+                "end_date": "2026-06-30",
+                "contract_value": 3000,
+                "status": "active",
+            },
+            self.current_user,
+        )
+
+        with connect(self.settings) as connection:
+            connection.execute(
+                """
+                INSERT INTO employees
+                (id, name, first_name, last_name, position, status, employment_date, employment_end_date, street, city, phone, medical_exam_valid_until)
+                VALUES
+                ('e-1', 'Pracownik Testowy', 'Pracownik', 'Testowy', '', 'active', '', '', '', '', '', '')
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO hours_months
+                (id, month_key, month_label, selected, visible_investments_json, finance_json)
+                VALUES
+                ('hm-2026-03', '2026-03', 'marzec 2026', 1, '[]', '{}')
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO time_entries
+                (id, month_id, employee_id, employee_name, contract_id, contract_name, hours, cost_amount)
+                VALUES
+                ('te-1', 'hm-2026-03', 'e-1', 'Pracownik Testowy', ?, ?, 8, 0)
+                """,
+                (contract["id"], contract["name"]),
+            )
+            connection.commit()
+
+        archived = self.service.archive_contract(contract["id"], self.current_user)
+        self.assertEqual(archived["status"], "archived")
+
+        usage = self.repository.get_usage_counts(contract["id"])
+        self.assertEqual(usage["hours"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
+

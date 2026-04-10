@@ -1,5 +1,5 @@
-(function initDemoSeed(global) {
-  const VERSION_KEY = 'agentDemoSeedVersion';
+﻿(function initDemoSeed(global) {
+  const VERSION_KEY = 'clodeDemoSeedVersion';
   const VERSION = "demo-20260407-v1";
   const payload = {
   "contracts": [
@@ -84,7 +84,7 @@
     {
       "id": "contract-demo-007",
       "contract_number": "K/2026/007",
-      "name": "W?ze? Eta",
+      "name": "Węzeł Eta",
       "investor": "Grupa Horizon",
       "signed_date": "2025-05-03",
       "end_date": "2026-07-03",
@@ -123,7 +123,7 @@
     {
       "id": "contract-demo-010",
       "contract_number": "K/2026/010",
-      "name": "Zak?ad Kappa",
+      "name": "Zakład Kappa",
       "investor": "Prime Estate",
       "signed_date": "2025-06-26",
       "end_date": "2026-09-28",
@@ -146,52 +146,52 @@
       "employment_date": "2023-01-02",
       "employment_end_date": "",
       "street": "ul. Demo 1",
-      "city": "10-100 Rzesz?w",
+      "city": "10-100 Rzeszów",
       "phone": "+48 500 000 100",
       "medical_exam_valid_until": "2026-07-01",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-002",
-      "name": "W?jcik Piotr",
+      "name": "Wójcik Piotr",
       "first_name": "Piotr",
-      "last_name": "W?jcik",
+      "last_name": "Wójcik",
       "position": "Brygadzista",
       "status": "active",
       "employment_date": "2023-01-11",
       "employment_end_date": "",
       "street": "ul. Demo 2",
-      "city": "11-111 Krak?w",
+      "city": "11-111 Kraków",
       "phone": "+48 500 001 101",
       "medical_exam_valid_until": "2026-07-18",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-003",
-      "name": "Zieli?ski Micha?",
-      "first_name": "Micha?",
-      "last_name": "Zieli?ski",
+      "name": "Zieliński Michał",
+      "first_name": "Michał",
+      "last_name": "Zieliński",
       "position": "Operator",
       "status": "active",
       "employment_date": "2023-01-20",
       "employment_end_date": "",
       "street": "ul. Demo 3",
-      "city": "12-122 Tarn?w",
+      "city": "12-122 Tarnów",
       "phone": "+48 500 002 102",
       "medical_exam_valid_until": "2026-08-04",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-004",
-      "name": "D?browski Pawe?",
-      "first_name": "Pawe?",
-      "last_name": "D?browski",
+      "name": "Dąbrowski Paweł",
+      "first_name": "Paweł",
+      "last_name": "Dąbrowski",
       "position": "Elektromonter",
       "status": "active",
       "employment_date": "2023-01-29",
       "employment_end_date": "",
       "street": "ul. Demo 4",
-      "city": "13-133 D?bica",
+      "city": "13-133 Dębica",
       "phone": "+48 500 003 103",
       "medical_exam_valid_until": "2026-08-21",
       "worker_code": "p"
@@ -228,15 +228,15 @@
     },
     {
       "id": "emp-demo-007",
-      "name": "Kr?l Marek",
+      "name": "Król Marek",
       "first_name": "Marek",
-      "last_name": "Kr?l",
+      "last_name": "Król",
       "position": "Kierowca",
       "status": "active",
       "employment_date": "2023-02-25",
       "employment_end_date": "",
       "street": "ul. Demo 7",
-      "city": "16-166 Jas?o",
+      "city": "16-166 Jasło",
       "phone": "+48 500 006 106",
       "medical_exam_valid_until": "2026-10-11",
       "worker_code": "p"
@@ -251,37 +251,37 @@
       "employment_date": "2023-03-06",
       "employment_end_date": "",
       "street": "ul. Demo 8",
-      "city": "17-177 Przemy?l",
+      "city": "17-177 Przemyśl",
       "phone": "+48 500 007 107",
       "medical_exam_valid_until": "2026-10-28",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-009",
-      "name": "St?pie? ?ukasz",
-      "first_name": "?ukasz",
-      "last_name": "St?pie?",
+      "name": "Stępień Łukasz",
+      "first_name": "Łukasz",
+      "last_name": "Stępień",
       "position": "Monter",
       "status": "active",
       "employment_date": "2023-03-15",
       "employment_end_date": "",
       "street": "ul. Demo 9",
-      "city": "18-188 Rzesz?w",
+      "city": "18-188 Rzeszów",
       "phone": "+48 500 008 108",
       "medical_exam_valid_until": "2026-11-14",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-010",
-      "name": "Wi?niewski Mateusz",
+      "name": "Wiśniewski Mateusz",
       "first_name": "Mateusz",
-      "last_name": "Wi?niewski",
+      "last_name": "Wiśniewski",
       "position": "Brygadzista",
       "status": "active",
       "employment_date": "2023-03-24",
       "employment_end_date": "",
       "street": "ul. Demo 10",
-      "city": "19-199 Krak?w",
+      "city": "19-199 Kraków",
       "phone": "+48 500 009 109",
       "medical_exam_valid_until": "2026-12-01",
       "worker_code": "p"
@@ -296,22 +296,22 @@
       "employment_date": "2023-04-02",
       "employment_end_date": "",
       "street": "ul. Demo 11",
-      "city": "20-100 Tarn?w",
+      "city": "20-100 Tarnów",
       "phone": "+48 500 010 110",
       "medical_exam_valid_until": "2026-12-18",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-012",
-      "name": "Wo?niak Szymon",
+      "name": "Woźniak Szymon",
       "first_name": "Szymon",
-      "last_name": "Wo?niak",
+      "last_name": "Woźniak",
       "position": "Elektromonter",
       "status": "active",
       "employment_date": "2023-04-11",
       "employment_end_date": "",
       "street": "ul. Demo 12",
-      "city": "21-111 D?bica",
+      "city": "21-111 Dębica",
       "phone": "+48 500 011 111",
       "medical_exam_valid_until": "2027-01-04",
       "worker_code": "p"
@@ -356,22 +356,22 @@
       "employment_date": "2023-05-08",
       "employment_end_date": "",
       "street": "ul. Demo 15",
-      "city": "24-144 Jas?o",
+      "city": "24-144 Jasło",
       "phone": "+48 500 014 114",
       "medical_exam_valid_until": "2027-02-24",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-016",
-      "name": "Jab?o?ski Damian",
+      "name": "Jabłoński Damian",
       "first_name": "Damian",
-      "last_name": "Jab?o?ski",
+      "last_name": "Jabłoński",
       "position": "Koordynator",
       "status": "active",
       "employment_date": "2023-05-17",
       "employment_end_date": "",
       "street": "ul. Demo 16",
-      "city": "25-155 Przemy?l",
+      "city": "25-155 Przemyśl",
       "phone": "+48 500 015 115",
       "medical_exam_valid_until": "2027-03-13",
       "worker_code": "p"
@@ -386,7 +386,7 @@
       "employment_date": "2023-05-26",
       "employment_end_date": "",
       "street": "ul. Demo 17",
-      "city": "26-166 Rzesz?w",
+      "city": "26-166 Rzeszów",
       "phone": "+48 500 016 116",
       "medical_exam_valid_until": "2027-03-30",
       "worker_code": "p"
@@ -401,46 +401,46 @@
       "employment_date": "2023-06-04",
       "employment_end_date": "",
       "street": "ul. Demo 18",
-      "city": "27-177 Krak?w",
+      "city": "27-177 Kraków",
       "phone": "+48 500 017 117",
       "medical_exam_valid_until": "2027-04-16",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-019",
-      "name": "Kami?ski Dawid",
+      "name": "Kamiński Dawid",
       "first_name": "Dawid",
-      "last_name": "Kami?ski",
+      "last_name": "Kamiński",
       "position": "Operator",
       "status": "active",
       "employment_date": "2023-06-13",
       "employment_end_date": "",
       "street": "ul. Demo 19",
-      "city": "28-188 Tarn?w",
+      "city": "28-188 Tarnów",
       "phone": "+48 500 018 118",
       "medical_exam_valid_until": "2027-05-03",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-020",
-      "name": "Szyma?ski Konrad",
+      "name": "Szymański Konrad",
       "first_name": "Konrad",
-      "last_name": "Szyma?ski",
+      "last_name": "Szymański",
       "position": "Elektromonter",
       "status": "active",
       "employment_date": "2023-06-22",
       "employment_end_date": "",
       "street": "ul. Demo 20",
-      "city": "29-199 D?bica",
+      "city": "29-199 Dębica",
       "phone": "+48 500 019 119",
       "medical_exam_valid_until": "2027-05-20",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-021",
-      "name": "Koz?owski Artur",
+      "name": "Kozłowski Artur",
       "first_name": "Artur",
-      "last_name": "Koz?owski",
+      "last_name": "Kozłowski",
       "position": "Spawacz",
       "status": "active",
       "employment_date": "2023-07-01",
@@ -476,7 +476,7 @@
       "employment_date": "2023-07-19",
       "employment_end_date": "",
       "street": "ul. Demo 23",
-      "city": "32-122 Jas?o",
+      "city": "32-122 Jasło",
       "phone": "+48 500 022 122",
       "medical_exam_valid_until": "2027-07-10",
       "worker_code": "p"
@@ -491,7 +491,7 @@
       "employment_date": "2023-07-28",
       "employment_end_date": "",
       "street": "ul. Demo 24",
-      "city": "33-133 Przemy?l",
+      "city": "33-133 Przemyśl",
       "phone": "+48 500 023 123",
       "medical_exam_valid_until": "2027-07-27",
       "worker_code": "p"
@@ -506,7 +506,7 @@
       "employment_date": "2023-08-06",
       "employment_end_date": "",
       "street": "ul. Demo 25",
-      "city": "34-144 Rzesz?w",
+      "city": "34-144 Rzeszów",
       "phone": "+48 500 024 124",
       "medical_exam_valid_until": "2027-08-13",
       "worker_code": "p"
@@ -521,46 +521,46 @@
       "employment_date": "2023-08-15",
       "employment_end_date": "",
       "street": "ul. Demo 26",
-      "city": "35-155 Krak?w",
+      "city": "35-155 Kraków",
       "phone": "+48 500 025 125",
       "medical_exam_valid_until": "2027-08-30",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-027",
-      "name": "W?jcik Piotr",
+      "name": "Wójcik Piotr",
       "first_name": "Piotr",
-      "last_name": "W?jcik",
+      "last_name": "Wójcik",
       "position": "Operator",
       "status": "active",
       "employment_date": "2023-08-24",
       "employment_end_date": "",
       "street": "ul. Demo 27",
-      "city": "36-166 Tarn?w",
+      "city": "36-166 Tarnów",
       "phone": "+48 500 026 126",
       "medical_exam_valid_until": "2027-09-16",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-028",
-      "name": "Zieli?ski Micha?",
-      "first_name": "Micha?",
-      "last_name": "Zieli?ski",
+      "name": "Zieliński Michał",
+      "first_name": "Michał",
+      "last_name": "Zieliński",
       "position": "Elektromonter",
       "status": "active",
       "employment_date": "2023-09-02",
       "employment_end_date": "",
       "street": "ul. Demo 28",
-      "city": "37-177 D?bica",
+      "city": "37-177 Dębica",
       "phone": "+48 500 027 127",
       "medical_exam_valid_until": "2027-10-03",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-029",
-      "name": "D?browski Pawe?",
-      "first_name": "Pawe?",
-      "last_name": "D?browski",
+      "name": "Dąbrowski Paweł",
+      "first_name": "Paweł",
+      "last_name": "Dąbrowski",
       "position": "Spawacz",
       "status": "active",
       "employment_date": "2023-09-11",
@@ -596,22 +596,22 @@
       "employment_date": "2023-09-29",
       "employment_end_date": "",
       "street": "ul. Demo 31",
-      "city": "40-100 Jas?o",
+      "city": "40-100 Jasło",
       "phone": "+48 500 030 130",
       "medical_exam_valid_until": "2027-11-23",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-032",
-      "name": "Kr?l Marek",
+      "name": "Król Marek",
       "first_name": "Marek",
-      "last_name": "Kr?l",
+      "last_name": "Król",
       "position": "Koordynator",
       "status": "active",
       "employment_date": "2023-10-08",
       "employment_end_date": "",
       "street": "ul. Demo 32",
-      "city": "41-111 Przemy?l",
+      "city": "41-111 Przemyśl",
       "phone": "+48 500 031 131",
       "medical_exam_valid_until": "2027-12-10",
       "worker_code": "p"
@@ -626,37 +626,37 @@
       "employment_date": "2023-10-17",
       "employment_end_date": "",
       "street": "ul. Demo 33",
-      "city": "42-122 Rzesz?w",
+      "city": "42-122 Rzeszów",
       "phone": "+48 500 032 132",
       "medical_exam_valid_until": "2027-12-27",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-034",
-      "name": "St?pie? ?ukasz",
-      "first_name": "?ukasz",
-      "last_name": "St?pie?",
+      "name": "Stępień Łukasz",
+      "first_name": "Łukasz",
+      "last_name": "Stępień",
       "position": "Brygadzista",
       "status": "active",
       "employment_date": "2023-10-26",
       "employment_end_date": "",
       "street": "ul. Demo 34",
-      "city": "43-133 Krak?w",
+      "city": "43-133 Kraków",
       "phone": "+48 500 033 133",
       "medical_exam_valid_until": "2028-01-13",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-035",
-      "name": "Wi?niewski Mateusz",
+      "name": "Wiśniewski Mateusz",
       "first_name": "Mateusz",
-      "last_name": "Wi?niewski",
+      "last_name": "Wiśniewski",
       "position": "Operator",
       "status": "active",
       "employment_date": "2023-11-04",
       "employment_end_date": "",
       "street": "ul. Demo 35",
-      "city": "44-144 Tarn?w",
+      "city": "44-144 Tarnów",
       "phone": "+48 500 034 134",
       "medical_exam_valid_until": "2028-01-30",
       "worker_code": "p"
@@ -671,16 +671,16 @@
       "employment_date": "2023-11-13",
       "employment_end_date": "",
       "street": "ul. Demo 36",
-      "city": "45-155 D?bica",
+      "city": "45-155 Dębica",
       "phone": "+48 500 035 135",
       "medical_exam_valid_until": "2028-02-16",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-037",
-      "name": "Wo?niak Szymon",
+      "name": "Woźniak Szymon",
       "first_name": "Szymon",
-      "last_name": "Wo?niak",
+      "last_name": "Woźniak",
       "position": "Spawacz",
       "status": "active",
       "employment_date": "2023-11-22",
@@ -716,7 +716,7 @@
       "employment_date": "2023-12-10",
       "employment_end_date": "",
       "street": "ul. Demo 39",
-      "city": "48-188 Jas?o",
+      "city": "48-188 Jasło",
       "phone": "+48 500 038 138",
       "medical_exam_valid_until": "2028-04-07",
       "worker_code": "p"
@@ -731,22 +731,22 @@
       "employment_date": "2023-12-19",
       "employment_end_date": "",
       "street": "ul. Demo 40",
-      "city": "49-199 Przemy?l",
+      "city": "49-199 Przemyśl",
       "phone": "+48 500 039 139",
       "medical_exam_valid_until": "2028-04-24",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-041",
-      "name": "Jab?o?ski Damian",
+      "name": "Jabłoński Damian",
       "first_name": "Damian",
-      "last_name": "Jab?o?ski",
+      "last_name": "Jabłoński",
       "position": "Monter",
       "status": "active",
       "employment_date": "2023-12-28",
       "employment_end_date": "",
       "street": "ul. Demo 41",
-      "city": "50-100 Rzesz?w",
+      "city": "50-100 Rzeszów",
       "phone": "+48 500 040 140",
       "medical_exam_valid_until": "2028-05-11",
       "worker_code": "p"
@@ -761,7 +761,7 @@
       "employment_date": "2024-01-06",
       "employment_end_date": "",
       "street": "ul. Demo 42",
-      "city": "51-111 Krak?w",
+      "city": "51-111 Kraków",
       "phone": "+48 500 041 141",
       "medical_exam_valid_until": "2028-05-28",
       "worker_code": "p"
@@ -776,31 +776,31 @@
       "employment_date": "2024-01-15",
       "employment_end_date": "",
       "street": "ul. Demo 43",
-      "city": "52-122 Tarn?w",
+      "city": "52-122 Tarnów",
       "phone": "+48 500 042 142",
       "medical_exam_valid_until": "2028-06-14",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-044",
-      "name": "Kami?ski Dawid",
+      "name": "Kamiński Dawid",
       "first_name": "Dawid",
-      "last_name": "Kami?ski",
+      "last_name": "Kamiński",
       "position": "Elektromonter",
       "status": "active",
       "employment_date": "2024-01-24",
       "employment_end_date": "",
       "street": "ul. Demo 44",
-      "city": "53-133 D?bica",
+      "city": "53-133 Dębica",
       "phone": "+48 500 043 143",
       "medical_exam_valid_until": "2028-07-01",
       "worker_code": "p"
     },
     {
       "id": "emp-demo-045",
-      "name": "Szyma?ski Konrad",
+      "name": "Szymański Konrad",
       "first_name": "Konrad",
-      "last_name": "Szyma?ski",
+      "last_name": "Szymański",
       "position": "Spawacz",
       "status": "active",
       "employment_date": "2024-02-02",
@@ -813,9 +813,9 @@
     },
     {
       "id": "emp-demo-046",
-      "name": "Koz?owski Artur",
+      "name": "Kozłowski Artur",
       "first_name": "Artur",
-      "last_name": "Koz?owski",
+      "last_name": "Kozłowski",
       "position": "Magazynier",
       "status": "active",
       "employment_date": "2024-02-11",
@@ -836,7 +836,7 @@
       "employment_date": "2024-02-20",
       "employment_end_date": "",
       "street": "ul. Demo 47",
-      "city": "56-166 Jas?o",
+      "city": "56-166 Jasło",
       "phone": "+48 500 046 146",
       "medical_exam_valid_until": "2028-08-21",
       "worker_code": "p"
@@ -851,7 +851,7 @@
       "employment_date": "2024-02-29",
       "employment_end_date": "",
       "street": "ul. Demo 48",
-      "city": "57-177 Przemy?l",
+      "city": "57-177 Przemyśl",
       "phone": "+48 500 047 147",
       "medical_exam_valid_until": "2028-09-07",
       "worker_code": "p"
@@ -866,7 +866,7 @@
       "employment_date": "2024-03-09",
       "employment_end_date": "",
       "street": "ul. Demo 49",
-      "city": "58-188 Rzesz?w",
+      "city": "58-188 Rzeszów",
       "phone": "+48 500 048 148",
       "medical_exam_valid_until": "2028-09-24",
       "worker_code": "p"
@@ -881,7 +881,7 @@
       "employment_date": "2024-03-18",
       "employment_end_date": "",
       "street": "ul. Demo 50",
-      "city": "59-199 Krak?w",
+      "city": "59-199 Kraków",
       "phone": "+48 500 049 149",
       "medical_exam_valid_until": "2028-10-11",
       "worker_code": "p"
@@ -899,15 +899,15 @@
         "worker_code": "p"
       },
       {
-        "name": "W?jcik Piotr",
+        "name": "Wójcik Piotr",
         "worker_code": "p"
       },
       {
-        "name": "Zieli?ski Micha?",
+        "name": "Zieliński Michał",
         "worker_code": "p"
       },
       {
-        "name": "D?browski Pawe?",
+        "name": "Dąbrowski Paweł",
         "worker_code": "p"
       },
       {
@@ -919,7 +919,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Kr?l Marek",
+        "name": "Król Marek",
         "worker_code": "p"
       },
       {
@@ -927,11 +927,11 @@
         "worker_code": "p"
       },
       {
-        "name": "St?pie? ?ukasz",
+        "name": "Stępień Łukasz",
         "worker_code": "p"
       },
       {
-        "name": "Wi?niewski Mateusz",
+        "name": "Wiśniewski Mateusz",
         "worker_code": "p"
       },
       {
@@ -939,7 +939,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Wo?niak Szymon",
+        "name": "Woźniak Szymon",
         "worker_code": "p"
       },
       {
@@ -955,7 +955,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Jab?o?ski Damian",
+        "name": "Jabłoński Damian",
         "worker_code": "p"
       },
       {
@@ -967,15 +967,15 @@
         "worker_code": "p"
       },
       {
-        "name": "Kami?ski Dawid",
+        "name": "Kamiński Dawid",
         "worker_code": "p"
       },
       {
-        "name": "Szyma?ski Konrad",
+        "name": "Szymański Konrad",
         "worker_code": "p"
       },
       {
-        "name": "Koz?owski Artur",
+        "name": "Kozłowski Artur",
         "worker_code": "p"
       },
       {
@@ -999,15 +999,15 @@
         "worker_code": "p"
       },
       {
-        "name": "W?jcik Piotr",
+        "name": "Wójcik Piotr",
         "worker_code": "p"
       },
       {
-        "name": "Zieli?ski Micha?",
+        "name": "Zieliński Michał",
         "worker_code": "p"
       },
       {
-        "name": "D?browski Pawe?",
+        "name": "Dąbrowski Paweł",
         "worker_code": "p"
       },
       {
@@ -1019,7 +1019,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Kr?l Marek",
+        "name": "Król Marek",
         "worker_code": "p"
       },
       {
@@ -1027,11 +1027,11 @@
         "worker_code": "p"
       },
       {
-        "name": "St?pie? ?ukasz",
+        "name": "Stępień Łukasz",
         "worker_code": "p"
       },
       {
-        "name": "Wi?niewski Mateusz",
+        "name": "Wiśniewski Mateusz",
         "worker_code": "p"
       },
       {
@@ -1039,7 +1039,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Wo?niak Szymon",
+        "name": "Woźniak Szymon",
         "worker_code": "p"
       },
       {
@@ -1055,7 +1055,7 @@
         "worker_code": "p"
       },
       {
-        "name": "Jab?o?ski Damian",
+        "name": "Jabłoński Damian",
         "worker_code": "p"
       },
       {
@@ -1067,15 +1067,15 @@
         "worker_code": "p"
       },
       {
-        "name": "Kami?ski Dawid",
+        "name": "Kamiński Dawid",
         "worker_code": "p"
       },
       {
-        "name": "Szyma?ski Konrad",
+        "name": "Szymański Konrad",
         "worker_code": "p"
       },
       {
-        "name": "Koz?owski Artur",
+        "name": "Kozłowski Artur",
         "worker_code": "p"
       },
       {
@@ -1106,10 +1106,10 @@
           "Park Delta",
           "Budynek Epsilon",
           "Magazyn Zeta",
-          "W?ze? Eta",
+          "Węzeł Eta",
           "Obiekt Theta",
           "Kompleks Iota",
-          "Zak?ad Kappa"
+          "Zakład Kappa"
         ],
         "finance": {
           "zus_company_1": 34242.6,
@@ -1126,12 +1126,12 @@
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 64.0,
-              "Zak?ad Kappa": 80.0,
+              "Zakład Kappa": 80.0,
               "Budynek Epsilon": 40.0
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
               "Park Delta": 72.0,
@@ -1140,19 +1140,19 @@
             }
           },
           {
-            "employee_name": "Zieli?ski Micha?",
+            "employee_name": "Zieliński Michał",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 144.0
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 80.0,
               "Obiekt Theta": 64.0,
-              "Zak?ad Kappa": 16.0
+              "Zakład Kappa": 16.0
             }
           },
           {
@@ -1173,12 +1173,12 @@
             }
           },
           {
-            "employee_name": "Kr?l Marek",
+            "employee_name": "Król Marek",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 40.0,
+              "Zakład Kappa": 40.0,
               "Terminal Beta": 48.0,
-              "W?ze? Eta": 56.0
+              "Węzeł Eta": 56.0
             }
           },
           {
@@ -1190,18 +1190,18 @@
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 152.0
             }
           },
           {
-            "employee_name": "Wi?niewski Mateusz",
+            "employee_name": "Wiśniewski Mateusz",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 64.0,
-              "W?ze? Eta": 48.0,
+              "Węzeł Eta": 48.0,
               "Budynek Epsilon": 56.0
             }
           },
@@ -1213,7 +1213,7 @@
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 176.0
@@ -1234,7 +1234,7 @@
             }
           },
           {
-            "employee_name": "Jab?o?ski Damian",
+            "employee_name": "Jabłoński Damian",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 184.0
@@ -1251,12 +1251,12 @@
             "employee_name": "Kowalski Patryk",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 72.0,
+              "Węzeł Eta": 72.0,
               "Hala Gamma": 72.0
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 88.0,
@@ -1264,7 +1264,7 @@
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 80.0,
@@ -1272,7 +1272,7 @@
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 176.0
@@ -1282,7 +1282,7 @@
             "employee_name": "Krawczyk Karol",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 32.0,
+              "Zakład Kappa": 32.0,
               "Magazyn Zeta": 144.0
             }
           },
@@ -1320,31 +1320,31 @@
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 56.0,
-              "W?ze? Eta": 88.0
+              "Węzeł Eta": 88.0
             }
           },
           {
-            "employee_name": "Zieli?ski Micha?",
+            "employee_name": "Zieliński Michał",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 120.0,
-              "Zak?ad Kappa": 56.0
+              "Węzeł Eta": 120.0,
+              "Zakład Kappa": 56.0
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 80.0,
-              "W?ze? Eta": 72.0
+              "Węzeł Eta": 72.0
             }
           },
           {
-            "employee_name": "Kr?l Marek",
+            "employee_name": "Król Marek",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 48.0,
@@ -1356,21 +1356,21 @@
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 80.0,
-              "W?ze? Eta": 80.0
+              "Węzeł Eta": 80.0
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 184.0
+              "Węzeł Eta": 184.0
             }
           },
           {
-            "employee_name": "Wi?niewski Mateusz",
+            "employee_name": "Wiśniewski Mateusz",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 40.0,
+              "Węzeł Eta": 40.0,
               "Budynek Epsilon": 104.0
             }
           },
@@ -1378,16 +1378,16 @@
             "employee_name": "Kowalczyk Jakub",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 48.0,
+              "Węzeł Eta": 48.0,
               "Centrum Alfa": 120.0
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 120.0,
-              "Zak?ad Kappa": 56.0
+              "Zakład Kappa": 56.0
             }
           },
           {
@@ -1402,7 +1402,7 @@
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 80.0,
-              "Zak?ad Kappa": 72.0
+              "Zakład Kappa": 72.0
             }
           },
           {
@@ -1415,49 +1415,49 @@
             }
           },
           {
-            "employee_name": "Jab?o?ski Damian",
+            "employee_name": "Jabłoński Damian",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 88.0,
-              "W?ze? Eta": 72.0
+              "Węzeł Eta": 72.0
             }
           },
           {
             "employee_name": "Walczak Marcin",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 144.0
+              "Zakład Kappa": 144.0
             }
           },
           {
             "employee_name": "Kowalski Patryk",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 72.0,
+              "Zakład Kappa": 72.0,
               "Obiekt Theta": 96.0
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 160.0
+              "Węzeł Eta": 160.0
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 32.0,
-              "W?ze? Eta": 112.0,
+              "Zakład Kappa": 32.0,
+              "Węzeł Eta": 112.0,
               "Obiekt Theta": 24.0
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 88.0,
+              "Węzeł Eta": 88.0,
               "Park Delta": 88.0
             }
           },
@@ -1465,7 +1465,7 @@
             "employee_name": "Krawczyk Karol",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 136.0,
+              "Węzeł Eta": 136.0,
               "Kompleks Iota": 40.0
             }
           },
@@ -1492,7 +1492,7 @@
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 120.0,
-              "Zak?ad Kappa": 40.0
+              "Zakład Kappa": 40.0
             }
           }
         ]
@@ -1507,10 +1507,10 @@
           "Park Delta",
           "Budynek Epsilon",
           "Magazyn Zeta",
-          "W?ze? Eta",
+          "Węzeł Eta",
           "Obiekt Theta",
           "Kompleks Iota",
-          "Zak?ad Kappa"
+          "Zakład Kappa"
         ],
         "finance": {
           "zus_company_1": 27033.22,
@@ -1531,25 +1531,25 @@
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 96.0,
+              "Węzeł Eta": 96.0,
               "Magazyn Zeta": 88.0
             }
           },
           {
-            "employee_name": "Zieli?ski Micha?",
+            "employee_name": "Zieliński Michał",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 168.0
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 96.0,
+              "Zakład Kappa": 96.0,
               "Budynek Epsilon": 80.0
             }
           },
@@ -1562,7 +1562,7 @@
             }
           },
           {
-            "employee_name": "Kr?l Marek",
+            "employee_name": "Król Marek",
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 168.0
@@ -1576,7 +1576,7 @@
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
               "Park Delta": 80.0,
@@ -1584,7 +1584,7 @@
             }
           },
           {
-            "employee_name": "Wi?niewski Mateusz",
+            "employee_name": "Wiśniewski Mateusz",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 24.0,
@@ -1600,7 +1600,7 @@
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
               "Park Delta": 184.0
@@ -1624,7 +1624,7 @@
             }
           },
           {
-            "employee_name": "Jab?o?ski Damian",
+            "employee_name": "Jabłoński Damian",
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 48.0,
@@ -1648,7 +1648,7 @@
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 104.0,
@@ -1656,7 +1656,7 @@
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
               "Budynek Epsilon": 80.0,
@@ -1664,7 +1664,7 @@
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 64.0,
@@ -1683,9 +1683,9 @@
             "employee_name": "Pawlak Wojciech",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 48.0,
+              "Zakład Kappa": 48.0,
               "Budynek Epsilon": 48.0,
-              "W?ze? Eta": 64.0
+              "Węzeł Eta": 64.0
             }
           },
           {
@@ -1700,7 +1700,7 @@
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 32.0,
-              "W?ze? Eta": 96.0,
+              "Węzeł Eta": 96.0,
               "Magazyn Zeta": 48.0
             }
           },
@@ -1714,7 +1714,7 @@
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 56.0,
@@ -1722,7 +1722,7 @@
             }
           },
           {
-            "employee_name": "Zieli?ski Micha?",
+            "employee_name": "Zieliński Michał",
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 40.0,
@@ -1731,7 +1731,7 @@
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 184.0
@@ -1746,7 +1746,7 @@
             }
           },
           {
-            "employee_name": "Kr?l Marek",
+            "employee_name": "Król Marek",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 88.0,
@@ -1754,15 +1754,15 @@
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 104.0,
+              "Zakład Kappa": 104.0,
               "Budynek Epsilon": 72.0
             }
           },
           {
-            "employee_name": "Wi?niewski Mateusz",
+            "employee_name": "Wiśniewski Mateusz",
             "worker_code": "p",
             "project_hours": {
               "Budynek Epsilon": 48.0,
@@ -1778,18 +1778,18 @@
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 32.0,
-              "Zak?ad Kappa": 120.0
+              "Zakład Kappa": 120.0
             }
           },
           {
             "employee_name": "Jankowski Filip",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 80.0,
+              "Zakład Kappa": 80.0,
               "Kompleks Iota": 72.0
             }
           },
@@ -1798,7 +1798,7 @@
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 96.0,
-              "W?ze? Eta": 88.0
+              "Węzeł Eta": 88.0
             }
           },
           {
@@ -1806,11 +1806,11 @@
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 72.0,
-              "Zak?ad Kappa": 88.0
+              "Zakład Kappa": 88.0
             }
           },
           {
-            "employee_name": "Jab?o?ski Damian",
+            "employee_name": "Jabłoński Damian",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 112.0,
@@ -1821,7 +1821,7 @@
             "employee_name": "Walczak Marcin",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 72.0,
+              "Zakład Kappa": 72.0,
               "Budynek Epsilon": 104.0
             }
           },
@@ -1829,19 +1829,19 @@
             "employee_name": "Kowalski Patryk",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 72.0,
+              "Węzeł Eta": 72.0,
               "Hala Gamma": 112.0
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 168.0
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 96.0,
@@ -1849,7 +1849,7 @@
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 40.0,
@@ -1876,8 +1876,8 @@
             "employee_name": "Wieczorek Bartosz",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 88.0,
-              "Zak?ad Kappa": 80.0
+              "Węzeł Eta": 88.0,
+              "Zakład Kappa": 80.0
             }
           },
           {
@@ -1892,7 +1892,7 @@
       },
       "2026-04": {
         "month_key": "2026-04",
-        "month_label": "kwiecie? 2026",
+        "month_label": "kwiecień 2026",
         "visible_investments": [
           "Centrum Alfa",
           "Terminal Beta",
@@ -1900,10 +1900,10 @@
           "Park Delta",
           "Budynek Epsilon",
           "Magazyn Zeta",
-          "W?ze? Eta",
+          "Węzeł Eta",
           "Obiekt Theta",
           "Kompleks Iota",
-          "Zak?ad Kappa"
+          "Zakład Kappa"
         ],
         "finance": {
           "zus_company_1": 34744.21,
@@ -1925,15 +1925,15 @@
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 96.0,
-              "Zak?ad Kappa": 56.0
+              "Zakład Kappa": 56.0
             }
           },
           {
-            "employee_name": "Zieli?ski Micha?",
+            "employee_name": "Zieliński Michał",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 80.0,
@@ -1941,7 +1941,7 @@
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 104.0,
@@ -1953,14 +1953,14 @@
             "worker_code": "p",
             "project_hours": {
               "Budynek Epsilon": 96.0,
-              "Zak?ad Kappa": 80.0
+              "Zakład Kappa": 80.0
             }
           },
           {
             "employee_name": "Grabowski Adam",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 64.0,
+              "Węzeł Eta": 64.0,
               "Budynek Epsilon": 88.0
             }
           },
@@ -1968,11 +1968,11 @@
             "employee_name": "Adamczyk Krzysztof",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 144.0
+              "Zakład Kappa": 144.0
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 96.0,
@@ -1984,22 +1984,22 @@
             "worker_code": "p",
             "project_hours": {
               "Park Delta": 88.0,
-              "W?ze? Eta": 88.0
+              "Węzeł Eta": 88.0
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 112.0,
-              "Zak?ad Kappa": 32.0
+              "Zakład Kappa": 32.0
             }
           },
           {
             "employee_name": "Jankowski Filip",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 136.0,
+              "Zakład Kappa": 136.0,
               "Magazyn Zeta": 32.0
             }
           },
@@ -2007,16 +2007,16 @@
             "employee_name": "Michalak Sebastian",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 72.0,
+              "Zakład Kappa": 72.0,
               "Magazyn Zeta": 96.0
             }
           },
           {
-            "employee_name": "Jab?o?ski Damian",
+            "employee_name": "Jabłoński Damian",
             "worker_code": "p",
             "project_hours": {
               "Terminal Beta": 112.0,
-              "Zak?ad Kappa": 40.0
+              "Zakład Kappa": 40.0
             }
           },
           {
@@ -2032,11 +2032,11 @@
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 88.0,
-              "W?ze? Eta": 72.0
+              "Węzeł Eta": 72.0
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 128.0,
@@ -2044,7 +2044,7 @@
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
               "Magazyn Zeta": 48.0,
@@ -2052,7 +2052,7 @@
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 176.0
@@ -2078,14 +2078,14 @@
             "employee_name": "Wieczorek Bartosz",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 168.0
+              "Zakład Kappa": 168.0
             }
           },
           {
             "employee_name": "Dudek Hubert",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 72.0,
+              "Zakład Kappa": 72.0,
               "Centrum Alfa": 96.0
             }
           },
@@ -2098,14 +2098,14 @@
             }
           },
           {
-            "employee_name": "W?jcik Piotr",
+            "employee_name": "Wójcik Piotr",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 144.0
             }
           },
           {
-            "employee_name": "D?browski Pawe?",
+            "employee_name": "Dąbrowski Paweł",
             "worker_code": "p",
             "project_hours": {
               "Centrum Alfa": 176.0
@@ -2119,7 +2119,7 @@
             }
           },
           {
-            "employee_name": "Kr?l Marek",
+            "employee_name": "Król Marek",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 96.0,
@@ -2132,18 +2132,18 @@
             "project_hours": {
               "Park Delta": 96.0,
               "Centrum Alfa": 40.0,
-              "Zak?ad Kappa": 24.0
+              "Zakład Kappa": 24.0
             }
           },
           {
-            "employee_name": "St?pie? ?ukasz",
+            "employee_name": "Stępień Łukasz",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 144.0
             }
           },
           {
-            "employee_name": "Wi?niewski Mateusz",
+            "employee_name": "Wiśniewski Mateusz",
             "worker_code": "p",
             "project_hours": {
               "Obiekt Theta": 176.0
@@ -2158,10 +2158,10 @@
             }
           },
           {
-            "employee_name": "Wo?niak Szymon",
+            "employee_name": "Woźniak Szymon",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 88.0,
+              "Zakład Kappa": 88.0,
               "Budynek Epsilon": 80.0
             }
           },
@@ -2185,7 +2185,7 @@
             "worker_code": "p",
             "project_hours": {
               "Hala Gamma": 112.0,
-              "Zak?ad Kappa": 72.0
+              "Zakład Kappa": 72.0
             }
           },
           {
@@ -2197,23 +2197,23 @@
             }
           },
           {
-            "employee_name": "Kami?ski Dawid",
+            "employee_name": "Kamiński Dawid",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 24.0,
+              "Węzeł Eta": 24.0,
               "Magazyn Zeta": 80.0,
               "Obiekt Theta": 64.0
             }
           },
           {
-            "employee_name": "Szyma?ski Konrad",
+            "employee_name": "Szymański Konrad",
             "worker_code": "p",
             "project_hours": {
-              "W?ze? Eta": 184.0
+              "Węzeł Eta": 184.0
             }
           },
           {
-            "employee_name": "Koz?owski Artur",
+            "employee_name": "Kozłowski Artur",
             "worker_code": "p",
             "project_hours": {
               "Kompleks Iota": 88.0,
@@ -2234,7 +2234,7 @@
             "employee_name": "Pawlak Wojciech",
             "worker_code": "p",
             "project_hours": {
-              "Zak?ad Kappa": 96.0,
+              "Zakład Kappa": 96.0,
               "Magazyn Zeta": 32.0,
               "Terminal Beta": 56.0
             }
@@ -2333,8 +2333,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 668066.0,
         "net_amount": 668066.0,
@@ -2363,8 +2363,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 758849.0,
         "net_amount": 758849.0,
@@ -2453,8 +2453,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 587995.0,
         "net_amount": 587995.0,
@@ -2483,8 +2483,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 497277.0,
         "net_amount": 497277.0,
@@ -2573,8 +2573,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 513584.0,
         "net_amount": 513584.0,
@@ -2603,8 +2603,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Centrum Alfa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Centrum Alfa",
         "cost_category": "",
         "amount_net": 292057.0,
         "net_amount": 292057.0,
@@ -2693,8 +2693,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 735035.0,
         "net_amount": 735035.0,
@@ -2723,8 +2723,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 521867.0,
         "net_amount": 521867.0,
@@ -2813,8 +2813,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 306647.0,
         "net_amount": 306647.0,
@@ -2843,8 +2843,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 319345.0,
         "net_amount": 319345.0,
@@ -2933,8 +2933,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 424195.0,
         "net_amount": 424195.0,
@@ -2963,8 +2963,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Terminal Beta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Terminal Beta",
         "cost_category": "",
         "amount_net": 358610.0,
         "net_amount": 358610.0,
@@ -3053,8 +3053,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 554749.0,
         "net_amount": 554749.0,
@@ -3083,8 +3083,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 275320.0,
         "net_amount": 275320.0,
@@ -3173,8 +3173,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 678905.0,
         "net_amount": 678905.0,
@@ -3203,8 +3203,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 422319.0,
         "net_amount": 422319.0,
@@ -3293,8 +3293,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 553103.0,
         "net_amount": 553103.0,
@@ -3323,8 +3323,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Hala Gamma",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Hala Gamma",
         "cost_category": "",
         "amount_net": 515154.0,
         "net_amount": 515154.0,
@@ -3413,8 +3413,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 253909.0,
         "net_amount": 253909.0,
@@ -3443,8 +3443,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 344183.0,
         "net_amount": 344183.0,
@@ -3533,8 +3533,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 214947.0,
         "net_amount": 214947.0,
@@ -3563,8 +3563,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 561331.0,
         "net_amount": 561331.0,
@@ -3653,8 +3653,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 579352.0,
         "net_amount": 579352.0,
@@ -3683,8 +3683,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Park Delta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Park Delta",
         "cost_category": "",
         "amount_net": 528574.0,
         "net_amount": 528574.0,
@@ -3773,8 +3773,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 233749.0,
         "net_amount": 233749.0,
@@ -3803,8 +3803,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 263907.0,
         "net_amount": 263907.0,
@@ -3893,8 +3893,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 219388.0,
         "net_amount": 219388.0,
@@ -3923,8 +3923,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 464029.0,
         "net_amount": 464029.0,
@@ -4013,8 +4013,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 329583.0,
         "net_amount": 329583.0,
@@ -4043,8 +4043,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Budynek Epsilon",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Budynek Epsilon",
         "cost_category": "",
         "amount_net": 687428.0,
         "net_amount": 687428.0,
@@ -4133,8 +4133,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 385553.0,
         "net_amount": 385553.0,
@@ -4163,8 +4163,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 412227.0,
         "net_amount": 412227.0,
@@ -4253,8 +4253,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 645766.0,
         "net_amount": 645766.0,
@@ -4283,8 +4283,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 287904.0,
         "net_amount": 287904.0,
@@ -4373,8 +4373,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 498522.0,
         "net_amount": 498522.0,
@@ -4403,8 +4403,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Magazyn Zeta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Magazyn Zeta",
         "cost_category": "",
         "amount_net": 725568.0,
         "net_amount": 725568.0,
@@ -4425,7 +4425,7 @@
       {
         "id": "inv-demo-0073",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-02-02",
         "invoice_number": "FK/02/0073/2026",
@@ -4434,7 +4434,7 @@
         "party": "Cargo Lift",
         "category_or_description": "other / pakiet 3",
         "category": "other / pakiet 7",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "other",
         "amount_net": 146411.0,
         "net_amount": 146411.0,
@@ -4455,7 +4455,7 @@
       {
         "id": "inv-demo-0074",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-02-15",
         "invoice_number": "FK/02/0074/2026",
@@ -4464,7 +4464,7 @@
         "party": "Instal-Pro",
         "category_or_description": "other / pakiet 5",
         "category": "other / pakiet 6",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "other",
         "amount_net": 112818.0,
         "net_amount": 112818.0,
@@ -4485,7 +4485,7 @@
       {
         "id": "inv-demo-0075",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-02-04",
         "invoice_number": "FS/02/0075/2026",
@@ -4493,8 +4493,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 195439.0,
         "net_amount": 195439.0,
@@ -4515,7 +4515,7 @@
       {
         "id": "inv-demo-0076",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-02-05",
         "invoice_number": "FS/02/0076/2026",
@@ -4523,8 +4523,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 663137.0,
         "net_amount": 663137.0,
@@ -4545,7 +4545,7 @@
       {
         "id": "inv-demo-0077",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-03-19",
         "invoice_number": "FK/03/0077/2026",
@@ -4554,7 +4554,7 @@
         "party": "Mega Stal",
         "category_or_description": "other / pakiet 4",
         "category": "other / pakiet 5",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "other",
         "amount_net": 120430.0,
         "net_amount": 120430.0,
@@ -4575,7 +4575,7 @@
       {
         "id": "inv-demo-0078",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-03-18",
         "invoice_number": "FK/03/0078/2026",
@@ -4584,7 +4584,7 @@
         "party": "Instal-Pro",
         "category_or_description": "materials / pakiet 6",
         "category": "materials / pakiet 4",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "materials",
         "amount_net": 412542.0,
         "net_amount": 412542.0,
@@ -4605,7 +4605,7 @@
       {
         "id": "inv-demo-0079",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-03-21",
         "invoice_number": "FS/03/0079/2026",
@@ -4613,8 +4613,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 774544.0,
         "net_amount": 774544.0,
@@ -4635,7 +4635,7 @@
       {
         "id": "inv-demo-0080",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-03-07",
         "invoice_number": "FS/03/0080/2026",
@@ -4643,8 +4643,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 523534.0,
         "net_amount": 523534.0,
@@ -4665,7 +4665,7 @@
       {
         "id": "inv-demo-0081",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-04-20",
         "invoice_number": "FK/04/0081/2026",
@@ -4674,7 +4674,7 @@
         "party": "Mega Stal",
         "category_or_description": "materials / pakiet 3",
         "category": "materials / pakiet 5",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "materials",
         "amount_net": 98371.0,
         "net_amount": 98371.0,
@@ -4695,7 +4695,7 @@
       {
         "id": "inv-demo-0082",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "cost",
         "issue_date": "2026-04-11",
         "invoice_number": "FK/04/0082/2026",
@@ -4704,7 +4704,7 @@
         "party": "Nova Services",
         "category_or_description": "equipment / pakiet 5",
         "category": "equipment / pakiet 2",
-        "description": "Demo koszt dla W?ze? Eta",
+        "description": "Demo koszt dla Węzeł Eta",
         "cost_category": "equipment",
         "amount_net": 319163.0,
         "net_amount": 319163.0,
@@ -4725,7 +4725,7 @@
       {
         "id": "inv-demo-0083",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-04-26",
         "invoice_number": "FS/04/0083/2026",
@@ -4733,8 +4733,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 742784.0,
         "net_amount": 742784.0,
@@ -4755,7 +4755,7 @@
       {
         "id": "inv-demo-0084",
         "contract_id": "contract-demo-007",
-        "contract_name": "W?ze? Eta",
+        "contract_name": "Węzeł Eta",
         "type": "sales",
         "issue_date": "2026-04-10",
         "invoice_number": "FS/04/0084/2026",
@@ -4763,8 +4763,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla W?ze? Eta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Węzeł Eta",
         "cost_category": "",
         "amount_net": 395133.0,
         "net_amount": 395133.0,
@@ -4853,8 +4853,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 206971.0,
         "net_amount": 206971.0,
@@ -4883,8 +4883,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 738022.0,
         "net_amount": 738022.0,
@@ -4973,8 +4973,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 552821.0,
         "net_amount": 552821.0,
@@ -5003,8 +5003,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 670718.0,
         "net_amount": 670718.0,
@@ -5093,8 +5093,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 708964.0,
         "net_amount": 708964.0,
@@ -5123,8 +5123,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Obiekt Theta",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Obiekt Theta",
         "cost_category": "",
         "amount_net": 188402.0,
         "net_amount": 188402.0,
@@ -5213,8 +5213,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 442873.0,
         "net_amount": 442873.0,
@@ -5243,8 +5243,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 721063.0,
         "net_amount": 721063.0,
@@ -5333,8 +5333,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 585308.0,
         "net_amount": 585308.0,
@@ -5363,8 +5363,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 477748.0,
         "net_amount": 477748.0,
@@ -5453,8 +5453,8 @@
         "counterparty_name": "Solid Build",
         "party": "Solid Build",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 511097.0,
         "net_amount": 511097.0,
@@ -5483,8 +5483,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 4 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Kompleks Iota",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Kompleks Iota",
         "cost_category": "",
         "amount_net": 408341.0,
         "net_amount": 408341.0,
@@ -5505,7 +5505,7 @@
       {
         "id": "inv-demo-0109",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-02-16",
         "invoice_number": "FK/02/0109/2026",
@@ -5514,7 +5514,7 @@
         "party": "Cargo Lift",
         "category_or_description": "equipment / pakiet 1",
         "category": "equipment / pakiet 8",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "equipment",
         "amount_net": 418255.0,
         "net_amount": 418255.0,
@@ -5535,7 +5535,7 @@
       {
         "id": "inv-demo-0110",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-02-15",
         "invoice_number": "FK/02/0110/2026",
@@ -5544,7 +5544,7 @@
         "party": "Tech-Mat",
         "category_or_description": "materials / pakiet 8",
         "category": "materials / pakiet 2",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "materials",
         "amount_net": 415635.0,
         "net_amount": 415635.0,
@@ -5565,7 +5565,7 @@
       {
         "id": "inv-demo-0111",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-02-25",
         "invoice_number": "FS/02/0111/2026",
@@ -5573,8 +5573,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 714542.0,
         "net_amount": 714542.0,
@@ -5595,7 +5595,7 @@
       {
         "id": "inv-demo-0112",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-02-13",
         "invoice_number": "FS/02/0112/2026",
@@ -5603,8 +5603,8 @@
         "counterparty_name": "General Invest",
         "party": "General Invest",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 345889.0,
         "net_amount": 345889.0,
@@ -5625,7 +5625,7 @@
       {
         "id": "inv-demo-0113",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-03-04",
         "invoice_number": "FK/03/0113/2026",
@@ -5634,7 +5634,7 @@
         "party": "Geo Supply",
         "category_or_description": "transport / pakiet 6",
         "category": "transport / pakiet 8",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "transport",
         "amount_net": 415216.0,
         "net_amount": 415216.0,
@@ -5655,7 +5655,7 @@
       {
         "id": "inv-demo-0114",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-03-12",
         "invoice_number": "FK/03/0114/2026",
@@ -5664,7 +5664,7 @@
         "party": "Tech-Mat",
         "category_or_description": "materials / pakiet 2",
         "category": "materials / pakiet 7",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "materials",
         "amount_net": 417713.0,
         "net_amount": 417713.0,
@@ -5685,7 +5685,7 @@
       {
         "id": "inv-demo-0115",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-03-14",
         "invoice_number": "FS/03/0115/2026",
@@ -5693,8 +5693,8 @@
         "counterparty_name": "Civitas Group",
         "party": "Civitas Group",
         "category_or_description": "Etap 2 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 742260.0,
         "net_amount": 742260.0,
@@ -5715,7 +5715,7 @@
       {
         "id": "inv-demo-0116",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-03-07",
         "invoice_number": "FS/03/0116/2026",
@@ -5723,8 +5723,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 1 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 307611.0,
         "net_amount": 307611.0,
@@ -5745,7 +5745,7 @@
       {
         "id": "inv-demo-0117",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-04-13",
         "invoice_number": "FK/04/0117/2026",
@@ -5754,7 +5754,7 @@
         "party": "Martex",
         "category_or_description": "other / pakiet 4",
         "category": "other / pakiet 8",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "other",
         "amount_net": 258749.0,
         "net_amount": 258749.0,
@@ -5775,7 +5775,7 @@
       {
         "id": "inv-demo-0118",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "cost",
         "issue_date": "2026-04-15",
         "invoice_number": "FK/04/0118/2026",
@@ -5784,7 +5784,7 @@
         "party": "Bud-System",
         "category_or_description": "materials / pakiet 5",
         "category": "materials / pakiet 4",
-        "description": "Demo koszt dla Zak?ad Kappa",
+        "description": "Demo koszt dla Zakład Kappa",
         "cost_category": "materials",
         "amount_net": 318704.0,
         "net_amount": 318704.0,
@@ -5805,7 +5805,7 @@
       {
         "id": "inv-demo-0119",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-04-03",
         "invoice_number": "FS/04/0119/2026",
@@ -5813,8 +5813,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 397485.0,
         "net_amount": 397485.0,
@@ -5835,7 +5835,7 @@
       {
         "id": "inv-demo-0120",
         "contract_id": "contract-demo-010",
-        "contract_name": "Zak?ad Kappa",
+        "contract_name": "Zakład Kappa",
         "type": "sales",
         "issue_date": "2026-04-07",
         "invoice_number": "FS/04/0120/2026",
@@ -5843,8 +5843,8 @@
         "counterparty_name": "Mercury Estate",
         "party": "Mercury Estate",
         "category_or_description": "Etap 3 / rozliczenie",
-        "category": "sprzeda?",
-        "description": "Demo sprzeda? dla Zak?ad Kappa",
+        "category": "sprzedaż",
+        "description": "Demo sprzedaż dla Zakład Kappa",
         "cost_category": "",
         "amount_net": 397691.0,
         "net_amount": 397691.0,
@@ -5961,17 +5961,17 @@
         "carryover_days": 4,
         "extra_days": 2
       },
-      "W?jcik Piotr": {
+      "Wójcik Piotr": {
         "base_days": 26,
         "carryover_days": 0,
         "extra_days": 0
       },
-      "Zieli?ski Micha?": {
+      "Zieliński Michał": {
         "base_days": 26,
         "carryover_days": 0,
         "extra_days": 0
       },
-      "D?browski Pawe?": {
+      "Dąbrowski Paweł": {
         "base_days": 26,
         "carryover_days": 4,
         "extra_days": 0
@@ -5986,7 +5986,7 @@
         "carryover_days": 0,
         "extra_days": 2
       },
-      "Kr?l Marek": {
+      "Król Marek": {
         "base_days": 26,
         "carryover_days": 4,
         "extra_days": 0
@@ -5996,12 +5996,12 @@
         "carryover_days": 0,
         "extra_days": 0
       },
-      "St?pie? ?ukasz": {
+      "Stępień Łukasz": {
         "base_days": 26,
         "carryover_days": 0,
         "extra_days": 0
       },
-      "Wi?niewski Mateusz": {
+      "Wiśniewski Mateusz": {
         "base_days": 26,
         "carryover_days": 4,
         "extra_days": 0
@@ -6011,7 +6011,7 @@
         "carryover_days": 0,
         "extra_days": 2
       },
-      "Wo?niak Szymon": {
+      "Woźniak Szymon": {
         "base_days": 26,
         "carryover_days": 0,
         "extra_days": 0
@@ -6031,7 +6031,7 @@
         "carryover_days": 0,
         "extra_days": 0
       },
-      "Jab?o?ski Damian": {
+      "Jabłoński Damian": {
         "base_days": 26,
         "carryover_days": 4,
         "extra_days": 2
@@ -6064,7 +6064,7 @@
       {
         "id": "vac-demo-002",
         "employee_id": "emp-demo-002",
-        "employee_name": "W?jcik Piotr",
+        "employee_name": "Wójcik Piotr",
         "type": "vacation",
         "start_date": "2026-04-08",
         "end_date": "2026-04-10",
@@ -6077,7 +6077,7 @@
       {
         "id": "vac-demo-003",
         "employee_id": "emp-demo-003",
-        "employee_name": "Zieli?ski Micha?",
+        "employee_name": "Zieliński Michał",
         "type": "vacation",
         "start_date": "2026-04-09",
         "end_date": "2026-04-11",
@@ -6090,7 +6090,7 @@
       {
         "id": "vac-demo-004",
         "employee_id": "emp-demo-004",
-        "employee_name": "D?browski Pawe?",
+        "employee_name": "Dąbrowski Paweł",
         "type": "sick_leave",
         "start_date": "2026-04-10",
         "end_date": "2026-04-12",
@@ -6129,7 +6129,7 @@
       {
         "id": "vac-demo-007",
         "employee_id": "emp-demo-007",
-        "employee_name": "Kr?l Marek",
+        "employee_name": "Król Marek",
         "type": "sick_leave",
         "start_date": "2026-04-13",
         "end_date": "2026-04-15",
@@ -6155,7 +6155,7 @@
       {
         "id": "vac-demo-009",
         "employee_id": "emp-demo-009",
-        "employee_name": "St?pie? ?ukasz",
+        "employee_name": "Stępień Łukasz",
         "type": "vacation",
         "start_date": "2026-04-15",
         "end_date": "2026-04-19",
@@ -6168,7 +6168,7 @@
       {
         "id": "vac-demo-010",
         "employee_id": "emp-demo-010",
-        "employee_name": "Wi?niewski Mateusz",
+        "employee_name": "Wiśniewski Mateusz",
         "type": "sick_leave",
         "start_date": "2026-04-16",
         "end_date": "2026-04-18",
@@ -6194,7 +6194,7 @@
       {
         "id": "vac-demo-012",
         "employee_id": "emp-demo-012",
-        "employee_name": "Wo?niak Szymon",
+        "employee_name": "Woźniak Szymon",
         "type": "vacation",
         "start_date": "2026-04-18",
         "end_date": "2026-04-20",
@@ -6213,15 +6213,15 @@
           "contract_name": "Centrum Alfa",
           "note": "Dane demonstracyjne"
         },
-        "W?jcik Piotr": {
+        "Wójcik Piotr": {
           "contract_name": "Terminal Beta",
           "note": "Dane demonstracyjne"
         },
-        "Zieli?ski Micha?": {
+        "Zieliński Michał": {
           "contract_name": "Hala Gamma",
           "note": "Dane demonstracyjne"
         },
-        "D?browski Pawe?": {
+        "Dąbrowski Paweł": {
           "contract_name": "Park Delta",
           "note": "Dane demonstracyjne"
         },
@@ -6235,19 +6235,19 @@
         }
       },
       "2026-04-09": {
-        "Kr?l Marek": {
-          "contract_name": "Zak?ad Kappa",
+        "Król Marek": {
+          "contract_name": "Zakład Kappa",
           "note": "Dane demonstracyjne"
         },
         "Adamczyk Krzysztof": {
           "contract_name": "Centrum Alfa",
           "note": "Dane demonstracyjne"
         },
-        "St?pie? ?ukasz": {
+        "Stępień Łukasz": {
           "contract_name": "Terminal Beta",
           "note": "Dane demonstracyjne"
         },
-        "Wi?niewski Mateusz": {
+        "Wiśniewski Mateusz": {
           "contract_name": "Hala Gamma",
           "note": "Dane demonstracyjne"
         },
@@ -6255,7 +6255,7 @@
           "contract_name": "Park Delta",
           "note": "Dane demonstracyjne"
         },
-        "Wo?niak Szymon": {
+        "Woźniak Szymon": {
           "contract_name": "Budynek Epsilon",
           "note": "Dane demonstracyjne"
         }
@@ -6277,7 +6277,7 @@
     {
       "id": "ww-issue-demo-002",
       "employee_id": "emp-demo-002",
-      "employee_name": "W?jcik Piotr",
+      "employee_name": "Wójcik Piotr",
       "issue_date": "2026-03-02",
       "item_id": "ww-demo-002",
       "item_name": "Kamizelka ostrzegawcza",
@@ -6288,7 +6288,7 @@
     {
       "id": "ww-issue-demo-003",
       "employee_id": "emp-demo-003",
-      "employee_name": "Zieli?ski Micha?",
+      "employee_name": "Zieliński Michał",
       "issue_date": "2026-03-03",
       "item_id": "ww-demo-003",
       "item_name": "Kurtka robocza",
@@ -6299,7 +6299,7 @@
     {
       "id": "ww-issue-demo-004",
       "employee_id": "emp-demo-004",
-      "employee_name": "D?browski Pawe?",
+      "employee_name": "Dąbrowski Paweł",
       "issue_date": "2026-03-04",
       "item_id": "ww-demo-004",
       "item_name": "Spodnie robocze",
@@ -6332,7 +6332,7 @@
     {
       "id": "ww-issue-demo-007",
       "employee_id": "emp-demo-007",
-      "employee_name": "Kr?l Marek",
+      "employee_name": "Król Marek",
       "issue_date": "2026-03-07",
       "item_id": "ww-demo-001",
       "item_name": "Kask ochronny",
@@ -6354,7 +6354,7 @@
     {
       "id": "ww-issue-demo-009",
       "employee_id": "emp-demo-009",
-      "employee_name": "St?pie? ?ukasz",
+      "employee_name": "Stępień Łukasz",
       "issue_date": "2026-03-09",
       "item_id": "ww-demo-003",
       "item_name": "Kurtka robocza",
@@ -6365,7 +6365,7 @@
     {
       "id": "ww-issue-demo-010",
       "employee_id": "emp-demo-010",
-      "employee_name": "Wi?niewski Mateusz",
+      "employee_name": "Wiśniewski Mateusz",
       "issue_date": "2026-03-10",
       "item_id": "ww-demo-004",
       "item_name": "Spodnie robocze",
@@ -6387,7 +6387,7 @@
     {
       "id": "ww-issue-demo-012",
       "employee_id": "emp-demo-012",
-      "employee_name": "Wo?niak Szymon",
+      "employee_name": "Woźniak Szymon",
       "issue_date": "2026-03-12",
       "item_id": "ww-demo-006",
       "item_name": "R?kawice techniczne",
@@ -6475,22 +6475,22 @@
   "activeView": "homeView"
 };
   const keys = {
-    version: 'agentDemoSeedVersion',
-    activeView: 'agentFirmowyActiveView',
-    contracts: 'agentInvestmentCatalogV1',
-    deletedContracts: 'agentInvestmentCatalogDeletedV1',
-    employees: 'agentEmployeeRegistryV1',
-    hours: 'agentHoursFormV2',
-    invoices: 'agentManualInvoicesV1',
-    vacations: 'agentVacationRegistryV1',
-    planning: 'agentPlanningRegistryV1',
-    workwearIssues: 'agentWorkwearRegistryV1',
-    workwearCatalog: 'agentWorkwearCatalogV1',
-    settings: 'agentAppSettingsV1',
-    auditLogs: 'agentAuditLogV1',
-    notifications: 'agentNotificationCenterV1',
-    authSession: 'agentAuthSessionV1',
-    legacySeedVersion: 'agentProjectFinisherSeedVersion'
+    version: 'clodeDemoSeedVersion',
+    activeView: 'clodeActiveViewV1',
+    contracts: 'clodeContractsV1',
+    deletedContracts: 'clodeDeletedContractsV1',
+    employees: 'clodeEmployeeRegistryV1',
+    hours: 'clodeHoursRegistryV2',
+    invoices: 'clodeInvoiceRegistryV1',
+    vacations: 'clodeVacationRegistryV1',
+    planning: 'clodePlanningRegistryV1',
+    workwearIssues: 'clodeWorkwearRegistryV1',
+    workwearCatalog: 'clodeWorkwearCatalogV1',
+    settings: 'clodeSettingsV1',
+    auditLogs: 'clodeAuditLogV1',
+    notifications: 'clodeNotificationCenterV1',
+    authSession: 'clodeAuthSessionV1',
+    legacySeedVersion: 'clodeLegacySeedVersion'
   };
   function write(key, value) {
     global.localStorage.setItem(key, JSON.stringify(value));
@@ -6518,3 +6518,4 @@
     console.error('Demo seed bootstrap failed.', error);
   }
 })(window);
+

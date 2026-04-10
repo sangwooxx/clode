@@ -43,7 +43,7 @@ The MVP is being built to be:
 ### 1. Start the full MVP
 
 ```powershell
-cd C:\Users\kubaz\Documents\Codex\agent_excel_mvp
+Set-Location <repo-root>
 powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1
 ```
 

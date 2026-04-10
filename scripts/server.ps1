@@ -1,12 +1,18 @@
 param(
     [string]$HostName = "localhost",
     [int]$Port = 8080,
-    [string]$RootDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp",
+    [string]$RootDir = "",
     [string]$ExcelPath = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+if ([string]::IsNullOrWhiteSpace($RootDir)) {
+    $RootDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
+
+$workspaceRoot = Split-Path -Parent $RootDir
 
 $appDir = Join-Path $RootDir "app"
 $dataDir = Join-Path $RootDir "data"
@@ -15,7 +21,7 @@ $sharedDir = Join-Path $RootDir "shared"
 $syncScript = Join-Path $RootDir "scripts\sync-excel.ps1"
 
 if ([string]::IsNullOrWhiteSpace($ExcelPath)) {
-    $match = Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+    $match = Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
         Where-Object { $_.Name -like "*2025*kopia*.xlsx" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1

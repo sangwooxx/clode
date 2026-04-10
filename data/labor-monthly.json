@@ -4,7 +4,7 @@
     "month_key": "2026-02",
     "month_label": "luty 2026",
     "selected": 0,
-    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"W?ze? Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zak?ad Kappa\"]",
+    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"Węzeł Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zakład Kappa\"]",
     "finance_json": "{\"zus_company_1\": 34242.6, \"zus_company_2\": 28016.67, \"zus_company_3\": 21790.75, \"pit4_company_1\": 24903.71, \"pit4_company_2\": 21790.75, \"pit4_company_3\": 24903.71, \"payouts\": 400238.21}"
   },
   {
@@ -12,15 +12,15 @@
     "month_key": "2026-03",
     "month_label": "marzec 2026",
     "selected": 0,
-    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"W?ze? Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zak?ad Kappa\"]",
+    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"Węzeł Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zakład Kappa\"]",
     "finance_json": "{\"zus_company_1\": 27033.22, \"zus_company_2\": 22118.09, \"zus_company_3\": 17202.96, \"pit4_company_1\": 19660.53, \"pit4_company_2\": 17202.96, \"pit4_company_3\": 19660.53, \"payouts\": 315972.75}"
   },
   {
     "id": "hours-month-2026-04",
     "month_key": "2026-04",
-    "month_label": "kwiecie? 2026",
+    "month_label": "kwiecień 2026",
     "selected": 1,
-    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"W?ze? Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zak?ad Kappa\"]",
+    "visible_investments_json": "[\"Centrum Alfa\", \"Terminal Beta\", \"Hala Gamma\", \"Park Delta\", \"Budynek Epsilon\", \"Magazyn Zeta\", \"Węzeł Eta\", \"Obiekt Theta\", \"Kompleks Iota\", \"Zakład Kappa\"]",
     "finance_json": "{\"zus_company_1\": 34744.21, \"zus_company_2\": 28427.08, \"zus_company_3\": 22109.95, \"pit4_company_1\": 25268.52, \"pit4_company_2\": 22109.95, \"pit4_company_3\": 25268.53, \"payouts\": 406101.2}"
   }
 ]

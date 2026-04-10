@@ -1,17 +1,19 @@
-const EMPLOYEE_STORAGE_KEY = "agentEmployeeRegistryV1";
-const EMPLOYEE_HOURS_STORAGE_KEY = "agentHoursFormV2";
-const EMPLOYEE_WORKWEAR_STORAGE_KEY = "agentWorkwearRegistryV1";
-const EMPLOYEE_VACATION_STORAGE_KEY = "agentVacationRegistryV1";
-const EMPLOYEE_PLANNING_STORAGE_KEY = "agentPlanningRegistryV1";
+const EMPLOYEE_STORAGE_KEY = "clodeEmployeeRegistryV1";
+const EMPLOYEE_HOURS_STORAGE_KEY = "clodeHoursRegistryV2";
+const EMPLOYEE_WORKWEAR_STORAGE_KEY = "clodeWorkwearRegistryV1";
+const EMPLOYEE_VACATION_STORAGE_KEY = "clodeVacationRegistryV1";
+const EMPLOYEE_PLANNING_STORAGE_KEY = "clodePlanningRegistryV1";
+const EMPLOYEE_TABLE_SORT_KEY = "clodeEmployeesTableSortV1";
 
-const employeeViewState = window.__agentEmployeeViewState || {
+const employeeViewState = window.__clodeEmployeeViewState || {
   selectedName: "",
   search: "",
   editingName: "",
   initialized: false,
+  sort: null,
 };
 
-window.__agentEmployeeViewState = employeeViewState;
+window.__clodeEmployeeViewState = employeeViewState;
 employeeViewState.pdfOptions = employeeViewState.pdfOptions || {
   identity: true,
   contact: true,
@@ -19,6 +21,29 @@ employeeViewState.pdfOptions = employeeViewState.pdfOptions || {
   medical: true,
   history: true,
 };
+
+function clodePrintBaseCss() {
+  return `
+    body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #111; }
+    h1 { margin: 0; font-size: 26px; }
+    h2 { margin: 0 0 12px; font-size: 16px; }
+    .header { margin-bottom: 24px; }
+    .header p { margin: 10px 0 0; color: #555; font-size: 12px; }
+    .print-section { margin-top: 20px; }
+    .meta-grid, .stats-grid, .meta { display: grid; gap: 10px; }
+    .meta-grid, .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 0 22px; }
+    .meta-grid div, .stats-grid div, .meta div { padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 10px; }
+    span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 6px; }
+    strong { font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #d8d8d8; text-align: left; vertical-align: top; }
+    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; white-space: nowrap; }
+  `.trim();
+}
+
+window.ClodePrintUtils = window.ClodePrintUtils || {};
+window.ClodePrintUtils.baseCss = window.ClodePrintUtils.baseCss || clodePrintBaseCss;
 
 const employeeMoneyFormatter = new Intl.NumberFormat("pl-PL", {
   style: "currency",
@@ -92,8 +117,8 @@ function employeeNumber(value) {
 }
 
 function employeeReadStore(storageKey, fallbackValue) {
-  if (window.AgentDataAccess?.legacy) {
-    return window.AgentDataAccess.legacy.read(storageKey, fallbackValue);
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.read(storageKey, fallbackValue);
   }
   try {
     const raw = window.localStorage.getItem(storageKey);
@@ -104,8 +129,8 @@ function employeeReadStore(storageKey, fallbackValue) {
 }
 
 function employeeWriteStore(storageKey, value, eventName = "") {
-  if (window.AgentDataAccess?.legacy) {
-    return window.AgentDataAccess.legacy.write(storageKey, value, eventName ? { eventName } : {});
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.write(storageKey, value, eventName ? { eventName } : {});
   }
   window.localStorage.setItem(storageKey, JSON.stringify(value));
   if (eventName) {
@@ -120,6 +145,46 @@ function employeeMoney(value) {
 
 function employeeValue(value) {
   return employeeNumberFormatter.format(employeeNumber(value));
+}
+
+function employeeDefaultSort() {
+  return { key: "last_name", direction: "asc" };
+}
+
+function employeeLoadSort() {
+  const fallback = employeeDefaultSort();
+  const parsed = employeeReadStore(EMPLOYEE_TABLE_SORT_KEY, null);
+  if (!parsed || typeof parsed !== "object") return fallback;
+  const key = String(parsed.key || "").trim();
+  const direction = String(parsed.direction || "").trim().toLowerCase();
+  if (!key) return fallback;
+  if (direction !== "asc" && direction !== "desc") return fallback;
+  return { key, direction };
+}
+
+function employeeSaveSort() {
+  employeeWriteStore(EMPLOYEE_TABLE_SORT_KEY, employeeViewState.sort || employeeDefaultSort());
+}
+
+function employeeRegistryColumnMap() {
+  return {
+    last_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.last_name || "" },
+    first_name: { type: "string", defaultDirection: "asc", getValue: (row) => row.first_name || "" },
+    status: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.status || "") },
+    position: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.position || "") },
+    medical_exam_valid_until: { type: "date", defaultDirection: "asc", getValue: (row) => row.medical_exam_valid_until || "" },
+    medical_days_remaining: { type: "number", defaultDirection: "asc", getValue: (row) => Number(row.medical_days_remaining ?? 999999) },
+    worker_code: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.worker_code || "") },
+    employment_date: { type: "date", defaultDirection: "asc", getValue: (row) => row.employment_date || "" },
+    months_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.months_count || 0) },
+    projects_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.projects_count || 0) },
+    total_cost: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.total_cost || 0) },
+  };
+}
+
+function employeeRenderHeader(label, key, sortState) {
+  if (!window.ClodeTableUtils?.renderHeader) return employeeEscape(label);
+  return window.ClodeTableUtils.renderHeader(label, "employeeRegistry", key, sortState);
 }
 
 function legacyEmployeeStatusLabel(status) {
@@ -618,7 +683,7 @@ function legacyRenderEmployeeCardV1() {
         <div><span>Kod i miejscowość</span><strong>${employeeEscape(employee.city || "-")}</strong></div>
         <div><span>Telefon</span><strong>${employeeEscape(employee.phone || "-")}</strong></div>
       </div>
-      <div class="detail-stats compact-stats">
+      <div class="stats-grid compact-stats-grid section-grid metrics-grid--3 employee-summary-stats">
         <article class="stat"><span>Przepracowane miesiące</span><strong>${employeeEscape(String(months.length))}</strong></article>
         <article class="stat"><span>Suma inwestycji</span><strong>${employeeEscape(String(totalProjects))}</strong></article>
         <article class="stat"><span>Łączny koszt wynagrodzeń</span><strong>${employeeEscape(employeeMoney(totalCost))}</strong></article>
@@ -891,7 +956,7 @@ function legacyRenderEmployeeCardV2() {
         <div><span>Kod i miejscowość</span><strong>${employeeEscape(employee.city || "-")}</strong></div>
         <div><span>Telefon</span><strong>${employeeEscape(employee.phone || "-")}</strong></div>
       </div>
-      <div class="detail-stats compact-stats">
+      <div class="stats-grid compact-stats-grid section-grid metrics-grid--3 employee-summary-stats">
         <article class="stat"><span>Przepracowane miesiące</span><strong>${employeeEscape(String(months.length))}</strong></article>
         <article class="stat"><span>Suma inwestycji</span><strong>${employeeEscape(String(totalProjects))}</strong></article>
         <article class="stat"><span>Łączny koszt wynagrodzeń</span><strong>${employeeEscape(employeeMoney(totalCost))}</strong></article>
@@ -1045,11 +1110,14 @@ function renderEmployeeRegistryTable() {
   const rows = getEmployeeRoster()
     .map((employee) => {
       const months = buildEmployeeMonthlyRows(employee.name);
+      const medical = employeeMedicalStatus(employee.medical_exam_valid_until);
       return {
         ...employee,
         months_count: months.length,
         total_cost: months.reduce((sum, month) => sum + month.employer_cost, 0),
         projects_count: new Set(months.flatMap((month) => month.contracts)).size,
+        medical_days_remaining: medical.daysRemaining,
+        medical_days_text: medical.daysText,
       };
     })
     .filter((employee) => employeeSearchText(employee).includes(query));
@@ -1059,32 +1127,36 @@ function renderEmployeeRegistryTable() {
     return;
   }
 
-  if (!rows.some((employee) => employee.name === employeeViewState.selectedName)) {
-    employeeViewState.selectedName = rows[0].name;
+  const sortState = employeeViewState.sort || employeeDefaultSort();
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(rows, sortState, employeeRegistryColumnMap())
+    : rows;
+
+  if (!sortedRows.some((employee) => employee.name === employeeViewState.selectedName)) {
+    employeeViewState.selectedName = sortedRows[0].name;
   }
 
   target.innerHTML = `
-    <table class="entity-table module-table">
+    <table class="data-table invoice-module-table module-table">
       <thead>
         <tr>
           <th>Lp.</th>
-          <th>Nazwisko</th>
-          <th>Imi\u0119</th>
-          <th>Status</th>
-          <th>Stanowisko</th>
-          <th>Badania wa\u017cne do</th>
-          <th>Dni do badania</th>
-          <th>Kod</th>
-          <th>Zatrudniony od</th>
-          <th>Miesi\u0105ce</th>
-          <th>Inwestycje</th>
-          <th>Koszt \u0142\u0105czny</th>
-          <th>Akcje</th>
+          <th>${employeeRenderHeader("Nazwisko", "last_name", sortState)}</th>
+          <th>${employeeRenderHeader("Imi\u0119", "first_name", sortState)}</th>
+          <th>${employeeRenderHeader("Status", "status", sortState)}</th>
+          <th>${employeeRenderHeader("Stanowisko", "position", sortState)}</th>
+          <th>${employeeRenderHeader("Badania wa\u017cne do", "medical_exam_valid_until", sortState)}</th>
+          <th>${employeeRenderHeader("Dni do badania", "medical_days_remaining", sortState)}</th>
+          <th>${employeeRenderHeader("Kod", "worker_code", sortState)}</th>
+          <th>${employeeRenderHeader("Zatrudniony od", "employment_date", sortState)}</th>
+          <th>${employeeRenderHeader("Miesi\u0105ce", "months_count", sortState)}</th>
+          <th>${employeeRenderHeader("Inwestycje", "projects_count", sortState)}</th>
+          <th class="text-right">${employeeRenderHeader("Koszt \u0142\u0105czny", "total_cost", sortState)}</th>
+          <th class="control-col">Akcje</th>
         </tr>
       </thead>
       <tbody>
-        ${rows.map((employee, index) => {
-          const medical = employeeMedicalStatus(employee.medical_exam_valid_until);
+        ${sortedRows.map((employee, index) => {
           return `
             <tr class="clickable-row${employee.name === employeeViewState.selectedName ? " is-selected" : ""}" data-employee-name="${employeeEscape(employee.name)}">
               <td>${index + 1}</td>
@@ -1093,12 +1165,12 @@ function renderEmployeeRegistryTable() {
               <td>${employeeEscape(employeeStatusLabel(employee.status))}</td>
               <td>${employeeEscape(employee.position || "-")}</td>
               <td>${employeeEscape(employeeDateText(employee.medical_exam_valid_until))}</td>
-              <td>${employeeEscape(medical.daysText)}</td>
+              <td>${employeeEscape(employee.medical_days_text || "-")}</td>
               <td>${employeeEscape(employee.worker_code || "-")}</td>
               <td>${employeeEscape(employeeDateText(employee.employment_date))}</td>
               <td>${employeeEscape(String(employee.months_count))}</td>
               <td>${employeeEscape(String(employee.projects_count))}</td>
-              <td>${employeeEscape(employeeMoney(employee.total_cost))}</td>
+              <td class="text-right">${employeeEscape(employeeMoney(employee.total_cost))}</td>
               <td class="action-cell">
                 <button class="table-action-button" type="button" data-employee-edit="${employeeEscape(employee.name)}">Edytuj</button>
                 <button class="table-action-button danger-button" type="button" data-employee-delete="${employeeEscape(employee.name)}">Usu\u0144</button>
@@ -1134,7 +1206,7 @@ function renderEmployeeCard() {
           <h2>${employeeEscape(employeeDisplayName(employee) || employee.name)}</h2>
         </div>
         <div class="detail-actions">
-          <button id="printEmployeeCardButton" class="primary-button" type="button">PDF karty</button>
+          <button id="printEmployeeCardButton" class="clicker-button" type="button">PDF karty</button>
         </div>
       </div>
       <div class="detail-meta-grid">
@@ -1146,7 +1218,7 @@ function renderEmployeeCard() {
         <div><span>Kod i miejscowo\u015b\u0107</span><strong>${employeeEscape(employee.city || "-")}</strong></div>
         <div><span>Telefon</span><strong>${employeeEscape(employee.phone || "-")}</strong></div>
       </div>
-      <div class="detail-stats compact-stats">
+      <div class="stats-grid compact-stats-grid section-grid metrics-grid--3 employee-summary-stats">
         <article class="stat"><span>Przepracowane miesi\u0105ce</span><strong>${employeeEscape(String(months.length))}</strong></article>
         <article class="stat"><span>Suma inwestycji</span><strong>${employeeEscape(String(totalProjects))}</strong></article>
         <article class="stat"><span>\u0141\u0105czny koszt wynagrodzeń</span><strong>${employeeEscape(employeeMoney(totalCost))}</strong></article>
@@ -1155,10 +1227,10 @@ function renderEmployeeCard() {
         <div class="section-head">
           <h3>Badania lekarskie</h3>
         </div>
-        <div class="detail-meta-grid">
-          <div><span>Badania wa\u017cne do</span><strong>${employeeEscape(employeeDateText(employee.medical_exam_valid_until))}</strong></div>
-          <div><span>Dni do najbli\u017cszego badania</span><strong>${employeeEscape(medical.daysText)}</strong></div>
-          <div><span>Status bada\u0144</span><strong>${employeeEscape(medical.label)}</strong></div>
+        <div class="stats-grid compact-stats-grid section-grid metrics-grid--3 employee-medical-stats">
+          <article class="stat"><span>Badania wa\u017cne do</span><strong>${employeeEscape(employeeDateText(employee.medical_exam_valid_until))}</strong></article>
+          <article class="stat"><span>Dni do najbli\u017cszego badania</span><strong>${employeeEscape(medical.daysText)}</strong></article>
+          <article class="stat"><span>Status bada\u0144</span><strong>${employeeEscape(medical.label)}</strong></article>
         </div>
       </section>
       ${employeeRenderPdfOptions()}
@@ -1429,19 +1501,7 @@ function exportEmployeeCardPdf(employee, months) {
   <meta charset="utf-8">
   <title>Karta pracownika</title>
   <style>
-    body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #111; }
-    h1 { margin: 0; font-size: 26px; }
-    h2 { margin: 0 0 12px; font-size: 16px; }
-    .header { margin-bottom: 24px; }
-    .header p { margin: 10px 0 0; color: #555; font-size: 12px; }
-    .print-section { margin-top: 20px; }
-    .meta-grid, .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-    .meta-grid div, .stats-grid div { padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 10px; }
-    span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 6px; }
-    strong { font-size: 14px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #d8d8d8; text-align: left; vertical-align: top; }
-    th { font-size: 10px; text-transform: uppercase; color: #555; white-space: nowrap; }
+    ${(window.ClodePrintUtils?.baseCss ? window.ClodePrintUtils.baseCss() : clodePrintBaseCss())}
   </style>
 </head>
 <body>
@@ -1463,6 +1523,9 @@ function initEmployeesView() {
   ensureEmployeeRegistrySeed();
   const roster = getEmployeeRoster();
   employeeViewState.selectedName = roster[0]?.name || "";
+  if (!employeeViewState.sort) {
+    employeeViewState.sort = employeeLoadSort();
+  }
 
   document.getElementById("newEmployeeButton")?.addEventListener("click", resetEmployeeForm);
   document.getElementById("saveEmployeeButton")?.addEventListener("click", saveEmployeeFromForm);
@@ -1472,6 +1535,18 @@ function initEmployeesView() {
     renderEmployeeModule();
   });
   document.getElementById("employeeRegistryTable")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='employeeRegistry']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      employeeViewState.sort = window.ClodeTableUtils.nextSort(
+        employeeViewState.sort || employeeDefaultSort(),
+        sortButton.dataset.sortKey,
+        employeeRegistryColumnMap()
+      );
+      employeeSaveSort();
+      renderEmployeeRegistryTable();
+      return;
+    }
+
     const editButton = event.target.closest("[data-employee-edit]");
     if (editButton) {
       employeeViewState.selectedName = editButton.dataset.employeeEdit;
@@ -1529,3 +1604,4 @@ if (document.readyState === "loading") {
 } else {
   initEmployeesView();
 }
+

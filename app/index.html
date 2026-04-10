@@ -4,19 +4,42 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Clode</title>
-  <link rel="stylesheet" href="styles.css?v=20260407-01">
+  <link rel="stylesheet" href="styles.css?v=20260409-60">
 </head>
 <body>
   <div class="app-shell">
     <main class="workspace">
       <section id="homeView" class="app-view is-active home-view">
         <div class="home-stage">
-          <img class="home-logo" src="assets/agz-logo-home-v2.png?v=20260330-19" alt="AGZ">
-          <div class="home-copy">
-            <h1>System zarz&#261;dzania firm&#261;</h1>
-          </div>
+          <section class="home-brand-panel">
+            <img class="home-logo" src="assets/clode-logo.svg?v=20260409-60" alt="Clode">
+            <div class="home-copy">
+              <p class="eyebrow home-eyebrow">Clode</p>
+              <h1>Zaloguj się do środowiska pracy operacyjnej</h1>
+              <p class="hero-copy home-subcopy">
+                Jedno miejsce do pracy na kontraktach, fakturach, czasie pracy i planowaniu zespołów.
+              </p>
+            </div>
+            <div class="home-feature-strip" aria-hidden="true">
+              <article class="home-feature-chip">
+                <strong>Kontrakty</strong>
+                <span>Rejestr i status realizacji</span>
+              </article>
+              <article class="home-feature-chip">
+                <strong>Finanse</strong>
+                <span>Faktury i dashboard marży</span>
+              </article>
+              <article class="home-feature-chip">
+                <strong>Kadry</strong>
+                <span>Godziny, planowanie i absencje</span>
+              </article>
+            </div>
+          </section>
           <section class="home-login-card">
             <h2>Logowanie</h2>
+            <p class="home-login-copy">
+              Użyj swojego konta, aby przejść do modułów operacyjnych i raportowych.
+            </p>
             <div class="home-login-grid">
               <label class="toolbar-field home-login-field">
                 <span>U&#380;ytkownik</span>
@@ -47,7 +70,7 @@
         <div class="view-grid">
           <section class="panel panel-wide">
             <h2>Podsumowanie</h2>
-            <div class="stats-grid section-grid metrics-grid--6">
+            <div class="stats-grid section-grid metrics-grid--6 dashboard-summary-stats">
               <article class="stat"><span>Faktury kosztowe</span><strong id="totalMaterial">-</strong></article>
               <article class="stat"><span>Koszt wynagrodzeń</span><strong id="totalLabor">-</strong></article>
               <article class="stat"><span>Łączny koszt</span><strong id="totalCost">-</strong></article>
@@ -127,51 +150,50 @@
 
         <div class="view-grid">
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
-              <div class="section-head section-head-inline">
-                <div>
-                  <h2>Formularz kontraktu</h2>
-                  <p class="hero-copy form-copy">
-                    Dodaj lub zaktualizuj kontrakt. Jeśli wpiszesz tę samą nazwę ponownie, dane kontraktu zostaną nadpisane.
-                  </p>
-                </div>
-                <div class="inline-actions compact-actions">
-                  <button id="newContractButton" class="secondary-button" type="button">+ Nowy kontrakt</button>
-                </div>
+            <div class="section-head section-head-inline">
+              <div>
+                <h2>Formularz kontraktu</h2>
+                <p class="hero-copy form-copy">
+                  Dodaj lub zaktualizuj kontrakt. Jeśli wpiszesz tę samą nazwę ponownie, dane kontraktu zostaną nadpisane.
+                </p>
               </div>
-              <div class="toolbar-grid investment-form-grid contract-form-grid section-grid form-grid--6">
-                <label class="toolbar-field">
-                  <span>Nazwa kontraktu</span>
-                  <input id="contractNameInput" type="text" placeholder="Np. BCU">
-                </label>
-                <label class="toolbar-field">
-                  <span>Zamawiający / inwestor</span>
-                  <input id="contractInvestorInput" type="text" placeholder="Nazwa inwestora">
-                </label>
-                <label class="toolbar-field">
-                  <span>Data podpisania umowy</span>
-                  <input id="contractSignedInput" type="date">
-                </label>
-                <label class="toolbar-field">
-                  <span>Termin zakończenia inwestycji</span>
-                  <input id="contractEndInput" type="date">
-                </label>
-                <label class="toolbar-field">
-                  <span>Kwota ryczałtowa</span>
-                  <input id="contractValueInput" type="number" step="0.01" min="0" placeholder="0.00">
-                </label>
-                <label class="toolbar-field">
-                  <span>Status</span>
-                  <select id="contractStatusInput">
-                    <option value="active">W realizacji</option>
-                    <option value="completed">Zakończona</option>
-                  </select>
-                </label>
-                <div class="toolbar-field align-end contract-form-action-tile">
-                  <span>&nbsp;</span>
-                  <button id="saveContractButton" class="primary-button" type="button">Zapisz kontrakt</button>
-                </div>
+              <div class="inline-actions compact-actions">
+                <button id="newContractButton" class="clicker-button" type="button">+ Nowy kontrakt</button>
+                <button id="saveContractButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz</button>
               </div>
+            </div>
+            <div class="toolbar-grid investment-form-grid contract-form-grid section-grid form-grid--6 form-grid-system form-grid-system--contracts">
+              <label class="toolbar-field">
+                <span>ID</span>
+                <input id="contractNumberInput" type="text" placeholder="Np. K/2026/001">
+              </label>
+              <label class="toolbar-field">
+                <span>Nazwa kontraktu</span>
+                <input id="contractNameInput" type="text" placeholder="Np. BCU">
+              </label>
+              <label class="toolbar-field">
+                <span>Zamawiający / inwestor</span>
+                <input id="contractInvestorInput" type="text" placeholder="Nazwa inwestora">
+              </label>
+              <label class="toolbar-field">
+                <span>Data podpisania umowy</span>
+                <input id="contractSignedInput" type="date">
+              </label>
+              <label class="toolbar-field">
+                <span>Termin zakończenia inwestycji</span>
+                <input id="contractEndInput" type="date">
+              </label>
+              <label class="toolbar-field">
+                <span>Kwota ryczałtowa</span>
+                <input id="contractValueInput" type="number" step="0.01" min="0" placeholder="0.00">
+              </label>
+              <label class="toolbar-field">
+                <span>Status</span>
+                <select id="contractStatusInput">
+                  <option value="active">W realizacji</option>
+                  <option value="completed">Zakończona</option>
+                </select>
+              </label>
             </div>
           </section>
 
@@ -180,7 +202,7 @@
               <h2>Spis kontraktów</h2>
               <div class="inline-actions">
                 <input id="contractSearchInput" type="search" placeholder="Szukaj kontraktu">
-                <button id="deleteSelectedContractsButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
+                <button id="deleteSelectedContractsButton" class="clicker-button clicker-button--danger" type="button">Usuń zaznaczone</button>
               </div>
             </div>
             <div id="contractsRegistryTable"></div>
@@ -274,43 +296,43 @@
 
         <div class="view-grid">
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <h2>Sterowanie miesiącem</h2>
               </div>
-              <div class="toolbar-grid hours-toolbar-grid section-grid controls-grid--5">
-                <label class="toolbar-field">
-                  <span>Miesiąc</span>
-                  <select id="monthSelect"></select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Nowy miesiąc</span>
-                  <div class="inline-actions month-add-actions">
-                    <select id="newMonthMonthSelect"></select>
-                    <input id="newMonthYearInput" type="number" min="2020" max="2100" step="1" placeholder="Rok">
-                    <button id="addMonthButton" class="secondary-button" type="button">Dodaj miesiąc</button>
-                  </div>
-                </label>
-                <label class="toolbar-field">
-                  <span>Usuń miesiące</span>
-                  <div class="inline-actions month-delete-actions">
-                    <select id="monthDeleteSelect"></select>
-                    <button id="deleteSelectedMonthsButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
-                  </div>
-                </label>
-                <label class="toolbar-field">
-                  <span>Szukaj pracownika</span>
-                  <input id="employeeSearchInput" type="search" placeholder="Nazwisko lub imię">
-                </label>
-                <label class="toolbar-field">
-                  <span>Dodaj pracownika</span>
-                  <div class="inline-actions">
-                    <input id="hoursEmployeeNameInput" type="text" list="hoursEmployeeSuggestions" placeholder="Nazwisko Imię">
-                    <datalist id="hoursEmployeeSuggestions"></datalist>
-                    <button id="addHoursEmployeeButton" class="secondary-button" type="button">Dodaj pracownika</button>
-                  </div>
-                </label>
-              </div>
+            </div>
+            <div class="toolbar-grid hours-toolbar-grid section-grid controls-grid--5 form-grid-system form-grid-system--controls">
+              <label class="toolbar-field">
+                <span>Miesiąc</span>
+                <select id="monthSelect"></select>
+              </label>
+              <label class="toolbar-field">
+                <span>Nowy miesiąc</span>
+                <div class="inline-actions month-add-actions">
+                  <select id="newMonthMonthSelect"></select>
+                  <input id="newMonthYearInput" type="number" min="2020" max="2100" step="1" placeholder="Rok">
+                  <button id="addMonthButton" class="secondary-button" type="button">Dodaj</button>
+                </div>
+              </label>
+              <label class="toolbar-field">
+                <span>Usuń miesiące</span>
+                <div class="inline-actions month-delete-actions">
+                  <select id="monthDeleteSelect"></select>
+                  <button id="deleteSelectedMonthsButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
+                </div>
+              </label>
+              <label class="toolbar-field">
+                <span>Szukaj pracownika</span>
+                <input id="employeeSearchInput" type="search" placeholder="Nazwisko lub imię">
+              </label>
+              <label class="toolbar-field">
+                <span>Dodaj pracownika</span>
+                <div class="inline-actions">
+                  <input id="hoursEmployeeNameInput" type="text" list="hoursEmployeeSuggestions" placeholder="Nazwisko Imię">
+                  <datalist id="hoursEmployeeSuggestions"></datalist>
+                  <button id="addHoursEmployeeButton" class="secondary-button" type="button">Dodaj pracownika</button>
+                </div>
+              </label>
             </div>
           </section>
 
@@ -382,36 +404,36 @@
         </header>
         <div class="view-grid">
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <h2>Analiza kontraktu</h2>
               </div>
-              <div class="toolbar-grid invoice-filter-grid section-grid controls-grid--5">
-                <label class="toolbar-field">
-                  <span>Szukaj kontraktu</span>
-                  <input id="invoiceContractSearchInput" type="search" placeholder="Szukaj kontraktu">
-                </label>
-                <label class="toolbar-field toolbar-field--span-2">
-                  <span>Kontrakt</span>
-                  <select id="invoiceContractSelect"></select>
-                </label>
-                <div class="toolbar-field invoice-segment-field">
-                  <span>Zakres analizy</span>
-                  <div id="invoiceScopeTabs" class="invoice-segmented-control">
-                    <button class="secondary-button is-active" data-invoice-scope="all" type="button">Całość</button>
-                    <button class="secondary-button" data-invoice-scope="year" type="button">Rok</button>
-                    <button class="secondary-button" data-invoice-scope="month" type="button">Miesiąc</button>
-                  </div>
+            </div>
+            <div class="toolbar-grid invoice-filter-grid">
+              <label class="toolbar-field">
+                <span>Szukaj kontraktu</span>
+                <input id="invoiceContractSearchInput" type="search" placeholder="Szukaj kontraktu">
+              </label>
+              <label class="toolbar-field toolbar-field--span-2">
+                <span>Kontrakt</span>
+                <select id="invoiceContractSelect"></select>
+              </label>
+              <div class="toolbar-field invoice-segment-field">
+                <span>Zakres analizy</span>
+                <div id="invoiceScopeTabs" class="invoice-segmented-control">
+                  <button class="secondary-button is-active" data-invoice-scope="all" type="button">Całość</button>
+                  <button class="secondary-button" data-invoice-scope="year" type="button">Rok</button>
+                  <button class="secondary-button" data-invoice-scope="month" type="button">Miesiąc</button>
                 </div>
-                <label class="toolbar-field" id="invoiceYearField" hidden>
-                  <span>Rok</span>
-                  <select id="invoiceYearSelect"></select>
-                </label>
-                <label class="toolbar-field" id="invoiceMonthField" hidden>
-                  <span>Miesiąc</span>
-                  <select id="invoiceMonthSelect"></select>
-                </label>
               </div>
+              <label class="toolbar-field" id="invoiceYearField" hidden>
+                <span>Rok</span>
+                <select id="invoiceYearSelect"></select>
+              </label>
+              <label class="toolbar-field" id="invoiceMonthField" hidden>
+                <span>Miesiąc</span>
+                <select id="invoiceMonthSelect"></select>
+              </label>
             </div>
 
             <section class="subsection-block invoice-contract-overview">
@@ -432,18 +454,6 @@
                   <p id="invoiceScopeCaption" class="hero-copy form-copy"></p>
                 </div>
                 <div class="inline-actions compact-actions">
-                  <label class="toolbar-field toolbar-field--compact">
-                    <span>Status płatności</span>
-                    <select id="invoicePaymentStatusFilter">
-                      <option value="">Wszystkie</option>
-                      <option value="unpaid">Nieopłacone</option>
-                      <option value="paid">Opłacone</option>
-                      <option value="overdue">Przeterminowane</option>
-                    </select>
-                  </label>
-                  <span id="invoiceSelectedCount" class="invoice-selected-count">Zaznaczone: 0</span>
-                  <button id="invoiceBulkDeleteButton" class="secondary-button danger-button" type="button">Usuń zaznaczone</button>
-                  <button id="toggleInvoiceFormButton" class="primary-button" type="button">+ Dodaj fakturę</button>
                 </div>
               </div>
 
@@ -452,93 +462,94 @@
                 <button class="secondary-button" data-invoice-type="sales" type="button">Faktury sprzedażowe</button>
               </div>
 
-              <section id="invoiceEntryEditor" class="subsection-block invoice-entry-editor" hidden>
-                <div class="section-head section-head-stack">
+              <section id="invoiceEntryEditor" class="subsection-block invoice-entry-editor">
+                <div class="section-head">
                   <div>
                     <h3 id="invoiceFormHeading">Dodaj fakturę</h3>
                     <p id="invoiceFormContext" class="hero-copy form-copy"></p>
                   </div>
-                  <div class="investment-form-grid invoice-entry-grid section-grid form-grid--6">
-                    <label class="toolbar-field">
-                      <span>Typ faktury</span>
-                      <select id="invoiceTypeInput">
-                        <option value="cost">Kosztowa</option>
-                        <option value="sales">Faktura sprzedażowa</option>
-                      </select>
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Data wystawienia</span>
-                      <input id="invoiceDateInput" type="date">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Numer faktury</span>
-                      <input id="invoiceNumberInput" type="text" placeholder="Np. FV/03/2026">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Kontrahent</span>
-                      <input id="invoicePartyInput" type="text" placeholder="Nazwa kontrahenta">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Kategoria</span>
-                      <input id="invoiceCategoryInput" type="text" placeholder="Np. materiały / podwykonawca">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Opis</span>
-                      <input id="invoiceDescriptionInput" type="text" placeholder="Krótki opis">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Netto</span>
-                      <input id="invoiceNetInput" type="number" min="0" step="0.01" placeholder="0.00">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>VAT</span>
-                      <select id="invoiceVatRateSelect">
-                        <option value="23" selected>23%</option>
-                        <option value="none">Bez VAT</option>
-                        <option value="custom">Inny</option>
-                      </select>
-                    </label>
-                    <label class="toolbar-field" id="invoiceVatCustomField" hidden>
-                      <span>Inna stawka VAT %</span>
-                      <input id="invoiceVatRateCustomInput" type="number" min="0" step="0.01" placeholder="Np. 8">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Kwota VAT</span>
-                      <input id="invoiceVatInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Brutto</span>
-                      <input id="invoiceGrossInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Termin płatności</span>
-                      <input id="invoiceDueDateInput" type="date">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Data płatności</span>
-                      <input id="invoicePaymentDateInput" type="date">
-                    </label>
-                    <label class="toolbar-field">
-                      <span>Status płatności</span>
-                      <select id="invoicePaymentStatusInput">
-                        <option value="unpaid">Nieopłacona</option>
-                        <option value="paid">Opłacona</option>
-                        <option value="overdue">Przeterminowana</option>
-                      </select>
-                    </label>
-                    <div class="toolbar-field align-end toolbar-field--action-stack invoice-form-action-tile">
-                      <span>&nbsp;</span>
-                      <div class="inline-actions">
-                        <button id="cancelInvoiceButton" class="secondary-button" type="button">Anuluj</button>
-                        <button id="saveAndNextInvoiceButton" class="secondary-button" type="button">Zapisz i dodaj następną</button>
-                        <button id="saveInvoiceButton" class="primary-button" type="button">Zapisz</button>
-                      </div>
-                    </div>
+                  <div class="inline-actions compact-actions invoice-form-actions">
+                    <button id="cancelInvoiceButton" class="clicker-button" type="button" hidden>Anuluj</button>
+                    <button id="newInvoiceButton" class="clicker-button" type="button">+ Dodaj fakturę</button>
+                    <button id="saveInvoiceButton" class="clicker-button clicker-button--primary clicker-button--save" type="button" hidden>Zapisz</button>
                   </div>
+                </div>
+                <div id="invoiceEntryFields" class="investment-form-grid invoice-entry-grid section-grid form-grid--6 form-grid-system form-grid-system--entry" hidden>
+                  <label class="toolbar-field">
+                    <span>Typ faktury</span>
+                    <select id="invoiceTypeInput">
+                      <option value="cost">Kosztowa</option>
+                      <option value="sales">Faktura sprzedażowa</option>
+                    </select>
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Data wystawienia</span>
+                    <input id="invoiceDateInput" type="date">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Numer faktury</span>
+                    <input id="invoiceNumberInput" type="text" placeholder="Np. FV/03/2026">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Kontrahent</span>
+                    <input id="invoicePartyInput" type="text" placeholder="Nazwa kontrahenta">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Kategoria</span>
+                    <input id="invoiceCategoryInput" type="text" placeholder="Np. materiały / podwykonawca">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Opis</span>
+                    <input id="invoiceDescriptionInput" type="text" placeholder="Krótki opis">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Netto</span>
+                    <input id="invoiceNetInput" type="number" min="0" step="0.01" placeholder="0.00">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>VAT</span>
+                    <select id="invoiceVatRateSelect">
+                      <option value="23" selected>23%</option>
+                      <option value="none">Bez VAT</option>
+                      <option value="custom">Inny</option>
+                    </select>
+                  </label>
+                  <label class="toolbar-field" id="invoiceVatCustomField" hidden>
+                    <span>Inna stawka VAT %</span>
+                    <input id="invoiceVatRateCustomInput" type="number" min="0" step="0.01" placeholder="Np. 8">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Kwota VAT</span>
+                    <input id="invoiceVatInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Brutto</span>
+                    <input id="invoiceGrossInput" type="number" min="0" step="0.01" placeholder="0.00" readonly>
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Termin płatności</span>
+                    <input id="invoiceDueDateInput" type="date">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Data płatności</span>
+                    <input id="invoicePaymentDateInput" type="date">
+                  </label>
+                  <label class="toolbar-field">
+                    <span>Status płatności</span>
+                    <select id="invoicePaymentStatusInput">
+                      <option value="unpaid">Nieopłacona</option>
+                      <option value="paid">Opłacona</option>
+                      <option value="overdue">Przeterminowana</option>
+                    </select>
+                  </label>
                 </div>
               </section>
 
               <div class="form-table-shell invoice-table-shell">
+                <div class="inline-actions compact-actions invoice-table-actions">
+                  <span id="invoiceSelectedCount" class="invoice-selected-count">Zaznaczone: 0</span>
+                  <button id="invoiceBulkDeleteButton" class="clicker-button clicker-button--danger" type="button">Usuń zaznaczone</button>
+                </div>
                 <div id="invoiceEntriesTable"></div>
               </div>
             </section>
@@ -556,65 +567,60 @@
 
         <div class="view-grid">
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <h2 id="employeeFormHeading">Dane pracownika</h2>
               </div>
               <div class="inline-actions compact-actions">
-                <button id="newEmployeeButton" class="secondary-button" type="button">+ Nowy pracownik</button>
+                <button id="newEmployeeButton" class="clicker-button" type="button">+ Nowy pracownik</button>
+                <button id="deleteEmployeeButton" class="clicker-button clicker-button--danger" type="button">Usuń</button>
+                <button id="saveEmployeeButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz</button>
               </div>
-              <div class="investment-form-grid employee-form-grid section-grid form-grid--6">
-                <label class="toolbar-field">
-                  <span>Imię</span>
-                  <input id="employeeFirstNameInput" type="text" placeholder="Imię">
-                </label>
-                <label class="toolbar-field">
-                  <span>Nazwisko</span>
-                  <input id="employeeLastNameInput" type="text" placeholder="Nazwisko">
-                </label>
-                <label class="toolbar-field">
-                  <span>Stanowisko</span>
-                  <input id="employeePositionInput" type="text" placeholder="Np. monter">
-                </label>
-                <label class="toolbar-field">
-                  <span>Zatrudniony od</span>
-                  <input id="employeeStartDateInput" type="date">
-                </label>
-                <label class="toolbar-field">
-                  <span>Status</span>
-                  <select id="employeeStatusInput">
-                    <option value="active">Aktywny</option>
-                    <option value="inactive">Zakończone zatrudnienie</option>
-                  </select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Zakończenie pracy</span>
-                  <input id="employeeEndDateInput" type="date">
-                </label>
-                <label class="toolbar-field">
-                  <span>Adres</span>
-                  <input id="employeeStreetInput" type="text" placeholder="Ulica i numer">
-                </label>
-                <label class="toolbar-field">
-                  <span>Kod i miejscowość</span>
-                  <input id="employeeCityInput" type="text" placeholder="00-000 Miejscowość">
-                </label>
-                <label class="toolbar-field">
-                  <span>Telefon</span>
-                  <input id="employeePhoneInput" type="text" placeholder="+48 000 000 000">
-                </label>
-                <label class="toolbar-field">
-                  <span>Badania ważne do</span>
-                  <input id="employeeMedicalExamValidUntilInput" type="date">
-                </label>
-                <div class="toolbar-field align-end toolbar-field--action-stack employee-form-action-tile">
-                  <span>&nbsp;</span>
-                  <div class="inline-actions">
-                    <button id="deleteEmployeeButton" class="secondary-button" type="button">Usuń pracownika</button>
-                    <button id="saveEmployeeButton" class="primary-button" type="button">Zapisz pracownika</button>
-                  </div>
-                </div>
-              </div>
+            </div>
+            <div class="investment-form-grid employee-form-grid section-grid form-grid--6 form-grid-system form-grid-system--employees">
+              <label class="toolbar-field">
+                <span>Imię</span>
+                <input id="employeeFirstNameInput" type="text" placeholder="Imię">
+              </label>
+              <label class="toolbar-field">
+                <span>Nazwisko</span>
+                <input id="employeeLastNameInput" type="text" placeholder="Nazwisko">
+              </label>
+              <label class="toolbar-field">
+                <span>Stanowisko</span>
+                <input id="employeePositionInput" type="text" placeholder="Np. monter">
+              </label>
+              <label class="toolbar-field">
+                <span>Zatrudniony od</span>
+                <input id="employeeStartDateInput" type="date">
+              </label>
+              <label class="toolbar-field">
+                <span>Status</span>
+                <select id="employeeStatusInput">
+                  <option value="active">Aktywny</option>
+                  <option value="inactive">Zakończone zatrudnienie</option>
+                </select>
+              </label>
+              <label class="toolbar-field">
+                <span>Zakończenie pracy</span>
+                <input id="employeeEndDateInput" type="date">
+              </label>
+              <label class="toolbar-field">
+                <span>Adres</span>
+                <input id="employeeStreetInput" type="text" placeholder="Ulica i numer">
+              </label>
+              <label class="toolbar-field">
+                <span>Kod i miejscowość</span>
+                <input id="employeeCityInput" type="text" placeholder="00-000 Miejscowość">
+              </label>
+              <label class="toolbar-field">
+                <span>Telefon</span>
+                <input id="employeePhoneInput" type="text" placeholder="+48 000 000 000">
+              </label>
+              <label class="toolbar-field">
+                <span>Badania ważne do</span>
+                <input id="employeeMedicalExamValidUntilInput" type="date">
+              </label>
             </div>
           </section>
 
@@ -642,7 +648,7 @@
 
         <div class="view-grid">
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <h2 id="workwearFormHeading">Nowe wydanie</h2>
                 <p class="hero-copy form-copy">
@@ -650,43 +656,40 @@
                 </p>
               </div>
               <div class="inline-actions compact-actions">
-                <button id="newWorkwearButton" class="secondary-button" type="button">+ Nowe wydanie</button>
+                <button id="newWorkwearButton" class="clicker-button" type="button">+ Nowe wydanie</button>
+                <button id="saveWorkwearButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz</button>
               </div>
-              <div class="investment-form-grid workwear-form-grid section-grid form-grid--7">
-                <label class="toolbar-field">
-                  <span>Pracownik</span>
-                  <select id="workwearEmployeeSelect"></select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Data wydania</span>
-                  <input id="workwearIssueDateInput" type="date">
-                </label>
-                <label class="toolbar-field">
-                  <span>Produkt</span>
-                  <select id="workwearProductSelect"></select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Rozmiar</span>
-                  <select id="workwearSizeSelect"></select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Ilość</span>
-                  <input id="workwearQtyInput" type="number" min="1" step="1" placeholder="1">
-                </label>
-                <label class="toolbar-field">
-                  <span>Uwagi</span>
-                  <input id="workwearNotesInput" type="text" placeholder="Dodatkowa informacja">
-                </label>
-                <div class="toolbar-field align-end workwear-form-action-tile">
-                  <span>&nbsp;</span>
-                  <button id="saveWorkwearButton" class="primary-button" type="button">Zapisz wydanie</button>
-                </div>
-              </div>
+            </div>
+            <div class="investment-form-grid workwear-form-grid section-grid form-grid--6">
+              <label class="toolbar-field">
+                <span>Pracownik</span>
+                <select id="workwearEmployeeSelect"></select>
+              </label>
+              <label class="toolbar-field">
+                <span>Data wydania</span>
+                <input id="workwearIssueDateInput" type="date">
+              </label>
+              <label class="toolbar-field">
+                <span>Produkt</span>
+                <select id="workwearProductSelect"></select>
+              </label>
+              <label class="toolbar-field">
+                <span>Rozmiar</span>
+                <select id="workwearSizeSelect"></select>
+              </label>
+              <label class="toolbar-field">
+                <span>Ilość</span>
+                <input id="workwearQtyInput" type="number" min="1" step="1" placeholder="1">
+              </label>
+              <label class="toolbar-field">
+                <span>Uwagi</span>
+                <input id="workwearNotesInput" type="text" placeholder="Dodatkowa informacja">
+              </label>
             </div>
           </section>
 
           <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <h2>Katalog odzieży</h2>
                 <p class="hero-copy form-copy">
@@ -694,31 +697,28 @@
                 </p>
               </div>
               <div class="inline-actions compact-actions">
-                <button id="newWorkwearCatalogButton" class="secondary-button" type="button">+ Nowa pozycja</button>
+                <button id="newWorkwearCatalogButton" class="clicker-button" type="button">+ Nowa pozycja</button>
+                <button id="saveWorkwearCatalogButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz</button>
               </div>
-              <div class="investment-form-grid workwear-catalog-grid section-grid form-grid--4">
-                <label class="toolbar-field">
-                  <span>Nazwa pozycji</span>
-                  <input id="workwearCatalogNameInput" type="text" placeholder="Np. kurtka zimowa">
-                </label>
-                <label class="toolbar-field">
-                  <span>Kategoria</span>
-                  <input id="workwearCatalogCategoryInput" type="text" placeholder="Np. odzież wierzchnia">
-                </label>
-                <label class="toolbar-field">
-                  <span>Opis standardu</span>
-                  <input id="workwearCatalogNotesInput" type="text" placeholder="Np. wydanie sezonowe">
-                </label>
-                <div class="toolbar-field align-end">
-                  <span>&nbsp;</span>
-                  <button id="saveWorkwearCatalogButton" class="primary-button" type="button">Zapisz pozycję</button>
-                </div>
-              </div>
+            </div>
+            <div class="investment-form-grid workwear-catalog-grid section-grid controls-grid--3">
+              <label class="toolbar-field">
+                <span>Nazwa pozycji</span>
+                <input id="workwearCatalogNameInput" type="text" placeholder="Np. kurtka zimowa">
+              </label>
+              <label class="toolbar-field">
+                <span>Kategoria</span>
+                <input id="workwearCatalogCategoryInput" type="text" placeholder="Np. odzież wierzchnia">
+              </label>
+              <label class="toolbar-field">
+                <span>Opis standardu</span>
+                <input id="workwearCatalogNotesInput" type="text" placeholder="Np. wydanie sezonowe">
+              </label>
             </div>
             <div id="workwearCatalogTable"></div>
           </section>
 
-          <section class="panel panel-wide">
+          <section class="panel panel-half">
             <div class="section-head">
               <h2>Pracownicy</h2>
               <input id="workwearSearchInput" type="search" placeholder="Szukaj pracownika">
@@ -726,7 +726,7 @@
             <div id="workwearEmployeesTable"></div>
           </section>
 
-          <section class="panel panel-wide">
+          <section class="panel panel-half">
             <div id="workwearCardView"></div>
           </section>
         </div>
@@ -755,84 +755,81 @@
           </section>
 
           <section class="panel panel-two-thirds">
-            <div class="section-head section-head-stack">
+            <div class="section-head">
               <div>
                 <p class="eyebrow">Karta urlopowa</p>
                 <h2 id="vacationEmployeeHeading">Wybierz pracownika</h2>
                 <p id="vacationEmployeeSubline" class="hero-copy form-copy"></p>
               </div>
-              <div class="investment-form-grid vacation-balance-grid section-grid controls-grid--4">
-                <label class="toolbar-field">
-                  <span>Limit roczny</span>
-                  <input id="vacationBaseInput" type="number" min="0" step="0.5" placeholder="0">
-                </label>
-                <label class="toolbar-field">
-                  <span>Urlop zaległy</span>
-                  <input id="vacationCarryInput" type="number" min="0" step="0.5" placeholder="0">
-                </label>
-                <label class="toolbar-field">
-                  <span>Dodatkowa pula</span>
-                  <input id="vacationExtraInput" type="number" min="0" step="0.5" placeholder="0">
-                </label>
-                <div class="toolbar-field align-end">
-                  <span>&nbsp;</span>
-                  <button id="saveVacationBalanceButton" class="primary-button" type="button">Zapisz pulę</button>
-                </div>
-              </div>
+            </div>
+            <div class="inline-actions compact-actions vacation-balance-actions">
+              <button id="saveVacationBalanceButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz</button>
+            </div>
+
+            <div class="investment-form-grid vacation-balance-grid section-grid controls-grid--3">
+              <label class="toolbar-field">
+                <span>Limit roczny</span>
+                <input id="vacationBaseInput" type="number" min="0" step="0.5" placeholder="0">
+              </label>
+              <label class="toolbar-field">
+                <span>Urlop zaległy</span>
+                <input id="vacationCarryInput" type="number" min="0" step="0.5" placeholder="0">
+              </label>
+              <label class="toolbar-field">
+                <span>Dodatkowa pula</span>
+                <input id="vacationExtraInput" type="number" min="0" step="0.5" placeholder="0">
+              </label>
             </div>
 
             <div id="vacationBalanceStats" class="stats-grid compact-stats-grid section-grid metrics-grid--6"></div>
 
             <section class="subsection-block">
-              <div class="section-head section-head-stack">
+              <div class="section-head">
                 <div>
                   <h3 id="vacationRequestFormHeading">Nowy wniosek / nieobecność</h3>
                   <p class="hero-copy form-copy">
                     Osoba uprawniona wpisuje wniosek, a później zmienia jego status na zatwierdzony albo odrzucony.
                   </p>
                 </div>
-                <div class="inline-actions compact-actions">
-                  <button id="newVacationRequestButton" class="secondary-button" type="button">+ Nowy wniosek</button>
+                <div class="inline-actions compact-actions vacation-request-actions">
+                  <button id="newVacationRequestButton" class="clicker-button" type="button">+ Nowy wniosek</button>
+                  <button id="saveVacationRequestButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Dodaj wniosek</button>
                 </div>
-                <div class="investment-form-grid vacation-request-grid section-grid form-grid--4">
-                  <label class="toolbar-field">
-                    <span>Pracownik</span>
-                    <select id="vacationRequestEmployeeSelect"></select>
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Rodzaj</span>
-                    <select id="vacationTypeInput">
-                      <option value="vacation">Urlop wypoczynkowy</option>
-                      <option value="on_demand">Urlop na żądanie</option>
-                      <option value="l4">L4</option>
-                      <option value="other">Inna nieobecność</option>
-                    </select>
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Od</span>
-                    <input id="vacationStartInput" type="date">
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Do</span>
-                    <input id="vacationEndInput" type="date">
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Liczba dni</span>
-                    <input id="vacationDaysInput" type="number" min="0" step="0.5" placeholder="0">
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Wprowadza</span>
-                    <input id="vacationRequestedByInput" type="text" placeholder="Imię i nazwisko">
-                  </label>
-                  <label class="toolbar-field">
-                    <span>Uwagi</span>
-                    <input id="vacationNotesInput" type="text" placeholder="Opcjonalna uwaga">
-                  </label>
-                  <div class="toolbar-field align-end">
-                    <span>&nbsp;</span>
-                    <button id="saveVacationRequestButton" class="primary-button" type="button">Dodaj wniosek</button>
-                  </div>
-                </div>
+              </div>
+              <div class="investment-form-grid vacation-request-grid section-grid form-grid--4">
+                <label class="toolbar-field">
+                  <span>Pracownik</span>
+                  <select id="vacationRequestEmployeeSelect"></select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Rodzaj</span>
+                  <select id="vacationTypeInput">
+                    <option value="vacation">Urlop wypoczynkowy</option>
+                    <option value="on_demand">Urlop na żądanie</option>
+                    <option value="l4">L4</option>
+                    <option value="other">Inna nieobecność</option>
+                  </select>
+                </label>
+                <label class="toolbar-field">
+                  <span>Od</span>
+                  <input id="vacationStartInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Do</span>
+                  <input id="vacationEndInput" type="date">
+                </label>
+                <label class="toolbar-field">
+                  <span>Liczba dni</span>
+                  <input id="vacationDaysInput" type="number" min="0" step="0.5" placeholder="0">
+                </label>
+                <label class="toolbar-field">
+                  <span>Wprowadza</span>
+                  <input id="vacationRequestedByInput" type="text" placeholder="Imię i nazwisko">
+                </label>
+                <label class="toolbar-field">
+                  <span>Uwagi</span>
+                  <input id="vacationNotesInput" type="text" placeholder="Opcjonalna uwaga">
+                </label>
               </div>
             </section>
 
@@ -879,8 +876,8 @@
             <div id="settingsCurrentUserCard" class="detail-meta-grid section-grid metrics-grid--4"></div>
           </section>
 
-          <section class="panel panel-wide">
-            <div class="section-head section-head-stack">
+           <section class="panel panel-wide">
+            <div class="section-head section-head-inline">
               <div>
                 <h2 id="settingsUserFormHeading">Nowe konto użytkownika</h2>
                 <p class="hero-copy form-copy">
@@ -888,60 +885,55 @@
                 </p>
               </div>
               <div class="inline-actions compact-actions">
-                <button id="newUserButton" class="secondary-button" type="button">+ Nowe konto</button>
+                <button id="newUserButton" class="clicker-button" type="button">+ Nowe konto</button>
+                <button id="deleteUserButton" class="clicker-button clicker-button--danger" type="button">Usuń konto</button>
+                <button id="saveUserButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz konto</button>
               </div>
-              <div class="investment-form-grid settings-user-grid section-grid form-grid--4">
-                <label class="toolbar-field">
-                  <span>Imię i nazwisko</span>
-                  <input id="settingsUserNameInput" type="text" placeholder="Np. Jakub Zarzycki">
-                </label>
-                <label class="toolbar-field">
-                  <span>Login</span>
-                  <input id="settingsUserUsernameInput" type="text" placeholder="Np. j.zarzycki">
-                </label>
-                <label class="toolbar-field">
-                  <span>Adres e-mail</span>
-                  <input id="settingsUserEmailInput" type="email" placeholder="adres@firma.pl">
-                </label>
-                <label class="toolbar-field">
-                  <span>Hasło</span>
-                  <input id="settingsUserPasswordInput" type="text" placeholder="Hasło tymczasowe">
-                </label>
-                <label class="toolbar-field">
-                  <span>Rola</span>
-                  <select id="settingsUserRoleInput">
-                    <option value="admin">Administrator</option>
-                    <option value="kierownik">Kierownik</option>
-                    <option value="księgowość">Księgowość</option>
-                    <option value="read-only">Tylko odczyt</option>
-                  </select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Status konta</span>
-                  <select id="settingsUserStatusInput">
-                    <option value="active">Aktywne</option>
-                    <option value="inactive">Nieaktywne</option>
-                  </select>
-                </label>
-                <label class="toolbar-field">
-                  <span>Akceptacja urlopów</span>
-                  <select id="settingsUserVacationApprovalInput">
-                    <option value="yes">Tak</option>
-                    <option value="no">Nie</option>
-                  </select>
-                </label>
-                <div class="toolbar-field align-end toolbar-field--action-stack">
-                  <span>&nbsp;</span>
-                  <div class="inline-actions">
-                    <button id="deleteUserButton" class="secondary-button" type="button">Usuń konto</button>
-                    <button id="saveUserButton" class="primary-button" type="button">Zapisz konto</button>
-                  </div>
-                </div>
-              </div>
-              <div class="settings-permissions">
-                <p class="eyebrow">Uprawnienia do modułów</p>
-                <div id="settingsPermissionGrid" class="permission-grid"></div>
-              </div>
+            </div>
+            <div class="toolbar-grid investment-form-grid settings-user-grid section-grid form-grid--6 form-grid-system form-grid-system--settings-user">
+              <label class="toolbar-field">
+                <span>Imię i nazwisko</span>
+                <input id="settingsUserNameInput" type="text" placeholder="Np. Administrator">
+              </label>
+              <label class="toolbar-field">
+                <span>Login</span>
+                <input id="settingsUserUsernameInput" type="text" placeholder="Np. j.zarzycki">
+              </label>
+              <label class="toolbar-field">
+                <span>Adres e-mail</span>
+                <input id="settingsUserEmailInput" type="email" placeholder="adres@firma.pl">
+              </label>
+              <label class="toolbar-field">
+                <span>Hasło</span>
+                <input id="settingsUserPasswordInput" type="text" placeholder="Hasło tymczasowe">
+              </label>
+              <label class="toolbar-field">
+                <span>Rola</span>
+                <select id="settingsUserRoleInput">
+                  <option value="admin">Administrator</option>
+                  <option value="kierownik">Kierownik</option>
+                  <option value="księgowość">Księgowość</option>
+                  <option value="read-only">Tylko odczyt</option>
+                </select>
+              </label>
+              <label class="toolbar-field">
+                <span>Status konta</span>
+                <select id="settingsUserStatusInput">
+                  <option value="active">Aktywne</option>
+                  <option value="inactive">Nieaktywne</option>
+                </select>
+              </label>
+              <label class="toolbar-field">
+                <span>Akceptacja urlopów</span>
+                <select id="settingsUserVacationApprovalInput">
+                  <option value="yes">Tak</option>
+                  <option value="no">Nie</option>
+                </select>
+              </label>
+            </div>
+            <div class="settings-permissions">
+              <p class="eyebrow">Uprawnienia do modułów</p>
+              <div id="settingsPermissionGrid" class="permission-grid"></div>
             </div>
           </section>
 
@@ -961,6 +953,9 @@
                   Ustawiasz zasady akceptacji wniosków i działania modułów administracyjnych.
                 </p>
               </div>
+              <div class="inline-actions compact-actions">
+                <button id="saveWorkflowSettingsButton" class="clicker-button clicker-button--primary clicker-button--save" type="button">Zapisz ustawienia</button>
+              </div>
             </div>
             <div class="investment-form-grid settings-workflow-grid section-grid controls-grid--3">
               <label class="toolbar-field">
@@ -977,10 +972,6 @@
                   <option value="off">Wyłączone</option>
                 </select>
               </label>
-              <div class="toolbar-field align-end">
-                <span>&nbsp;</span>
-                <button id="saveWorkflowSettingsButton" class="primary-button" type="button">Zapisz ustawienia</button>
-              </div>
             </div>
           </section>
 
@@ -996,12 +987,8 @@
     </main>
 
     <aside class="app-rail">
-      <button class="rail-brand rail-brand-button" data-view="homeView" type="button">
-        <span class="rail-dot"></span>
-        <div>
-          <strong>Clode</strong>
-          <small>Zarządzanie firmą</small>
-        </div>
+                    <button class="rail-brand rail-brand-button" data-view="homeView" type="button" aria-label="Clode">
+          <img class="rail-brand-logo" src="assets/clode-logo.svg?v=20260409-22" alt="Clode">
       </button>
       <nav class="rail-nav">
         <button class="rail-main-link" data-view="dashboardView" type="button">Dashboard</button>
@@ -1017,33 +1004,34 @@
         <button id="railSettingsButton" class="rail-account-button" data-view="settingsView" type="button">
           <div class="rail-user-card">
             <span class="rail-user-label">Konto</span>
-            <strong id="railCurrentUserName">Jakub Zarzycki</strong>
-            <small id="railCurrentUserRole">Administrator</small>
+            <strong id="railCurrentUserName">Niezalogowany</strong>
+            <small id="railCurrentUserRole">Zaloguj się</small>
           </div>
           <div class="rail-account-icon-wrap">
             <span id="railNotificationsBadge" class="notification-badge" hidden>0</span>
             <span class="rail-account-icon" aria-hidden="true">&#9881;</span>
           </div>
         </button>
+        <button id="railLogoutButton" class="secondary-button rail-logout-button" type="button" hidden>Wyloguj</button>
       </div>
     </aside>
   </div>
 
-  <script>window.__APP_MODULE_VERSION__ = "20260408-01";</script>
-  <script src="../frontend/src/data/storage-keys.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/adapters/local-storage-adapter.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/adapters/api-adapter.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/data-access.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/auth-client.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/contract-client.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/invoice-client.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/time-entry-client.js?v=20260408-01"></script>
-  <script src="../frontend/src/data/migration-tools.js?v=20260408-01"></script>
-  <script src="../data/app-data.js?v=20260408-01"></script>
-  <script src="../data/hours-form-seed.js?v=20260408-01"></script>
-  <script src="../data/demo-seed.js?v=20260408-01"></script>
-  <script src="shell.js?v=20260408-01"></script>
-  <script src="app.js?v=20260408-01"></script>
+  <script>window.__APP_MODULE_VERSION__ = "20260410-05";</script>
+  <script src="../frontend/src/data/storage-keys.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/adapters/local-storage-adapter.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/adapters/api-adapter.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/data-access.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/auth-client.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/contract-client.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/invoice-client.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/time-entry-client.js?v=20260410-05"></script>
+  <script src="../frontend/src/data/migration-tools.js?v=20260410-05"></script>
+  <script src="../data/app-data.js?v=20260410-05"></script>
+  <script src="../data/hours-form-seed.js?v=20260410-05"></script>
+  <script src="../data/demo-seed.js?v=20260410-05"></script>
+  <script src="shell.js?v=20260410-05"></script>
+  <script src="app.js?v=20260410-05"></script>
 </body>
 </html>
 

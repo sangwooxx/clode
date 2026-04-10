@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import sys
@@ -14,21 +14,21 @@ BACKEND_SRC = PROJECT_DIR / "backend" / "src"
 if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
-from agent_backend.config import load_settings  # noqa: E402
-from agent_backend.db.bootstrap import ensure_database  # noqa: E402
-from agent_backend.db.connection import connect  # noqa: E402
-from agent_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
-from agent_backend.repositories.contract_repository import ContractRepository  # noqa: E402
-from agent_backend.repositories.invoice_repository import InvoiceRepository  # noqa: E402
-from agent_backend.services.contract_service import ContractService  # noqa: E402
-from agent_backend.services.invoice_service import InvoiceService  # noqa: E402
+from clode_backend.config import load_settings  # noqa: E402
+from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.db.connection import connect  # noqa: E402
+from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
+from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
+from clode_backend.repositories.invoice_repository import InvoiceRepository  # noqa: E402
+from clode_backend.services.contract_service import ContractService  # noqa: E402
+from clode_backend.services.invoice_service import InvoiceService  # noqa: E402
 
 
 class DashboardInvoiceConsistencyTestCase(unittest.TestCase):
     def setUp(self) -> None:
-        self.previous_database_url = os.environ.get("AGENT_DATABASE_URL")
-        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"agent-test-dashboard-consistency-{uuid4().hex}.db"
-        os.environ["AGENT_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
+        self.previous_database_url = os.environ.get("CLODE_DATABASE_URL")
+        self.test_db_path = PROJECT_DIR / "backend" / "var" / f"clode-test-dashboard-consistency-{uuid4().hex}.db"
+        os.environ["CLODE_DATABASE_URL"] = f"sqlite:///{self.test_db_path.as_posix()}"
         self.settings = load_settings()
         ensure_database(self.settings)
         self.contract_repository = ContractRepository(self.settings)
@@ -41,9 +41,9 @@ class DashboardInvoiceConsistencyTestCase(unittest.TestCase):
 
     def tearDown(self) -> None:
         if self.previous_database_url is None:
-            os.environ.pop("AGENT_DATABASE_URL", None)
+            os.environ.pop("CLODE_DATABASE_URL", None)
         else:
-            os.environ["AGENT_DATABASE_URL"] = self.previous_database_url
+            os.environ["CLODE_DATABASE_URL"] = self.previous_database_url
 
     def _seed_data(self) -> None:
         with connect(self.settings) as connection:
@@ -154,3 +154,4 @@ class DashboardInvoiceConsistencyTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

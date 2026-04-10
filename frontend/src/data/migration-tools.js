@@ -4,7 +4,7 @@
   }
 
   function buildLegacySnapshot() {
-    const dataAccess = global.AgentDataAccess;
+    const dataAccess = global.ClodeDataAccess || global.AgentDataAccess;
     const snapshot = dataAccess.exportSnapshot();
     return {
       exported_at: toIsoTimestamp(),
@@ -26,15 +26,16 @@
     global.URL.revokeObjectURL(url);
   }
 
-  global.AgentMigrationTools = {
+  global.ClodeMigrationTools = {
     exportLegacySnapshot() {
       return buildLegacySnapshot();
     },
     downloadLegacySnapshot(filename) {
-      const safeName = filename || `agent-legacy-export-${toIsoTimestamp().slice(0, 10)}.json`;
+      const safeName = filename || `clode-legacy-export-${toIsoTimestamp().slice(0, 10)}.json`;
       const snapshot = buildLegacySnapshot();
       downloadJson(safeName, snapshot);
       return snapshot;
     },
   };
+  global.AgentMigrationTools = global.ClodeMigrationTools;
 })(window);

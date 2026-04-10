@@ -1,10 +1,17 @@
 param(
     [string]$ExcelPath = "",
-    [string]$OutputDir = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp\data"
+    [string]$OutputDir = ""
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+$projectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$workspaceRoot = Split-Path -Parent $projectRoot
+
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $OutputDir = Join-Path $projectRoot "data"
+}
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
@@ -390,7 +397,7 @@ function Build-AppData {
 Ensure-Directory -Path $OutputDir
 
 if ([string]::IsNullOrWhiteSpace($ExcelPath)) {
-    $match = Get-ChildItem -LiteralPath "C:\Users\kubaz\Documents\Codex" -Filter "*.xlsx" |
+    $match = Get-ChildItem -LiteralPath $workspaceRoot -Filter "*.xlsx" |
         Where-Object { $_.Name -like "*2025*kopia*.xlsx" } |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1

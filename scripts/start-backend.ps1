@@ -1,5 +1,5 @@
-param(
-    [string]$ProjectRoot = "C:\Users\kubaz\Documents\Codex\agent_excel_mvp",
+﻿param(
+    [string]$ProjectRoot = "",
     [string]$BindHost = "127.0.0.1",
     [int]$Port = 8787,
     [int]$StartupTimeoutSec = 20
@@ -8,7 +8,20 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$python = "C:\Users\kubaz\AppData\Local\Programs\Python\Python312\python.exe"
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+}
+
+$pythonCandidates = @(@(
+    (Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue),
+    (Get-Command py -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue)
+) | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -Unique)
+
+if (-not $pythonCandidates -or $pythonCandidates.Count -eq 0) {
+    throw "Python runtime not found."
+}
+
+$python = $pythonCandidates[0]
 $serverScript = Join-Path $ProjectRoot "backend\run_server.py"
 $healthUrl = "http://$BindHost`:$Port/api/health"
 
@@ -21,7 +34,7 @@ function Test-BackendHealthy {
             return $false
         }
         $payload = $response.Content | ConvertFrom-Json
-        return $payload.ok -eq $true -and $payload.service -eq "agent-backend"
+        return $payload.ok -eq $true -and $payload.service -eq "clode-backend"
     } catch {
         return $false
     }
@@ -70,10 +83,6 @@ function Wait-BackendReady {
     return $false
 }
 
-if (-not (Test-Path -LiteralPath $python)) {
-    throw "Python runtime not found at $python"
-}
-
 if (-not (Test-Path -LiteralPath $serverScript)) {
     throw "Backend entrypoint not found at $serverScript"
 }
@@ -81,7 +90,7 @@ if (-not (Test-Path -LiteralPath $serverScript)) {
 Stop-PortListeners -TargetPort $Port
 $allowedOrigins = "http://127.0.0.1:8082,http://localhost:8082,http://127.0.0.1:8080,http://localhost:8080,null"
 $backendEnv = @"
-`$env:AGENT_ALLOWED_ORIGINS = '$allowedOrigins'
+`$env:CLODE_ALLOWED_ORIGINS = '$allowedOrigins'
 & '$python' '$serverScript'
 "@
 Start-Process powershell -ArgumentList @("-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $backendEnv) -WorkingDirectory $ProjectRoot | Out-Null
@@ -89,4 +98,5 @@ if (-not (Wait-BackendReady -Url $healthUrl -TimeoutSec $StartupTimeoutSec)) {
     throw "Backend nie zglosil gotowosci pod $healthUrl w ciagu $StartupTimeoutSec s."
 }
 
-Write-Host "Uruchomiono backend pod $healthUrl"
+Write-Host "Uruchomiono backend Clode pod $healthUrl"
+

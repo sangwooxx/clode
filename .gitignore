@@ -1,4 +1,4 @@
-# OS / editor
+﻿# OS / editor
 .DS_Store
 Thumbs.db
 *.swp
@@ -35,7 +35,7 @@ test-results/
 backend/var/*.db-wal
 backend/var/*.db-shm
 backend/var/qa_*.db
-backend/var/agent-test-*.db
+backend/var/clode-test-*.db
 backend/var/migration-smoke-*.db
 backend/var/smoke-*.db
 
@@ -47,3 +47,4 @@ build/
 # IDE
 .vscode/
 .idea/
+

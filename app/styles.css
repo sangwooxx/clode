@@ -20,22 +20,23 @@
   --space-md: clamp(11px, 0.72vw, 14px);
   --space-lg: clamp(14px, 0.92vw, 18px);
   --space-xl: clamp(18px, 1.15vw, 24px);
-  --font-size-label: clamp(9px, 0.56vw, 10px);
-  --font-size-body: clamp(12px, 0.74vw, 13px);
-  --font-size-control: clamp(13px, 0.84vw, 14px);
-  --font-size-copy: clamp(12px, 0.84vw, 14px);
+  --font-size-label: clamp(7.5px, 0.48vw, 9px);
+  --font-size-body: clamp(11px, 0.68vw, 12px);
+  --font-size-control: clamp(12px, 0.78vw, 13px);
+  --font-size-copy: clamp(11px, 0.78vw, 13px);
   --font-size-heading-1: clamp(22px, 1.75vw, 28px);
   --font-size-heading-2: clamp(16px, 1.08vw, 19px);
   --font-size-heading-3: clamp(14px, 0.94vw, 17px);
-  --font-size-metric: clamp(22px, 1.75vw, 30px);
-  --control-height: clamp(42px, 3.4vw, 46px);
-  --field-gap: clamp(10px, 0.82vw, 14px);
-  --field-label-gap: clamp(7px, 0.52vw, 9px);
-  --field-tile-min-height: clamp(88px, 6.8vw, 98px);
-  --field-tile-padding: clamp(12px, 0.82vw, 15px);
+  --font-size-metric: clamp(21px, 1.68vw, 29px);
+  --table-actions-col-width: 108px;
+  --control-height: clamp(40px, 3vw, 44px);
+  --field-gap: clamp(8px, 0.7vw, 12px);
+  --field-label-gap: clamp(6px, 0.46vw, 8px);
+  --field-tile-min-height: clamp(78px, 6vw, 88px);
+  --field-tile-padding: clamp(10px, 0.72vw, 13px);
   --section-head-height: clamp(82px, 6.6vw, 96px);
-  --section-gap: clamp(14px, 0.95vw, 18px);
-  --search-inline-width: clamp(10.5rem, 14vw, 12.5rem);
+  --section-gap: clamp(12px, 0.82vw, 16px);
+  --search-inline-width: clamp(10rem, 13vw, 11.5rem);
 }
 
 * { box-sizing: border-box; }
@@ -57,8 +58,8 @@ body { min-height: 100vh; }
 }
 
 .workspace {
-  margin-left: 280px;
-  padding: clamp(18px, 1.8vw, 28px);
+  margin-left: 0;
+  padding: clamp(14px, 1.18vw, 22px);
   min-height: 100vh;
   background: #212121;
 }
@@ -67,26 +68,53 @@ body { min-height: 100vh; }
   position: fixed;
   top: 0;
   left: 0;
-  width: 280px;
+  width: 230px;
   height: 100vh;
   z-index: 100;
-  padding: 20px 18px;
+  padding: 14px 12px;
   border-right: 1px solid var(--line-soft);
   background: #171717;
-  display: grid;
+  display: none;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 12px;
   overflow: hidden;
+}
+
+.app-shell.is-authenticated-shell .workspace {
+  margin-left: 230px;
+}
+
+.app-shell.is-authenticated-shell .app-rail {
+  display: grid;
+}
+
+.app-shell:not(.is-authenticated-shell) .workspace {
+  padding: 0;
+  background:
+    radial-gradient(circle at top left, rgba(16, 163, 127, 0.16), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.05), transparent 26%),
+    linear-gradient(180deg, #1b1b1b 0%, #212121 100%);
 }
 
 .rail-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 12px;
+  justify-content: center;
+  gap: 0;
+  padding: 12px 10px;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.02);
+  min-height: 72px;
+}
+
+.rail-brand-logo {
+  width: 142px;
+  max-width: 100%;
+  height: 44px;
+  object-fit: contain;
+  flex: 0 0 auto;
+  display: block;
 }
 
 .rail-brand-button {
@@ -103,6 +131,7 @@ body { min-height: 100vh; }
   border-radius: 50%;
   background: linear-gradient(135deg, var(--accent), #26c29c);
   box-shadow: 0 0 14px rgba(16, 163, 127, 0.28);
+  display: none;
 }
 
 .rail-brand strong { display: block; font-size: var(--font-size-control); }
@@ -110,7 +139,7 @@ body { min-height: 100vh; }
 
 .rail-nav {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   align-content: start;
   min-height: 0;
   overflow-y: auto;
@@ -119,7 +148,7 @@ body { min-height: 100vh; }
 
 .rail-group {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rail-group-toggle,
@@ -127,7 +156,7 @@ body { min-height: 100vh; }
 .rail-main-link {
   width: 100%;
   text-align: left;
-  padding: 14px 16px;
+  padding: 11px 12px;
   border-radius: 12px;
   border: 1px solid var(--line-soft);
   background: #1f1f1f;
@@ -178,14 +207,14 @@ body { min-height: 100vh; }
 }
 
 .rail-subtab {
-  min-height: 44px;
-  padding: 12px 14px;
+  min-height: 40px;
+  padding: 9px 11px;
   font-size: var(--font-size-body);
   background: #202020;
 }
 
 .rail-main-link {
-  min-height: 46px;
+  min-height: 40px;
   font-size: var(--font-size-body);
   font-weight: 600;
   background: #202020;
@@ -208,8 +237,15 @@ body { min-height: 100vh; }
 .rail-footer {
   display: grid;
   gap: 10px;
-  padding-top: 8px;
+  padding-top: 12px;
+  margin-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   align-self: end;
+}
+
+.rail-logout-button {
+  width: 100%;
+  min-width: 0;
 }
 
 .rail-account-button {
@@ -218,7 +254,7 @@ body { min-height: 100vh; }
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  padding: 12px;
+  padding: 9px 10px;
   border-radius: 14px;
   border: 1px solid var(--line-soft);
   background: rgba(255, 255, 255, 0.03);
@@ -266,8 +302,8 @@ body { min-height: 100vh; }
 
 .rail-account-icon-wrap {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -299,6 +335,10 @@ body { min-height: 100vh; }
   font-weight: 700;
 }
 
+.notification-badge[hidden] {
+  display: none !important;
+}
+
 .app-view {
   display: none;
   gap: 18px;
@@ -313,52 +353,106 @@ body { min-height: 100vh; }
 }
 
 .home-stage {
-  min-height: calc(100vh - 120px);
+  width: min(1120px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: clamp(34px, 4.4vw, 68px) clamp(22px, 3.5vw, 44px);
   display: grid;
-  justify-items: center;
+  grid-template-columns: minmax(0, 1.08fr) minmax(340px, 392px);
+  justify-items: stretch;
+  align-items: center;
   align-content: center;
-  gap: 28px;
-  text-align: center;
+  gap: clamp(24px, 3.4vw, 42px);
+  text-align: left;
+}
+
+.home-brand-panel {
+  display: grid;
+  gap: 20px;
+  align-content: center;
 }
 
 .home-logo {
-  max-width: min(460px, 70vw);
-  width: 100%;
+  width: min(392px, 100%);
+  max-width: min(392px, 100%);
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.28));
+  justify-self: start;
 }
 
 .home-copy {
   display: grid;
   gap: 14px;
-  justify-items: center;
+  justify-items: start;
+  max-width: 44rem;
 }
 
 .home-subcopy {
   margin-top: 0;
+  max-width: 56ch;
+}
+
+.home-eyebrow {
+  margin-bottom: 0;
+}
+
+.home-feature-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 52rem;
+}
+
+.home-feature-chip {
+  display: grid;
+  gap: 8px;
+  min-height: 84px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.home-feature-chip strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.home-feature-chip span {
+  color: var(--text-soft);
+  line-height: 1.45;
 }
 
 .home-login-card {
-  width: min(380px, 100%);
+  width: min(400px, 100%);
+  justify-self: end;
   padding: 28px 24px 24px;
-  border-radius: 18px;
-  border: 1px solid var(--line-soft);
-  background: #262626;
-  box-shadow: var(--shadow);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(47, 47, 47, 0.94), rgba(38, 38, 38, 0.98));
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.28);
   text-align: left;
 }
 
 .home-login-card h2 {
-  margin: 0 0 18px;
+  margin: 0 0 10px;
   font-size: var(--font-size-heading-2);
   line-height: 1.15;
+}
+
+.home-login-copy {
+  margin: 0 0 16px;
+  color: var(--text-soft);
+  line-height: 1.55;
 }
 
 .home-login-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 12px;
 }
 
 .home-login-field {
@@ -415,9 +509,9 @@ body { min-height: 100vh; }
 
 .view-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-  gap: 18px;
-  margin-bottom: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  gap: 16px;
+  margin-bottom: 8px;
   min-height: 0;
   align-items: start;
 }
@@ -471,7 +565,7 @@ h3 {
 }
 
 .hero-copy {
-  margin: 14px 0 0;
+  margin: 10px 0 0;
   max-width: 72ch;
   font-size: var(--font-size-copy);
   line-height: 1.6;
@@ -491,7 +585,7 @@ h3 {
   border: 1px solid var(--line-soft);
   border-radius: 16px;
   box-shadow: var(--shadow);
-  padding: clamp(14px, 0.95vw, 18px);
+  padding: clamp(12px, 0.76vw, 16px);
   min-width: 0;
   overflow: visible;
 }
@@ -529,9 +623,9 @@ h3 {
   justify-content: center;
   gap: 8px;
   min-height: var(--control-height);
-  min-width: clamp(8.75rem, 9vw, 10.5rem);
+  min-width: clamp(7.75rem, 8vw, 10rem);
   max-width: 100%;
-  padding: 0 clamp(12px, 0.8vw, 16px);
+  padding: 0 clamp(11px, 0.72vw, 15px);
   border-radius: 10px;
   border: 1px solid transparent;
   font-size: var(--font-size-control);
@@ -552,18 +646,67 @@ h3 {
   border-color: var(--line);
 }
 
+.clicker-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.clicker-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.clicker-button--primary {
+  background: rgba(16, 163, 127, 0.22);
+  color: #f2fffb;
+}
+
+.clicker-button--primary:hover {
+  background: rgba(16, 163, 127, 0.3);
+}
+
+.clicker-button--danger {
+  background: rgba(255, 127, 127, 0.16);
+  color: #ffd6d6;
+}
+
+.clicker-button--danger:hover {
+  background: rgba(255, 127, 127, 0.22);
+}
+
+.clicker-button--save::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3 2.5h7l3 3V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z' stroke='%23cfeee4' stroke-width='1.3'/%3E%3Cpath d='M5 2.5v4h6v-4' stroke='%23cfeee4' stroke-width='1.3'/%3E%3Cpath d='M5 13v-4h6v4' stroke='%23cfeee4' stroke-width='1.3'/%3E%3C/svg%3E");
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min, 160px)), 1fr));
   gap: var(--field-gap);
-  margin-top: 18px;
+  margin-top: 14px;
   width: 100%;
   min-width: 0;
   align-items: stretch;
 }
 
 .stat {
-  padding: 16px;
+  padding: 14px;
   border-radius: 14px;
   border: 1px solid var(--line-soft);
   background: #303030;
@@ -579,18 +722,67 @@ h3 {
   color: var(--text-muted);
   margin-bottom: 0;
   line-height: 1.35;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
 }
 
 .stat strong {
   font-size: var(--font-size-metric);
   line-height: 1.08;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
   font-variant-numeric: tabular-nums;
+}
+
+/* Dashboard metric tiles: remove the vertical gap between label and value. */
+#dashboardView .stats-grid .stat {
+  gap: 0;
+}
+
+.stat strong > .metric-value {
+  display: inline-flex;
+  align-items: flex-end;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.metric-value {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.metric-value__amount {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+}
+
+.metric-value--number .metric-value__amount {
+  letter-spacing: -0.02em;
+}
+
+.metric-value__currency {
+  flex: 0 0 auto;
+  margin-bottom: 0.1em;
+  color: var(--text-muted);
+  font-size: 0.5em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
 }
 
 .rank-list, .alert-list, .recommendation-list, .supplier-list {
@@ -618,8 +810,8 @@ h3 {
 .split-layout {
   display: grid;
   grid-template-columns: 1.1fr 1fr;
-  gap: 18px;
-  margin-top: 16px;
+  gap: 16px;
+  margin-top: 14px;
 }
 
 .status-good { color: var(--good); }
@@ -812,7 +1004,7 @@ th, td {
   padding: 13px 10px;
   border-bottom: 1px solid var(--line-soft);
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {
@@ -859,6 +1051,17 @@ th {
   color: var(--accent);
 }
 
+/* Invoices: keep sort indicator right next to label (not pushed to the cell edge). */
+#invoicesView .invoice-module-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#invoicesView .invoice-module-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
 .mini-bars {
   display: flex;
   align-items: end;
@@ -899,19 +1102,19 @@ th {
 .detail-stats {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .detail-layout {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
-  gap: 18px;
-  margin-top: 18px;
+  gap: 16px;
+  margin-top: 14px;
 }
 
 .chart-panel, .analysis-panel, .placeholder-panel {
-  padding: 16px;
+  padding: 14px;
   border-radius: 14px;
   background: #303030;
   border: 1px solid var(--line-soft);
@@ -961,7 +1164,7 @@ th {
 .toolbar-grid {
   display: grid;
   gap: var(--field-gap);
-  margin-top: 18px;
+  margin-top: 14px;
   width: 100%;
   min-width: 0;
   align-items: stretch;
@@ -970,7 +1173,7 @@ th {
 .investment-form-grid {
   display: grid;
   gap: var(--field-gap);
-  margin-top: 16px;
+  margin-top: 14px;
   width: 100%;
   min-width: 0;
   align-items: stretch;
@@ -1086,7 +1289,7 @@ th {
 
 .inline-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -1114,8 +1317,8 @@ th {
 
 .toolbar-field > .inline-actions {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(8.75rem, auto);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) minmax(8.25rem, auto);
+  gap: 8px;
   align-items: center;
   width: 100%;
   min-width: 0;
@@ -1202,6 +1405,33 @@ th {
 .finance-stack {
   display: grid;
   gap: 12px;
+}
+
+#hoursView .finance-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+#hoursView .finance-field {
+  min-height: 0;
+}
+
+#hoursView .finance-field span {
+  max-width: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#hoursView .finance-field-summary {
+  justify-content: space-between;
+}
+
+#hoursView .finance-field-summary strong {
+  font-size: 15px;
+  line-height: 1.16;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 .contracts-selector {
@@ -1293,8 +1523,8 @@ th {
 }
 
 .finance-field-emphasis {
-  border-color: rgba(16, 163, 127, 0.4);
-  background: rgba(16, 163, 127, 0.09);
+  border-color: var(--line-soft);
+  background: #303030;
 }
 
 .finance-field-placeholder {
@@ -1318,9 +1548,9 @@ th {
 }
 
 .form-table-shell {
-  margin-top: 16px;
+  margin-top: 14px;
   overflow-x: auto;
-  border-radius: 14px;
+  border-radius: 12px;
   border: 1px solid var(--line-soft);
   background: rgba(0,0,0,0.08);
 }
@@ -1372,23 +1602,23 @@ th {
 }
 
 #hoursView table {
-  margin-top: 10px;
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 11.75px;
 }
 
 #hoursView th,
 #hoursView td {
-  padding: 8px 8px;
+  padding: 7px 8px;
 }
 
 #hoursView .toolbar-grid {
-  gap: 10px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 #hoursView .hours-toolbar-grid {
   align-items: stretch;
-  grid-template-columns: minmax(13rem, 0.9fr) minmax(21rem, 1.45fr) minmax(16rem, 1.1fr) minmax(13rem, 0.95fr) minmax(14rem, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(8.75rem, 11.5vw, 11.5rem), 1fr));
 }
 
 #hoursView .hours-toolbar-grid > .toolbar-field {
@@ -1414,9 +1644,10 @@ th {
 
 #hoursView .month-delete-actions {
   display: grid;
-  grid-template-columns: minmax(112px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 #hoursView #monthDeleteSelect {
@@ -1462,7 +1693,7 @@ th {
 #invoicesView .invoice-toolbar-grid .inline-actions {
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 100%;
 }
@@ -1474,7 +1705,7 @@ th {
 
 #hoursView .hours-toolbar-grid .month-add-actions {
   grid-template-columns: minmax(0, 1.2fr) minmax(4.8rem, 5.6rem) max-content;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -1511,16 +1742,16 @@ th {
 }
 
 #hoursView .finance-field {
-  padding: 10px 12px;
+  padding: 9px 11px;
 }
 
 #hoursView .finance-field strong {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 #hoursView .hours-table {
-  min-width: 1040px;
+  min-width: 980px;
   table-layout: fixed;
 }
 
@@ -1652,14 +1883,82 @@ th {
   transform: translateY(-50%);
 }
 
+#hoursView .compact-summary-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#hoursView .compact-summary-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
 #hoursView .hours-table .cell-input,
 #hoursView .hours-table .hours-input {
+  text-align: center;
+}
+
+/* Standard table layout (contracts-like) for other modules */
+#employeeRegistryTable .invoice-module-table th .sort-button,
+#planningView .invoice-module-table th .sort-button,
+#vacationsView .invoice-module-table th .sort-button,
+#workwearView .invoice-module-table th .sort-button,
+#settingsView .invoice-module-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#employeeRegistryTable .invoice-module-table th .sort-button > span:first-child,
+#planningView .invoice-module-table th .sort-button > span:first-child,
+#vacationsView .invoice-module-table th .sort-button > span:first-child,
+#workwearView .invoice-module-table th .sort-button > span:first-child,
+#settingsView .invoice-module-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
+#employeeRegistryTable .invoice-module-table th:last-child,
+#employeeRegistryTable .invoice-module-table td:last-child,
+#planningView .invoice-module-table th:last-child,
+#planningView .invoice-module-table td:last-child,
+#vacationsView .invoice-module-table th:last-child,
+#vacationsView .invoice-module-table td:last-child,
+#workwearView .invoice-module-table th:last-child,
+#workwearView .invoice-module-table td:last-child,
+#settingsView .invoice-module-table th:last-child,
+#settingsView .invoice-module-table td:last-child {
+  min-width: 92px;
+  width: 92px;
+  text-align: center;
+}
+
+#employeeRegistryTable .invoice-module-table td.action-cell,
+#planningView .invoice-module-table td.action-cell,
+#vacationsView .invoice-module-table td.action-cell,
+#workwearView .invoice-module-table td.action-cell,
+#settingsView .invoice-module-table td.action-cell {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+#vacationsView .invoice-module-table th.control-col,
+#vacationsView .invoice-module-table td.control-col {
+  width: 92px;
+  min-width: 92px;
   text-align: center;
 }
 
 #hoursView .contract-chip,
 #hoursView .pill {
   text-align: center;
+}
+
+/* Hours table: keep action cell as a normal table cell so row separators stay consistent. */
+#hoursView .hours-table td.action-cell {
+  display: table-cell;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .action-cell,
@@ -1696,6 +1995,21 @@ th {
 .danger-button:hover {
   border-color: rgba(255, 127, 127, 0.75);
   color: #fff0f0;
+}
+
+.success-button {
+  border-color: rgba(16, 163, 127, 0.48);
+  color: rgba(210, 255, 245, 0.92);
+}
+
+.success-button:hover {
+  border-color: rgba(16, 163, 127, 0.82);
+  color: #eafffa;
+}
+
+.table-muted {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 .icon-button {
@@ -1744,16 +2058,9 @@ th {
 
 #workwearView .workwear-form-grid {
   margin-top: 0;
-  grid-template-columns:
-    minmax(11rem, 1.5fr)
-    minmax(9.25rem, 1.12fr)
-    minmax(10rem, 1.35fr)
-    minmax(6.5rem, 0.7fr)
-    minmax(5.5rem, 0.58fr)
-    minmax(11rem, 1.55fr)
-    minmax(9.5rem, 1.1fr);
   align-items: stretch;
   width: 100%;
+  grid-auto-flow: row dense;
 }
 
 #workwearView .workwear-form-grid > .toolbar-field {
@@ -1796,17 +2103,15 @@ th {
   justify-content: flex-end;
 }
 
+#workwearView .workwear-catalog-grid {
+  grid-auto-flow: row dense;
+}
+
 #contractsView .contract-form-grid {
   margin-top: 0;
-  grid-template-columns:
-    minmax(14rem, 2.2fr)
-    minmax(14rem, 2.1fr)
-    minmax(11rem, 1.2fr)
-    minmax(11rem, 1.2fr)
-    minmax(10rem, 1fr)
-    minmax(10rem, 1fr)
-    minmax(11rem, 1.15fr);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(8.75rem, 11.5vw, 11.5rem), 1fr));
   align-items: stretch;
+  grid-auto-flow: row dense;
 }
 
 #contractsView .contract-form-grid .toolbar-field,
@@ -1849,36 +2154,64 @@ th {
 }
 
 #employeesView .employee-form-grid {
-  --tile-min: clamp(11.75rem, 15vw, 14rem);
+  --tile-min: clamp(8.75rem, 11vw, 11.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(clamp(8.75rem, 11.5vw, 11.25rem), 1fr));
+  grid-auto-flow: row dense;
 }
 
 #employeesView .employee-form-action-tile {
-  grid-column: span 2;
+  grid-column: span 1;
   min-height: var(--field-tile-min-height);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.028));
 }
 
 #employeesView .employee-form-action-tile.toolbar-field.align-end {
-  grid-template-rows: auto 1fr;
-  align-content: stretch;
+  grid-template-rows: auto minmax(var(--control-height), auto);
+  align-content: start;
   align-items: stretch;
+  justify-content: stretch;
 }
 
 #employeesView .employee-form-action-tile.toolbar-field.align-end > span {
   display: block;
-  visibility: hidden;
+  visibility: visible;
   min-height: calc(var(--font-size-label) * 1.3);
 }
 
-#employeesView .employee-form-action-tile > .inline-actions {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: center;
-  align-content: center;
+#employeesView .employee-form-button-tile > button {
+  min-height: var(--control-height);
+  height: var(--control-height);
+  min-width: 0;
+  white-space: normal;
+  width: 100%;
   align-self: stretch;
+  justify-self: stretch;
 }
 
-#employeesView .employee-form-action-tile > .inline-actions > * {
-  min-height: var(--control-height);
-  white-space: nowrap;
+#employeesView .module-table {
+  table-layout: fixed;
+}
+
+#employeesView .module-table th,
+#employeesView .module-table td {
+  padding: 8px 8px;
+  line-height: 1.36;
+}
+
+#employeesView .entity-table th:nth-child(2),
+#employeesView .entity-table td:nth-child(2) {
+  min-width: 112px;
+}
+
+#employeesView .entity-table th:nth-child(3),
+#employeesView .entity-table td:nth-child(3) {
+  min-width: 96px;
+}
+
+#employeesView .entity-table th:last-child,
+#employeesView .entity-table td:last-child {
+  width: 92px;
+  min-width: 92px;
 }
 
 #employeesView #employeePhoneInput {
@@ -1918,6 +2251,11 @@ th {
   width: 100%;
   min-width: 0;
   align-items: stretch;
+}
+
+/* Employees: legacy card sections use 3 tiles; make them scale like stats-grid (full panel width). */
+#employeeCardView .detail-meta-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min, 160px)), 1fr));
 }
 
 .detail-meta-grid > div {
@@ -1983,6 +2321,18 @@ th {
   grid-column: span 8;
 }
 
+.panel-five-twelfths {
+  grid-column: span 5;
+}
+
+.panel-seven-twelfths {
+  grid-column: span 7;
+}
+
+.panel-half {
+  grid-column: span 6;
+}
+
 .compact-stats-grid {
   margin-top: 0;
 }
@@ -1990,12 +2340,14 @@ th {
 .module-table {
   width: 100%;
   font-size: var(--font-size-body);
+  font-variant-numeric: tabular-nums;
 }
 
 .module-table th,
 .module-table td {
-  padding: 10px 12px;
+  padding: 9px 10px;
   vertical-align: middle;
+  line-height: 1.42;
 }
 
 .module-table th {
@@ -2009,11 +2361,56 @@ th {
   color: var(--text);
 }
 
+#contractsRegistryTable .invoice-module-table th:last-child,
+#contractsRegistryTable .invoice-module-table td:last-child {
+  width: 92px;
+  min-width: 92px;
+  text-align: center;
+}
+
+/* Contracts registry actions: use the same action-cell/button styling as other tables (invoices/employees). */
+
+#contractsRegistryTable .invoice-module-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+  font-size: 12.75px;
+}
+
+#contractsRegistryTable .invoice-module-table th,
+#contractsRegistryTable .invoice-module-table td {
+  padding: 8px 8px;
+  line-height: 1.36;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#contractsRegistryTable .invoice-module-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#contractsRegistryTable .invoice-module-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
+/* invoice-module-table: actions column (employees-style) */
+#invoicesView .invoice-module-table th:last-child,
+#invoicesView .invoice-module-table td:last-child {
+  width: 92px;
+  min-width: 92px;
+  text-align: center;
+}
+
 .subsection-block {
   display: grid;
   gap: 14px;
-  margin-top: 18px;
-  padding-top: 18px;
+  margin-top: 14px;
+  padding-top: 14px;
   border-top: 1px solid var(--line-soft);
 }
 
@@ -2119,6 +2516,11 @@ th {
   --tile-min: clamp(13rem, 18vw, 16rem);
 }
 
+/* Settings: make workflow tiles fill the whole panel width (2 tiles should still stretch). */
+#settingsView .settings-workflow-grid {
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-min, clamp(13rem, 18vw, 16rem)), 1fr));
+}
+
 #invoicesView .invoice-toolbar-grid {
   align-items: stretch;
 }
@@ -2131,8 +2533,12 @@ th {
 }
 
 #invoicesView .invoice-filter-grid {
+  display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--field-gap);
   width: 100%;
+  min-width: 0;
+  align-items: stretch;
 }
 
 #invoicesView .invoice-filter-grid .toolbar-field--span-2 {
@@ -2142,6 +2548,7 @@ th {
 #invoicesView .invoice-filter-grid > .toolbar-field {
   width: 100%;
   max-width: none;
+  min-width: 0;
   justify-self: stretch;
   align-self: stretch;
 }
@@ -2152,6 +2559,10 @@ th {
   width: 100%;
   min-width: 0;
   max-width: none;
+}
+
+#invoicesView .invoice-filter-grid > * {
+  min-width: 0;
 }
 
 #invoicesView #invoiceContractSearchInput {
@@ -2209,7 +2620,7 @@ th {
 }
 
 #invoicesView .invoice-stats-bar {
-  --tile-min: clamp(10rem, 12vw, 12.5rem);
+  --tile-min: clamp(9.4rem, 11vw, 11.5rem);
 }
 
 #invoicesView .invoice-stats-bar .stat {
@@ -2224,7 +2635,7 @@ th {
 #invoicesView .invoice-table-toolbar {
   justify-content: space-between;
   align-items: flex-end;
-  gap: 12px;
+  gap: 10px;
 }
 
 #invoicesView .invoice-table-toolbar .compact-actions {
@@ -2236,12 +2647,16 @@ th {
 }
 
 #invoicesView .invoice-table-toolbar .toolbar-field--compact {
-  min-width: 146px;
-  max-width: 168px;
+  min-width: 132px;
+  max-width: 152px;
 }
 
 #invoicesView .invoice-table-toolbar .toolbar-field--compact > select {
   width: 100%;
+}
+
+#invoicesView .invoice-form-actions {
+  justify-content: flex-end;
 }
 
 #invoicesView .invoice-selected-count {
@@ -2254,6 +2669,17 @@ th {
   white-space: nowrap;
 }
 
+#invoicesView .invoice-table-shell .invoice-table-actions {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#invoicesView .invoice-table-shell .invoice-table-actions .invoice-selected-count {
+  margin-right: auto;
+}
+
 #invoicesView .invoice-entry-editor {
   margin-top: 10px;
   padding-top: 14px;
@@ -2261,10 +2687,11 @@ th {
 
 #invoicesView .invoice-entry-grid {
   margin-top: 0;
+  grid-auto-flow: row dense;
 }
 
 #invoicesView .invoice-form-action-tile {
-  grid-column: span 2;
+  grid-column: span 1;
 }
 
 #invoicesView .invoice-form-action-tile.toolbar-field.align-end {
@@ -2275,31 +2702,102 @@ th {
 
 #invoicesView .invoice-form-action-tile.toolbar-field.align-end > span {
   display: block;
-  visibility: hidden;
+  visibility: visible;
   min-height: calc(var(--font-size-label) * 1.3);
 }
 
-#invoicesView .invoice-form-action-tile > .inline-actions {
-  grid-template-columns: max-content max-content 1fr;
-  align-items: center;
-  align-content: center;
-  align-self: stretch;
-  gap: 10px;
-}
-
-#invoicesView .invoice-form-action-tile > .inline-actions > * {
+#invoicesView .invoice-form-button-tile > button {
   min-height: var(--control-height);
   min-width: 0;
-  white-space: nowrap;
+  white-space: normal;
+  width: 100%;
+  align-self: stretch;
+  justify-self: stretch;
 }
 
 #invoicesView #saveInvoiceButton {
-  justify-self: end;
-  min-width: 132px;
+  justify-self: stretch;
+  min-width: 124px;
 }
 
 #invoicesView #saveAndNextInvoiceButton {
-  min-width: 172px;
+  min-width: 158px;
+}
+
+#contractsView .contract-form-grid .toolbar-field span,
+#invoicesView .invoice-filter-grid .toolbar-field span,
+#invoicesView .invoice-entry-grid .toolbar-field span,
+#hoursView .hours-toolbar-grid .toolbar-field span,
+#hoursView .finance-grid .toolbar-field span,
+#employeesView .employee-form-grid .toolbar-field span,
+#workwearView .workwear-form-grid .toolbar-field span,
+#workwearView .workwear-catalog-grid .toolbar-field span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+/* Workwear tables: allow wrapping only between words (never split inside a word). */
+#workwearView .module-table th,
+#workwearView .module-table td,
+#workwearView .invoice-module-table th,
+#workwearView .invoice-module-table td {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  white-space: normal;
+}
+
+#workwearView .module-table {
+  table-layout: auto;
+}
+
+#workwearView .workwear-entries-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#workwearView .workwear-entries-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
+/* Workwear card: keep the handover table content-driven (columns follow content) and prevent overflow. */
+#workwearCardView .workwear-entries-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+}
+
+#workwearCardView .workwear-entries-table th,
+#workwearCardView .workwear-entries-table td {
+  vertical-align: middle;
+}
+
+#workwearCardView .workwear-entries-table .checkbox-cell {
+  width: 36px;
+  min-width: 36px;
+  text-align: center;
+}
+
+#workwearCardView .workwear-entries-table th:nth-child(2),
+#workwearCardView .workwear-entries-table td:nth-child(2) {
+  width: 44px;
+  min-width: 44px;
+  text-align: center;
+}
+
+#workwearCardView .workwear-entries-table th:last-child,
+#workwearCardView .workwear-entries-table td:last-child {
+  width: 104px;
+  min-width: 104px;
+  text-align: center;
+}
+
+#hoursView .finance-grid .toolbar-field span {
+  font-size: 10px;
+  letter-spacing: 0.12em;
 }
 
 #invoicesView .invoice-table-shell {
@@ -2308,8 +2806,17 @@ th {
 
 #invoicesView .invoice-module-table {
   width: 100%;
-  min-width: 1160px;
-  table-layout: fixed;
+  min-width: 0;
+  table-layout: auto;
+}
+
+#invoicesView .invoice-module-table th,
+#invoicesView .invoice-module-table td {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 #invoicesView .invoice-module-table .checkbox-cell {
@@ -2324,32 +2831,16 @@ th {
   accent-color: var(--accent);
 }
 
-#invoicesView .invoice-module-table th:nth-child(2),
-#invoicesView .invoice-module-table td:nth-child(2) {
-  width: 52px;
-  min-width: 52px;
-  text-align: center;
-}
-
-#invoicesView .invoice-module-table th:nth-child(3),
-#invoicesView .invoice-module-table td:nth-child(3),
-#invoicesView .invoice-module-table th:nth-child(7),
-#invoicesView .invoice-module-table td:nth-child(7),
-#invoicesView .invoice-module-table th:nth-child(8),
-#invoicesView .invoice-module-table td:nth-child(8),
-#invoicesView .invoice-module-table th:nth-child(9),
-#invoicesView .invoice-module-table td:nth-child(9) {
-  white-space: nowrap;
-}
-
 #invoicesView .invoice-module-table th:nth-child(4),
 #invoicesView .invoice-module-table td:nth-child(4) {
-  min-width: 138px;
+  width: auto;
+  min-width: 0;
 }
 
 #invoicesView .invoice-module-table th:nth-child(5),
 #invoicesView .invoice-module-table td:nth-child(5) {
-  min-width: 144px;
+  width: auto;
+  min-width: 0;
 }
 
 #invoicesView .invoice-module-table th:nth-child(10),
@@ -2358,34 +2849,56 @@ th {
 #invoicesView .invoice-module-table td:nth-child(11),
 #invoicesView .invoice-module-table th:nth-child(12),
 #invoicesView .invoice-module-table td:nth-child(12) {
-  min-width: 92px;
-  white-space: nowrap;
+  width: auto;
+  min-width: 0;
 }
 
 #invoicesView .invoice-module-table th:last-child,
 #invoicesView .invoice-module-table td:last-child {
-  width: 118px;
-  min-width: 118px;
   text-align: center;
 }
 
+
+#invoicesView .invoice-description-cell strong,
+#invoicesView .invoice-description-cell small {
+  display: block;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 #invoicesView .invoice-description-cell {
+  min-width: 0;
+  vertical-align: middle;
+}
+
+#invoicesView .invoice-description-content {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 #invoicesView .invoice-description-cell strong {
   font-size: var(--font-size-body);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.34;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 #invoicesView .invoice-description-cell small {
   color: var(--text-muted);
-  line-height: 1.35;
+  line-height: 1.34;
+  overflow: hidden;
   overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 #invoicesView .invoice-summary-row td {
@@ -2414,7 +2927,7 @@ th {
 
 .permission-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(clamp(8.25rem, 12vw, 10.75rem), 1fr));
   gap: var(--field-gap);
 }
 
@@ -2440,10 +2953,47 @@ th {
   display: block;
   font-size: var(--font-size-control);
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .permission-card small {
   color: var(--text-muted);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Settings: permissions tiles need slightly smaller type so labels fit cleanly. */
+#settingsView .permission-card strong {
+  font-size: 11px;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#settingsView .permission-card small {
+  font-size: 10px;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .employee-pdf-options .permission-card {
@@ -2612,6 +3162,20 @@ th {
   overflow-x: auto;
 }
 
+#vacationsView .vacation-balance-actions,
+#vacationsView .vacation-request-actions {
+  justify-content: flex-end;
+}
+
+#vacationsView .vacation-balance-actions {
+  margin-top: 10px;
+  margin-bottom: 8px;
+}
+
+#vacationsView .vacation-request-actions {
+  margin-top: 10px;
+}
+
 #vacationsView .module-table {
   margin-top: 0;
   table-layout: auto;
@@ -2626,24 +3190,18 @@ th {
 }
 
 #vacationsView .vacation-balance-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--field-gap);
 }
 
-#vacationsView .vacation-balance-grid .toolbar-field.align-end {
-  grid-template-rows: auto minmax(var(--control-height), auto);
-  align-content: start;
+#vacationsView .vacation-balance-grid {
+  margin-top: 0;
 }
 
-#vacationsView .vacation-balance-grid .toolbar-field.align-end > span {
-  display: block;
-  visibility: hidden;
-  min-height: calc(var(--font-size-label) * 1.35);
-}
-
-#vacationsView .vacation-balance-grid .toolbar-field.align-end > button {
-  align-self: start;
-  justify-self: stretch;
+/* Make the 3 balance input tiles match the visual rhythm of .stat tiles below. */
+#vacationsView .vacation-balance-grid .toolbar-field {
+  border-radius: 14px;
+  padding: 14px;
 }
 
 #vacationBalanceStats {
@@ -2759,15 +3317,151 @@ th {
 #vacationsView .vacation-request-grid { gap: 12px; }
 
 #invoicesView .panel-third {
-  grid-column: span 3;
+  grid-column: span 4;
 }
 
 #invoicesView .panel-two-thirds {
-  grid-column: span 9;
+  grid-column: span 8;
 }
 
 #vacationsView .action-cell {
   gap: 4px;
+}
+
+#dashboardView .form-table-shell {
+  margin-top: 0;
+}
+
+#dashboardView .stats-grid {
+  --tile-min: clamp(8.8rem, 10vw, 10.8rem);
+}
+
+#dashboardView .dashboard-summary-stats .stat strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dashboardView .stat {
+  min-height: 0;
+  align-content: start;
+  gap: 0;
+}
+
+#dashboardView .stat > span {
+  max-width: none;
+}
+
+#dashboardView .stat strong {
+  font-size: clamp(19px, 1.48vw, 27px);
+}
+
+#dashboardView .detail-stats .stat strong {
+  font-size: clamp(17px, 1.18vw, 22px);
+}
+
+#dashboardView .invoice-module-table {
+  margin-top: 0;
+  font-size: 12.75px;
+  width: 100%;
+  min-width: 0;
+  table-layout: auto;
+}
+
+#dashboardView .invoice-module-table th,
+#dashboardView .invoice-module-table td {
+  padding: 8px 8px;
+  line-height: 1.36;
+  vertical-align: middle;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+#dashboardView .invoice-module-table th .sort-button {
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+#dashboardView .invoice-module-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+}
+
+#dashboardView .module-table {
+  margin-top: 0;
+  font-size: 13px;
+}
+
+#dashboardView .module-table th,
+#dashboardView .module-table td {
+  padding: 11px 9px;
+  line-height: 1.45;
+}
+
+#dashboardView .dashboard-investments-table th:nth-child(2),
+#dashboardView .dashboard-investments-table td:nth-child(2) {
+  min-width: 196px;
+}
+
+#dashboardView .dashboard-detail-table th:nth-child(2),
+#dashboardView .dashboard-detail-table td:nth-child(2) {
+  min-width: 88px;
+}
+
+#invoicesView .invoice-table-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+#invoicesView .invoice-table-toolbar .compact-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: end;
+  align-items: end;
+  gap: 8px;
+}
+
+#invoicesView .invoice-selected-count {
+  font-size: 12px;
+}
+
+#invoicesView .invoice-module-table {
+  font-size: 12.75px;
+}
+
+#invoicesView .invoice-module-table th,
+#invoicesView .invoice-module-table td {
+  padding: 8px 8px;
+  line-height: 1.36;
+}
+
+#invoicesView .invoice-module-table th:nth-child(5),
+#invoicesView .invoice-module-table td:nth-child(5) {
+  min-width: 148px;
+}
+
+#invoicesView .invoice-entry-grid {
+  grid-template-columns: repeat(auto-fit, minmax(clamp(8.75rem, 11.5vw, 11.5rem), 1fr));
+}
+
+#invoicesView .invoice-entry-grid .toolbar-field {
+  width: 100%;
+  max-width: none;
+}
+
+#invoicesView .invoice-entry-grid .toolbar-field > input,
+#invoicesView .invoice-entry-grid .toolbar-field > select {
+  width: 100%;
+}
+
+#invoicesView .invoice-form-action-tile {
+  grid-column: span 1;
 }
 
 @media (max-width: 1480px) {
@@ -2776,16 +3470,38 @@ th {
   }
   .detail-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
-  #contractsView .contract-form-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  #workwearView .workwear-form-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  #contractsView .contract-form-grid,
+  #invoicesView .invoice-entry-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(8.5rem, 11vw, 11.25rem), 1fr));
   }
 }
 
 @media (max-width: 1280px) {
+  .app-shell.is-authenticated-shell .workspace { margin-left: 214px; padding: 14px; }
+  .app-shell.is-authenticated-shell .app-rail {
+    width: 214px;
+    padding: 13px 11px;
+    gap: 12px;
+  }
+  .rail-brand {
+    min-height: 68px;
+    padding: 11px 9px;
+  }
+  .rail-brand-logo {
+    width: 132px;
+    height: 40px;
+  }
+  .rail-main-link {
+    min-height: 38px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .rail-account-button {
+    padding: 9px 10px;
+  }
+  .rail-user-card strong {
+    font-size: 13px;
+  }
   .view-hero { grid-template-columns: 1fr; }
   .section-grid {
     grid-template-columns: repeat(var(--grid-cols-tablet, var(--grid-cols-laptop, var(--grid-cols-desktop, 4))), minmax(0, 1fr));
@@ -2795,44 +3511,162 @@ th {
   .finance-grid-tertiary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .detail-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .detail-meta-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .permission-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .permission-grid { grid-template-columns: repeat(auto-fit, minmax(clamp(8.25rem, 12vw, 10.75rem), 1fr)); }
   #vacationBalanceStats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-  #contractsView .contract-form-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  #contractsView .contract-form-grid,
+  #invoicesView .invoice-entry-grid,
+  #hoursView .hours-toolbar-grid,
+  #employeesView .employee-form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(8.25rem, 12vw, 10.75rem), 1fr));
   }
 
-  #invoicesView .invoice-filter-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  #settingsView .settings-user-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(7.5rem, 10.5vw, 10.25rem), 1fr));
   }
 
-  #workwearView .workwear-form-grid {
+  #hoursView .finance-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
+  #employeesView .employee-form-action-tile {
+    grid-column: span 1;
+  }
+
   #invoicesView .invoice-form-action-tile {
-    grid-column: span 3;
+    grid-column: span 1;
+  }
+
+  .home-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 372px);
+  }
+
+  .home-feature-strip {
+    grid-template-columns: 1fr;
+    max-width: 26rem;
   }
 }
 
 @media (max-width: 1120px) {
-  .workspace { margin-left: 236px; }
-  .app-rail {
-    width: 236px;
+  .app-shell.is-authenticated-shell .workspace { margin-left: 190px; padding: 12px; }
+  .app-shell.is-authenticated-shell .app-rail {
+    width: 190px;
+    padding: 12px 10px;
   }
   .split-layout, .detail-layout { grid-template-columns: 1fr; }
   .panel-third,
   .panel-two-thirds { grid-column: 1 / -1; }
   .detail-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+  .rail-main-link {
+    padding: 10px 11px;
+    font-size: 12px;
+  }
+
+  .rail-footer {
+    padding-top: 14px;
+  }
+
+  #dashboardView .module-table,
+  #dashboardView .invoice-module-table {
+    font-size: 12.5px;
+  }
+
+  #dashboardView .module-table th,
+  #dashboardView .module-table td,
+  #dashboardView .invoice-module-table th,
+  #dashboardView .invoice-module-table td {
+    padding: 10px 7px;
+  }
+
+  #dashboardView .dashboard-investments-table th:nth-child(2),
+  #dashboardView .dashboard-investments-table td:nth-child(2) {
+    min-width: 176px;
+  }
+
+  #hoursView .finance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #employeesView .employee-form-action-tile {
+    grid-column: span 2;
+  }
+
+  #invoicesView .invoice-table-toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  #invoicesView .invoice-table-toolbar .compact-actions {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    grid-auto-flow: row;
+    justify-content: start;
+  }
+
+  #contractsView .contract-form-grid,
+  #invoicesView .invoice-entry-grid,
+  #hoursView .hours-toolbar-grid,
+  #employeesView .employee-form-grid,
+  #workwearView .workwear-form-grid,
+  #workwearView .workwear-catalog-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(8rem, 13vw, 10.5rem), 1fr));
+  }
+
+  #employeesView .employee-form-action-tile {
+    grid-column: span 1;
+  }
+
+  #invoicesView .invoice-form-action-tile {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 980px) {
-  #invoicesView .invoice-filter-grid {
+  .home-stage {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .home-brand-panel {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .home-logo {
+    justify-self: center;
+  }
+
+  .home-copy {
+    justify-items: center;
+  }
+
+  .home-login-card {
+    justify-self: center;
+  }
+
+  #hoursView .finance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #employeesView .employee-form-action-tile {
+    grid-column: span 2;
+  }
+
+  #invoicesView .invoice-table-toolbar .compact-actions {
+    grid-template-columns: 1fr;
   }
 
   #invoicesView .invoice-form-action-tile {
     grid-column: span 2;
+  }
+
+  #contractsView .contract-form-grid,
+  #invoicesView .invoice-entry-grid,
+  #hoursView .hours-toolbar-grid,
+  #employeesView .employee-form-grid,
+  #workwearView .workwear-form-grid,
+  #workwearView .workwear-catalog-grid {
+    grid-template-columns: repeat(auto-fit, minmax(clamp(7.5rem, 18vw, 10rem), 1fr));
   }
 }
 
@@ -2851,11 +3685,16 @@ th {
   #invoicesView .invoice-form-action-tile {
     grid-column: span 1;
   }
+
+  #workwearView .workwear-form-grid,
+  #workwearView .workwear-catalog-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 760px) {
-  .workspace { margin-left: 208px; padding: 16px; }
-  .app-rail { width: 208px; }
+  .app-shell.is-authenticated-shell .workspace { margin-left: 192px; padding: 14px; }
+  .app-shell.is-authenticated-shell .app-rail { width: 192px; }
   .view-grid { grid-template-columns: 1fr; }
   .panel { grid-column: 1 / -1; }
   .section-grid {
@@ -2881,4 +3720,460 @@ th {
   #hoursView .hours-toolbar-grid .month-add-actions {
     grid-template-columns: 1fr;
   }
+
+  .home-stage {
+    padding: 28px 18px;
+  }
+
+  .home-feature-strip {
+    max-width: none;
+  }
+}
+
+/* Final proportional form grids override for key business modules */
+#contractsView .contract-form-grid,
+#invoicesView .invoice-entry-grid,
+#hoursView .hours-toolbar-grid,
+#employeesView .employee-form-grid,
+#workwearView .workwear-form-grid,
+#workwearView .workwear-catalog-grid {
+  grid-auto-flow: row;
+}
+
+#contractsView .contract-form-grid {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+#invoicesView .invoice-entry-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+#hoursView .hours-toolbar-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--field-gap);
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+#hoursView .hours-toolbar-grid > .toolbar-field {
+  min-height: var(--field-tile-min-height);
+  padding: 9px 11px;
+  border-radius: 12px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: stretch;
+  align-items: stretch;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+#hoursView .hours-toolbar-grid > .toolbar-field > .inline-actions {
+  display: grid;
+  grid-template-columns: repeat(var(--hours-toolbar-action-cols, 2), minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+#hoursView .hours-toolbar-grid > .toolbar-field > .inline-actions > * {
+  width: 100%;
+  min-width: 0;
+}
+
+#hoursView .hours-toolbar-grid .month-add-actions {
+  --hours-toolbar-action-cols: 3;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#hoursView .hours-toolbar-grid .month-delete-actions {
+  --hours-toolbar-action-cols: 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#hoursView .hours-toolbar-grid #addMonthButton,
+#hoursView .hours-toolbar-grid #deleteSelectedMonthsButton,
+#hoursView .hours-toolbar-grid #addHoursEmployeeButton {
+  min-width: 0;
+  justify-self: stretch;
+}
+
+#employeesView .employee-form-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+/* Workwear: use the same "fluid" auto-fit grid behavior as other good sections (no fixed repeat(N)). */
+#workwearView .workwear-form-grid,
+#workwearView .workwear-catalog-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--tile-min, 12rem)), 1fr));
+}
+
+#workwearView .workwear-form-grid {
+  --tile-min: clamp(12rem, 16vw, 15rem);
+}
+
+#workwearView .workwear-catalog-grid {
+  --tile-min: clamp(13rem, 18vw, 16rem);
+}
+
+#contractsView .contract-form-action-tile,
+#invoicesView .invoice-form-action-tile,
+#employeesView .employee-form-action-tile,
+#workwearView .workwear-form-action-tile,
+#workwearView .workwear-catalog-grid > .toolbar-field.align-end {
+  grid-column: span 1;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+#contractsView .contract-form-action-tile > button,
+#workwearView .workwear-form-action-tile > button,
+#workwearView .workwear-catalog-grid > .toolbar-field.align-end > button {
+  width: 100%;
+}
+
+@media (max-width: 1480px) {
+  #contractsView .contract-form-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  #invoicesView .invoice-entry-grid,
+  #employeesView .employee-form-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1120px) {
+  #contractsView .contract-form-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  #invoicesView .invoice-entry-grid,
+  #hoursView .hours-toolbar-grid,
+  #employeesView .employee-form-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  #contractsView .contract-form-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  #contractsView .contract-form-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  #contractsView .contract-form-grid,
+  #invoicesView .invoice-entry-grid,
+  #hoursView .hours-toolbar-grid,
+  #employeesView .employee-form-grid,
+  #workwearView .workwear-form-grid,
+  #workwearView .workwear-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #invoicesView .invoice-filter-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shared layout language for form sections */
+.form-grid-system {
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+  grid-auto-flow: row;
+  grid-template-columns: repeat(var(--form-cols-desktop, 6), minmax(0, 1fr));
+}
+
+.form-grid-system > .toolbar-field {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.form-grid-system > .toolbar-field > input,
+.form-grid-system > .toolbar-field > select,
+.form-grid-system > .toolbar-field > textarea,
+.form-grid-system > .toolbar-field > .invoice-segmented-control,
+.form-grid-system > .toolbar-field > .inline-actions {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.form-grid-system > .toolbar-field.align-end,
+.form-grid-system > .toolbar-field.toolbar-field--action-stack {
+  grid-column: span 1;
+  justify-self: stretch;
+  align-self: stretch;
+}
+
+.form-grid-system > .toolbar-field.align-end > button,
+.form-grid-system > .toolbar-field.toolbar-field--action-stack > .inline-actions,
+.form-grid-system > .toolbar-field.align-end > .inline-actions {
+  width: 100%;
+}
+
+.form-grid-system > .toolbar-field span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+.form-grid-system--contracts {
+  --form-cols-desktop: 6;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--filters {
+  --form-cols-desktop: 5;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--entry {
+  --form-cols-desktop: 6;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--controls {
+  --form-cols-desktop: 5;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--employees {
+  --form-cols-desktop: 6;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--settings {
+  --form-cols-desktop: 6;
+  --form-cols-laptop: 5;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--settings-user {
+  --form-cols-desktop: 7;
+  --form-cols-laptop: 6;
+  --form-cols-tablet: 4;
+}
+
+/* Settings: keep form tile headings on one line, consistent with other form grids. */
+#settingsView .settings-user-grid .toolbar-field span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+}
+
+/* Settings: slightly smaller typography so labels/content fit comfortably in one row on wide panels. */
+#settingsView .settings-user-grid .toolbar-field span {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+#settingsView .settings-user-grid input,
+#settingsView .settings-user-grid select {
+  font-size: 12px;
+}
+
+.form-grid-system--workwear {
+  --form-cols-desktop: 7;
+  --form-cols-laptop: 6;
+  --form-cols-tablet: 4;
+}
+
+.form-grid-system--catalog {
+  --form-cols-desktop: 4;
+  --form-cols-laptop: 4;
+  --form-cols-tablet: 3;
+}
+
+@media (max-width: 1480px) {
+  .form-grid-system {
+    grid-template-columns: repeat(var(--form-cols-laptop, var(--form-cols-desktop, 6)), minmax(0, 1fr));
+  }
+
+  #hoursView .hours-toolbar-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1120px) {
+  .form-grid-system {
+    grid-template-columns: repeat(var(--form-cols-tablet, var(--form-cols-laptop, var(--form-cols-desktop, 6))), minmax(0, 1fr));
+  }
+
+  #hoursView .hours-toolbar-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  #hoursView .hours-toolbar-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  #hoursView .hours-toolbar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #hoursView .hours-toolbar-grid .month-add-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #hoursView .hours-toolbar-grid .month-add-actions > :last-child {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .form-grid-system {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 1024-ish table compression */
+@media (max-width: 1120px) {
+  #employeeRegistryTable .module-table,
+  #contractsRegistryTable .invoice-module-table {
+    font-size: 12px;
+  }
+
+  #employeeRegistryTable .module-table th,
+  #employeeRegistryTable .module-table td,
+  #contractsRegistryTable .invoice-module-table th,
+  #contractsRegistryTable .invoice-module-table td {
+    padding: 7px 6px;
+    line-height: 1.32;
+  }
+
+  #contractsRegistryTable .control-col,
+  #employeeRegistryTable .module-table th:first-child,
+  #employeeRegistryTable .module-table td:first-child {
+    width: 44px;
+    min-width: 44px;
+  }
+
+  #contractsRegistryTable .action-cell,
+  #employeeRegistryTable .action-cell,
+  #invoicesView .invoice-module-table .action-cell {
+    gap: 4px;
+  }
+
+  #employeeRegistryTable .table-action-button {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  #employeeRegistryTable .module-table th:nth-child(2),
+  #employeeRegistryTable .module-table td:nth-child(2) {
+    min-width: 92px;
+    width: 92px;
+  }
+
+  #employeeRegistryTable .module-table th:nth-child(3),
+  #employeeRegistryTable .module-table td:nth-child(3) {
+    min-width: 78px;
+    width: 78px;
+  }
+
+  #employeeRegistryTable .module-table th:nth-child(6),
+  #employeeRegistryTable .module-table td:nth-child(6),
+  #employeeRegistryTable .module-table th:nth-child(7),
+  #employeeRegistryTable .module-table td:nth-child(7) {
+    min-width: 96px;
+    width: 96px;
+  }
+
+  #employeeRegistryTable .module-table th:last-child,
+  #employeeRegistryTable .module-table td:last-child {
+    min-width: 96px;
+    width: 96px;
+  }
+
+  #contractsRegistryTable .invoice-module-table th {
+    white-space: nowrap;
+  }
+
+  #contractsRegistryTable .invoice-module-table th:last-child,
+  #contractsRegistryTable .invoice-module-table td:last-child {
+    min-width: 92px;
+    width: 92px;
+  }
+}
+
+/* Contract form should behave like the registry table below: one row + horizontal move */
+#contractsView .contract-form-shell {
+  margin-top: 0;
+  overflow-x: auto;
+}
+
+#contractsView .contract-form-shell .contract-form-grid {
+  width: max(100%, 1420px);
+  min-width: 1420px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-flow: column;
+  align-items: stretch;
+}
+
+#contractsView .contract-form-shell .contract-form-grid > .toolbar-field {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+/* Planning: allow wrapping only between words (never split inside a word). */
+#planningView th {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+#planningView th .sort-button > span:first-child {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  white-space: normal;
+}
+
+/* Hours workers: keep sort indicator right next to the label (not pushed to the cell edge). */
+#hoursView .hours-table th .sort-button {
+  position: static;
+  justify-content: flex-start;
+  gap: 6px;
+  white-space: nowrap;
+  padding-right: 0;
+}
+
+#hoursView .hours-table th .sort-button > span:first-child {
+  flex: 0 1 auto;
+  width: auto;
+  text-align: left;
+}
+
+#hoursView .hours-table th .sort-button .sort-indicator {
+  position: static;
+  right: auto;
+  top: auto;
+  transform: none;
 }

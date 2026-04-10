@@ -1,5 +1,6 @@
-(function initAgentContractApi(global) {
-  const SESSION_STORAGE_KEY = "agent_backend_session_token";
+(function initClodeContractApi(global) {
+  const SESSION_STORAGE_KEY = "clode_backend_session_token";
+  const LEGACY_SESSION_STORAGE_KEY = "agent_backend_session_token";
 
   function createContractApi(options) {
     const config = {
@@ -9,7 +10,7 @@
 
     function getSessionToken() {
       try {
-        return String(global.sessionStorage?.getItem(SESSION_STORAGE_KEY) || "").trim();
+        return String(global.sessionStorage?.getItem(SESSION_STORAGE_KEY) || global.sessionStorage?.getItem(LEGACY_SESSION_STORAGE_KEY) || "").trim();
       } catch {
         return "";
       }
@@ -19,11 +20,10 @@
       const controller = new AbortController();
       const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
       try {
-        const headers = {
-          "Content-Type": "application/json",
-        };
+        const headers = { "Content-Type": "application/json" };
         const token = getSessionToken();
         if (token) {
+          headers["X-Clode-Session"] = token;
           headers["X-Agent-Session"] = token;
         }
 
@@ -39,14 +39,12 @@
         if (response.status !== 204) {
           payload = await response.json().catch(() => null);
         }
-
         if (!response.ok) {
           const error = new Error(payload?.error || `API ${method} ${path} failed with status ${response.status}`);
           error.status = response.status;
           error.payload = payload;
           throw error;
         }
-
         return payload;
       } finally {
         global.clearTimeout(timer);
@@ -89,11 +87,7 @@
       },
       async getDashboardSnapshot(filters = {}) {
         const params = new URLSearchParams();
-        if (filters.includeArchived) {
-          params.set("include_archived", "1");
-        } else {
-          params.set("include_archived", "0");
-        }
+        params.set("include_archived", filters.includeArchived ? "1" : "0");
         Object.entries(filters || {}).forEach(([key, value]) => {
           if (key === "includeArchived") return;
           const normalized = value === undefined || value === null ? "" : String(value);
@@ -106,7 +100,8 @@
     };
   }
 
-  global.AgentContractApi = {
+  global.ClodeContractApi = {
     create: createContractApi,
   };
+  global.AgentContractApi = global.ClodeContractApi;
 })(window);

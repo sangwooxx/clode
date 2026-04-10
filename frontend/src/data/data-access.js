@@ -1,8 +1,10 @@
-(function initAgentDataAccess(global) {
-  const storageKeys = global.AgentStorageKeys || {};
-  const localAdapter = global.AgentLocalStorageAdapter.create(global.localStorage);
-  const apiAdapter = global.AgentApiAdapter.create({
-    baseUrl: global.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+(function initClodeDataAccess(global) {
+  const storageKeys = global.ClodeStorageKeys || global.AgentStorageKeys || {};
+  const localStorageAdapterFactory = global.ClodeLocalStorageAdapter || global.AgentLocalStorageAdapter;
+  const apiAdapterFactory = global.ClodeApiAdapter || global.AgentApiAdapter;
+  const localAdapter = localStorageAdapterFactory.create(global.localStorage);
+  const apiAdapter = apiAdapterFactory.create({
+    baseUrl: global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
   });
 
   const repositoryDefinitions = Object.freeze({
@@ -101,7 +103,7 @@
   }, {});
 
   const managerState = {
-    mode: global.__AGENT_DATA_MODE || "local",
+    mode: global.__CLODE_DATA_MODE || global.__AGENT_DATA_MODE || "local",
   };
 
   function cloneValue(value) {
@@ -195,7 +197,7 @@
     return accumulator;
   }, {});
 
-  global.AgentDataAccess = {
+  global.ClodeDataAccess = {
     repositoryDefinitions,
     repositories,
     getMode() {
@@ -240,4 +242,5 @@
       return repositoryDefinitions[repositoryName]?.storageKey || "";
     },
   };
+  global.AgentDataAccess = global.ClodeDataAccess;
 })(window);

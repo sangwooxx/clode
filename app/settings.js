@@ -1,11 +1,67 @@
-const settingsViewState = window.__agentSettingsViewState || {
+﻿const settingsViewState = window.__clodeSettingsViewState || {
   initialized: false,
   editingUserId: "",
   userSearch: "",
   auditSearch: "",
+  userSort: null,
 };
 
-window.__agentSettingsViewState = settingsViewState;
+window.__clodeSettingsViewState = settingsViewState;
+
+const SETTINGS_USERS_TABLE_SORT_KEY = "clodeSettingsUsersTableSortV1";
+
+function settingsReadStore(storageKey, fallbackValue) {
+  try {
+    const raw = window.localStorage?.getItem(storageKey);
+    if (!raw) return fallbackValue;
+    return JSON.parse(raw);
+  } catch {
+    return fallbackValue;
+  }
+}
+
+function settingsWriteStore(storageKey, value) {
+  try {
+    window.localStorage?.setItem(storageKey, JSON.stringify(value));
+  } catch {
+    // ignore
+  }
+}
+
+function settingsDefaultUserSort() {
+  return { key: "name", direction: "asc" };
+}
+
+function settingsLoadUserSort() {
+  const parsed = settingsReadStore(SETTINGS_USERS_TABLE_SORT_KEY, null);
+  if (!parsed) return settingsDefaultUserSort();
+  const key = String(parsed.key || "");
+  const direction = String(parsed.direction || "");
+  if (!key) return settingsDefaultUserSort();
+  if (direction !== "asc" && direction !== "desc") return settingsDefaultUserSort();
+  return { key, direction };
+}
+
+function settingsSaveUserSort() {
+  settingsWriteStore(SETTINGS_USERS_TABLE_SORT_KEY, settingsViewState.userSort || settingsDefaultUserSort());
+}
+
+function settingsUsersColumnMap() {
+  return {
+    name: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.name || "") },
+    username: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.username || "") },
+    email: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.email || "") },
+    role: { type: "string", defaultDirection: "asc", getValue: (row) => String(settingsRoleLabel(row.role) || "") },
+    status: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.status || "") },
+    canApproveVacations: { type: "string", defaultDirection: "asc", getValue: (row) => (row.canApproveVacations ? "tak" : "nie") },
+    moduleCount: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.moduleCount || 0) },
+  };
+}
+
+function settingsRenderHeader(label, key, sortState) {
+  if (!window.ClodeTableUtils?.renderHeader) return settingsEscape(label);
+  return window.ClodeTableUtils.renderHeader(label, "settingsUsers", key, sortState);
+}
 
 function settingsEscape(value) {
   return String(value ?? "")
@@ -170,31 +226,43 @@ function renderSettingsUsersTable() {
       settingsRoleLabel(user.role),
       user.status === "inactive" ? "nieaktywne" : "aktywne",
     ].some((value) => String(value || "").toLowerCase().includes(query));
-  });
+  }).map((user) => ({
+    ...user,
+    moduleCount: Object.values(user.permissions || {}).filter(Boolean).length,
+  }));
 
   if (!rows.length) {
     target.innerHTML = "<p>Brak użytkowników dla podanego filtra.</p>";
     return;
   }
 
+  const sortState = settingsViewState.userSort || settingsDefaultUserSort();
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(rows, sortState, settingsUsersColumnMap())
+    : rows;
+
   target.innerHTML = `
-    <table class="entity-table module-table">
+    <table class="data-table invoice-module-table">
       <thead>
         <tr>
           <th>Lp.</th>
-          <th>Użytkownik</th>
-          <th>Login</th>
-          <th>E-mail</th>
-          <th>Rola</th>
-          <th>Status</th>
-          <th>Akceptuje urlopy</th>
-          <th>Liczba modułów</th>
+          <th>${settingsRenderHeader("Użytkownik", "name", sortState)}</th>
+          <th>${settingsRenderHeader("Login", "username", sortState)}</th>
+          <th>${settingsRenderHeader("E-mail", "email", sortState)}</th>
+          <th>${settingsRenderHeader("Rola", "role", sortState)}</th>
+          <th>${settingsRenderHeader("Status", "status", sortState)}</th>
+          <th>${settingsRenderHeader("Akceptuje urlopy", "canApproveVacations", sortState)}</th>
+          <th class="text-right">${settingsRenderHeader("Liczba modułów", "moduleCount", sortState)}</th>
           <th>Akcje</th>
         </tr>
       </thead>
       <tbody>
-        ${rows.map((user, index) => {
-          const moduleCount = Object.values(user.permissions || {}).filter(Boolean).length;
+        ${sortedRows.map((user, index) => {
+          // Render akcje 1:1 jak w Rejestrze faktur (ten sam układ i klasy).
+          const actions = `
+               <button class="table-action-button" type="button" title="Edytuj konto" data-settings-user-edit="${settingsEscape(user.id)}">Edytuj</button>
+               <button class="table-action-button danger-button" type="button" title="Usuń konto" data-settings-user-delete="${settingsEscape(user.id)}">Usuń</button>
+             `;
           return `
             <tr class="clickable-row${user.id === settingsViewState.editingUserId ? " is-selected" : ""}" data-settings-user="${settingsEscape(user.id)}">
               <td>${index + 1}</td>
@@ -204,11 +272,8 @@ function renderSettingsUsersTable() {
               <td>${settingsEscape(settingsRoleLabel(user.role))}</td>
               <td>${settingsEscape(user.status === "inactive" ? "Nieaktywne" : "Aktywne")}</td>
               <td>${settingsEscape(user.canApproveVacations ? "Tak" : "Nie")}</td>
-              <td>${settingsEscape(String(moduleCount))}</td>
-              <td class="action-cell">
-                <button class="table-action-button" type="button" data-settings-user-edit="${settingsEscape(user.id)}">Edytuj</button>
-                <button class="table-action-button danger-button" type="button" data-settings-user-delete="${settingsEscape(user.id)}">Usuń</button>
-              </td>
+              <td class="text-right">${settingsEscape(String(user.moduleCount))}</td>
+              <td class="action-cell">${actions}</td>
             </tr>
           `;
         }).join("")}
@@ -330,8 +395,8 @@ async function saveSettingsUser() {
 
   try {
     let savedUser = null;
-    if (window.AgentAuthClient?.saveUser) {
-      savedUser = await window.AgentAuthClient.saveUser(payload);
+    if (window.ClodeAuthClient?.saveUser) {
+      savedUser = await window.ClodeAuthClient.saveUser(payload);
     } else {
       savedUser = payload;
     }
@@ -362,8 +427,8 @@ async function deleteSettingsUser(userIdArg = "") {
   if (!window.confirm(`Czy na pewno chcesz usunąć konto ${user.name}?`)) return;
 
   try {
-    if (window.AgentAuthClient?.deleteUser) {
-      await window.AgentAuthClient.deleteUser(userId);
+    if (window.ClodeAuthClient?.deleteUser) {
+      await window.ClodeAuthClient.deleteUser(userId);
     }
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Administracja", "Usunięto konto", user.name, `Login: ${user.username || "-"}`);
@@ -416,6 +481,18 @@ function initSettingsView() {
   });
   document.getElementById("saveWorkflowSettingsButton")?.addEventListener("click", saveWorkflowSettings);
   document.getElementById("settingsUsersTable")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='settingsUsers']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      settingsViewState.userSort = window.ClodeTableUtils.nextSort(
+        settingsViewState.userSort || settingsDefaultUserSort(),
+        sortButton.dataset.sortKey,
+        settingsUsersColumnMap()
+      );
+      settingsSaveUserSort();
+      renderSettingsUsersTable();
+      return;
+    }
+
     const editButton = event.target.closest("[data-settings-user-edit]");
     if (editButton) {
       fillSettingsUserForm(editButton.dataset.settingsUserEdit);
@@ -442,6 +519,9 @@ function initSettingsView() {
   });
 
   settingsViewState.initialized = true;
+  if (!settingsViewState.userSort) {
+    settingsViewState.userSort = settingsLoadUserSort();
+  }
   renderSettingsModule();
 }
 
@@ -450,3 +530,4 @@ if (document.readyState === "loading") {
 } else {
   initSettingsView();
 }
+

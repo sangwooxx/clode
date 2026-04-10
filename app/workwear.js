@@ -1,5 +1,6 @@
-const WORKWEAR_STORAGE_KEY = "agentWorkwearRegistryV1";
-const WORKWEAR_CATALOG_STORAGE_KEY = "agentWorkwearCatalogV1";
+const WORKWEAR_STORAGE_KEY = "clodeWorkwearRegistryV1";
+const WORKWEAR_CATALOG_STORAGE_KEY = "clodeWorkwearCatalogV1";
+const WORKWEAR_TABLE_SORT_KEY = "clodeWorkwearTableSortV1";
 
 const WORKWEAR_SIZE_OPTIONS = [
   "UNI",
@@ -30,15 +31,102 @@ const DEFAULT_WORKWEAR_CATALOG = [
   { id: "ww-cat-gloves", name: "Rękawice robocze", category: "BHP", notes: "Zużycie bieżące" },
 ];
 
-const workwearState = window.__agentWorkwearState || {
+const workwearState = window.__clodeWorkwearState || {
   selectedEmployee: "",
   search: "",
   editingEntryId: "",
   editingCatalogId: "",
+  selectedEntryIds: [],
+  selectedEntryRowId: "",
   initialized: false,
+  sorts: null,
 };
 
-window.__agentWorkwearState = workwearState;
+window.__clodeWorkwearState = workwearState;
+
+function workwearDefaultSorts() {
+  return {
+    catalog: { key: "name", direction: "asc" },
+    employees: { key: "last_name", direction: "asc" },
+    entries: { key: "issue_date", direction: "desc" },
+  };
+}
+
+function workwearReadStore(storageKey, fallbackValue) {
+  if (window.ClodeDataAccess?.legacy) {
+    return window.ClodeDataAccess.legacy.read(storageKey, fallbackValue);
+  }
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    return raw === null ? fallbackValue : JSON.parse(raw);
+  } catch {
+    return fallbackValue;
+  }
+}
+
+function workwearWriteStore(storageKey, value) {
+  if (window.ClodeDataAccess?.legacy) {
+    window.ClodeDataAccess.legacy.write(storageKey, value);
+    return;
+  }
+  window.localStorage.setItem(storageKey, JSON.stringify(value));
+}
+
+function workwearLoadSorts() {
+  const defaults = workwearDefaultSorts();
+  const parsed = workwearReadStore(WORKWEAR_TABLE_SORT_KEY, null);
+  if (!parsed || typeof parsed !== "object") return defaults;
+  const normalize = (value, fallback) => {
+    if (!value || typeof value !== "object") return { ...fallback };
+    const key = String(value.key || fallback.key || "").trim();
+    const direction = String(value.direction || fallback.direction || "asc").trim().toLowerCase();
+    if (!key) return { ...fallback };
+    if (direction !== "asc" && direction !== "desc") return { ...fallback };
+    return { key, direction };
+  };
+  return {
+    catalog: normalize(parsed.catalog, defaults.catalog),
+    employees: normalize(parsed.employees, defaults.employees),
+    entries: normalize(parsed.entries, defaults.entries),
+  };
+}
+
+function workwearSaveSorts() {
+  workwearWriteStore(WORKWEAR_TABLE_SORT_KEY, workwearState.sorts || workwearDefaultSorts());
+}
+
+function workwearRenderHeader(label, tableName, key, sortState) {
+  if (!window.ClodeTableUtils?.renderHeader) return workwearEscape(label);
+  return window.ClodeTableUtils.renderHeader(label, tableName, key, sortState);
+}
+
+function workwearCatalogColumnMap() {
+  return {
+    name: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.name || "") },
+    category: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.category || "") },
+    notes: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.notes || "") },
+  };
+}
+
+function workwearEmployeesColumnMap() {
+  return {
+    last_name: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.last_name || "") },
+    first_name: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.first_name || "") },
+    position: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.position || "") },
+    issues_count: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.issues_count || 0) },
+    last_issue_date: { type: "date", defaultDirection: "desc", getValue: (row) => String(row.last_issue_date || "") },
+  };
+}
+
+function workwearEntriesColumnMap() {
+  return {
+    issue_date: { type: "date", defaultDirection: "desc", getValue: (row) => String(row.issue_date || "") },
+    item_name: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.item_name || "") },
+    size: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.size || "") },
+    quantity: { type: "number", defaultDirection: "desc", getValue: (row) => Number(row.quantity || 0) },
+    notes: { type: "string", defaultDirection: "asc", getValue: (row) => String(row.notes || "") },
+  };
+}
 
 function workwearEscape(value) {
   return String(value ?? "")
@@ -70,15 +158,15 @@ function workwearSearchText(value) {
 }
 
 function loadWorkwearRegistry() {
-  const parsed = window.AgentDataAccess?.legacy
-    ? window.AgentDataAccess.legacy.read(WORKWEAR_STORAGE_KEY, [])
+  const parsed = window.ClodeDataAccess?.legacy
+    ? window.ClodeDataAccess.legacy.read(WORKWEAR_STORAGE_KEY, [])
     : [];
   return Array.isArray(parsed) ? parsed : [];
 }
 
 function saveWorkwearRegistry(registry) {
-  if (window.AgentDataAccess?.legacy) {
-    window.AgentDataAccess.legacy.write(WORKWEAR_STORAGE_KEY, registry, { eventName: "workwear-registry-updated" });
+  if (window.ClodeDataAccess?.legacy) {
+    window.ClodeDataAccess.legacy.write(WORKWEAR_STORAGE_KEY, registry, { eventName: "workwear-registry-updated" });
     return;
   }
   window.localStorage.setItem(WORKWEAR_STORAGE_KEY, JSON.stringify(registry));
@@ -86,8 +174,8 @@ function saveWorkwearRegistry(registry) {
 }
 
 function loadWorkwearCatalog() {
-  const parsed = window.AgentDataAccess?.legacy
-    ? window.AgentDataAccess.legacy.read(WORKWEAR_CATALOG_STORAGE_KEY, null)
+  const parsed = window.ClodeDataAccess?.legacy
+    ? window.ClodeDataAccess.legacy.read(WORKWEAR_CATALOG_STORAGE_KEY, null)
     : null;
   if (Array.isArray(parsed) && parsed.length) {
     return parsed;
@@ -96,8 +184,8 @@ function loadWorkwearCatalog() {
 }
 
 function saveWorkwearCatalog(catalog) {
-  if (window.AgentDataAccess?.legacy) {
-    window.AgentDataAccess.legacy.write(WORKWEAR_CATALOG_STORAGE_KEY, catalog, { eventName: "workwear-catalog-updated" });
+  if (window.ClodeDataAccess?.legacy) {
+    window.ClodeDataAccess.legacy.write(WORKWEAR_CATALOG_STORAGE_KEY, catalog, { eventName: "workwear-catalog-updated" });
     return;
   }
   window.localStorage.setItem(WORKWEAR_CATALOG_STORAGE_KEY, JSON.stringify(catalog));
@@ -167,7 +255,7 @@ function renderWorkwearSizeSelect() {
 function resetWorkwearForm() {
   workwearState.editingEntryId = "";
   document.getElementById("workwearFormHeading").textContent = "Nowe wydanie";
-  document.getElementById("saveWorkwearButton").textContent = "Zapisz wydanie";
+  document.getElementById("saveWorkwearButton").textContent = "Zapisz";
   if (workwearState.selectedEmployee) {
     document.getElementById("workwearEmployeeSelect").value = workwearState.selectedEmployee;
   }
@@ -185,7 +273,7 @@ function resetCatalogForm() {
   document.getElementById("workwearCatalogNameInput").value = "";
   document.getElementById("workwearCatalogCategoryInput").value = "";
   document.getElementById("workwearCatalogNotesInput").value = "";
-  document.getElementById("saveWorkwearCatalogButton").textContent = "Zapisz pozycję";
+  document.getElementById("saveWorkwearCatalogButton").textContent = "Zapisz";
 }
 
 function fillCatalogForm(itemId) {
@@ -223,24 +311,25 @@ function fillWorkwearForm(entryId) {
 function renderWorkwearCatalogTable() {
   const target = document.getElementById("workwearCatalogTable");
   if (!target) return;
-  const catalog = loadWorkwearCatalog().sort((left, right) => String(left.name || "").localeCompare(String(right.name || ""), "pl", {
-    sensitivity: "base",
-    numeric: true,
-  }));
+  const catalog = loadWorkwearCatalog().map((item) => ({ ...item }));
+  const sortState = workwearState.sorts?.catalog || workwearDefaultSorts().catalog;
+  const sortedCatalog = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(catalog, sortState, workwearCatalogColumnMap())
+    : catalog;
 
   target.innerHTML = `
-    <table class="entity-table module-table">
+    <table class="data-table invoice-module-table module-table">
       <thead>
         <tr>
           <th>Lp.</th>
-          <th>Produkt</th>
-          <th>Kategoria</th>
-          <th>Opis standardu</th>
-          <th>Akcje</th>
+          <th>${workwearRenderHeader("Produkt", "workwearCatalog", "name", sortState)}</th>
+          <th>${workwearRenderHeader("Kategoria", "workwearCatalog", "category", sortState)}</th>
+          <th>${workwearRenderHeader("Opis standardu", "workwearCatalog", "notes", sortState)}</th>
+          <th class="control-col">Akcje</th>
         </tr>
       </thead>
       <tbody>
-        ${catalog.map((item, index) => `
+        ${sortedCatalog.map((item, index) => `
           <tr>
             <td>${index + 1}</td>
             <td>${workwearEscape(item.name)}</td>
@@ -281,21 +370,25 @@ function renderWorkwearEmployeesTable() {
   }
 
   ensureSelectedEmployee();
+  const sortState = workwearState.sorts?.employees || workwearDefaultSorts().employees;
+  const sortedRows = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(rows, sortState, workwearEmployeesColumnMap())
+    : rows;
   target.innerHTML = `
-    <table class="entity-table module-table">
+    <table class="data-table invoice-module-table module-table">
       <thead>
         <tr>
           <th>Lp.</th>
-          <th>Nazwisko</th>
-          <th>Imię</th>
-          <th>Stanowisko</th>
-          <th>Liczba wydań</th>
-          <th>Ostatnie wydanie</th>
-          <th>Akcja</th>
+          <th>${workwearRenderHeader("Nazwisko", "workwearEmployees", "last_name", sortState)}</th>
+          <th>${workwearRenderHeader("Imię", "workwearEmployees", "first_name", sortState)}</th>
+          <th>${workwearRenderHeader("Stanowisko", "workwearEmployees", "position", sortState)}</th>
+          <th>${workwearRenderHeader("Liczba wydań", "workwearEmployees", "issues_count", sortState)}</th>
+          <th>${workwearRenderHeader("Ostatnie wydanie", "workwearEmployees", "last_issue_date", sortState)}</th>
+          <th class="control-col">Akcja</th>
         </tr>
       </thead>
       <tbody>
-        ${rows.map((employee, index) => `
+        ${sortedRows.map((employee, index) => `
           <tr class="clickable-row${employee.name === workwearState.selectedEmployee ? " is-selected" : ""}" data-workwear-employee="${workwearEscape(employee.name)}">
             <td>${index + 1}</td>
             <td>${workwearEscape(employee.last_name || "-")}</td>
@@ -335,27 +428,38 @@ function exportWorkwearCardPdf(employee, entries) {
   <meta charset="utf-8">
   <title>Karta przekazania odzieży</title>
   <style>
-    body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #111; }
-    h1 { margin: 0 0 8px; font-size: 24px; }
-    .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0 22px; }
-    .meta div { padding: 10px 12px; border: 1px solid #d9d9d9; }
-    .meta span { display: block; font-size: 10px; text-transform: uppercase; color: #666; margin-bottom: 6px; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th, td { padding: 8px 10px; border-bottom: 1px solid #d8d8d8; text-align: left; }
-    th { font-size: 10px; text-transform: uppercase; color: #555; }
+    ${(window.ClodePrintUtils?.baseCss ? window.ClodePrintUtils.baseCss() : `
+      body { font-family: "Segoe UI", Arial, sans-serif; margin: 24px; color: #111; }
+      h1 { margin: 0; font-size: 26px; }
+      h2 { margin: 0 0 12px; font-size: 16px; }
+      .header { margin-bottom: 24px; }
+      .header p { margin: 10px 0 0; color: #555; font-size: 12px; }
+      .print-section { margin-top: 20px; }
+      .meta-grid, .stats-grid, .meta { display: grid; gap: 10px; }
+      .meta-grid, .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .meta { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 0 22px; }
+      .meta-grid div, .stats-grid div, .meta div { padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 10px; }
+      span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #666; margin-bottom: 6px; }
+      strong { font-size: 14px; }
+      table { width: 100%; border-collapse: collapse; font-size: 12px; }
+      th, td { padding: 8px 10px; border-bottom: 1px solid #d8d8d8; text-align: left; vertical-align: top; }
+      th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #555; white-space: nowrap; }
+    `.trim())}
     .signatures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 48px; }
-    .box span { display: block; font-size: 11px; color: #666; margin-bottom: 32px; }
+    .box span { display: block; font-size: 11px; color: #666; margin-bottom: 32px; text-transform: none; letter-spacing: 0; }
   </style>
 </head>
 <body>
-  <h1>Karta przekazania odzieży roboczej</h1>
+  <div class="header">
+    <h1>Karta przekazania odzieży roboczej</h1>
+    <p>${workwearEscape(workwearDisplayName(employee))} • Data wydruku: ${workwearEscape(new Date().toLocaleDateString("pl-PL"))}</p>
+  </div>
   <div class="meta">
     <div><span>Pracownik</span><strong>${workwearEscape(workwearDisplayName(employee))}</strong></div>
     <div><span>Zatrudniony od</span><strong>${workwearEscape(employee.employment_date || "-")}</strong></div>
     <div><span>Adres</span><strong>${workwearEscape(employee.street || "-")}</strong></div>
     <div><span>Kod i miejscowość</span><strong>${workwearEscape(employee.city || "-")}</strong></div>
     <div><span>Telefon</span><strong>${workwearEscape(employee.phone || "-")}</strong></div>
-    <div><span>Data wydruku</span><strong>${workwearEscape(new Date().toLocaleDateString("pl-PL"))}</strong></div>
   </div>
   <table>
     <thead>
@@ -393,6 +497,12 @@ function renderWorkwearCard() {
   }
 
   const entries = getWorkwearEntriesForEmployee(employee.name);
+  const entrySort = workwearState.sorts?.entries || workwearDefaultSorts().entries;
+  const sortedEntries = window.ClodeTableUtils?.sortItems
+    ? window.ClodeTableUtils.sortItems(entries, entrySort, workwearEntriesColumnMap())
+    : entries;
+  const selectedSet = new Set((workwearState.selectedEntryIds || []).map((id) => String(id)));
+  const allSelected = entries.length > 0 && entries.every((entry) => selectedSet.has(String(entry.id)));
   target.innerHTML = `
     <div class="record-card">
       <div class="section-head">
@@ -401,7 +511,7 @@ function renderWorkwearCard() {
           <h2>${workwearEscape(workwearDisplayName(employee))}</h2>
         </div>
         <div class="detail-actions">
-          <button id="printWorkwearCardButton" class="primary-button" type="button">PDF karty</button>
+          <button id="printWorkwearCardButton" class="clicker-button" type="button">PDF karty</button>
         </div>
       </div>
       <div class="detail-meta-grid">
@@ -411,21 +521,25 @@ function renderWorkwearCard() {
         <div><span>Zatrudniony od</span><strong>${workwearEscape(employee.employment_date || "-")}</strong></div>
       </div>
       <div class="form-table-shell">
-        <table class="compact-summary-table">
+        <table class="data-table invoice-module-table module-table workwear-entries-table">
           <thead>
             <tr>
+              <th class="checkbox-cell"><input id="workwearEntrySelectAll" type="checkbox"${allSelected ? " checked" : ""}></th>
               <th>Lp.</th>
-              <th>Data wydania</th>
-              <th>Produkt</th>
-              <th>Rozmiar</th>
-              <th>Ilość</th>
-              <th>Uwagi</th>
+              <th>${workwearRenderHeader("Data wydania", "workwearEntries", "issue_date", entrySort)}</th>
+              <th>${workwearRenderHeader("Produkt", "workwearEntries", "item_name", entrySort)}</th>
+              <th>${workwearRenderHeader("Rozmiar", "workwearEntries", "size", entrySort)}</th>
+              <th>${workwearRenderHeader("Ilość", "workwearEntries", "quantity", entrySort)}</th>
+              <th>${workwearRenderHeader("Uwagi", "workwearEntries", "notes", entrySort)}</th>
               <th>Akcje</th>
             </tr>
           </thead>
           <tbody>
-            ${entries.length ? entries.map((entry, index) => `
-              <tr>
+            ${sortedEntries.length ? sortedEntries.map((entry, index) => `
+              <tr class="clickable-row${String(entry.id) === String(workwearState.selectedEntryRowId || "") ? " is-selected" : ""}" data-workwear-entry-row-id="${workwearEscape(entry.id)}">
+                <td class="checkbox-cell">
+                  <input type="checkbox" data-workwear-entry-select="${workwearEscape(entry.id)}"${selectedSet.has(String(entry.id)) ? " checked" : ""}>
+                </td>
                 <td>${index + 1}</td>
                 <td>${workwearEscape(entry.issue_date || "-")}</td>
                 <td>${workwearEscape(entry.item_name || "-")}</td>
@@ -439,7 +553,7 @@ function renderWorkwearCard() {
               </tr>
             `).join("") : `
               <tr>
-                <td colspan="7">Brak wydań dla tego pracownika.</td>
+                <td colspan="8">Brak wydań dla tego pracownika.</td>
               </tr>
             `}
           </tbody>
@@ -457,8 +571,6 @@ function renderWorkwearCard() {
       </div>
     </div>
   `;
-
-  document.getElementById("printWorkwearCardButton")?.addEventListener("click", () => exportWorkwearCardPdf(employee, entries));
 }
 
 function renderWorkwearModule() {
@@ -604,6 +716,9 @@ function initWorkwearView() {
   if (workwearState.initialized || !document.getElementById("workwearView")) return;
 
   ensureSelectedEmployee();
+  if (!workwearState.sorts) {
+    workwearState.sorts = workwearLoadSorts();
+  }
   document.getElementById("newWorkwearButton")?.addEventListener("click", resetWorkwearForm);
   document.getElementById("saveWorkwearButton")?.addEventListener("click", saveWorkwearIssue);
   document.getElementById("newWorkwearCatalogButton")?.addEventListener("click", resetCatalogForm);
@@ -613,10 +728,25 @@ function initWorkwearView() {
     renderWorkwearModule();
   });
   document.getElementById("workwearEmployeesTable")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='workwearEmployees']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      workwearState.sorts = workwearState.sorts || workwearDefaultSorts();
+      workwearState.sorts.employees = window.ClodeTableUtils.nextSort(
+        workwearState.sorts.employees || workwearDefaultSorts().employees,
+        sortButton.dataset.sortKey,
+        workwearEmployeesColumnMap()
+      );
+      workwearSaveSorts();
+      renderWorkwearEmployeesTable();
+      return;
+    }
+
     const editButton = event.target.closest("[data-workwear-open]");
     if (editButton) {
       workwearState.selectedEmployee = editButton.dataset.workwearOpen;
       workwearState.editingEntryId = "";
+      workwearState.selectedEntryIds = [];
+      workwearState.selectedEntryRowId = "";
       renderWorkwearModule();
       return;
     }
@@ -624,9 +754,68 @@ function initWorkwearView() {
     if (!row) return;
     workwearState.selectedEmployee = row.dataset.workwearEmployee;
     workwearState.editingEntryId = "";
+    workwearState.selectedEntryIds = [];
+    workwearState.selectedEntryRowId = "";
     renderWorkwearModule();
   });
+  document.getElementById("workwearCardView")?.addEventListener("change", (event) => {
+    const selectAll = event.target.closest("#workwearEntrySelectAll");
+    if (selectAll) {
+      const employee = typeof window.getEmployeeProfileByName === "function"
+        ? window.getEmployeeProfileByName(workwearState.selectedEmployee)
+        : null;
+      const entries = employee ? getWorkwearEntriesForEmployee(employee.name) : [];
+      workwearState.selectedEntryIds = selectAll.checked ? entries.map((entry) => String(entry.id)) : [];
+      renderWorkwearCard();
+      return;
+    }
+    const checkbox = event.target.closest("[data-workwear-entry-select]");
+    if (!checkbox) return;
+    const entryId = String(checkbox.dataset.workwearEntrySelect || "");
+    if (!entryId) return;
+    const current = new Set((workwearState.selectedEntryIds || []).map((id) => String(id)));
+    if (checkbox.checked) current.add(entryId);
+    else current.delete(entryId);
+    workwearState.selectedEntryIds = [...current];
+    renderWorkwearCard();
+  });
   document.getElementById("workwearCardView")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='workwearEntries']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      workwearState.sorts = workwearState.sorts || workwearDefaultSorts();
+      workwearState.sorts.entries = window.ClodeTableUtils.nextSort(
+        workwearState.sorts.entries || workwearDefaultSorts().entries,
+        sortButton.dataset.sortKey,
+        workwearEntriesColumnMap()
+      );
+      workwearSaveSorts();
+      renderWorkwearCard();
+      return;
+    }
+
+    if (event.target.closest("input[type='checkbox']") || event.target.closest("button")) {
+      // keep checkbox/button interactions without toggling selection highlight
+    } else {
+      const row = event.target.closest("[data-workwear-entry-row-id]");
+      if (row?.dataset?.workwearEntryRowId) {
+        workwearState.selectedEntryRowId = row.dataset.workwearEntryRowId;
+        renderWorkwearCard();
+        return;
+      }
+    }
+
+    const printButton = event.target.closest("#printWorkwearCardButton");
+    if (printButton) {
+      const employee = typeof window.getEmployeeProfileByName === "function"
+        ? window.getEmployeeProfileByName(workwearState.selectedEmployee)
+        : null;
+      if (!employee) return;
+      const allEntries = getWorkwearEntriesForEmployee(employee.name);
+      const selectedSet = new Set((workwearState.selectedEntryIds || []).map((id) => String(id)));
+      const entries = selectedSet.size ? allEntries.filter((entry) => selectedSet.has(String(entry.id))) : allEntries;
+      exportWorkwearCardPdf(employee, entries);
+      return;
+    }
     const editButton = event.target.closest("[data-workwear-edit]");
     if (editButton) {
       fillWorkwearForm(editButton.dataset.workwearEdit);
@@ -638,6 +827,19 @@ function initWorkwearView() {
     }
   });
   document.getElementById("workwearCatalogTable")?.addEventListener("click", (event) => {
+    const sortButton = event.target.closest("button[data-sort-table='workwearCatalog']");
+    if (sortButton && window.ClodeTableUtils?.nextSort) {
+      workwearState.sorts = workwearState.sorts || workwearDefaultSorts();
+      workwearState.sorts.catalog = window.ClodeTableUtils.nextSort(
+        workwearState.sorts.catalog || workwearDefaultSorts().catalog,
+        sortButton.dataset.sortKey,
+        workwearCatalogColumnMap()
+      );
+      workwearSaveSorts();
+      renderWorkwearCatalogTable();
+      return;
+    }
+
     const editButton = event.target.closest("[data-workwear-catalog-edit]");
     if (editButton) {
       fillCatalogForm(editButton.dataset.workwearCatalogEdit);
@@ -665,3 +867,4 @@ if (document.readyState === "loading") {
 } else {
   initWorkwearView();
 }
+

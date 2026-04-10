@@ -1,5 +1,5 @@
-const HOURS_STORAGE_KEY = "agentHoursFormV2";
-const HOURS_INVESTMENT_REGISTRY_KEY = "agentInvestmentCatalogV1";
+﻿const HOURS_STORAGE_KEY = "clodeHoursRegistryV2";
+const HOURS_INVESTMENT_REGISTRY_KEY = "clodeContractsV1";
 
 const hoursState = {
   seed: window.HOURS_FORM_SEED || { meta: {}, employees: [], investments: [], months: [], default_month: "" },
@@ -510,14 +510,14 @@ function renderHoursTable() {
   const monthRh = getMonthRhTotal(month);
   const footerRows = buildMonthProjectFooter(month, visibleInvestments);
   const workerColumns = getMonthWorkerColumns(month, visibleInvestments);
-  const workers = window.AgentTableUtils.sortItems(
+  const workers = window.ClodeTableUtils.sortItems(
     getFilteredWorkers({ ...month, workers: getHoursDisplayWorkers(month) }),
     hoursState.sorts.workers,
     workerColumns
   );
 
   const projectHeaders = visibleInvestments.map((investment) => `
-    <th>${window.AgentTableUtils.renderHeader(getHoursContractCode(investment), "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
+    <th>${window.ClodeTableUtils.renderHeader(getHoursContractCode(investment), "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
   `).join("");
 
   const rowsHtml = workers.map((worker) => {
@@ -563,10 +563,10 @@ function renderHoursTable() {
     <table class="hours-table compact-hours-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
           ${projectHeaders}
           <th>Akcja</th>
         </tr>
@@ -588,7 +588,7 @@ function renderHoursTable() {
 function renderYearProjectSummary() {
   const target = document.getElementById("yearProjectSummary");
   if (!target) return;
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearProjectSummary(),
     hoursState.sorts.yearProjects,
     yearProjectColumns
@@ -602,11 +602,11 @@ function renderYearProjectSummary() {
     <table class="compact-summary-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Kontrakt", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kontrakt", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
         </tr>
       </thead>
       <tbody>
@@ -627,7 +627,7 @@ function renderYearProjectSummary() {
 function renderYearEmployeeSummary() {
   const target = document.getElementById("yearEmployeeSummary");
   if (!target) return;
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearEmployeeSummary(),
     hoursState.sorts.yearEmployees,
     yearEmployeeColumns
@@ -641,12 +641,12 @@ function renderYearEmployeeSummary() {
     <table class="compact-summary-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba kontraktów", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba kontraktów", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
         </tr>
       </thead>
       <tbody>
@@ -829,14 +829,14 @@ function renderHoursTable() {
   const monthRh = getMonthRhTotal(month);
   const footerRows = buildMonthProjectFooter(month, visibleInvestments);
   const workerColumns = getMonthWorkerColumns(month, visibleInvestments);
-  const workers = window.AgentTableUtils.sortItems(
+  const workers = window.ClodeTableUtils.sortItems(
     getFilteredWorkers(month),
     hoursState.sorts.workers,
     workerColumns
   );
 
   const projectHeaders = visibleInvestments.map((investment) => `
-    <th>${window.AgentTableUtils.renderHeader(investment, "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
+    <th>${window.ClodeTableUtils.renderHeader(investment, "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
   `).join("");
   const rowsHtml = workers.map((worker) => {
     const totalHours = getWorkerTotalHours(worker);
@@ -880,10 +880,10 @@ function renderHoursTable() {
     <table class="hours-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
           ${projectHeaders}
           <th>Akcja</th>
         </tr>
@@ -978,7 +978,7 @@ function buildYearEmployeeSummary() {
 
 function renderYearProjectSummary() {
   const target = document.getElementById("yearProjectSummary");
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearProjectSummary(),
     hoursState.sorts.yearProjects,
     yearProjectColumns
@@ -992,11 +992,11 @@ function renderYearProjectSummary() {
     <table>
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Inwestycja", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Inwestycja", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
         </tr>
       </thead>
       <tbody>
@@ -1016,7 +1016,7 @@ function renderYearProjectSummary() {
 
 function renderYearEmployeeSummary() {
   const target = document.getElementById("yearEmployeeSummary");
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearEmployeeSummary(),
     hoursState.sorts.yearEmployees,
     yearEmployeeColumns
@@ -1030,12 +1030,12 @@ function renderYearEmployeeSummary() {
     <table>
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba inwestycji", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba inwestycji", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
         </tr>
       </thead>
       <tbody>
@@ -1126,14 +1126,14 @@ function renderHoursTable() {
   const monthRh = getMonthRhTotal(month);
   const footerRows = buildMonthProjectFooter(month, visibleInvestments);
   const workerColumns = getMonthWorkerColumns(month, visibleInvestments);
-  const workers = window.AgentTableUtils.sortItems(
+  const workers = window.ClodeTableUtils.sortItems(
     getFilteredWorkers(month),
     hoursState.sorts.workers,
     workerColumns
   );
 
   const projectHeaders = visibleInvestments.map((investment) => `
-    <th>${window.AgentTableUtils.renderHeader(getHoursContractCode(investment), "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
+    <th>${window.ClodeTableUtils.renderHeader(getHoursContractCode(investment), "hoursWorkers", "project::" + investment, hoursState.sorts.workers)}</th>
   `).join("");
 
   const rowsHtml = workers.map((worker) => {
@@ -1179,10 +1179,10 @@ function renderHoursTable() {
     <table class="hours-table compact-hours-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "hoursWorkers", "employee_name", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "hoursWorkers", "worker_code", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Suma godzin", "hoursWorkers", "total_hours", hoursState.sorts.workers)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "hoursWorkers", "worker_cost", hoursState.sorts.workers)}</th>
           ${projectHeaders}
           <th>Akcja</th>
         </tr>
@@ -1202,7 +1202,7 @@ function renderHoursTable() {
 function renderYearProjectSummary() {
   const target = document.getElementById("yearProjectSummary");
   if (!target) return;
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearProjectSummary(),
     hoursState.sorts.yearProjects,
     yearProjectColumns
@@ -1216,11 +1216,11 @@ function renderYearProjectSummary() {
     <table class="compact-summary-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Kontrakt", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kontrakt", "yearProjects", "name", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearProjects", "hours", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt wynagrodzeń", "yearProjects", "cost", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearProjects", "months", hoursState.sorts.yearProjects)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba pracowników", "yearProjects", "workers", hoursState.sorts.yearProjects)}</th>
         </tr>
       </thead>
       <tbody>
@@ -1241,7 +1241,7 @@ function renderYearProjectSummary() {
 function renderYearEmployeeSummary() {
   const target = document.getElementById("yearEmployeeSummary");
   if (!target) return;
-  const rows = window.AgentTableUtils.sortItems(
+  const rows = window.ClodeTableUtils.sortItems(
     buildYearEmployeeSummary(),
     hoursState.sorts.yearEmployees,
     yearEmployeeColumns
@@ -1255,12 +1255,12 @@ function renderYearEmployeeSummary() {
     <table class="compact-summary-table">
       <thead>
         <tr>
-          <th>${window.AgentTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
-          <th>${window.AgentTableUtils.renderHeader("Liczba kontraktów", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Pracownik", "yearEmployees", "name", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Kod", "yearEmployees", "worker_code", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Godziny", "yearEmployees", "hours", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Koszt roczny", "yearEmployees", "cost", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Aktywne miesiące", "yearEmployees", "months", hoursState.sorts.yearEmployees)}</th>
+          <th>${window.ClodeTableUtils.renderHeader("Liczba kontraktów", "yearEmployees", "projects", hoursState.sorts.yearEmployees)}</th>
         </tr>
       </thead>
       <tbody>
@@ -1489,7 +1489,7 @@ function addEmployeeFromHoursView() {
     });
   }
 
-  window.localStorage.setItem("agentEmployeeRegistryV1", JSON.stringify(registry));
+  window.localStorage.setItem("clodeEmployeeRegistryV1", JSON.stringify(registry));
   syncHoursEmployeesFromRegistry();
   saveHoursData();
   window.dispatchEvent(new CustomEvent("employee-registry-updated"));
@@ -1509,7 +1509,7 @@ function deactivateEmployeeFromHours(workerName) {
     if (!existing.employment_end_date) {
       existing.employment_end_date = new Date().toISOString().slice(0, 10);
     }
-    window.localStorage.setItem("agentEmployeeRegistryV1", JSON.stringify(registry));
+    window.localStorage.setItem("clodeEmployeeRegistryV1", JSON.stringify(registry));
   }
 
   syncHoursEmployeesFromRegistry();
@@ -1680,7 +1680,7 @@ function bindHoursEvents() {
     if (!button) return;
     const month = getSelectedMonthRecord();
     if (!month) return;
-    hoursState.sorts.workers = window.AgentTableUtils.nextSort(
+    hoursState.sorts.workers = window.ClodeTableUtils.nextSort(
       hoursState.sorts.workers,
       button.dataset.sortKey,
       getMonthWorkerColumns(month, getVisibleInvestments(month))
@@ -1691,7 +1691,7 @@ function bindHoursEvents() {
   document.getElementById("yearProjectSummary").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-sort-table='yearProjects']");
     if (!button) return;
-    hoursState.sorts.yearProjects = window.AgentTableUtils.nextSort(
+    hoursState.sorts.yearProjects = window.ClodeTableUtils.nextSort(
       hoursState.sorts.yearProjects,
       button.dataset.sortKey,
       yearProjectColumns
@@ -1702,7 +1702,7 @@ function bindHoursEvents() {
   document.getElementById("yearEmployeeSummary").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-sort-table='yearEmployees']");
     if (!button) return;
-    hoursState.sorts.yearEmployees = window.AgentTableUtils.nextSort(
+    hoursState.sorts.yearEmployees = window.ClodeTableUtils.nextSort(
       hoursState.sorts.yearEmployees,
       button.dataset.sortKey,
       yearEmployeeColumns
@@ -1767,7 +1767,7 @@ function getVisibleInvestments(month) {
 
 function loadHoursEmployeeRegistry() {
   try {
-    return JSON.parse(window.localStorage.getItem("agentEmployeeRegistryV1") || "[]");
+    return JSON.parse(window.localStorage.getItem("clodeEmployeeRegistryV1") || "[]");
   } catch {
     return [];
   }
@@ -1790,7 +1790,7 @@ function ensureHoursEmployeeRegistrySeed() {
   })).filter((employee) => employee.name);
 
   if (seededRegistry.length) {
-    window.localStorage.setItem("agentEmployeeRegistryV1", JSON.stringify(seededRegistry));
+    window.localStorage.setItem("clodeEmployeeRegistryV1", JSON.stringify(seededRegistry));
   }
 
   return seededRegistry;
@@ -2034,7 +2034,7 @@ function bindHoursEvents() {
     if (!button) return;
     const month = getSelectedMonthRecord();
     if (!month) return;
-    hoursState.sorts.workers = window.AgentTableUtils.nextSort(
+    hoursState.sorts.workers = window.ClodeTableUtils.nextSort(
       hoursState.sorts.workers,
       button.dataset.sortKey,
       getMonthWorkerColumns(month, getVisibleInvestments(month))
@@ -2045,7 +2045,7 @@ function bindHoursEvents() {
   document.getElementById("yearProjectSummary").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-sort-table='yearProjects']");
     if (!button) return;
-    hoursState.sorts.yearProjects = window.AgentTableUtils.nextSort(
+    hoursState.sorts.yearProjects = window.ClodeTableUtils.nextSort(
       hoursState.sorts.yearProjects,
       button.dataset.sortKey,
       yearProjectColumns
@@ -2056,7 +2056,7 @@ function bindHoursEvents() {
   document.getElementById("yearEmployeeSummary").addEventListener("click", (event) => {
     const button = event.target.closest("button[data-sort-table='yearEmployees']");
     if (!button) return;
-    hoursState.sorts.yearEmployees = window.AgentTableUtils.nextSort(
+    hoursState.sorts.yearEmployees = window.ClodeTableUtils.nextSort(
       hoursState.sorts.yearEmployees,
       button.dataset.sortKey,
       yearEmployeeColumns
@@ -2112,3 +2112,4 @@ if (document.readyState === "loading") {
 }
 
 window.removeEmployeeFromHoursData = removeEmployeeFromHoursData;
+

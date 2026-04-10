@@ -15,7 +15,7 @@
       "months_count": 3
     },
     {
-      "name": "W?jcik Piotr",
+      "name": "Wójcik Piotr",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-002"
@@ -23,7 +23,7 @@
       "months_count": 3
     },
     {
-      "name": "Zieli?ski Micha?",
+      "name": "Zieliński Michał",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-003"
@@ -31,7 +31,7 @@
       "months_count": 3
     },
     {
-      "name": "D?browski Pawe?",
+      "name": "Dąbrowski Paweł",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-004"
@@ -55,7 +55,7 @@
       "months_count": 3
     },
     {
-      "name": "Kr?l Marek",
+      "name": "Król Marek",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-007"
@@ -71,7 +71,7 @@
       "months_count": 3
     },
     {
-      "name": "St?pie? ?ukasz",
+      "name": "Stępień Łukasz",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-009"
@@ -79,7 +79,7 @@
       "months_count": 3
     },
     {
-      "name": "Wi?niewski Mateusz",
+      "name": "Wiśniewski Mateusz",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-010"
@@ -95,7 +95,7 @@
       "months_count": 3
     },
     {
-      "name": "Wo?niak Szymon",
+      "name": "Woźniak Szymon",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-012"
@@ -127,7 +127,7 @@
       "months_count": 3
     },
     {
-      "name": "Jab?o?ski Damian",
+      "name": "Jabłoński Damian",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-016"
@@ -151,7 +151,7 @@
       "months_count": 3
     },
     {
-      "name": "Kami?ski Dawid",
+      "name": "Kamiński Dawid",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-019"
@@ -159,7 +159,7 @@
       "months_count": 3
     },
     {
-      "name": "Szyma?ski Konrad",
+      "name": "Szymański Konrad",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-020"
@@ -167,7 +167,7 @@
       "months_count": 3
     },
     {
-      "name": "Koz?owski Artur",
+      "name": "Kozłowski Artur",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-021"
@@ -215,7 +215,7 @@
       "months_count": 3
     },
     {
-      "name": "W?jcik Piotr",
+      "name": "Wójcik Piotr",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-027"
@@ -223,7 +223,7 @@
       "months_count": 3
     },
     {
-      "name": "Zieli?ski Micha?",
+      "name": "Zieliński Michał",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-028"
@@ -231,7 +231,7 @@
       "months_count": 3
     },
     {
-      "name": "D?browski Pawe?",
+      "name": "Dąbrowski Paweł",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-029"
@@ -255,7 +255,7 @@
       "months_count": 3
     },
     {
-      "name": "Kr?l Marek",
+      "name": "Król Marek",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-032"
@@ -271,7 +271,7 @@
       "months_count": 3
     },
     {
-      "name": "St?pie? ?ukasz",
+      "name": "Stępień Łukasz",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-034"
@@ -279,7 +279,7 @@
       "months_count": 3
     },
     {
-      "name": "Wi?niewski Mateusz",
+      "name": "Wiśniewski Mateusz",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-035"
@@ -295,7 +295,7 @@
       "months_count": 3
     },
     {
-      "name": "Wo?niak Szymon",
+      "name": "Woźniak Szymon",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-037"
@@ -327,7 +327,7 @@
       "months_count": 3
     },
     {
-      "name": "Jab?o?ski Damian",
+      "name": "Jabłoński Damian",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-041"
@@ -351,7 +351,7 @@
       "months_count": 3
     },
     {
-      "name": "Kami?ski Dawid",
+      "name": "Kamiński Dawid",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-044"
@@ -359,7 +359,7 @@
       "months_count": 3
     },
     {
-      "name": "Szyma?ski Konrad",
+      "name": "Szymański Konrad",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-045"
@@ -367,7 +367,7 @@
       "months_count": 3
     },
     {
-      "name": "Koz?owski Artur",
+      "name": "Kozłowski Artur",
       "worker_code": "p",
       "employee_ids": [
         "emp-demo-046"
@@ -445,7 +445,7 @@
       "status": "active"
     },
     {
-      "name": "W?ze? Eta",
+      "name": "Węzeł Eta",
       "contract_id": "contract-demo-007",
       "contract_number": "K/2026/007",
       "status": "active"
@@ -463,7 +463,7 @@
       "status": "active"
     },
     {
-      "name": "Zak?ad Kappa",
+      "name": "Zakład Kappa",
       "contract_id": "contract-demo-010",
       "contract_number": "K/2026/010",
       "status": "active"
@@ -480,10 +480,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "visible_investments": [
         "Centrum Alfa",
@@ -492,10 +492,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "finance": {
         "zus_company_1": 34242.6,
@@ -512,12 +512,12 @@
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 64.0,
-            "Zak?ad Kappa": 80.0,
+            "Zakład Kappa": 80.0,
             "Budynek Epsilon": 40.0
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
             "Park Delta": 72.0,
@@ -526,19 +526,19 @@
           }
         },
         {
-          "employee_name": "Zieli?ski Micha?",
+          "employee_name": "Zieliński Michał",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 144.0
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 80.0,
             "Obiekt Theta": 64.0,
-            "Zak?ad Kappa": 16.0
+            "Zakład Kappa": 16.0
           }
         },
         {
@@ -559,12 +559,12 @@
           }
         },
         {
-          "employee_name": "Kr?l Marek",
+          "employee_name": "Król Marek",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 40.0,
+            "Zakład Kappa": 40.0,
             "Terminal Beta": 48.0,
-            "W?ze? Eta": 56.0
+            "Węzeł Eta": 56.0
           }
         },
         {
@@ -576,18 +576,18 @@
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 152.0
           }
         },
         {
-          "employee_name": "Wi?niewski Mateusz",
+          "employee_name": "Wiśniewski Mateusz",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 64.0,
-            "W?ze? Eta": 48.0,
+            "Węzeł Eta": 48.0,
             "Budynek Epsilon": 56.0
           }
         },
@@ -599,7 +599,7 @@
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 176.0
@@ -620,7 +620,7 @@
           }
         },
         {
-          "employee_name": "Jab?o?ski Damian",
+          "employee_name": "Jabłoński Damian",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 184.0
@@ -637,12 +637,12 @@
           "employee_name": "Kowalski Patryk",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 72.0,
+            "Węzeł Eta": 72.0,
             "Hala Gamma": 72.0
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 88.0,
@@ -650,7 +650,7 @@
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 80.0,
@@ -658,7 +658,7 @@
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 176.0
@@ -668,7 +668,7 @@
           "employee_name": "Krawczyk Karol",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 32.0,
+            "Zakład Kappa": 32.0,
             "Magazyn Zeta": 144.0
           }
         },
@@ -706,31 +706,31 @@
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 56.0,
-            "W?ze? Eta": 88.0
+            "Węzeł Eta": 88.0
           }
         },
         {
-          "employee_name": "Zieli?ski Micha?",
+          "employee_name": "Zieliński Michał",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 120.0,
-            "Zak?ad Kappa": 56.0
+            "Węzeł Eta": 120.0,
+            "Zakład Kappa": 56.0
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 80.0,
-            "W?ze? Eta": 72.0
+            "Węzeł Eta": 72.0
           }
         },
         {
-          "employee_name": "Kr?l Marek",
+          "employee_name": "Król Marek",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 48.0,
@@ -742,21 +742,21 @@
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 80.0,
-            "W?ze? Eta": 80.0
+            "Węzeł Eta": 80.0
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 184.0
+            "Węzeł Eta": 184.0
           }
         },
         {
-          "employee_name": "Wi?niewski Mateusz",
+          "employee_name": "Wiśniewski Mateusz",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 40.0,
+            "Węzeł Eta": 40.0,
             "Budynek Epsilon": 104.0
           }
         },
@@ -764,16 +764,16 @@
           "employee_name": "Kowalczyk Jakub",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 48.0,
+            "Węzeł Eta": 48.0,
             "Centrum Alfa": 120.0
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 120.0,
-            "Zak?ad Kappa": 56.0
+            "Zakład Kappa": 56.0
           }
         },
         {
@@ -788,7 +788,7 @@
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 80.0,
-            "Zak?ad Kappa": 72.0
+            "Zakład Kappa": 72.0
           }
         },
         {
@@ -801,49 +801,49 @@
           }
         },
         {
-          "employee_name": "Jab?o?ski Damian",
+          "employee_name": "Jabłoński Damian",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 88.0,
-            "W?ze? Eta": 72.0
+            "Węzeł Eta": 72.0
           }
         },
         {
           "employee_name": "Walczak Marcin",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 144.0
+            "Zakład Kappa": 144.0
           }
         },
         {
           "employee_name": "Kowalski Patryk",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 72.0,
+            "Zakład Kappa": 72.0,
             "Obiekt Theta": 96.0
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 160.0
+            "Węzeł Eta": 160.0
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 32.0,
-            "W?ze? Eta": 112.0,
+            "Zakład Kappa": 32.0,
+            "Węzeł Eta": 112.0,
             "Obiekt Theta": 24.0
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 88.0,
+            "Węzeł Eta": 88.0,
             "Park Delta": 88.0
           }
         },
@@ -851,7 +851,7 @@
           "employee_name": "Krawczyk Karol",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 136.0,
+            "Węzeł Eta": 136.0,
             "Kompleks Iota": 40.0
           }
         },
@@ -878,7 +878,7 @@
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 120.0,
-            "Zak?ad Kappa": 40.0
+            "Zakład Kappa": 40.0
           }
         }
       ]
@@ -893,10 +893,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "visible_investments": [
         "Centrum Alfa",
@@ -905,10 +905,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "finance": {
         "zus_company_1": 27033.22,
@@ -929,25 +929,25 @@
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 96.0,
+            "Węzeł Eta": 96.0,
             "Magazyn Zeta": 88.0
           }
         },
         {
-          "employee_name": "Zieli?ski Micha?",
+          "employee_name": "Zieliński Michał",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 168.0
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 96.0,
+            "Zakład Kappa": 96.0,
             "Budynek Epsilon": 80.0
           }
         },
@@ -960,7 +960,7 @@
           }
         },
         {
-          "employee_name": "Kr?l Marek",
+          "employee_name": "Król Marek",
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 168.0
@@ -974,7 +974,7 @@
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
             "Park Delta": 80.0,
@@ -982,7 +982,7 @@
           }
         },
         {
-          "employee_name": "Wi?niewski Mateusz",
+          "employee_name": "Wiśniewski Mateusz",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 24.0,
@@ -998,7 +998,7 @@
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
             "Park Delta": 184.0
@@ -1022,7 +1022,7 @@
           }
         },
         {
-          "employee_name": "Jab?o?ski Damian",
+          "employee_name": "Jabłoński Damian",
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 48.0,
@@ -1046,7 +1046,7 @@
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 104.0,
@@ -1054,7 +1054,7 @@
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
             "Budynek Epsilon": 80.0,
@@ -1062,7 +1062,7 @@
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 64.0,
@@ -1081,9 +1081,9 @@
           "employee_name": "Pawlak Wojciech",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 48.0,
+            "Zakład Kappa": 48.0,
             "Budynek Epsilon": 48.0,
-            "W?ze? Eta": 64.0
+            "Węzeł Eta": 64.0
           }
         },
         {
@@ -1098,7 +1098,7 @@
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 32.0,
-            "W?ze? Eta": 96.0,
+            "Węzeł Eta": 96.0,
             "Magazyn Zeta": 48.0
           }
         },
@@ -1112,7 +1112,7 @@
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 56.0,
@@ -1120,7 +1120,7 @@
           }
         },
         {
-          "employee_name": "Zieli?ski Micha?",
+          "employee_name": "Zieliński Michał",
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 40.0,
@@ -1129,7 +1129,7 @@
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 184.0
@@ -1144,7 +1144,7 @@
           }
         },
         {
-          "employee_name": "Kr?l Marek",
+          "employee_name": "Król Marek",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 88.0,
@@ -1152,15 +1152,15 @@
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 104.0,
+            "Zakład Kappa": 104.0,
             "Budynek Epsilon": 72.0
           }
         },
         {
-          "employee_name": "Wi?niewski Mateusz",
+          "employee_name": "Wiśniewski Mateusz",
           "worker_code": "p",
           "project_hours": {
             "Budynek Epsilon": 48.0,
@@ -1176,18 +1176,18 @@
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 32.0,
-            "Zak?ad Kappa": 120.0
+            "Zakład Kappa": 120.0
           }
         },
         {
           "employee_name": "Jankowski Filip",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 80.0,
+            "Zakład Kappa": 80.0,
             "Kompleks Iota": 72.0
           }
         },
@@ -1196,7 +1196,7 @@
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 96.0,
-            "W?ze? Eta": 88.0
+            "Węzeł Eta": 88.0
           }
         },
         {
@@ -1204,11 +1204,11 @@
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 72.0,
-            "Zak?ad Kappa": 88.0
+            "Zakład Kappa": 88.0
           }
         },
         {
-          "employee_name": "Jab?o?ski Damian",
+          "employee_name": "Jabłoński Damian",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 112.0,
@@ -1219,7 +1219,7 @@
           "employee_name": "Walczak Marcin",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 72.0,
+            "Zakład Kappa": 72.0,
             "Budynek Epsilon": 104.0
           }
         },
@@ -1227,19 +1227,19 @@
           "employee_name": "Kowalski Patryk",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 72.0,
+            "Węzeł Eta": 72.0,
             "Hala Gamma": 112.0
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 168.0
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 96.0,
@@ -1247,7 +1247,7 @@
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 40.0,
@@ -1274,8 +1274,8 @@
           "employee_name": "Wieczorek Bartosz",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 88.0,
-            "Zak?ad Kappa": 80.0
+            "Węzeł Eta": 88.0,
+            "Zakład Kappa": 80.0
           }
         },
         {
@@ -1290,7 +1290,7 @@
     },
     {
       "month_key": "2026-04",
-      "month_label": "kwiecie? 2026",
+      "month_label": "kwiecień 2026",
       "investments": [
         "Centrum Alfa",
         "Terminal Beta",
@@ -1298,10 +1298,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "visible_investments": [
         "Centrum Alfa",
@@ -1310,10 +1310,10 @@
         "Park Delta",
         "Budynek Epsilon",
         "Magazyn Zeta",
-        "W?ze? Eta",
+        "Węzeł Eta",
         "Obiekt Theta",
         "Kompleks Iota",
-        "Zak?ad Kappa"
+        "Zakład Kappa"
       ],
       "finance": {
         "zus_company_1": 34744.21,
@@ -1335,15 +1335,15 @@
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 96.0,
-            "Zak?ad Kappa": 56.0
+            "Zakład Kappa": 56.0
           }
         },
         {
-          "employee_name": "Zieli?ski Micha?",
+          "employee_name": "Zieliński Michał",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 80.0,
@@ -1351,7 +1351,7 @@
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 104.0,
@@ -1363,14 +1363,14 @@
           "worker_code": "p",
           "project_hours": {
             "Budynek Epsilon": 96.0,
-            "Zak?ad Kappa": 80.0
+            "Zakład Kappa": 80.0
           }
         },
         {
           "employee_name": "Grabowski Adam",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 64.0,
+            "Węzeł Eta": 64.0,
             "Budynek Epsilon": 88.0
           }
         },
@@ -1378,11 +1378,11 @@
           "employee_name": "Adamczyk Krzysztof",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 144.0
+            "Zakład Kappa": 144.0
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 96.0,
@@ -1394,22 +1394,22 @@
           "worker_code": "p",
           "project_hours": {
             "Park Delta": 88.0,
-            "W?ze? Eta": 88.0
+            "Węzeł Eta": 88.0
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 112.0,
-            "Zak?ad Kappa": 32.0
+            "Zakład Kappa": 32.0
           }
         },
         {
           "employee_name": "Jankowski Filip",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 136.0,
+            "Zakład Kappa": 136.0,
             "Magazyn Zeta": 32.0
           }
         },
@@ -1417,16 +1417,16 @@
           "employee_name": "Michalak Sebastian",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 72.0,
+            "Zakład Kappa": 72.0,
             "Magazyn Zeta": 96.0
           }
         },
         {
-          "employee_name": "Jab?o?ski Damian",
+          "employee_name": "Jabłoński Damian",
           "worker_code": "p",
           "project_hours": {
             "Terminal Beta": 112.0,
-            "Zak?ad Kappa": 40.0
+            "Zakład Kappa": 40.0
           }
         },
         {
@@ -1442,11 +1442,11 @@
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 88.0,
-            "W?ze? Eta": 72.0
+            "Węzeł Eta": 72.0
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 128.0,
@@ -1454,7 +1454,7 @@
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
             "Magazyn Zeta": 48.0,
@@ -1462,7 +1462,7 @@
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 176.0
@@ -1488,14 +1488,14 @@
           "employee_name": "Wieczorek Bartosz",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 168.0
+            "Zakład Kappa": 168.0
           }
         },
         {
           "employee_name": "Dudek Hubert",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 72.0,
+            "Zakład Kappa": 72.0,
             "Centrum Alfa": 96.0
           }
         },
@@ -1508,14 +1508,14 @@
           }
         },
         {
-          "employee_name": "W?jcik Piotr",
+          "employee_name": "Wójcik Piotr",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 144.0
           }
         },
         {
-          "employee_name": "D?browski Pawe?",
+          "employee_name": "Dąbrowski Paweł",
           "worker_code": "p",
           "project_hours": {
             "Centrum Alfa": 176.0
@@ -1529,7 +1529,7 @@
           }
         },
         {
-          "employee_name": "Kr?l Marek",
+          "employee_name": "Król Marek",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 96.0,
@@ -1542,18 +1542,18 @@
           "project_hours": {
             "Park Delta": 96.0,
             "Centrum Alfa": 40.0,
-            "Zak?ad Kappa": 24.0
+            "Zakład Kappa": 24.0
           }
         },
         {
-          "employee_name": "St?pie? ?ukasz",
+          "employee_name": "Stępień Łukasz",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 144.0
           }
         },
         {
-          "employee_name": "Wi?niewski Mateusz",
+          "employee_name": "Wiśniewski Mateusz",
           "worker_code": "p",
           "project_hours": {
             "Obiekt Theta": 176.0
@@ -1568,10 +1568,10 @@
           }
         },
         {
-          "employee_name": "Wo?niak Szymon",
+          "employee_name": "Woźniak Szymon",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 88.0,
+            "Zakład Kappa": 88.0,
             "Budynek Epsilon": 80.0
           }
         },
@@ -1595,7 +1595,7 @@
           "worker_code": "p",
           "project_hours": {
             "Hala Gamma": 112.0,
-            "Zak?ad Kappa": 72.0
+            "Zakład Kappa": 72.0
           }
         },
         {
@@ -1607,23 +1607,23 @@
           }
         },
         {
-          "employee_name": "Kami?ski Dawid",
+          "employee_name": "Kamiński Dawid",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 24.0,
+            "Węzeł Eta": 24.0,
             "Magazyn Zeta": 80.0,
             "Obiekt Theta": 64.0
           }
         },
         {
-          "employee_name": "Szyma?ski Konrad",
+          "employee_name": "Szymański Konrad",
           "worker_code": "p",
           "project_hours": {
-            "W?ze? Eta": 184.0
+            "Węzeł Eta": 184.0
           }
         },
         {
-          "employee_name": "Koz?owski Artur",
+          "employee_name": "Kozłowski Artur",
           "worker_code": "p",
           "project_hours": {
             "Kompleks Iota": 88.0,
@@ -1644,7 +1644,7 @@
           "employee_name": "Pawlak Wojciech",
           "worker_code": "p",
           "project_hours": {
-            "Zak?ad Kappa": 96.0,
+            "Zakład Kappa": 96.0,
             "Magazyn Zeta": 32.0,
             "Terminal Beta": 56.0
           }
