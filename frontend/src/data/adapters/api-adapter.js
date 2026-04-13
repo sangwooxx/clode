@@ -6,30 +6,43 @@
   function createApiAdapter(options) {
     const config = {
       baseUrl: options?.baseUrl || resolveApiBaseUrl(),
-      timeoutMs: Number(options?.timeoutMs || 5000),
+      timeoutMs: Number(options?.timeoutMs || 20000),
+      retryCount: Number(options?.retryCount || 1),
     };
 
     async function request(method, path, body) {
-      const controller = new AbortController();
-      const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
-      try {
-        const response = await global.fetch(`${config.baseUrl}${path}`, {
-          method,
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: body === undefined ? undefined : JSON.stringify(body),
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          throw new Error(`API ${method} ${path} failed with status ${response.status}`);
+      let lastError = null;
+      for (let attempt = 0; attempt <= config.retryCount; attempt += 1) {
+        const controller = new AbortController();
+        const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
+        try {
+          const response = await global.fetch(`${config.baseUrl}${path}`, {
+            method,
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: body === undefined ? undefined : JSON.stringify(body),
+            signal: controller.signal,
+          });
+          if (!response.ok) {
+            throw new Error(`API ${method} ${path} failed with status ${response.status}`);
+          }
+          if (response.status === 204) return null;
+          return await response.json();
+        } catch (error) {
+          lastError = error;
+          const isAbort = error?.name === "AbortError";
+          const isNetwork = error instanceof TypeError;
+          const shouldRetry = attempt < config.retryCount && (isAbort || isNetwork);
+          if (!shouldRetry) {
+            throw error;
+          }
+        } finally {
+          global.clearTimeout(timer);
         }
-        if (response.status === 204) return null;
-        return await response.json();
-      } finally {
-        global.clearTimeout(timer);
       }
+      throw lastError || new Error(`API ${method} ${path} failed.`);
     }
 
     return {

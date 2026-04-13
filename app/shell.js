@@ -1105,6 +1105,7 @@ function bindLoginActions() {
   document.getElementById("railLogoutButton")?.addEventListener("click", async () => {
     if (!isAuthenticated()) return;
     if (!window.confirm("Czy na pewno chcesz się wylogować?")) return;
+    await window.ClodeDataAccess?.flushPendingWrites?.();
     await window.ClodeAuthClient?.logout?.();
     setLoginStatus("Wylogowano z systemu.", "info");
     setActiveView("homeView");

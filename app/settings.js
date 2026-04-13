@@ -525,6 +525,8 @@ function initSettingsView() {
   renderSettingsModule();
 }
 
+window.renderSettingsModule = renderSettingsModule;
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initSettingsView);
 } else {

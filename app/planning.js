@@ -666,6 +666,7 @@ function initPlanningView() {
 }
 
 window.removeContractFromPlanningData = removeContractFromPlanningData;
+window.renderPlanningModule = renderPlanningModule;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initPlanningView);

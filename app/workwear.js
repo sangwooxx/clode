@@ -862,6 +862,8 @@ function initWorkwearView() {
   renderWorkwearModule();
 }
 
+window.renderWorkwearModule = renderWorkwearModule;
+
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initWorkwearView);
 } else {
