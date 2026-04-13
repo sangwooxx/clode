@@ -4,16 +4,18 @@ const SHELL_CONTRACT_DELETED_KEY = "clodeDeletedContractsV1";
 const SETTINGS_STORAGE_KEY = "clodeSettingsV1";
 const AUDIT_LOG_STORAGE_KEY = "clodeAuditLogV1";
 const NOTIFICATION_STORAGE_KEY = "clodeNotificationCenterV1";
+const APP_VERSION_STORAGE_KEY = "clodeAppModuleVersionV1";
+const APP_VERSION_RELOAD_KEY = "clodeAppVersionReloadV1";
 const APP_MODULE_VERSION = window.__APP_MODULE_VERSION__ || "20260408-13";
 
 const viewModuleMap = {
-  hoursView: [`hours-lite.js?v=${APP_MODULE_VERSION}`],
-  employeesView: [`hours-lite.js?v=${APP_MODULE_VERSION}`, `employees.js?v=${APP_MODULE_VERSION}`],
-  workwearView: [`hours-lite.js?v=${APP_MODULE_VERSION}`, `employees.js?v=${APP_MODULE_VERSION}`, `workwear.js?v=${APP_MODULE_VERSION}`],
-  vacationsView: [`employees.js?v=${APP_MODULE_VERSION}`, `vacations.js?v=${APP_MODULE_VERSION}`],
-  planningView: [`employees.js?v=${APP_MODULE_VERSION}`, `vacations.js?v=${APP_MODULE_VERSION}`, `planning.js?v=${APP_MODULE_VERSION}`],
-  invoicesView: [`invoices.js?v=${APP_MODULE_VERSION}`],
-  settingsView: [`settings.js?v=${APP_MODULE_VERSION}`],
+  hoursView: [`/app/hours-lite.js?v=${APP_MODULE_VERSION}`],
+  employeesView: [`/app/hours-lite.js?v=${APP_MODULE_VERSION}`, `/app/employees.js?v=${APP_MODULE_VERSION}`],
+  workwearView: [`/app/hours-lite.js?v=${APP_MODULE_VERSION}`, `/app/employees.js?v=${APP_MODULE_VERSION}`, `/app/workwear.js?v=${APP_MODULE_VERSION}`],
+  vacationsView: [`/app/employees.js?v=${APP_MODULE_VERSION}`, `/app/vacations.js?v=${APP_MODULE_VERSION}`],
+  planningView: [`/app/employees.js?v=${APP_MODULE_VERSION}`, `/app/vacations.js?v=${APP_MODULE_VERSION}`, `/app/planning.js?v=${APP_MODULE_VERSION}`],
+  invoicesView: [`/app/invoices.js?v=${APP_MODULE_VERSION}`],
+  settingsView: [`/app/settings.js?v=${APP_MODULE_VERSION}`],
 };
 
 const viewRenderHooks = {
@@ -870,6 +872,40 @@ function loadScriptOnce(src) {
   return promise;
 }
 
+function registerPreloadedModuleScripts() {
+  document.querySelectorAll("script[src]").forEach((script) => {
+    const rawSrc = String(script.getAttribute("src") || "").trim();
+    if (!rawSrc) return;
+    try {
+      const resolvedUrl = new URL(rawSrc, window.location.href);
+      loadedModuleScripts.set(rawSrc, Promise.resolve());
+      loadedModuleScripts.set(resolvedUrl.pathname + resolvedUrl.search, Promise.resolve());
+      loadedModuleScripts.set(resolvedUrl.href, Promise.resolve());
+    } catch {
+      loadedModuleScripts.set(rawSrc, Promise.resolve());
+    }
+  });
+}
+
+function syncAppVersion() {
+  try {
+    const previousVersion = String(window.localStorage.getItem(APP_VERSION_STORAGE_KEY) || "").trim();
+    const reloadedVersion = String(window.sessionStorage.getItem(APP_VERSION_RELOAD_KEY) || "").trim();
+    window.localStorage.setItem(APP_VERSION_STORAGE_KEY, APP_MODULE_VERSION);
+    if (previousVersion && previousVersion !== APP_MODULE_VERSION && reloadedVersion !== APP_MODULE_VERSION) {
+      window.sessionStorage.setItem(APP_VERSION_RELOAD_KEY, APP_MODULE_VERSION);
+      window.location.reload();
+      return true;
+    }
+    if (reloadedVersion === APP_MODULE_VERSION) {
+      window.sessionStorage.removeItem(APP_VERSION_RELOAD_KEY);
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 function ensureViewModuleLoaded(viewId) {
   const modules = viewModuleMap[viewId] || [];
   if (!modules.length) {
@@ -1333,6 +1369,8 @@ function registerShellGlobals() {
 }
 
 async function initShell() {
+  if (syncAppVersion()) return;
+  registerPreloadedModuleScripts();
   registerShellGlobals();
   bindShellNavigation();
   bindLoginActions();

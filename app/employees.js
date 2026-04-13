@@ -269,6 +269,14 @@ async function persistEmployeeRegistry(registry) {
   saveEmployeeRegistry(registry);
 }
 
+async function reloadEmployeeRegistryFromBackend() {
+  if (!window.ClodeDataAccess?.repositories?.employees?.load) {
+    return loadEmployeeRegistry();
+  }
+  const refreshed = await window.ClodeDataAccess.repositories.employees.load([]);
+  return Array.isArray(refreshed) ? refreshed : [];
+}
+
 function loadEmployeeHoursSnapshot() {
   const parsed = employeeReadStore(EMPLOYEE_HOURS_STORAGE_KEY, null);
   if (parsed && typeof parsed === "object" && parsed.months) {
@@ -1233,6 +1241,7 @@ async function saveEmployeeFromForm() {
     }
 
     await persistEmployeeRegistry(registry);
+    const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog(
         "Kadry",
@@ -1242,8 +1251,14 @@ async function saveEmployeeFromForm() {
       );
     }
 
-    employeeViewState.selectedName = name;
-    employeeViewState.editingName = name;
+    const savedEmployee = refreshedRegistry.find((employee) => employeeNormalize(employee?.name) === name);
+    employeeViewState.search = "";
+    const searchInput = document.getElementById("employeeRegistrySearchInput");
+    if (searchInput) {
+      searchInput.value = "";
+    }
+    employeeViewState.selectedName = savedEmployee?.name || name;
+    employeeViewState.editingName = savedEmployee?.name || name;
     renderEmployeeModuleIfActive();
   } catch (error) {
     console.warn("Nie udało się zapisać pracownika.", error);
@@ -1269,6 +1284,7 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     await window.whenClodeDataReady?.();
     removeEmployeeReferences(name);
     await persistEmployeeRegistry(loadEmployeeRegistry().filter((employee) => employee.name !== name));
+    await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
     }

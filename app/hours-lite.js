@@ -365,6 +365,23 @@ function hBuildMonth(monthKey, monthLabel = "") {
   };
 }
 
+function hMergeMonthState(payload, fallbackMonthKey = "") {
+  const monthKey = hMonthKey(payload?.month_key || fallbackMonthKey);
+  if (!monthKey) return null;
+  return {
+    month_key: monthKey,
+    month_label: hText(payload?.month_label) || hMonthLabel(monthKey),
+    visible_investments: Array.isArray(payload?.visible_investments)
+      ? payload.visible_investments.map((value) => hText(value)).filter(Boolean)
+      : [],
+    finance: {
+      ...hEmptyFinance(),
+      ...(payload?.finance || {}),
+    },
+    workers: Array.isArray(payload?.workers) ? payload.workers : [],
+  };
+}
+
 function hEnsureWorker(month, employeeName, employeeCode = "") {
   const normalized = hCanonicalEmployeeName(employeeName);
   let worker = (month.workers || []).find((item) => hCanonicalEmployeeName(item.employee_name) === normalized) || null;
@@ -1249,14 +1266,18 @@ function initHoursLite() {
     }
     try {
       await hWaitForClodeDataReady();
-      await api.createMonth({
+      const response = await api.createMonth({
         month_key: monthKey,
         month_label: hMonthLabel(monthKey),
         visible_investments: [],
         finance: hEmptyFinance(),
         selected: false,
       });
+      hoursState.data.months[monthKey] = hMergeMonthState(response?.month, monthKey) || hBuildMonth(monthKey);
       hoursState.selectedMonthKey = monthKey;
+      hEnsureEmployees();
+      hMirrorStateToLegacyStore();
+      hRenderModule();
       await hRefreshFromBackend({ selectedMonthKey: monthKey });
     } catch (error) {
       console.warn("Nie udało się dodać miesiąca.", error);
