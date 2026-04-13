@@ -264,105 +264,10 @@ function loadEmployeeHoursSnapshot() {
   if (parsed && typeof parsed === "object" && parsed.months) {
     return parsed;
   }
-
-  const seed = window.HOURS_FORM_SEED || { employees: [], months: [] };
-  const employees = (seed.employees || []).map((employee) => ({
-    name: employeeNormalize(employee?.name),
-    worker_code: employeeNormalize(employee?.worker_code),
-  })).filter((employee) => employee.name);
-
-  const months = {};
-  (seed.months || []).forEach((monthSeed) => {
-    if (!monthSeed?.month_key) return;
-    months[monthSeed.month_key] = {
-      month_key: monthSeed.month_key,
-      month_label: monthSeed.month_label || monthSeed.month_key,
-      visible_investments: [...(monthSeed.investments || [])],
-      finance: employeeDefaultFinance(),
-      workers: (monthSeed.rows || []).map((row) => ({
-        employee_name: employeeNormalize(row?.employee_name),
-        worker_code: employeeNormalize(row?.worker_code),
-        project_hours: { ...(row?.project_hours || {}) },
-      })).filter((row) => row.employee_name),
-    };
-  });
-
   return {
-    employees,
-    months,
+    employees: [],
+    months: {},
   };
-}
-
-function ensureEmployeeRegistrySeed() {
-  const snapshot = loadEmployeeHoursSnapshot();
-  const importedRoster = (window.HOURS_FORM_SEED?.employees || snapshot.employees || [])
-    .map((employee) => ({
-      name: employeeNormalize(employee?.name),
-      worker_code: employeeNormalize(employee?.worker_code),
-    }))
-    .filter((employee) => employee.name);
-
-  const currentRegistry = loadEmployeeRegistry();
-  const normalizedRegistry = currentRegistry
-    .map((employee) => {
-      const name = employeeNormalize(employee?.name);
-      if (!name) return null;
-      const parts = employeeSplitName(name);
-      return {
-        ...employee,
-        name,
-        first_name: parts.first_name,
-        last_name: parts.last_name,
-      };
-    })
-    .filter(Boolean);
-
-  const shouldReplaceDemoRegistry = normalizedRegistry.length > 0
-    && importedRoster.length > normalizedRegistry.length
-    && normalizedRegistry.length <= 12;
-  const importedNameSet = new Set(importedRoster.map((employee) => employee.name.toLowerCase()));
-  const matchedEmployees = normalizedRegistry.filter((employee) => importedNameSet.has(employee.name.toLowerCase())).length;
-  const overlapRatio = normalizedRegistry.length ? (matchedEmployees / normalizedRegistry.length) : 1;
-  const shouldRebuildFromImported = importedRoster.length >= 20
-    && normalizedRegistry.length > 0
-    && overlapRatio < 0.6;
-  const registryByName = new Map(
-    normalizedRegistry.map((employee) => [employee.name.toLowerCase(), employee]),
-  );
-
-  const registry = shouldReplaceDemoRegistry || shouldRebuildFromImported ? [] : [...normalizedRegistry];
-  const knownNames = new Set(registry.map((item) => employeeNormalize(item?.name).toLowerCase()).filter(Boolean));
-  let changed = false;
-
-  importedRoster.forEach((employee) => {
-    const name = employeeNormalize(employee?.name);
-    const normalizedKey = name.toLowerCase();
-    if (!name || knownNames.has(normalizedKey)) return;
-    const existing = registryByName.get(normalizedKey);
-    registry.push({
-      ...(existing || {}),
-      name,
-      ...employeeSplitName(name),
-      worker_code: employee.worker_code,
-      position: employeeNormalize(existing?.position),
-      status: String(existing?.status || "active") === "inactive" ? "inactive" : "active",
-      employment_date: String(existing?.employment_date || "").trim(),
-      employment_end_date: String(existing?.employment_end_date || "").trim(),
-      street: employeeNormalize(existing?.street),
-      city: employeeNormalize(existing?.city),
-      phone: employeeNormalize(existing?.phone),
-      medical_exam_date: String(existing?.medical_exam_date || "").trim(),
-      medical_exam_valid_until: String(existing?.medical_exam_valid_until || "").trim(),
-    });
-    knownNames.add(normalizedKey);
-    changed = true;
-  });
-
-  if (shouldReplaceDemoRegistry || shouldRebuildFromImported) {
-    changed = true;
-  }
-
-  if (changed) saveEmployeeRegistry(registry);
 }
 
 function getEmployeeRoster() {
@@ -370,7 +275,7 @@ function getEmployeeRoster() {
   const snapshot = loadEmployeeHoursSnapshot();
   const employees = new Map();
 
-  ((window.HOURS_FORM_SEED?.employees || snapshot.employees) || []).forEach((employee) => {
+  (snapshot.employees || []).forEach((employee) => {
     const name = employeeNormalize(employee?.name);
     if (!name) return;
     employees.set(name, {
@@ -1520,7 +1425,6 @@ function exportEmployeeCardPdf(employee, months) {
 function initEmployeesView() {
   if (employeeViewState.initialized || !document.getElementById("employeesView")) return;
 
-  ensureEmployeeRegistrySeed();
   const roster = getEmployeeRoster();
   employeeViewState.selectedName = roster[0]?.name || "";
   if (!employeeViewState.sort) {

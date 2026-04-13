@@ -23,7 +23,7 @@ def _table_count(connection, table_name: str) -> int:
 
 
 def _ensure_sqlite_database(settings: Settings) -> None:
-    if settings.database_seed_path and settings.database_seed_path.exists() and not settings.sqlite_path.exists():
+    if settings.allow_demo_seed_import and settings.database_seed_path and settings.database_seed_path.exists() and not settings.sqlite_path.exists():
         settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(settings.database_seed_path, settings.sqlite_path)
 
@@ -131,6 +131,8 @@ def _seed_missing_legacy_users(source: sqlite3.Connection, target) -> None:
 
 
 def _import_sqlite_seed_into_postgres(settings: Settings) -> None:
+    if not settings.allow_demo_seed_import:
+        return
     if not settings.database_seed_path or not settings.database_seed_path.exists():
         return
 

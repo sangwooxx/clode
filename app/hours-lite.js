@@ -260,15 +260,7 @@ function hEmployeeRoster() {
       }))
       .filter((employee) => employee.name);
   }
-  return (window.HOURS_FORM_SEED?.employees || [])
-    .map((employee) => ({
-      name: hText(employee?.name),
-      worker_code: hText(employee?.worker_code),
-      status: "active",
-      first_name: hNameParts(employee?.name).firstName,
-      last_name: hNameParts(employee?.name).lastName,
-    }))
-    .filter((employee) => employee.name);
+  return [];
 }
 
 function hEmployeeAliases(employee) {

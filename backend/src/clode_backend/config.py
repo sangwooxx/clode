@@ -12,6 +12,7 @@ class Settings:
     port: int
     database_url: str
     database_seed_path: Path | None
+    allow_demo_seed_import: bool
     project_root: Path
     allowed_origins: tuple[str, ...]
     session_ttl_hours: int
@@ -49,6 +50,11 @@ def load_settings() -> Settings:
         or ""
     ).strip()
     configured_seed_path = str(os.getenv("CLODE_DATABASE_SEED_PATH") or os.getenv("AGENT_DATABASE_SEED_PATH") or "").strip()
+    allow_demo_seed_import = str(
+        os.getenv("CLODE_ENABLE_DEMO_SEED_IMPORT")
+        or os.getenv("AGENT_ENABLE_DEMO_SEED_IMPORT")
+        or ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
 
     if configured_database_url:
         database_url = configured_database_url
@@ -60,7 +66,7 @@ def load_settings() -> Settings:
     database_seed_path = None
     if configured_seed_path:
         database_seed_path = Path(configured_seed_path)
-    elif is_vercel:
+    elif is_vercel and allow_demo_seed_import:
         if default_seed_db.exists():
             database_seed_path = default_seed_db
         elif default_db.exists():
@@ -80,6 +86,7 @@ def load_settings() -> Settings:
         port=int(read_env("CLODE_BACKEND_PORT", "AGENT_BACKEND_PORT", "8787")),
         database_url=database_url,
         database_seed_path=database_seed_path,
+        allow_demo_seed_import=allow_demo_seed_import,
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),

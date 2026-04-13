@@ -1268,6 +1268,9 @@ async function initShell() {
   registerShellGlobals();
   bindShellNavigation();
   bindLoginActions();
+  if (window.ClodeDataAccess?.setMode) {
+    window.ClodeDataAccess.setMode("api");
+  }
   bindRegistrySort("contractsRegistryTable", "contractsRegistry", registrySorts.contracts);
   bindRegistrySort("invoiceRegistryTable", "invoiceRegistry", registrySorts.invoices);
   document.getElementById("saveContractButton")?.addEventListener("click", saveContractFromForm);
@@ -1333,6 +1336,10 @@ async function initShell() {
     }
   }
 
+  if (window.ClodeDataAccess?.initialize) {
+    await window.ClodeDataAccess.initialize({ purgeLocal: true });
+  }
+
   if (isAuthenticated()) {
     await loadContractRegistryFromBackend({ includeArchived: true, force: true });
   } else {
@@ -1367,13 +1374,16 @@ async function initShell() {
     renderRailAccess();
     renderRailFooter();
     if (!isAuthenticated()) {
+      window.ClodeDataAccess?.purgeLocalRepositorySnapshots?.();
       saveContractRegistry([]);
       setActiveView("homeView");
       renderContractRegistry();
       renderInvoiceRegistry();
       return;
     }
-    void loadContractRegistryFromBackend({ includeArchived: true, force: true }).then(() => {
+    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true })).then(() => {
+      return loadContractRegistryFromBackend({ includeArchived: true, force: true });
+    }).then(() => {
       renderContractRegistry();
       renderInvoiceRegistry();
     });

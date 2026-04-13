@@ -69,12 +69,10 @@ function vacationEmployeesFromStores() {
   const hoursSnapshot = vacationReadStore(VACATION_HOURS_STORAGE_KEY, null);
   const snapshotEmployees =
     hoursSnapshot && typeof hoursSnapshot === "object" ? (hoursSnapshot.employees || []) : [];
-  const seedEmployees = window.HOURS_FORM_SEED?.employees || [];
 
   const merged = new Map();
 
-  // Base roster: seed + hours snapshot (if present)
-  [...(Array.isArray(seedEmployees) ? seedEmployees : []), ...(Array.isArray(snapshotEmployees) ? snapshotEmployees : [])].forEach((emp) => {
+  [...(Array.isArray(snapshotEmployees) ? snapshotEmployees : [])].forEach((emp) => {
     const name = vacationNormalizeName(emp?.name);
     if (!name) return;
     const key = name.toLowerCase();
@@ -684,7 +682,6 @@ function renderVacationModule() {
         hasGetEmployeeRoster: typeof window.getEmployeeRoster === "function",
         registryCount: Array.isArray(registry) ? registry.length : null,
         hoursEmployeesCount: hours && typeof hours === "object" && Array.isArray(hours.employees) ? hours.employees.length : null,
-        seedEmployeesCount: Array.isArray(window.HOURS_FORM_SEED?.employees) ? window.HOURS_FORM_SEED.employees.length : null,
         storageKeyEmployees: VACATION_EMPLOYEE_STORAGE_KEY,
         storageKeyHours: VACATION_HOURS_STORAGE_KEY,
       });

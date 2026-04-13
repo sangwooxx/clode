@@ -180,7 +180,7 @@ function loadWorkwearCatalog() {
   if (Array.isArray(parsed) && parsed.length) {
     return parsed;
   }
-  return DEFAULT_WORKWEAR_CATALOG.map((item) => ({ ...item }));
+  return [];
 }
 
 function saveWorkwearCatalog(catalog) {

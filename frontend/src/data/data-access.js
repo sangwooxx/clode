@@ -91,7 +91,7 @@
     workwearCatalog: {
       storeName: "workwear_catalog",
       storageKey: storageKeys.workwearCatalog,
-      fallback: null,
+      fallback: [],
       eventName: "workwear-catalog-updated",
     },
     legacySeedVersion: {
@@ -107,11 +107,18 @@
   }, {});
 
   const managerState = {
-    mode: global.__CLODE_DATA_MODE || global.__AGENT_DATA_MODE || "local",
+    mode: global.__CLODE_DATA_MODE || global.__AGENT_DATA_MODE || "api",
+    initialized: false,
+    pendingWrites: new Map(),
+    remoteCache: Object.create(null),
   };
 
   function cloneValue(value) {
     return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
+  }
+
+  function resolveFallback(fallbackValue) {
+    return typeof fallbackValue === "function" ? fallbackValue() : cloneValue(fallbackValue);
   }
 
   function resolveDefinition(repositoryNameOrStorageKey, fallbackValue) {
@@ -130,19 +137,73 @@
     };
   }
 
+  function getCacheKey(definition) {
+    return definition.storeName || definition.storageKey || "";
+  }
+
+  function getCachedValue(definition, fallbackValue) {
+    const cacheKey = getCacheKey(definition);
+    if (cacheKey && Object.prototype.hasOwnProperty.call(managerState.remoteCache, cacheKey)) {
+      return cloneValue(managerState.remoteCache[cacheKey]);
+    }
+    return resolveFallback(fallbackValue !== undefined ? fallbackValue : definition.fallback);
+  }
+
+  function setCachedValue(definition, value) {
+    const cacheKey = getCacheKey(definition);
+    if (!cacheKey) return cloneValue(value);
+    managerState.remoteCache[cacheKey] = cloneValue(value);
+    return cloneValue(value);
+  }
+
+  function clearCachedValues() {
+    managerState.remoteCache = Object.create(null);
+    Object.values(repositoryDefinitions).forEach((definition) => {
+      const cacheKey = getCacheKey(definition);
+      if (!cacheKey) return;
+      managerState.remoteCache[cacheKey] = resolveFallback(definition.fallback);
+    });
+  }
+
   function dispatchStoreEvent(eventName) {
     if (!eventName) return;
     global.dispatchEvent(new CustomEvent(eventName));
   }
 
+  function persistRemoteValue(definition, payload) {
+    if (managerState.mode !== "api") return Promise.resolve(payload);
+    const cacheKey = getCacheKey(definition);
+    const pending = apiAdapter.setParsed(definition.storeName, payload)
+      .catch((error) => {
+        console.warn(`[ClodeDataAccess] Failed to persist store "${definition.storeName}".`, error);
+        throw error;
+      })
+      .finally(() => {
+        managerState.pendingWrites.delete(cacheKey);
+      });
+    managerState.pendingWrites.set(cacheKey, pending);
+    return pending;
+  }
+
   function loadSync(repositoryNameOrStorageKey, fallbackValue) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, fallbackValue);
+    if (managerState.mode === "api") {
+      return getCachedValue(definition, fallbackValue);
+    }
     return cloneValue(localAdapter.getParsedSync(definition.storageKey, definition.fallback));
   }
 
   function saveSync(repositoryNameOrStorageKey, value, options) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, options?.fallback);
     const payload = cloneValue(value);
+    if (managerState.mode === "api") {
+      setCachedValue(definition, payload);
+      dispatchStoreEvent(options?.eventName || definition.eventName);
+      if (!options?.skipRemote && definition.storeName) {
+        void persistRemoteValue(definition, payload);
+      }
+      return payload;
+    }
     localAdapter.setParsedSync(definition.storageKey, payload);
     dispatchStoreEvent(options?.eventName || definition.eventName);
     return payload;
@@ -150,6 +211,23 @@
 
   function removeSync(repositoryNameOrStorageKey, options) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, options?.fallback);
+    if (managerState.mode === "api") {
+      setCachedValue(definition, resolveFallback(definition.fallback));
+      dispatchStoreEvent(options?.eventName || definition.eventName);
+      if (!options?.skipRemote && definition.storeName) {
+        const cacheKey = getCacheKey(definition);
+        const pending = apiAdapter.remove(definition.storeName)
+          .catch((error) => {
+            console.warn(`[ClodeDataAccess] Failed to remove store "${definition.storeName}".`, error);
+            throw error;
+          })
+          .finally(() => {
+            managerState.pendingWrites.delete(cacheKey);
+          });
+        managerState.pendingWrites.set(cacheKey, pending);
+      }
+      return;
+    }
     localAdapter.removeSync(definition.storageKey);
     dispatchStoreEvent(options?.eventName || definition.eventName);
   }
@@ -157,10 +235,12 @@
   async function load(repositoryNameOrStorageKey, fallbackValue) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, fallbackValue);
     if (managerState.mode === "api") {
-      const value = await apiAdapter.getParsed(definition.storeName, definition.fallback);
-      if (value !== undefined) {
-        localAdapter.setParsedSync(definition.storageKey, value);
+      try {
+        const value = await apiAdapter.getParsed(definition.storeName, definition.fallback);
+        setCachedValue(definition, value);
         return cloneValue(value);
+      } catch {
+        return getCachedValue(definition, fallbackValue);
       }
     }
     return loadSync(repositoryNameOrStorageKey, fallbackValue);
@@ -169,8 +249,8 @@
   async function save(repositoryNameOrStorageKey, value, options) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, options?.fallback);
     const payload = saveSync(repositoryNameOrStorageKey, value, options);
-    if (managerState.mode === "api" || options?.forceApi) {
-      await apiAdapter.setParsed(definition.storeName, payload);
+    if (managerState.mode === "api" && definition.storeName) {
+      await persistRemoteValue(definition, payload);
     }
     return payload;
   }
@@ -201,6 +281,51 @@
     return accumulator;
   }, {});
 
+  function purgeLocalRepositorySnapshots() {
+    Object.values(repositoryDefinitions).forEach((definition) => {
+      if (!definition.storageKey) return;
+      localAdapter.removeSync(definition.storageKey);
+    });
+  }
+
+  async function initialize(options = {}) {
+    if (managerState.mode !== "api") {
+      managerState.initialized = true;
+      return exportSnapshot();
+    }
+
+    if (options.reset !== false) {
+      clearCachedValues();
+    }
+    if (options.purgeLocal) {
+      purgeLocalRepositorySnapshots();
+    }
+
+    const repositoriesToLoad = Array.isArray(options.repositories) && options.repositories.length
+      ? options.repositories
+      : Object.keys(repositoryDefinitions).filter((repositoryName) => repositoryName !== "uiState" && repositoryName !== "authSession");
+
+    await Promise.all(repositoriesToLoad.map((repositoryName) => load(repositoryName)));
+    managerState.initialized = true;
+    return exportSnapshot();
+  }
+
+  async function flushPendingWrites() {
+    const pending = [...managerState.pendingWrites.values()];
+    if (!pending.length) return;
+    await Promise.allSettled(pending);
+  }
+
+  function exportSnapshot() {
+    const snapshot = {};
+    Object.entries(repositoryDefinitions).forEach(([repositoryName, definition]) => {
+      snapshot[repositoryName] = loadSync(definition.storageKey, definition.fallback);
+    });
+    return snapshot;
+  }
+
+  clearCachedValues();
+
   global.ClodeDataAccess = {
     repositoryDefinitions,
     repositories,
@@ -209,6 +334,18 @@
     },
     setMode(mode) {
       managerState.mode = mode === "api" ? "api" : "local";
+      if (managerState.mode === "api") {
+        clearCachedValues();
+      }
+    },
+    async initialize(options) {
+      return initialize(options);
+    },
+    async flushPendingWrites() {
+      return flushPendingWrites();
+    },
+    purgeLocalRepositorySnapshots() {
+      purgeLocalRepositorySnapshots();
     },
     async pingApi() {
       return apiAdapter.health();
@@ -236,11 +373,7 @@
       },
     },
     exportSnapshot() {
-      const snapshot = {};
-      Object.entries(repositoryDefinitions).forEach(([repositoryName, definition]) => {
-        snapshot[repositoryName] = loadSync(definition.storageKey, definition.fallback);
-      });
-      return snapshot;
+      return exportSnapshot();
     },
     getStorageKey(repositoryName) {
       return repositoryDefinitions[repositoryName]?.storageKey || "";
