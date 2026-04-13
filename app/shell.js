@@ -1079,14 +1079,20 @@ function bindLoginActions() {
     const result = await authenticateUser(username, password);
     setLoginStatus(result.message, result.ok ? "success" : "error");
     if (!result.ok) return;
-    try {
-      await loadContractRegistryFromBackend({ includeArchived: true, force: true });
-    } catch {}
     renderRailAccess();
     renderRailFooter();
+    setActiveView("dashboardView");
     renderContractRegistry();
     renderInvoiceRegistry();
-    setActiveView("dashboardView");
+    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true }))
+      .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
+      .then(() => {
+        renderRailAccess();
+        renderRailFooter();
+        renderContractRegistry();
+        renderInvoiceRegistry();
+      })
+      .catch(() => {});
   });
 
   document.getElementById("loginPasswordInput")?.addEventListener("keydown", (event) => {
@@ -1337,12 +1343,7 @@ async function initShell() {
     }
   }
 
-  if (isAuthenticated()) {
-    if (window.ClodeDataAccess?.initialize) {
-      await window.ClodeDataAccess.initialize({ purgeLocal: true });
-    }
-    await loadContractRegistryFromBackend({ includeArchived: true, force: true });
-  } else {
+  if (!isAuthenticated()) {
     window.ClodeDataAccess?.purgeLocalRepositorySnapshots?.();
     saveContractRegistry([]);
   }
@@ -1352,6 +1353,18 @@ async function initShell() {
   setActiveView(isAuthenticated() ? (shellReadStore(APP_SHELL_VIEW_KEY, "dashboardView") || "dashboardView") : "homeView");
   renderContractRegistry();
   renderInvoiceRegistry();
+
+  if (isAuthenticated()) {
+    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true }))
+      .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
+      .then(() => {
+        renderRailAccess();
+        renderRailFooter();
+        renderContractRegistry();
+        renderInvoiceRegistry();
+      })
+      .catch(() => {});
+  }
 
   window.addEventListener("storage", () => {
     renderRailAccess();
