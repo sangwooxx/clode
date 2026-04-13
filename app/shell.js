@@ -1337,13 +1337,13 @@ async function initShell() {
     }
   }
 
-  if (window.ClodeDataAccess?.initialize) {
-    await window.ClodeDataAccess.initialize({ purgeLocal: true });
-  }
-
   if (isAuthenticated()) {
+    if (window.ClodeDataAccess?.initialize) {
+      await window.ClodeDataAccess.initialize({ purgeLocal: true });
+    }
     await loadContractRegistryFromBackend({ includeArchived: true, force: true });
   } else {
+    window.ClodeDataAccess?.purgeLocalRepositorySnapshots?.();
     saveContractRegistry([]);
   }
 

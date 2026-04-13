@@ -1,6 +1,29 @@
 (function initApiAdapter(global) {
+  const SESSION_STORAGE_KEY = "clode_backend_session_token";
+  const LEGACY_SESSION_STORAGE_KEY = "agent_backend_session_token";
+  const LOCAL_SESSION_STORAGE_KEY = "clode_backend_persisted_session_token";
+  const LEGACY_LOCAL_SESSION_STORAGE_KEY = "agent_backend_persisted_session_token";
+
   function resolveApiBaseUrl() {
     return global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || (global.location?.origin ? `${global.location.origin}/api/v1` : "/api/v1");
+  }
+
+  function readSessionToken() {
+    try {
+      const sessionToken = String(
+        global.sessionStorage?.getItem(SESSION_STORAGE_KEY)
+        || global.sessionStorage?.getItem(LEGACY_SESSION_STORAGE_KEY)
+        || ""
+      ).trim();
+      if (sessionToken) return sessionToken;
+      return String(
+        global.localStorage?.getItem(LOCAL_SESSION_STORAGE_KEY)
+        || global.localStorage?.getItem(LEGACY_LOCAL_SESSION_STORAGE_KEY)
+        || ""
+      ).trim();
+    } catch {
+      return "";
+    }
   }
 
   function createApiAdapter(options) {
@@ -16,12 +39,18 @@
         const controller = new AbortController();
         const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
         try {
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          const token = readSessionToken();
+          if (token) {
+            headers["X-Clode-Session"] = token;
+            headers["X-Agent-Session"] = token;
+          }
           const response = await global.fetch(`${config.baseUrl}${path}`, {
             method,
             credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers,
             body: body === undefined ? undefined : JSON.stringify(body),
             signal: controller.signal,
           });

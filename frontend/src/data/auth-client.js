@@ -67,7 +67,8 @@
 
   const config = {
     baseUrl: resolveApiBaseUrl(),
-    timeoutMs: 7000,
+    timeoutMs: 20000,
+    retryCount: 1,
   };
   const SESSION_STORAGE_KEY = "clode_backend_session_token";
   const LEGACY_SESSION_STORAGE_KEY = "agent_backend_session_token";
@@ -257,42 +258,54 @@
   }
 
   async function request(method, path, body) {
-    const controller = new AbortController();
-    const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
-    try {
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      const token = state.sessionToken || loadStoredSessionToken();
-      if (token) {
-        headers["X-Clode-Session"] = token;
-        headers["X-Agent-Session"] = token;
+    let lastError = null;
+    for (let attempt = 0; attempt <= config.retryCount; attempt += 1) {
+      const controller = new AbortController();
+      const timer = global.setTimeout(() => controller.abort(), config.timeoutMs);
+      try {
+        const headers = {
+          "Content-Type": "application/json",
+        };
+        const token = state.sessionToken || loadStoredSessionToken();
+        if (token) {
+          headers["X-Clode-Session"] = token;
+          headers["X-Agent-Session"] = token;
+        }
+
+        const response = await global.fetch(`${config.baseUrl}${path}`, {
+          method,
+          credentials: "include",
+          headers,
+          body: body === undefined ? undefined : JSON.stringify(body),
+          signal: controller.signal,
+        });
+
+        let payload = null;
+        if (response.status !== 204) {
+          payload = await response.json().catch(() => null);
+        }
+
+        if (!response.ok) {
+          const error = new Error(payload?.error || payload?.message || `API ${method} ${path} failed.`);
+          error.status = response.status;
+          error.payload = payload;
+          throw error;
+        }
+
+        return payload;
+      } catch (error) {
+        lastError = error;
+        const isAbort = error?.name === "AbortError";
+        const isNetwork = error instanceof TypeError;
+        const shouldRetry = attempt < config.retryCount && (isAbort || isNetwork);
+        if (!shouldRetry) {
+          throw error;
+        }
+      } finally {
+        global.clearTimeout(timer);
       }
-
-      const response = await global.fetch(`${config.baseUrl}${path}`, {
-        method,
-        credentials: "include",
-        headers,
-        body: body === undefined ? undefined : JSON.stringify(body),
-        signal: controller.signal,
-      });
-
-      let payload = null;
-      if (response.status !== 204) {
-        payload = await response.json().catch(() => null);
-      }
-
-      if (!response.ok) {
-        const error = new Error(payload?.error || payload?.message || `API ${method} ${path} failed.`);
-        error.status = response.status;
-        error.payload = payload;
-        throw error;
-      }
-
-      return payload;
-    } finally {
-      global.clearTimeout(timer);
     }
+    throw lastError || new Error(`API ${method} ${path} failed.`);
   }
 
   async function loadUsers() {
