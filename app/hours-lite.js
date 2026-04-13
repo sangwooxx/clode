@@ -22,6 +22,7 @@ const hoursState = window.__clodeHoursLiteState || {
   lastError: "",
   data: null,
   sorts: null,
+  refreshToken: 0,
 };
 
 window.__clodeHoursLiteState = hoursState;
@@ -1077,8 +1078,11 @@ function hOpenPrint(title, htmlContent) {
 }
 
 async function hRefreshFromBackend(options = {}) {
+  const refreshToken = (hoursState.refreshToken || 0) + 1;
+  hoursState.refreshToken = refreshToken;
   const api = hTimeEntryApi();
   if (!api || (typeof window.isAuthenticated === "function" && !window.isAuthenticated())) {
+    if (refreshToken !== hoursState.refreshToken) return;
     hoursState.data = hEmptyState();
     hoursState.loadedFromBackend = false;
     hoursState.lastError = "";
@@ -1094,6 +1098,7 @@ async function hRefreshFromBackend(options = {}) {
 
   try {
     const payload = await api.list({});
+    if (refreshToken !== hoursState.refreshToken) return;
     const previousMonthKey = options.selectedMonthKey || hoursState.selectedMonthKey;
     hoursState.data = hBuildStateFromBackend(payload);
     hoursState.loadedFromBackend = true;
@@ -1105,9 +1110,11 @@ async function hRefreshFromBackend(options = {}) {
       : (monthKeys[0] || "");
     hMirrorStateToLegacyStore();
   } catch (error) {
+    if (refreshToken !== hoursState.refreshToken) return;
     hoursState.lastError = error?.message || "Nie udało się pobrać ewidencji czasu pracy z backendu.";
     console.warn(hoursState.lastError, error);
   } finally {
+    if (refreshToken !== hoursState.refreshToken) return;
     hoursState.loading = false;
   }
 

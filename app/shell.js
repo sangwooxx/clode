@@ -41,6 +41,7 @@ const shellState = {
   contractRegistryLoading: null,
   dataReady: false,
   dataBootstrapPromise: Promise.resolve(),
+  dataBootstrapInFlight: false,
   editingContractId: "",
   selectedContractRowId: "",
 };
@@ -665,7 +666,12 @@ function refreshAuthenticatedData(options = {}) {
   if (!isAuthenticated()) {
     shellState.dataReady = false;
     shellState.dataBootstrapPromise = Promise.resolve();
+    shellState.dataBootstrapInFlight = false;
     dispatchClodeDataReady({ authenticated: false });
+    return shellState.dataBootstrapPromise;
+  }
+
+  if (shellState.dataBootstrapInFlight) {
     return shellState.dataBootstrapPromise;
   }
 
@@ -674,6 +680,7 @@ function refreshAuthenticatedData(options = {}) {
   }
 
   shellState.dataReady = false;
+  shellState.dataBootstrapInFlight = true;
   const bootstrapPromise = Promise.resolve(window.ClodeDataAccess?.initialize?.({
     purgeLocal: true,
     reset: options.reset !== false,
@@ -699,7 +706,11 @@ function refreshAuthenticatedData(options = {}) {
     });
 
   shellState.dataBootstrapPromise = bootstrapPromise;
-  return bootstrapPromise;
+  return bootstrapPromise.finally(() => {
+    if (shellState.dataBootstrapPromise === bootstrapPromise) {
+      shellState.dataBootstrapInFlight = false;
+    }
+  });
 }
 
 function findUniqueContractByName(name) {
@@ -1156,6 +1167,7 @@ function bindLoginActions() {
     await window.ClodeAuthClient?.logout?.();
     shellState.dataReady = false;
     shellState.dataBootstrapPromise = Promise.resolve();
+    shellState.dataBootstrapInFlight = false;
     setLoginStatus("Wylogowano z systemu.", "info");
     setActiveView("homeView");
   });
@@ -1432,6 +1444,7 @@ async function initShell() {
       window.ClodeDataAccess?.purgeLocalRepositorySnapshots?.();
       shellState.dataReady = false;
       shellState.dataBootstrapPromise = Promise.resolve();
+      shellState.dataBootstrapInFlight = false;
       saveContractRegistry([]);
       setActiveView("homeView");
       renderContractRegistry();

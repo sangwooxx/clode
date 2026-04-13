@@ -1186,43 +1186,6 @@ async function saveEmployeeFromForm() {
     return;
   }
 
-  const registry = loadEmployeeRegistry();
-  const originalName = employeeViewState.editingName || name;
-  const existing = registry.find((employee) => employee.name === originalName);
-  const conflict = registry.find((employee) => employee.name === name && employee.name !== originalName);
-  if (conflict) {
-    window.alert("Pracownik o tej nazwie ju\u017c istnieje.");
-    return;
-  }
-
-  const status = String(document.getElementById("employeeStatusInput").value || "active");
-  const providedEndDate = String(document.getElementById("employeeEndDateInput").value || "");
-  const payload = {
-    name,
-    first_name: firstName,
-    last_name: lastName,
-    position: employeeNormalize(document.getElementById("employeePositionInput").value),
-    status,
-    employment_date: String(document.getElementById("employeeStartDateInput").value || ""),
-    employment_end_date: status === "inactive"
-      ? (providedEndDate || new Date().toISOString().slice(0, 10))
-      : providedEndDate,
-    street: employeeNormalize(document.getElementById("employeeStreetInput").value),
-    city: employeeNormalize(document.getElementById("employeeCityInput").value),
-    phone: employeeNormalize(document.getElementById("employeePhoneInput").value),
-    medical_exam_valid_until: String(document.getElementById("employeeMedicalExamValidUntilInput").value || ""),
-  };
-
-  if (existing) {
-    Object.assign(existing, payload);
-  } else {
-    registry.push(payload);
-  }
-
-  if (originalName !== name) {
-    renameEmployeeReferences(originalName, name);
-  }
-
   const saveButton = document.getElementById("saveEmployeeButton");
   const previousLabel = saveButton?.textContent || "Zapisz pracownika";
   if (saveButton) {
@@ -1232,6 +1195,43 @@ async function saveEmployeeFromForm() {
 
   try {
     await window.whenClodeDataReady?.();
+    const registry = loadEmployeeRegistry();
+    const originalName = employeeViewState.editingName || name;
+    const existing = registry.find((employee) => employee.name === originalName);
+    const conflict = registry.find((employee) => employee.name === name && employee.name !== originalName);
+    if (conflict) {
+      window.alert("Pracownik o tej nazwie ju\u017c istnieje.");
+      return;
+    }
+
+    const status = String(document.getElementById("employeeStatusInput").value || "active");
+    const providedEndDate = String(document.getElementById("employeeEndDateInput").value || "");
+    const payload = {
+      name,
+      first_name: firstName,
+      last_name: lastName,
+      position: employeeNormalize(document.getElementById("employeePositionInput").value),
+      status,
+      employment_date: String(document.getElementById("employeeStartDateInput").value || ""),
+      employment_end_date: status === "inactive"
+        ? (providedEndDate || new Date().toISOString().slice(0, 10))
+        : providedEndDate,
+      street: employeeNormalize(document.getElementById("employeeStreetInput").value),
+      city: employeeNormalize(document.getElementById("employeeCityInput").value),
+      phone: employeeNormalize(document.getElementById("employeePhoneInput").value),
+      medical_exam_valid_until: String(document.getElementById("employeeMedicalExamValidUntilInput").value || ""),
+    };
+
+    if (existing) {
+      Object.assign(existing, payload);
+    } else {
+      registry.push(payload);
+    }
+
+    if (originalName !== name) {
+      renameEmployeeReferences(originalName, name);
+    }
+
     await persistEmployeeRegistry(registry);
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog(
@@ -1265,9 +1265,9 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   if (!name) return;
   if (!window.confirm(`Czy na pewno chcesz usun\u0105\u0107 pracownika ${name}?`)) return;
 
-  removeEmployeeReferences(name);
   try {
     await window.whenClodeDataReady?.();
+    removeEmployeeReferences(name);
     await persistEmployeeRegistry(loadEmployeeRegistry().filter((employee) => employee.name !== name));
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
