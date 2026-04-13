@@ -1110,7 +1110,7 @@ async function hRefreshFromBackend(options = {}) {
 
   hoursState.loading = true;
   if (!options.silent) {
-    hRenderTable();
+    hRenderModule();
   }
 
   try {
