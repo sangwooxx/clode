@@ -1203,6 +1203,10 @@ window.renderHoursLite = function renderHoursLite() {
   void hRefreshFromBackend({ silent: false });
 };
 
+async function hWaitForClodeDataReady() {
+  await window.whenClodeDataReady?.();
+}
+
 function hNewMonthKeyFromControls() {
   const monthValue = String(document.getElementById("newMonthMonthSelect")?.value || "").trim();
   const yearValue = String(document.getElementById("newMonthYearInput")?.value || "").trim();
@@ -1230,15 +1234,32 @@ function initHoursLite() {
     if (!monthKey) return;
     const api = hTimeEntryApi();
     if (!api) return;
-    await api.createMonth({
-      month_key: monthKey,
-      month_label: hMonthLabel(monthKey),
-      visible_investments: [],
-      finance: hEmptyFinance(),
-      selected: false,
-    });
-    hoursState.selectedMonthKey = monthKey;
-    await hRefreshFromBackend({ selectedMonthKey: monthKey });
+    const addButton = document.getElementById("addMonthButton");
+    const previousLabel = addButton?.textContent || "Dodaj";
+    if (addButton) {
+      addButton.disabled = true;
+      addButton.textContent = "Dodawanie...";
+    }
+    try {
+      await hWaitForClodeDataReady();
+      await api.createMonth({
+        month_key: monthKey,
+        month_label: hMonthLabel(monthKey),
+        visible_investments: [],
+        finance: hEmptyFinance(),
+        selected: false,
+      });
+      hoursState.selectedMonthKey = monthKey;
+      await hRefreshFromBackend({ selectedMonthKey: monthKey });
+    } catch (error) {
+      console.warn("Nie udało się dodać miesiąca.", error);
+      window.alert("Nie udało się dodać miesiąca. Odśwież widok i spróbuj ponownie.");
+    } finally {
+      if (addButton) {
+        addButton.disabled = false;
+        addButton.textContent = previousLabel;
+      }
+    }
   });
 
   document.getElementById("deleteSelectedMonthsButton")?.addEventListener("click", async () => {
@@ -1416,6 +1437,10 @@ function initHoursLite() {
     hRenderEmployeeSuggestions();
     hMirrorStateToLegacyStore();
     hRenderModule();
+  });
+
+  window.addEventListener("clode-data-ready", () => {
+    void hRefreshFromBackend({ selectedMonthKey: hoursState.selectedMonthKey, silent: true });
   });
 
   window.addEventListener("app-view-changed", (event) => {

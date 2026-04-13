@@ -39,6 +39,8 @@ const shellState = {
   contractRegistry: [],
   contractRegistryLoaded: false,
   contractRegistryLoading: null,
+  dataReady: false,
+  dataBootstrapPromise: Promise.resolve(),
   editingContractId: "",
   selectedContractRowId: "",
 };
@@ -653,6 +655,53 @@ function getContractById(contractId) {
   return getContractRegistry().find((item) => item.id === normalizedId) || null;
 }
 
+function dispatchClodeDataReady(detail = {}) {
+  window.dispatchEvent(new CustomEvent("clode-data-ready", {
+    detail,
+  }));
+}
+
+function refreshAuthenticatedData(options = {}) {
+  if (!isAuthenticated()) {
+    shellState.dataReady = false;
+    shellState.dataBootstrapPromise = Promise.resolve();
+    dispatchClodeDataReady({ authenticated: false });
+    return shellState.dataBootstrapPromise;
+  }
+
+  if (shellState.dataBootstrapPromise && !options.force && !options.reset) {
+    return shellState.dataBootstrapPromise;
+  }
+
+  shellState.dataReady = false;
+  const bootstrapPromise = Promise.resolve(window.ClodeDataAccess?.initialize?.({
+    purgeLocal: true,
+    reset: options.reset !== false,
+  }))
+    .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
+    .then(() => {
+      shellState.dataReady = true;
+      renderRailAccess();
+      renderRailFooter();
+      renderContractRegistry();
+      renderInvoiceRegistry();
+      dispatchClodeDataReady({ authenticated: true });
+    })
+    .catch((error) => {
+      shellState.dataReady = false;
+      dispatchClodeDataReady({
+        authenticated: true,
+        error: true,
+        message: error?.message || "Nie udało się zsynchronizować danych po logowaniu.",
+      });
+      console.warn("Clode data bootstrap failed.", error);
+      throw error;
+    });
+
+  shellState.dataBootstrapPromise = bootstrapPromise;
+  return bootstrapPromise;
+}
+
 function findUniqueContractByName(name) {
   const normalizedName = String(name || "").trim();
   if (!normalizedName) return null;
@@ -1084,15 +1133,7 @@ function bindLoginActions() {
     setActiveView("dashboardView");
     renderContractRegistry();
     renderInvoiceRegistry();
-    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true }))
-      .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
-      .then(() => {
-        renderRailAccess();
-        renderRailFooter();
-        renderContractRegistry();
-        renderInvoiceRegistry();
-      })
-      .catch(() => {});
+    void refreshAuthenticatedData({ force: true });
   });
 
   document.getElementById("loginPasswordInput")?.addEventListener("keydown", (event) => {
@@ -1113,6 +1154,8 @@ function bindLoginActions() {
     if (!window.confirm("Czy na pewno chcesz się wylogować?")) return;
     await window.ClodeDataAccess?.flushPendingWrites?.();
     await window.ClodeAuthClient?.logout?.();
+    shellState.dataReady = false;
+    shellState.dataBootstrapPromise = Promise.resolve();
     setLoginStatus("Wylogowano z systemu.", "info");
     setActiveView("homeView");
   });
@@ -1266,6 +1309,12 @@ function registerShellGlobals() {
   window.markAllNotificationsRead = markAllNotificationsRead;
   window.renderShellFooter = renderRailFooter;
   window.renderRailAccess = renderRailAccess;
+  window.whenClodeDataReady = function whenClodeDataReady() {
+    return shellState.dataBootstrapPromise || Promise.resolve();
+  };
+  window.isClodeDataReady = function isClodeDataReady() {
+    return Boolean(shellState.dataReady);
+  };
   window.isAppViewActive = function isAppViewActive(viewId) {
     return document.getElementById(viewId)?.classList.contains("is-active") || false;
   };
@@ -1355,15 +1404,7 @@ async function initShell() {
   renderInvoiceRegistry();
 
   if (isAuthenticated()) {
-    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true }))
-      .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
-      .then(() => {
-        renderRailAccess();
-        renderRailFooter();
-        renderContractRegistry();
-        renderInvoiceRegistry();
-      })
-      .catch(() => {});
+    void refreshAuthenticatedData({ force: true });
   }
 
   window.addEventListener("storage", () => {
@@ -1389,18 +1430,16 @@ async function initShell() {
     renderRailFooter();
     if (!isAuthenticated()) {
       window.ClodeDataAccess?.purgeLocalRepositorySnapshots?.();
+      shellState.dataReady = false;
+      shellState.dataBootstrapPromise = Promise.resolve();
       saveContractRegistry([]);
       setActiveView("homeView");
       renderContractRegistry();
       renderInvoiceRegistry();
+      dispatchClodeDataReady({ authenticated: false });
       return;
     }
-    void Promise.resolve(window.ClodeDataAccess?.initialize?.({ purgeLocal: true })).then(() => {
-      return loadContractRegistryFromBackend({ includeArchived: true, force: true });
-    }).then(() => {
-      renderContractRegistry();
-      renderInvoiceRegistry();
-    });
+    void refreshAuthenticatedData({ force: true });
   });
 
 }

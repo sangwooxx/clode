@@ -259,6 +259,16 @@ function saveEmployeeRegistry(registry) {
   employeeWriteStore(EMPLOYEE_STORAGE_KEY, registry, "employee-registry-updated");
 }
 
+async function persistEmployeeRegistry(registry) {
+  if (window.ClodeDataAccess?.repositories?.employees?.save) {
+    await window.ClodeDataAccess.repositories.employees.save(registry, {
+      eventName: "employee-registry-updated",
+    });
+    return;
+  }
+  saveEmployeeRegistry(registry);
+}
+
 function loadEmployeeHoursSnapshot() {
   const parsed = employeeReadStore(EMPLOYEE_HOURS_STORAGE_KEY, null);
   if (parsed && typeof parsed === "object" && parsed.months) {
@@ -1167,7 +1177,7 @@ function renderEmployeeCard() {
   `;
 }
 
-function saveEmployeeFromForm() {
+async function saveEmployeeFromForm() {
   const firstName = employeeNormalize(document.getElementById("employeeFirstNameInput").value);
   const lastName = employeeNormalize(document.getElementById("employeeLastNameInput").value);
   const name = employeeComposeName(firstName, lastName);
@@ -1213,22 +1223,40 @@ function saveEmployeeFromForm() {
     renameEmployeeReferences(originalName, name);
   }
 
-  saveEmployeeRegistry(registry);
-  if (typeof window.recordAuditLog === "function") {
-    window.recordAuditLog(
-      "Kadry",
-      existing ? "Zaktualizowano pracownika" : "Dodano pracownika",
-      name,
-      payload.position ? `Stanowisko: ${payload.position}` : ""
-    );
+  const saveButton = document.getElementById("saveEmployeeButton");
+  const previousLabel = saveButton?.textContent || "Zapisz pracownika";
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.textContent = "Zapisywanie...";
   }
 
-  employeeViewState.selectedName = name;
-  employeeViewState.editingName = name;
-  renderEmployeeModuleIfActive();
+  try {
+    await window.whenClodeDataReady?.();
+    await persistEmployeeRegistry(registry);
+    if (typeof window.recordAuditLog === "function") {
+      window.recordAuditLog(
+        "Kadry",
+        existing ? "Zaktualizowano pracownika" : "Dodano pracownika",
+        name,
+        payload.position ? `Stanowisko: ${payload.position}` : ""
+      );
+    }
+
+    employeeViewState.selectedName = name;
+    employeeViewState.editingName = name;
+    renderEmployeeModuleIfActive();
+  } catch (error) {
+    console.warn("Nie udało się zapisać pracownika.", error);
+    window.alert("Nie udało się zapisać pracownika. Odśwież widok i spróbuj ponownie.");
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.textContent = previousLabel;
+    }
+  }
 }
 
-function deleteEmployeeFromRegistry(employeeNameArg = "") {
+async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   const formName = employeeComposeName(
     document.getElementById("employeeFirstNameInput")?.value,
     document.getElementById("employeeLastNameInput")?.value
@@ -1238,9 +1266,16 @@ function deleteEmployeeFromRegistry(employeeNameArg = "") {
   if (!window.confirm(`Czy na pewno chcesz usun\u0105\u0107 pracownika ${name}?`)) return;
 
   removeEmployeeReferences(name);
-  saveEmployeeRegistry(loadEmployeeRegistry().filter((employee) => employee.name !== name));
-  if (typeof window.recordAuditLog === "function") {
-    window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
+  try {
+    await window.whenClodeDataReady?.();
+    await persistEmployeeRegistry(loadEmployeeRegistry().filter((employee) => employee.name !== name));
+    if (typeof window.recordAuditLog === "function") {
+      window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
+    }
+  } catch (error) {
+    console.warn("Nie udało się usunąć pracownika.", error);
+    window.alert("Nie udało się usunąć pracownika. Odśwież widok i spróbuj ponownie.");
+    return;
   }
 
   const roster = getEmployeeRoster().filter((employee) => employee.name !== name);
@@ -1488,6 +1523,7 @@ function initEmployeesView() {
 
   window.addEventListener("hours-registry-updated", renderEmployeeModuleIfActive);
   window.addEventListener("employee-registry-updated", renderEmployeeModuleIfActive);
+  window.addEventListener("clode-data-ready", renderEmployeeModuleIfActive);
   window.addEventListener("app-view-changed", (event) => {
     if (event.detail?.viewId === "employeesView") renderEmployeeModule();
   });
