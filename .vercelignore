@@ -1,0 +1,7 @@
+tmp
+tests
+docs
+.git
+backend/var
+scripts
+__pycache__

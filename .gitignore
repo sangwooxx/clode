@@ -20,6 +20,7 @@ tmp/
 *.log
 frontend-http.stderr.log
 frontend-http.stdout.log
+.vercel/
 
 # Browser / QA harness artifacts
 *.har
@@ -49,3 +50,4 @@ build/
 .vscode/
 .idea/
 
+.vercel

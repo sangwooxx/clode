@@ -1,7 +1,11 @@
 (function initApiAdapter(global) {
+  function resolveApiBaseUrl() {
+    return global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || (global.location?.origin ? `${global.location.origin}/api/v1` : "/api/v1");
+  }
+
   function createApiAdapter(options) {
     const config = {
-      baseUrl: options?.baseUrl || "http://127.0.0.1:8787/api/v1",
+      baseUrl: options?.baseUrl || resolveApiBaseUrl(),
       timeoutMs: Number(options?.timeoutMs || 5000),
     };
 

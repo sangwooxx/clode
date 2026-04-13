@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 from pathlib import Path
+import shutil
 
 from clode_backend.config import Settings
 from clode_backend.db.connection import connect
@@ -12,6 +13,10 @@ def _migration_files(settings: Settings) -> list[Path]:
 
 
 def ensure_database(settings: Settings) -> None:
+    if settings.database_seed_path and settings.database_seed_path.exists() and not settings.sqlite_path.exists():
+        settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(settings.database_seed_path, settings.sqlite_path)
+
     connection = connect(settings)
     try:
         connection.execute(

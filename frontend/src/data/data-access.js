@@ -1,10 +1,14 @@
 (function initClodeDataAccess(global) {
+  function resolveApiBaseUrl() {
+    return global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || (global.location?.origin ? `${global.location.origin}/api/v1` : "/api/v1");
+  }
+
   const storageKeys = global.ClodeStorageKeys || global.AgentStorageKeys || {};
   const localStorageAdapterFactory = global.ClodeLocalStorageAdapter || global.AgentLocalStorageAdapter;
   const apiAdapterFactory = global.ClodeApiAdapter || global.AgentApiAdapter;
   const localAdapter = localStorageAdapterFactory.create(global.localStorage);
   const apiAdapter = apiAdapterFactory.create({
-    baseUrl: global.__CLODE_API_BASE_URL || global.__AGENT_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+    baseUrl: resolveApiBaseUrl(),
   });
 
   const repositoryDefinitions = Object.freeze({

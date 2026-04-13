@@ -22,7 +22,7 @@ from clode_backend.services.time_entry_service import TimeEntryService
 from clode_backend.services.user_service import UserService
 
 
-def create_server():
+def create_runtime_context():
     settings = load_settings()
     ensure_database(settings)
     store_repository = StoreRepository(settings)
@@ -34,6 +34,27 @@ def create_server():
     invoice_service = InvoiceService(InvoiceRepository(settings), contract_repository)
     contract_service = ContractService(contract_repository, ContractMetricsRepository(settings))
     time_entry_service = TimeEntryService(TimeEntryRepository(settings), contract_repository)
+
+    return {
+        "settings": settings,
+        "store_service": store_service,
+        "auth_service": auth_service,
+        "user_service": user_service,
+        "invoice_service": invoice_service,
+        "contract_service": contract_service,
+        "time_entry_service": time_entry_service,
+    }
+
+
+def create_server():
+    runtime = create_runtime_context()
+    settings = runtime["settings"]
+    store_service = runtime["store_service"]
+    auth_service = runtime["auth_service"]
+    user_service = runtime["user_service"]
+    invoice_service = runtime["invoice_service"]
+    contract_service = runtime["contract_service"]
+    time_entry_service = runtime["time_entry_service"]
 
     class ClodeRequestHandler(BaseHTTPRequestHandler):
         server_version = "ClodeBackend/0.1"

@@ -87,6 +87,10 @@ const detailMonthlyColumns = {
   margin: { type: "number", defaultDirection: "desc" },
 };
 
+function resolveApiBaseUrl() {
+  return window.__CLODE_API_BASE_URL || window.__AGENT_API_BASE_URL || (window.location?.origin ? `${window.location.origin}/api/v1` : "/api/v1");
+}
+
 function formatMoney(value) {
   return currency.format(Number(value || 0));
 }
@@ -188,7 +192,7 @@ function numberValue(value) {
 function getDashboardApi() {
   if (!window.ClodeContractApi?.create) return null;
   return window.ClodeContractApi.create({
-    baseUrl: window.__CLODE_API_BASE_URL || "http://127.0.0.1:8787/api/v1",
+    baseUrl: resolveApiBaseUrl(),
   });
 }
 

@@ -59,6 +59,33 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1
 ```
 
+## Vercel deployment
+
+The repository is now prepared for a professional Vercel demo deployment:
+- static frontend served directly from the repository,
+- Python API exposed from `/api/index.py`,
+- same-origin frontend to API communication on Vercel (`/api/v1`),
+- first-run demo database bootstrapped from `backend/seed/clode-demo.db` into the serverless temp directory (on Vercel this is `/tmp/clode.db`).
+
+### Deploy
+
+```powershell
+Set-Location <repo-root>
+vercel
+vercel --prod
+```
+
+### Important deployment note
+
+The current Vercel profile is suitable for a polished demo / review environment, but it is not yet a durable production persistence model.
+
+Reason:
+- Vercel Functions use ephemeral filesystem storage,
+- the app currently boots a demo SQLite copy into the serverless temp directory,
+- data written during usage can be lost between cold starts or deployments.
+
+For full production persistence, the next hardening step is moving the backend database from SQLite to a managed SQL service.
+
 ## Repository guide
 
 - [Architecture](docs/ARCHITECTURE.md)
@@ -98,6 +125,6 @@ The project is considered MVP-ready only when:
 
 ## Notes
 
-- The repository currently targets local MVP verification, not cloud deployment.
+- The repository supports both local MVP verification and Vercel-hosted demo deployment.
 - Some older frontend adapters still exist as compatibility layers outside the active core flow.
 - This repository is intentionally prepared for staged hardening and ongoing cleanup.

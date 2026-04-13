@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
+import tempfile
 
 
 @dataclass(frozen=True)
@@ -10,9 +11,11 @@ class Settings:
     host: str
     port: int
     database_url: str
+    database_seed_path: Path | None
     project_root: Path
     allowed_origins: tuple[str, ...]
     session_ttl_hours: int
+    is_vercel: bool
 
     @property
     def sqlite_path(self) -> Path:
@@ -24,10 +27,31 @@ class Settings:
 def load_settings() -> Settings:
     project_root = Path(__file__).resolve().parents[3]
     default_db = project_root / "backend" / "var" / "clode.db"
+    default_seed_db = project_root / "backend" / "seed" / "clode-demo.db"
+
     def read_env(primary_name: str, legacy_name: str, default: str) -> str:
         return str(os.getenv(primary_name) or os.getenv(legacy_name) or default)
 
-    database_url = read_env("CLODE_DATABASE_URL", "AGENT_DATABASE_URL", f"sqlite:///{default_db.as_posix()}")
+    is_vercel = bool(str(os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or "").strip())
+    configured_database_url = str(os.getenv("CLODE_DATABASE_URL") or os.getenv("AGENT_DATABASE_URL") or "").strip()
+    configured_seed_path = str(os.getenv("CLODE_DATABASE_SEED_PATH") or os.getenv("AGENT_DATABASE_SEED_PATH") or "").strip()
+
+    if configured_database_url:
+        database_url = configured_database_url
+    elif is_vercel:
+        database_url = f"sqlite:///{(Path(tempfile.gettempdir()) / 'clode.db').as_posix()}"
+    else:
+        database_url = f"sqlite:///{default_db.as_posix()}"
+
+    database_seed_path = None
+    if configured_seed_path:
+        database_seed_path = Path(configured_seed_path)
+    elif is_vercel:
+        if default_seed_db.exists():
+            database_seed_path = default_seed_db
+        elif default_db.exists():
+            database_seed_path = default_db
+
     allowed_origins = tuple(
         origin.strip()
         for origin in read_env(
@@ -41,8 +65,10 @@ def load_settings() -> Settings:
         host=read_env("CLODE_BACKEND_HOST", "AGENT_BACKEND_HOST", "127.0.0.1"),
         port=int(read_env("CLODE_BACKEND_PORT", "AGENT_BACKEND_PORT", "8787")),
         database_url=database_url,
+        database_seed_path=database_seed_path,
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
+        is_vercel=is_vercel,
     )
 
