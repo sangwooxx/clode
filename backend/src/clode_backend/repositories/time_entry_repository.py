@@ -128,7 +128,7 @@ class TimeEntryRepository(RepositoryBase):
                 FROM time_entries te
                 JOIN hours_months hm ON hm.id = te.month_id
                 {where_clause}
-                ORDER BY hm.month_key DESC, te.employee_name COLLATE NOCASE ASC, te.contract_name COLLATE NOCASE ASC
+                ORDER BY hm.month_key DESC, LOWER(te.employee_name) ASC, LOWER(te.contract_name) ASC
                 """,
                 tuple(params),
             ).fetchall()

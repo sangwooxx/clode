@@ -32,7 +32,7 @@ The MVP is being built to be:
 ## Technology overview
 
 - Frontend: vanilla HTML/CSS/JavaScript served locally
-- Backend: Python HTTP server with SQLite
+- Backend: Python HTTP server with SQLite locally and PostgreSQL on managed environments
 - Data model: SQL migrations + backend services + transitional frontend adapters where still required
 - Demo runtime:
   - frontend: `http://127.0.0.1:8082/app/index.html`
@@ -61,11 +61,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1
 
 ## Vercel deployment
 
-The repository is now prepared for a professional Vercel demo deployment:
+The repository is now prepared for a professional Vercel deployment:
 - static frontend served directly from the repository,
 - Python API exposed from `/api/index.py`,
 - same-origin frontend to API communication on Vercel (`/api/v1`),
-- first-run demo database bootstrapped from `backend/seed/clode-demo.db` into the serverless temp directory (on Vercel this is `/tmp/clode.db`).
+- support for `DATABASE_URL` / `CLODE_DATABASE_URL` so the backend can run against managed PostgreSQL,
+- first-run demo bootstrap from `backend/seed/clode-demo.db` when the target database is empty.
 
 ### Deploy
 
@@ -75,16 +76,15 @@ vercel
 vercel --prod
 ```
 
-### Important deployment note
+### Recommended production profile
 
-The current Vercel profile is suitable for a polished demo / review environment, but it is not yet a durable production persistence model.
+For a production-grade deployment, use the same style as `Boxly`:
+- GitHub connected to Vercel,
+- managed PostgreSQL (`DATABASE_URL`),
+- production deploys from `main`,
+- local SQLite kept only for local development or isolated demo runs.
 
-Reason:
-- Vercel Functions use ephemeral filesystem storage,
-- the app currently boots a demo SQLite copy into the serverless temp directory,
-- data written during usage can be lost between cold starts or deployments.
-
-For full production persistence, the next hardening step is moving the backend database from SQLite to a managed SQL service.
+If no managed database is configured, the app can still fall back to SQLite locally. On serverless environments, managed PostgreSQL is the recommended path.
 
 ## Repository guide
 

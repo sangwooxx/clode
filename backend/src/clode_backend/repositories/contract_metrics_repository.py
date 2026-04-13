@@ -209,7 +209,7 @@ class ContractMetricsRepository(RepositoryBase):
                 WHERE is_deleted = 0
                   AND (contract_id IS NULL OR trim(contract_id) = '')
                   {time_clause}
-                ORDER BY issue_date DESC, invoice_number COLLATE NOCASE ASC
+                ORDER BY issue_date DESC, LOWER(invoice_number) ASC
                 """,
                 tuple(params),
             ).fetchall()

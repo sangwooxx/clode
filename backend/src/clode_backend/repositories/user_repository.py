@@ -20,7 +20,7 @@ class UserRepository(RepositoryBase):
                        permissions_json, can_approve_vacations, is_active,
                        created_at, updated_at, last_login_at
                 FROM users
-                ORDER BY name COLLATE NOCASE ASC
+                ORDER BY LOWER(name) ASC
                 """
             ).fetchall()
         return [self._serialize(row) for row in rows]

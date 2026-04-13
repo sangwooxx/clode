@@ -18,7 +18,7 @@ class ContractRepository(RepositoryBase):
         if not include_archived:
             query += " AND status = ?"
             params = ("active",)
-        query += " ORDER BY status ASC, signed_date ASC, name COLLATE NOCASE ASC"
+        query += " ORDER BY status ASC, signed_date ASC, LOWER(name) ASC"
         with self.connect() as connection:
             rows = connection.execute(query, params).fetchall()
         return [self._serialize(row) for row in rows]

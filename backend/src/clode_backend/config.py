@@ -23,6 +23,15 @@ class Settings:
             raise RuntimeError("SQLite path requested for non-sqlite database URL.")
         return Path(self.database_url.replace("sqlite:///", "", 1))
 
+    @property
+    def is_sqlite(self) -> bool:
+        return self.database_url.startswith("sqlite:///")
+
+    @property
+    def is_postgres(self) -> bool:
+        normalized = self.database_url.lower()
+        return normalized.startswith("postgresql://") or normalized.startswith("postgres://")
+
 
 def load_settings() -> Settings:
     project_root = Path(__file__).resolve().parents[3]
@@ -33,7 +42,12 @@ def load_settings() -> Settings:
         return str(os.getenv(primary_name) or os.getenv(legacy_name) or default)
 
     is_vercel = bool(str(os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or "").strip())
-    configured_database_url = str(os.getenv("CLODE_DATABASE_URL") or os.getenv("AGENT_DATABASE_URL") or "").strip()
+    configured_database_url = str(
+        os.getenv("CLODE_DATABASE_URL")
+        or os.getenv("AGENT_DATABASE_URL")
+        or os.getenv("DATABASE_URL")
+        or ""
+    ).strip()
     configured_seed_path = str(os.getenv("CLODE_DATABASE_SEED_PATH") or os.getenv("AGENT_DATABASE_SEED_PATH") or "").strip()
 
     if configured_database_url:

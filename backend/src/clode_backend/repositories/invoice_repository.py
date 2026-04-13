@@ -54,7 +54,7 @@ class InvoiceRepository(RepositoryBase):
                        notes, created_at, updated_at, created_by, updated_by, is_deleted
                 FROM invoices
                 {where_clause}
-                ORDER BY issue_date DESC, invoice_number COLLATE NOCASE ASC, updated_at DESC
+                ORDER BY issue_date DESC, LOWER(invoice_number) ASC, updated_at DESC
                 """,
                 tuple(params),
             ).fetchall()
