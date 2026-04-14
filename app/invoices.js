@@ -913,10 +913,9 @@ function bindInvoiceModule() {
 
   const nodes = getInvoiceNodes();
 
-  nodes.contractSearchInput?.addEventListener("input", async (event) => {
+  nodes.contractSearchInput?.addEventListener("input", (event) => {
     invoiceModuleState.contractSearch = String(event.target.value || "");
-    ensureSelectedContract();
-    await refreshInvoiceModule();
+    renderInvoiceFilterControls();
   });
 
   nodes.contractSelect?.addEventListener("change", async (event) => {

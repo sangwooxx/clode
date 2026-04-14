@@ -11,6 +11,8 @@ const state = {
   requestId: 0,
   refreshHandle: 0,
   pendingRefresh: true,
+  loadPromise: null,
+  reloadAfterLoad: false,
   sorts: {
     investments: { key: "margin", direction: "desc" },
     detailMonthly: { key: "month_key", direction: "asc" },
@@ -808,69 +810,88 @@ function getSelectedInvestment() {
 }
 
 async function loadData() {
+  if (state.loadPromise) {
+    state.reloadAfterLoad = true;
+    state.pendingRefresh = true;
+    return state.loadPromise;
+  }
+
   const requestId = state.requestId + 1;
   state.requestId = requestId;
+  state.reloadAfterLoad = false;
 
-  if (!window.ClodeAuthClient?.isAuthenticated?.()) {
-    state.data = emptyDashboardData();
-    state.errorMessage = "";
-    state.pendingRefresh = false;
-    window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
-      detail: {
-        data: state.data,
-        errorMessage: state.errorMessage,
-      },
-    }));
-    renderDashboardIfActive();
-    return;
-  }
-
-  const api = getDashboardApi();
-  if (!api?.getDashboardSnapshot) {
-    state.data = emptyDashboardData();
-    state.errorMessage = "Brak połączenia z backendowym snapshotem dashboardu.";
-    window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
-      detail: {
-        data: state.data,
-        errorMessage: state.errorMessage,
-      },
-    }));
-    renderDashboardIfActive();
-    return;
-  }
-
-  state.loading = true;
-  try {
-    const payload = await api.getDashboardSnapshot({ includeArchived: false });
-    if (requestId !== state.requestId) return;
-    state.data = mapDashboardSnapshot(payload);
-    state.errorMessage = "";
-  } catch (error) {
-    if (requestId !== state.requestId) return;
-    state.data = emptyDashboardData();
-    state.errorMessage = error?.message || "Nie udało się pobrać danych dashboardu z backendu.";
-  } finally {
-    if (requestId === state.requestId) {
-      state.loading = false;
+  const run = (async () => {
+    if (!window.ClodeAuthClient?.isAuthenticated?.()) {
+      state.data = emptyDashboardData();
+      state.errorMessage = "";
+      state.pendingRefresh = false;
+      window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
+        detail: {
+          data: state.data,
+          errorMessage: state.errorMessage,
+        },
+      }));
+      renderDashboardIfActive();
+      return;
     }
-  }
 
-  if (requestId !== state.requestId) return;
-  state.pendingRefresh = false;
+    const api = getDashboardApi();
+    if (!api?.getDashboardSnapshot) {
+      state.data = emptyDashboardData();
+      state.errorMessage = "Brak połączenia z backendowym snapshotem dashboardu.";
+      window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
+        detail: {
+          data: state.data,
+          errorMessage: state.errorMessage,
+        },
+      }));
+      renderDashboardIfActive();
+      return;
+    }
 
-  if (!state.selectedInvestmentId && state.data.investments.length) {
-    state.selectedInvestmentId = state.data.investments[0].id;
-  }
-  if (state.selectedInvestmentId && !state.data.investments.some((item) => item.id === state.selectedInvestmentId)) {
-    state.selectedInvestmentId = state.data.investments[0]?.id || null;
-  }
-  window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
-    detail: {
-      data: state.data,
-      errorMessage: state.errorMessage,
-    },
-  }));
-  renderDashboardIfActive();
+    state.loading = true;
+    try {
+      const payload = await api.getDashboardSnapshot({ includeArchived: false });
+      if (requestId !== state.requestId) return;
+      state.data = mapDashboardSnapshot(payload);
+      state.errorMessage = "";
+    } catch (error) {
+      if (requestId !== state.requestId) return;
+      state.data = emptyDashboardData();
+      state.errorMessage = error?.message || "Nie udało się pobrać danych dashboardu z backendu.";
+    } finally {
+      if (requestId === state.requestId) {
+        state.loading = false;
+      }
+    }
+
+    if (requestId !== state.requestId) return;
+    state.pendingRefresh = false;
+
+    if (!state.selectedInvestmentId && state.data.investments.length) {
+      state.selectedInvestmentId = state.data.investments[0].id;
+    }
+    if (state.selectedInvestmentId && !state.data.investments.some((item) => item.id === state.selectedInvestmentId)) {
+      state.selectedInvestmentId = state.data.investments[0]?.id || null;
+    }
+    window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
+      detail: {
+        data: state.data,
+        errorMessage: state.errorMessage,
+      },
+    }));
+    renderDashboardIfActive();
+  })();
+
+  state.loadPromise = run.finally(() => {
+    state.loadPromise = null;
+    if (state.reloadAfterLoad) {
+      state.reloadAfterLoad = false;
+      requestDashboardRefresh(120, { force: isDashboardActive() });
+    }
+  });
+
+  return state.loadPromise;
 }
 
 function isDashboardActive() {
@@ -882,6 +903,11 @@ function requestDashboardRefresh(delay = 180, options = {}) {
   const shouldRunNow = options.force || isDashboardActive() || !window.ClodeAuthClient?.isAuthenticated?.();
   if (!shouldRunNow) {
     return;
+  }
+
+  if (state.loadPromise) {
+    state.reloadAfterLoad = true;
+    return state.loadPromise;
   }
 
   if (state.refreshHandle) {

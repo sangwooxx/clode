@@ -35,6 +35,7 @@
       storageKey: storageKeys.settings,
       fallback: null,
       eventName: "settings-updated",
+      preloadInApi: false,
     },
     authSession: {
       storeName: "auth_session",
@@ -47,24 +48,28 @@
       storageKey: storageKeys.auditLogs,
       fallback: [],
       eventName: "audit-log-updated",
+      preloadInApi: false,
     },
     notifications: {
       storeName: "notifications",
       storageKey: storageKeys.notifications,
       fallback: [],
       eventName: "notifications-updated",
+      preloadInApi: false,
     },
     employees: {
       storeName: "employees",
       storageKey: storageKeys.employees,
       fallback: [],
       eventName: "employee-registry-updated",
+      preloadInApi: false,
     },
     hours: {
       storeName: "hours",
       storageKey: storageKeys.hours,
       fallback: { months: {}, selected_month_key: "" },
       eventName: "hours-registry-updated",
+      preloadInApi: false,
     },
     invoices: {
       storeName: "invoices",
@@ -78,24 +83,28 @@
       storageKey: storageKeys.vacations,
       fallback: { balances: {}, requests: [] },
       eventName: "vacation-registry-updated",
+      preloadInApi: false,
     },
     planning: {
       storeName: "planning",
       storageKey: storageKeys.planning,
       fallback: { assignments: {} },
       eventName: "planning-registry-updated",
+      preloadInApi: false,
     },
     workwearIssues: {
       storeName: "workwear_issues",
       storageKey: storageKeys.workwearIssues,
       fallback: [],
       eventName: "workwear-registry-updated",
+      preloadInApi: false,
     },
     workwearCatalog: {
       storeName: "workwear_catalog",
       storageKey: storageKeys.workwearCatalog,
       fallback: [],
       eventName: "workwear-catalog-updated",
+      preloadInApi: false,
     },
     legacySeedVersion: {
       storeName: "legacy_seed_version",
@@ -252,7 +261,10 @@
 
   async function save(repositoryNameOrStorageKey, value, options) {
     const definition = resolveDefinition(repositoryNameOrStorageKey, options?.fallback);
-    const payload = saveSync(repositoryNameOrStorageKey, value, options);
+    const payload = saveSync(repositoryNameOrStorageKey, value, {
+      ...(options || {}),
+      skipRemote: true,
+    });
     if (managerState.mode === "api" && definition.storeName) {
       await persistRemoteValue(definition, payload);
     }
