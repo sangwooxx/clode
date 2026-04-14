@@ -1689,7 +1689,7 @@ window.getEmployeeRegistrySnapshot = getEmployeeRegistrySnapshot;
 window.getEmployeeProfileByName = getEmployeeProfileByName;
 window.saveEmployeeRegistryShared = saveEmployeeRegistry;
 window.loadEmployeeRegistryShared = loadEmployeeRegistry;
-window.renderEmployeesModule = renderEmployeeModule;
+window.renderEmployeesModule = renderEmployeeModuleIfActive;
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initEmployeesView);
