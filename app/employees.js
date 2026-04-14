@@ -750,11 +750,10 @@ function renderEmployeeModule() {
   }
 }
 
-function renderEmployeeModuleIfActive() {
+async function renderEmployeeModuleIfActive(options = {}) {
   if (typeof window.isAppViewActive === "function" && !window.isAppViewActive("employeesView")) return;
-  void ensureEmployeeModuleDataLoaded().then(() => {
-    renderEmployeeModule();
-  });
+  await ensureEmployeeModuleDataLoaded(options);
+  renderEmployeeModule();
 }
 
 function legacySaveEmployeeFromFormV1() {
@@ -1356,6 +1355,7 @@ async function saveEmployeeFromForm() {
 
     await persistEmployeeRegistry(registry);
     await window.ClodeDataAccess?.flushPendingWrites?.();
+    employeeViewState.storesReady = false;
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog(
@@ -1413,13 +1413,12 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     employeeViewState.selectedName = refreshedRegistry[0]?.name || "";
     employeeViewState.editingName = "";
     resetEmployeeForm();
+    await renderEmployeeModuleIfActive({ force: true });
   } catch (error) {
     console.warn("Nie udało się usunąć pracownika.", error);
     window.alert("Nie udało się usunąć pracownika. Odśwież widok i spróbuj ponownie.");
     return;
   }
-
-  renderEmployeeModuleIfActive();
 }
 
 function employeePdfOptionList() {

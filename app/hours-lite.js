@@ -1194,17 +1194,26 @@ async function hUpsertTimeEntry(monthKey, employeeName, contractId, hoursValue, 
 }
 
 async function hRemoveEmployee(employeeName) {
-  const month = hSelectedMonth();
-  if (!month) return;
-  const worker = (month.workers || []).find((item) => hCanonicalEmployeeName(item.employee_name) === hCanonicalEmployeeName(employeeName));
-  if (!worker) return;
   const api = hTimeEntryApi();
   if (!api) return;
-  const entryIds = Object.values(worker.entry_ids || {}).map((value) => hText(value)).filter(Boolean);
+  const normalizedEmployeeName = hCanonicalEmployeeName(employeeName);
+  const entryIds = new Set();
+  Object.values(hoursState.data.months || {}).forEach((month) => {
+    (month?.workers || []).forEach((worker) => {
+      if (hCanonicalEmployeeName(worker?.employee_name) !== normalizedEmployeeName) return;
+      Object.values(worker.entry_ids || {}).forEach((value) => {
+        const entryId = hText(value);
+        if (entryId) {
+          entryIds.add(entryId);
+        }
+      });
+    });
+  });
+  if (!entryIds.size) return;
   for (const entryId of entryIds) {
     await api.remove(entryId);
   }
-  await hRefreshFromBackend({ selectedMonthKey: month.month_key });
+  await hRefreshFromBackend({ selectedMonthKey: hoursState.selectedMonthKey });
 }
 
 async function hRemoveContract(contractId) {
