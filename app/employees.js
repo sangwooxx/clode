@@ -1401,6 +1401,7 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     await removeEmployeeReferences(name);
     await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
     await window.ClodeDataAccess?.flushPendingWrites?.();
+    employeeViewState.storesReady = false;
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
