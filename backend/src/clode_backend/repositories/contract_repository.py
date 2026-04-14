@@ -143,6 +143,21 @@ class ContractRepository(RepositoryBase):
             connection.commit()
         return int(cursor.rowcount or 0)
 
+    def delete(self, contract_id: str, *, deleted_at: str) -> bool:
+        with self.connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE contracts
+                SET deleted_at = ?,
+                    updated_at = ?
+                WHERE id = ?
+                  AND deleted_at IS NULL
+                """,
+                (deleted_at, deleted_at, contract_id),
+            )
+            connection.commit()
+        return bool(cursor.rowcount)
+
     def get_usage_counts(self, contract_id: str) -> dict[str, int]:
         with self.connect() as connection:
             invoices = connection.execute(

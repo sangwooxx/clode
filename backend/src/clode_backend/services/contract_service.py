@@ -70,6 +70,21 @@ class ContractService:
             raise ContractServiceError("Nie udało się zarchiwizować kontraktu.", status_code=500)
         return archived
 
+    def delete_contract(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
+        self.ensure_write_access(current_user)
+        contract = self.repository.get_by_id(contract_id)
+        if not contract:
+            raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
+        if normalize_contract_status(contract.get("status")) != "archived":
+            raise ContractServiceError("Kontrakt musi zostać najpierw zarchiwizowany.", status_code=400)
+        deleted = self.repository.delete(contract_id, deleted_at=utc_now_iso())
+        if not deleted:
+            raise ContractServiceError("Nie udało się usunąć kontraktu.", status_code=500)
+        return {
+            "id": contract_id,
+            "deleted": True,
+        }
+
     def bulk_archive_contracts(self, contract_ids: list[str], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
         normalized_ids = [text(contract_id) for contract_id in contract_ids if text(contract_id)]

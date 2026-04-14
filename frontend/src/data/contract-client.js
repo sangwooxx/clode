@@ -98,6 +98,9 @@
       async archive(contractId) {
         return request("DELETE", `/contracts/${encodeURIComponent(contractId)}`);
       },
+      async deletePermanently(contractId) {
+        return request("DELETE", `/contracts/${encodeURIComponent(contractId)}?permanent=1`);
+      },
       async bulkArchive(ids) {
         return request("POST", "/contracts/bulk-archive", { ids });
       },

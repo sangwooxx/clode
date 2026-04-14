@@ -11,6 +11,8 @@ const employeeViewState = window.__clodeEmployeeViewState || {
   editingName: "",
   initialized: false,
   sort: null,
+  storesReady: false,
+  loadPromise: null,
 };
 
 window.__clodeEmployeeViewState = employeeViewState;
@@ -370,6 +372,57 @@ function getEmployeeRegistrySnapshot() {
   return getEmployeeRoster();
 }
 
+function syncEmployeeSelection() {
+  const roster = getEmployeeRoster();
+  if (!roster.length) {
+    employeeViewState.selectedName = "";
+    if (!employeeViewState.editingName) {
+      employeeViewState.editingName = "";
+    }
+    return roster;
+  }
+
+  if (!roster.some((employee) => employee.name === employeeViewState.selectedName)) {
+    employeeViewState.selectedName = roster[0]?.name || "";
+  }
+
+  if (employeeViewState.editingName && !roster.some((employee) => employee.name === employeeViewState.editingName)) {
+    employeeViewState.editingName = "";
+  }
+
+  return roster;
+}
+
+async function ensureEmployeeModuleDataLoaded(options = {}) {
+  const repositories = window.ClodeDataAccess?.repositories;
+  if (!repositories?.employees?.load) {
+    return syncEmployeeSelection();
+  }
+
+  if (employeeViewState.loadPromise && !options.force) {
+    return employeeViewState.loadPromise;
+  }
+
+  if (employeeViewState.storesReady && !options.force) {
+    return syncEmployeeSelection();
+  }
+
+  const includeRelations = options.includeRelations ?? !employeeViewState.storesReady;
+  employeeViewState.loadPromise = (async () => {
+    try {
+      await ensureEmployeeStoresLoaded({ includeRelations });
+      employeeViewState.storesReady = true;
+    } catch (error) {
+      console.warn("Nie udało się odświeżyć danych pracowników.", error);
+    }
+    return syncEmployeeSelection();
+  })().finally(() => {
+    employeeViewState.loadPromise = null;
+  });
+
+  return employeeViewState.loadPromise;
+}
+
 function calculateMonthRh(month) {
   const workers = month?.workers || [];
   const totalHours = workers.reduce((sum, worker) => {
@@ -664,6 +717,7 @@ function legacyRenderEmployeeCardV1() {
 }
 
 function renderEmployeeModule() {
+  syncEmployeeSelection();
   renderEmployeeRegistryTable();
   renderEmployeeCard();
   if (employeeViewState.editingName) {
@@ -675,7 +729,9 @@ function renderEmployeeModule() {
 
 function renderEmployeeModuleIfActive() {
   if (typeof window.isAppViewActive === "function" && !window.isAppViewActive("employeesView")) return;
-  renderEmployeeModule();
+  void ensureEmployeeModuleDataLoaded().then(() => {
+    renderEmployeeModule();
+  });
 }
 
 function legacySaveEmployeeFromFormV1() {
@@ -1011,10 +1067,20 @@ function employeeStatusLabel(status) {
   return status === "inactive" ? "Zako\u0144czone zatrudnienie" : "Aktywny";
 }
 
+function updateEmployeeFormActions() {
+  const resetButton = document.getElementById("newEmployeeButton");
+  const saveButton = document.getElementById("saveEmployeeButton");
+  if (resetButton) {
+    resetButton.textContent = employeeViewState.editingName ? "Anuluj" : "Wyczyść";
+  }
+  if (saveButton) {
+    saveButton.textContent = employeeViewState.editingName ? "Zapisz zmiany" : "Dodaj pracownika";
+  }
+}
+
 function resetEmployeeForm() {
   employeeViewState.editingName = "";
   document.getElementById("employeeFormHeading").textContent = "Dane pracownika";
-  document.getElementById("saveEmployeeButton").textContent = "Zapisz pracownika";
   document.getElementById("employeeFirstNameInput").value = "";
   document.getElementById("employeeLastNameInput").value = "";
   document.getElementById("employeePositionInput").value = "";
@@ -1025,6 +1091,7 @@ function resetEmployeeForm() {
   document.getElementById("employeeCityInput").value = "";
   document.getElementById("employeePhoneInput").value = "";
   document.getElementById("employeeMedicalExamValidUntilInput").value = "";
+  updateEmployeeFormActions();
 }
 
 function fillEmployeeForm(employeeName) {
@@ -1036,7 +1103,6 @@ function fillEmployeeForm(employeeName) {
 
   employeeViewState.editingName = employee.name;
   document.getElementById("employeeFormHeading").textContent = `Edycja pracownika: ${employeeDisplayName(employee) || employee.name}`;
-  document.getElementById("saveEmployeeButton").textContent = "Zapisz zmiany";
   document.getElementById("employeeFirstNameInput").value = employee.first_name || "";
   document.getElementById("employeeLastNameInput").value = employee.last_name || "";
   document.getElementById("employeePositionInput").value = employee.position || "";
@@ -1047,6 +1113,7 @@ function fillEmployeeForm(employeeName) {
   document.getElementById("employeeCityInput").value = employee.city || "";
   document.getElementById("employeePhoneInput").value = employee.phone || "";
   document.getElementById("employeeMedicalExamValidUntilInput").value = employee.medical_exam_valid_until || "";
+  updateEmployeeFormActions();
 }
 
 function renderEmployeeRegistryTable() {
@@ -1219,7 +1286,7 @@ async function saveEmployeeFromForm() {
   }
 
   const saveButton = document.getElementById("saveEmployeeButton");
-  const previousLabel = saveButton?.textContent || "Zapisz pracownika";
+  const previousLabel = saveButton?.textContent || "Dodaj pracownika";
   if (saveButton) {
     saveButton.disabled = true;
     saveButton.textContent = "Zapisywanie...";
@@ -1508,6 +1575,7 @@ function initEmployeesView() {
   if (!employeeViewState.sort) {
     employeeViewState.sort = employeeLoadSort();
   }
+  updateEmployeeFormActions();
 
   document.getElementById("newEmployeeButton")?.addEventListener("click", resetEmployeeForm);
   document.getElementById("saveEmployeeButton")?.addEventListener("click", saveEmployeeFromForm);
@@ -1578,10 +1646,14 @@ function initEmployeesView() {
     if (window.isAppViewActive?.("employeesView") && formHasInput) {
       return;
     }
+    employeeViewState.storesReady = false;
     renderEmployeeModuleIfActive();
   });
   window.addEventListener("app-view-changed", (event) => {
-    if (event.detail?.viewId === "employeesView") renderEmployeeModule();
+    if (event.detail?.viewId === "employeesView") {
+      employeeViewState.storesReady = false;
+      renderEmployeeModuleIfActive();
+    }
   });
 
   employeeViewState.initialized = true;

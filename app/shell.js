@@ -514,8 +514,9 @@ const invoiceColumns = {
 };
 
 function formatContractNumber(value) {
-  const numeric = Number(value || 0);
-  return numeric > 0 ? String(numeric).padStart(3, "0") : "";
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
 }
 
 function compareContractDates(left, right) {
@@ -757,6 +758,18 @@ function resetContractForm() {
   document.getElementById("contractEndInput").value = "";
   document.getElementById("contractValueInput").value = "";
   document.getElementById("contractStatusInput").value = "active";
+  updateContractFormActions();
+}
+
+function updateContractFormActions() {
+  const resetButton = document.getElementById("newContractButton");
+  const saveButton = document.getElementById("saveContractButton");
+  if (resetButton) {
+    resetButton.textContent = shellState.editingContractId ? "Anuluj" : "Wyczyść";
+  }
+  if (saveButton) {
+    saveButton.textContent = shellState.editingContractId ? "Zapisz zmiany" : "Dodaj kontrakt";
+  }
 }
 
 function isContractSelected(contractId) {
@@ -775,6 +788,17 @@ function toggleContractSelection(contractId, forceValue) {
 
 function clearContractSelection() {
   shellState.selectedContractIds = [];
+}
+
+function updateBulkContractActionLabel() {
+  const button = document.getElementById("deleteSelectedContractsButton");
+  if (!button) return;
+  const selected = getContractRegistry().filter((item) => shellState.selectedContractIds.includes(item.id));
+  if (selected.length && selected.every((item) => item.status === "archived")) {
+    button.textContent = "Usuń zaznaczone";
+    return;
+  }
+  button.textContent = "Archiwizuj zaznaczone";
 }
 
 async function getContractOperationalUsage(contractId) {
@@ -804,13 +828,15 @@ async function getContractOperationalUsage(contractId) {
 async function deleteContracts(contractIds) {
   const ids = [...new Set((contractIds || []).map((item) => String(item || "").trim()).filter(Boolean))];
   if (!ids.length) {
-    window.alert("Zaznacz najpierw kontrakty do usunięcia.");
+    window.alert("Zaznacz najpierw kontrakty do archiwizacji lub usunięcia.");
     return;
   }
 
   const contractsById = new Map(getContractRegistry().map((item) => [item.id, item]));
+  const archivedIds = ids.filter((id) => contractsById.get(id)?.status === "archived");
+  const activeIds = ids.filter((id) => contractsById.get(id)?.status !== "archived");
   const usageDetails = (await Promise.all(
-    ids.map(async (id) => ({ id, contract: contractsById.get(id) || null, usage: await getContractOperationalUsage(id) }))
+    activeIds.map(async (id) => ({ id, contract: contractsById.get(id) || null, usage: await getContractOperationalUsage(id) }))
   )).filter(({ usage }) => usage.hours > 0 || usage.invoices > 0 || usage.planning > 0);
 
   const names = ids.map((id) => contractsById.get(id)?.name || id);
@@ -821,13 +847,26 @@ async function deleteContracts(contractIds) {
     if (usage.planning) details.push(`planowanie: ${usage.planning}`);
     return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
   });
-  const label = ids.length === 1
-    ? `Czy na pewno chcesz usunąć kontrakt "${names[0]}"?`
-    : `Czy na pewno chcesz usunąć ${ids.length} zaznaczone kontrakty?`;
-  const archiveNote = usageLines.length
-    ? `\n\nKontrakty mają dane historyczne i zostaną zarchiwizowane, a nie usunięte:\n${usageLines.join("\n")}`
-    : "";
-  if (!window.confirm(`${label}${archiveNote}`)) return;
+
+  const promptParts = [];
+  if (activeIds.length === ids.length) {
+    promptParts.push(ids.length === 1
+      ? `Czy na pewno chcesz zarchiwizować kontrakt "${names[0]}"?`
+      : `Czy na pewno chcesz zarchiwizować ${ids.length} zaznaczone kontrakty?`);
+  } else if (archivedIds.length === ids.length) {
+    promptParts.push(ids.length === 1
+      ? `Czy na pewno chcesz trwale usunąć zarchiwizowany kontrakt "${names[0]}"?`
+      : `Czy na pewno chcesz trwale usunąć ${ids.length} zarchiwizowane kontrakty?`);
+  } else {
+    promptParts.push(`Czy na pewno chcesz zarchiwizować ${activeIds.length} kontrakty i usunąć ${archivedIds.length} już zarchiwizowane pozycje?`);
+  }
+  if (usageLines.length) {
+    promptParts.push(`Kontrakty z danymi historycznymi zostaną tylko zarchiwizowane:\n${usageLines.join("\n")}`);
+  }
+  if (archivedIds.length) {
+    promptParts.push("Uwaga: usunięcie zarchiwizowanego kontraktu jest trwałe.");
+  }
+  if (!window.confirm(promptParts.join("\n\n"))) return;
 
   const api = getContractApi();
   if (!api) {
@@ -836,23 +875,32 @@ async function deleteContracts(contractIds) {
   }
 
   try {
-    if (ids.length === 1) {
-      await api.archive(ids[0]);
-    } else {
-      await api.bulkArchive(ids);
+    if (activeIds.length === 1) {
+      await api.archive(activeIds[0]);
+    } else if (activeIds.length > 1) {
+      await api.bulkArchive(activeIds);
+    }
+
+    if (archivedIds.length) {
+      await Promise.all(archivedIds.map((id) => api.deletePermanently(id)));
     }
 
     await loadContractRegistryFromBackend({ includeArchived: true, force: true });
     clearContractSelection();
     resetContractForm();
-    recordAuditLog("Kontrakty", "Zarchiwizowano kontrakty", names.join(", "), `Liczba pozycji: ${ids.length}`);
+    if (activeIds.length) {
+      recordAuditLog("Kontrakty", "Zarchiwizowano kontrakty", activeIds.map((id) => contractsById.get(id)?.name || id).join(", "), `Liczba pozycji: ${activeIds.length}`);
+    }
+    if (archivedIds.length) {
+      recordAuditLog("Kontrakty", "Usunięto zarchiwizowane kontrakty", archivedIds.map((id) => contractsById.get(id)?.name || id).join(", "), `Liczba pozycji: ${archivedIds.length}`);
+    }
     renderContractRegistry();
     renderInvoiceRegistry();
     if (typeof window.renderInvoiceModule === "function") {
       window.renderInvoiceModule();
     }
   } catch (error) {
-    window.alert(error?.message || "Nie udało się zarchiwizować kontraktów.");
+    window.alert(error?.message || "Nie udało się wykonać operacji na kontraktach.");
   }
 }
 
@@ -1010,7 +1058,7 @@ function renderRegistryTable(targetId, tableName, sortState) {
             <td>${window.ClodeTableUtils.escapeHtml(item.status === "archived" ? "Zarchiwizowana" : "W realizacji")}</td>
             <td class="action-cell">
               <button class="table-action-button" type="button" title="Edytuj kontrakt" data-contract-edit="${window.ClodeTableUtils.escapeHtml(item.id || "")}">Edytuj</button>
-              <button class="table-action-button danger-button" type="button" title="Usu\u0144 kontrakt" data-contract-delete="${window.ClodeTableUtils.escapeHtml(item.id || "")}">Usu\u0144</button>
+              <button class="table-action-button${item.status === "archived" ? " danger-button" : ""}" type="button" title="${item.status === "archived" ? "Usuń kontrakt" : "Zarchiwizuj kontrakt"}" data-contract-delete="${window.ClodeTableUtils.escapeHtml(item.id || "")}">${item.status === "archived" ? "Usuń" : "Archiwizuj"}</button>
             </td>
           </tr>
         `).join("")}
@@ -1021,6 +1069,7 @@ function renderRegistryTable(targetId, tableName, sortState) {
 
 function renderContractRegistry() {
   renderRegistryTable("contractsRegistryTable", "contractsRegistry", registrySorts.contracts);
+  updateBulkContractActionLabel();
 }
 
 function buildInvoiceRegistryRows() {
@@ -1293,6 +1342,7 @@ function fillContractForm(contractId) {
   document.getElementById("contractEndInput").value = contract.end_date || "";
   document.getElementById("contractValueInput").value = contract.contract_value || "";
   document.getElementById("contractStatusInput").value = contract.status || "active";
+  updateContractFormActions();
 }
 
 function bindShellNavigation() {
@@ -1386,6 +1436,7 @@ async function initShell() {
   document.getElementById("deleteSelectedContractsButton")?.addEventListener("click", () => {
     deleteContracts(shellState.selectedContractIds);
   });
+  updateContractFormActions();
   document.getElementById("contractSearchInput")?.addEventListener("input", (event) => {
     shellState.contractSearch = String(event.target.value || "");
     renderContractRegistry();

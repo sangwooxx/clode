@@ -177,6 +177,10 @@ def route_request(
                 updated = contract_service.update_contract(contract_id, body, current_user)
                 return json_response(200, {"ok": True, "contract": updated})
             if method == "DELETE":
+                permanent = str((query.get("permanent") or ["0"])[0]).strip().lower() in {"1", "true", "yes"}
+                if permanent:
+                    contract_service.delete_contract(contract_id, current_user)
+                    return json_response(204, {})
                 archived = contract_service.archive_contract(contract_id, current_user)
                 return json_response(200, {"ok": True, "contract": archived})
 
