@@ -62,7 +62,6 @@
       storageKey: storageKeys.employees,
       fallback: [],
       eventName: "employee-registry-updated",
-      preloadInApi: false,
     },
     hours: {
       storeName: "hours",

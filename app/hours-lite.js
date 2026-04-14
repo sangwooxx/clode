@@ -1239,6 +1239,9 @@ window.renderHoursLite = function renderHoursLite() {
 };
 
 async function hWaitForClodeDataReady() {
+  if (window.ClodeDataAccess?.repositories?.employees?.load) {
+    await window.ClodeDataAccess.repositories.employees.load([]);
+  }
   if (window.ClodeDataAccess?.repositories?.hours?.load) {
     await window.ClodeDataAccess.repositories.hours.load({ months: {}, selected_month_key: "" });
     return;
