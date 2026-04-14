@@ -314,6 +314,46 @@ function loadEmployeeHoursSnapshot() {
   };
 }
 
+function pruneEmployeeFromLocalHoursSnapshot(employeeName) {
+  const normalizedEmployeeName = employeeNormalize(employeeName);
+  if (!normalizedEmployeeName) return false;
+  const snapshot = loadEmployeeHoursSnapshot();
+  let changed = false;
+
+  const filteredEmployees = (Array.isArray(snapshot.employees) ? snapshot.employees : []).filter((employee) => {
+    const keep = employeeNormalize(employee?.name) !== normalizedEmployeeName;
+    if (!keep) changed = true;
+    return keep;
+  });
+
+  const nextMonths = Object.fromEntries(
+    Object.entries(snapshot.months || {}).map(([monthKey, monthValue]) => {
+      const month = monthValue && typeof monthValue === "object" ? { ...monthValue } : {};
+      const workers = Array.isArray(month.workers) ? month.workers : [];
+      const nextWorkers = workers.filter((worker) => {
+        const keep = employeeNormalize(worker?.employee_name) !== normalizedEmployeeName;
+        if (!keep) changed = true;
+        return keep;
+      });
+      return [monthKey, { ...month, workers: nextWorkers }];
+    })
+  );
+
+  if (!changed) return false;
+
+  employeeWriteStore(
+    EMPLOYEE_HOURS_STORAGE_KEY,
+    {
+      ...snapshot,
+      employees: filteredEmployees,
+      months: nextMonths,
+    },
+    "hours-registry-updated"
+  );
+
+  return true;
+}
+
 function employeeUpsertRosterEntry(target, payload = {}) {
   const name = employeeNormalize(payload?.name);
   if (!name) return;
@@ -1398,7 +1438,20 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   try {
     await ensureEmployeeStoresLoaded({ includeRelations: true });
     const registry = await reloadEmployeeRegistryFromBackend();
-    await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
+    const filteredRegistry = registry.filter((employee) => employee.name !== name);
+    saveEmployeeRegistry(filteredRegistry);
+    pruneEmployeeFromLocalHoursSnapshot(name);
+    employeeViewState.search = "";
+    const searchInput = document.getElementById("employeeRegistrySearchInput");
+    if (searchInput) {
+      searchInput.value = "";
+    }
+    employeeViewState.selectedName = filteredRegistry[0]?.name || "";
+    employeeViewState.editingName = "";
+    resetEmployeeForm();
+    renderEmployeeModule();
+
+    await persistEmployeeRegistry(filteredRegistry);
     await window.ClodeDataAccess?.flushPendingWrites?.();
     await removeEmployeeReferences(name);
     await window.ClodeDataAccess?.flushPendingWrites?.();
@@ -1407,11 +1460,6 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
-    }
-    employeeViewState.search = "";
-    const searchInput = document.getElementById("employeeRegistrySearchInput");
-    if (searchInput) {
-      searchInput.value = "";
     }
     employeeViewState.selectedName = refreshedRegistry[0]?.name || "";
     employeeViewState.editingName = "";
