@@ -314,47 +314,70 @@ function loadEmployeeHoursSnapshot() {
   };
 }
 
+function employeeUpsertRosterEntry(target, payload = {}) {
+  const name = employeeNormalize(payload?.name);
+  if (!name) return;
+
+  const split = employeeSplitName(name);
+  const existing = target.get(name) || {
+    name,
+    ...split,
+    worker_code: "",
+    position: "",
+    status: "active",
+    employment_date: "",
+    employment_end_date: "",
+    street: "",
+    city: "",
+    phone: "",
+    medical_exam_date: "",
+    medical_exam_valid_until: "",
+  };
+
+  target.set(name, {
+    ...existing,
+    ...payload,
+    name,
+    first_name: employeeNormalize(payload?.first_name) || existing.first_name || split.first_name,
+    last_name: employeeNormalize(payload?.last_name) || existing.last_name || split.last_name,
+    worker_code: employeeNormalize(payload?.worker_code) || existing.worker_code || "",
+    position: employeeNormalize(payload?.position) || existing.position || "",
+    status: String(payload?.status || existing.status || "active") === "inactive" ? "inactive" : "active",
+    employment_date: String(payload?.employment_date || existing.employment_date || "").trim(),
+    employment_end_date: String(payload?.employment_end_date || existing.employment_end_date || "").trim(),
+    street: employeeNormalize(payload?.street) || existing.street || "",
+    city: employeeNormalize(payload?.city) || existing.city || "",
+    phone: employeeNormalize(payload?.phone) || existing.phone || "",
+    medical_exam_date: String(payload?.medical_exam_date || existing.medical_exam_date || "").trim(),
+    medical_exam_valid_until: String(payload?.medical_exam_valid_until || existing.medical_exam_valid_until || "").trim(),
+  });
+}
+
 function getEmployeeRoster() {
   const registry = loadEmployeeRegistry();
   const snapshot = loadEmployeeHoursSnapshot();
   const employees = new Map();
 
   (snapshot.employees || []).forEach((employee) => {
-    const name = employeeNormalize(employee?.name);
-    if (!name) return;
-    employees.set(name, {
-      name,
-      ...employeeSplitName(name),
-      worker_code: employeeNormalize(employee?.worker_code),
-      position: "",
-      status: "active",
-      employment_date: "",
-      employment_end_date: "",
-      street: "",
-      city: "",
-      phone: "",
-      medical_exam_date: "",
-      medical_exam_valid_until: "",
+    employeeUpsertRosterEntry(employees, {
+      name: employee?.name,
+      worker_code: employee?.worker_code,
+      status: employee?.status || "active",
+    });
+  });
+
+  Object.values(snapshot.months || {}).forEach((month) => {
+    (month?.workers || []).forEach((worker) => {
+      employeeUpsertRosterEntry(employees, {
+        name: worker?.employee_name,
+        worker_code: worker?.worker_code,
+        status: "active",
+      });
     });
   });
 
   registry.forEach((employee) => {
-    const name = employeeNormalize(employee?.name);
-    if (!name) return;
-    employees.set(name, {
-      ...(employees.get(name) || { name, worker_code: "" }),
-      first_name: employeeNormalize(employee?.first_name) || employeeSplitName(name).first_name,
-      last_name: employeeNormalize(employee?.last_name) || employeeSplitName(name).last_name,
-      position: employeeNormalize(employee?.position),
-      status: String(employee?.status || "active") === "inactive" ? "inactive" : "active",
-      employment_date: String(employee?.employment_date || "").trim(),
-      employment_end_date: String(employee?.employment_end_date || "").trim(),
-      street: employeeNormalize(employee?.street),
-      city: employeeNormalize(employee?.city),
-      phone: employeeNormalize(employee?.phone),
-      medical_exam_date: String(employee?.medical_exam_date || "").trim(),
-      medical_exam_valid_until: String(employee?.medical_exam_valid_until || "").trim(),
-    });
+    employeeUpsertRosterEntry(employees, employee);
   });
 
   return [...employees.values()].sort(employeeCompare);

@@ -480,6 +480,16 @@ function hMirrorStateToLegacyStore() {
 function hEnsureEmployees() {
   const roster = hEmployeeRoster();
   const activeEmployees = roster.filter((employee) => employee.status !== "inactive");
+  const visibleEmployees = new Map();
+
+  activeEmployees.forEach((employee) => {
+    const canonicalName = hCanonicalEmployeeName(employee?.name, roster);
+    if (!canonicalName) return;
+    visibleEmployees.set(canonicalName.toLowerCase(), {
+      name: canonicalName,
+      worker_code: hText(employee?.worker_code),
+    });
+  });
 
   Object.values(hoursState.data.months || {}).forEach((month) => {
     const mergedWorkers = new Map();
@@ -504,16 +514,17 @@ function hEnsureEmployees() {
       const rosterEmployee = hEmployeeProfileByName(canonicalName, roster);
       existing.worker_code = hText(rosterEmployee?.worker_code) || existing.worker_code;
       mergedWorkers.set(key, existing);
+      if (!visibleEmployees.has(key)) {
+        visibleEmployees.set(key, {
+          name: canonicalName,
+          worker_code: existing.worker_code,
+        });
+      }
     });
     month.workers = [...mergedWorkers.values()].sort(hSort);
   });
 
-  hoursState.data.employees = activeEmployees
-    .map((employee) => ({
-      name: employee.name,
-      worker_code: hText(employee.worker_code),
-    }))
-    .sort(hSort);
+  hoursState.data.employees = [...visibleEmployees.values()].sort(hSort);
 }
 
 function hMonthKeys() {
