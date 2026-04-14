@@ -645,6 +645,17 @@ function mapDashboardSnapshot(payload) {
 
   const totalsSource = payload?.totals || {};
   const unassignedSource = payload?.unassigned || {};
+  const assignedMaterial = numberValue(totalsSource.invoice_cost_total);
+  const assignedLabor = numberValue(totalsSource.labor_cost_total);
+  const assignedSales = numberValue(totalsSource.revenue_total);
+  const unassignedMaterial = numberValue(unassignedSource.invoice_cost_total);
+  const unassignedLabor = numberValue(unassignedSource.labor_cost_total);
+  const unassignedSales = numberValue(unassignedSource.revenue_total);
+  const totalMaterial = assignedMaterial + unassignedMaterial;
+  const totalLabor = assignedLabor + unassignedLabor;
+  const totalSales = assignedSales + unassignedSales;
+  const totalCost = totalMaterial + totalLabor;
+  const totalMargin = totalSales - totalCost;
   const unmatchedHours = Array.isArray(payload?.unmatched_hours) ? payload.unmatched_hours.map((item) => ({
     source_name: textValue(item.source_name),
     entries: Number(item.entries || 0),
@@ -654,11 +665,11 @@ function mapDashboardSnapshot(payload) {
 
   return {
     totals: {
-      total_material: numberValue(totalsSource.invoice_cost_total),
-      total_labor: numberValue(totalsSource.labor_cost_total),
-      total_cost: numberValue(totalsSource.cost_total),
-      total_sales: numberValue(totalsSource.revenue_total),
-      total_margin: numberValue(totalsSource.margin),
+      total_material: totalMaterial,
+      total_labor: totalLabor,
+      total_cost: totalCost,
+      total_sales: totalSales,
+      total_margin: totalMargin,
       investments_count: investments.length,
     },
     investments,
