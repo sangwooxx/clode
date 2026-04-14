@@ -99,7 +99,7 @@ body { min-height: 100vh; }
 .rail-brand {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 0;
   padding: 11px 12px;
   border: 1px solid var(--line-soft);
@@ -109,7 +109,7 @@ body { min-height: 100vh; }
 }
 
 .rail-brand-logo {
-  width: min(100%, 210px);
+  width: min(100%, 186px);
   max-width: none;
   height: 76px;
   object-fit: contain;
@@ -3488,7 +3488,7 @@ th {
     padding: 9px 10px;
   }
   .rail-brand-logo {
-    width: min(100%, 194px);
+    width: min(100%, 172px);
     max-width: none;
     height: 68px;
   }

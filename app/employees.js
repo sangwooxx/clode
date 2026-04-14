@@ -1398,8 +1398,9 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   try {
     await ensureEmployeeStoresLoaded({ includeRelations: true });
     const registry = await reloadEmployeeRegistryFromBackend();
-    await removeEmployeeReferences(name);
     await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
+    await window.ClodeDataAccess?.flushPendingWrites?.();
+    await removeEmployeeReferences(name);
     await window.ClodeDataAccess?.flushPendingWrites?.();
     employeeViewState.storesReady = false;
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
