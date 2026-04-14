@@ -99,9 +99,9 @@ body { min-height: 100vh; }
 .rail-brand {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
-  padding: 6px 8px;
+  padding: 11px 12px;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.02);
@@ -109,8 +109,8 @@ body { min-height: 100vh; }
 }
 
 .rail-brand-logo {
-  width: 100%;
-  max-width: 196px;
+  width: min(100%, 210px);
+  max-width: none;
   height: 76px;
   object-fit: contain;
   flex: 0 0 auto;
@@ -370,6 +370,8 @@ body { min-height: 100vh; }
   display: grid;
   gap: 8px;
   align-content: center;
+  justify-items: start;
+  text-align: left;
 }
 
 .home-logo {
@@ -3483,11 +3485,11 @@ th {
   }
   .rail-brand {
     min-height: 90px;
-    padding: 6px 8px;
+    padding: 9px 10px;
   }
   .rail-brand-logo {
-    width: 100%;
-    max-width: 182px;
+    width: min(100%, 194px);
+    max-width: none;
     height: 68px;
   }
   .rail-main-link {
@@ -3631,17 +3633,17 @@ th {
   }
 
   .home-brand-panel {
-    justify-items: center;
-    text-align: center;
+    justify-items: start;
+    text-align: left;
   }
 
   .home-logo {
-    justify-self: center;
+    justify-self: start;
     width: min(100%, 560px);
   }
 
   .home-copy {
-    justify-items: center;
+    justify-items: start;
   }
 
   .home-login-card {
