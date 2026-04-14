@@ -1401,19 +1401,24 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     await removeEmployeeReferences(name);
     await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
     await window.ClodeDataAccess?.flushPendingWrites?.();
-    await reloadEmployeeRegistryFromBackend();
+    const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
     }
+    employeeViewState.search = "";
+    const searchInput = document.getElementById("employeeRegistrySearchInput");
+    if (searchInput) {
+      searchInput.value = "";
+    }
+    employeeViewState.selectedName = refreshedRegistry[0]?.name || "";
+    employeeViewState.editingName = "";
+    resetEmployeeForm();
   } catch (error) {
     console.warn("Nie udało się usunąć pracownika.", error);
     window.alert("Nie udało się usunąć pracownika. Odśwież widok i spróbuj ponownie.");
     return;
   }
 
-  const roster = getEmployeeRoster().filter((employee) => employee.name !== name);
-  employeeViewState.selectedName = roster[0]?.name || "";
-  employeeViewState.editingName = "";
   renderEmployeeModuleIfActive();
 }
 

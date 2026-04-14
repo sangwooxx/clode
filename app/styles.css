@@ -101,17 +101,17 @@ body { min-height: 100vh; }
   align-items: center;
   justify-content: center;
   gap: 0;
-  padding: 12px 10px;
+  padding: 10px 8px;
   border: 1px solid var(--line-soft);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.02);
-  min-height: 72px;
+  min-height: 88px;
 }
 
 .rail-brand-logo {
-  width: 142px;
-  max-width: 100%;
-  height: 44px;
+  width: 100%;
+  max-width: 176px;
+  height: 64px;
   object-fit: contain;
   flex: 0 0 auto;
   display: block;
@@ -368,22 +368,23 @@ body { min-height: 100vh; }
 
 .home-brand-panel {
   display: grid;
-  gap: 20px;
+  gap: 18px;
   align-content: center;
 }
 
 .home-logo {
-  width: min(392px, 100%);
-  max-width: min(392px, 100%);
+  width: min(100%, 620px);
+  max-width: none;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.28));
   justify-self: start;
+  align-self: end;
 }
 
 .home-copy {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   justify-items: start;
   max-width: 44rem;
 }
@@ -391,10 +392,6 @@ body { min-height: 100vh; }
 .home-subcopy {
   margin-top: 0;
   max-width: 56ch;
-}
-
-.home-eyebrow {
-  margin-bottom: 0;
 }
 
 .home-feature-strip {
@@ -3484,12 +3481,13 @@ th {
     gap: 12px;
   }
   .rail-brand {
-    min-height: 68px;
-    padding: 11px 9px;
+    min-height: 82px;
+    padding: 9px 8px;
   }
   .rail-brand-logo {
-    width: 132px;
-    height: 40px;
+    width: 100%;
+    max-width: 160px;
+    height: 58px;
   }
   .rail-main-link {
     min-height: 38px;
@@ -3539,6 +3537,10 @@ th {
 
   .home-stage {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 372px);
+  }
+
+  .home-logo {
+    width: min(100%, 560px);
   }
 
   .home-feature-strip {
@@ -3634,6 +3636,7 @@ th {
 
   .home-logo {
     justify-self: center;
+    width: min(100%, 520px);
   }
 
   .home-copy {
