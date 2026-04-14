@@ -140,17 +140,18 @@ class ContractService:
         )
         contracts = self.repository.list_all(include_archived=include_archived)
         contract_items = []
-        for contract in contracts:
-            metrics = self.metrics_repository.calculate_contract_metrics(contract["id"], normalized_range)
-            monthly_breakdown = self.metrics_repository.list_contract_monthly_breakdown(contract["id"], normalized_range)
-            contract_items.append({
-                "contract": contract,
-                "metrics": metrics,
-                "monthly_breakdown": monthly_breakdown,
-            })
-        global_metrics = self.metrics_repository.calculate_global_metrics(normalized_range)
-        unassigned_invoices = self.metrics_repository.list_unassigned_invoices(normalized_range)
-        unmatched_hours = self.metrics_repository.list_unmatched_hours(normalized_range)
+        with self.metrics_repository.connect() as connection:
+            for contract in contracts:
+                metrics = self.metrics_repository.calculate_contract_metrics(contract["id"], normalized_range, connection)
+                monthly_breakdown = self.metrics_repository.list_contract_monthly_breakdown(contract["id"], normalized_range, connection)
+                contract_items.append({
+                    "contract": contract,
+                    "metrics": metrics,
+                    "monthly_breakdown": monthly_breakdown,
+                })
+            global_metrics = self.metrics_repository.calculate_global_metrics(normalized_range, connection)
+            unassigned_invoices = self.metrics_repository.list_unassigned_invoices(normalized_range, connection)
+            unmatched_hours = self.metrics_repository.list_unmatched_hours(normalized_range, connection)
         return {
             "range": normalized_range,
             "contracts": contract_items,

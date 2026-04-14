@@ -8,6 +8,9 @@ const state = {
   search: "",
   dashboardMode: "contracts",
   selectedInvestmentId: null,
+  requestId: 0,
+  refreshHandle: 0,
+  pendingRefresh: true,
   sorts: {
     investments: { key: "margin", direction: "desc" },
     detailMonthly: { key: "month_key", direction: "asc" },
@@ -805,9 +808,13 @@ function getSelectedInvestment() {
 }
 
 async function loadData() {
+  const requestId = state.requestId + 1;
+  state.requestId = requestId;
+
   if (!window.ClodeAuthClient?.isAuthenticated?.()) {
     state.data = emptyDashboardData();
     state.errorMessage = "";
+    state.pendingRefresh = false;
     window.dispatchEvent(new CustomEvent("dashboard-data-updated", {
       detail: {
         data: state.data,
@@ -835,14 +842,21 @@ async function loadData() {
   state.loading = true;
   try {
     const payload = await api.getDashboardSnapshot({ includeArchived: false });
+    if (requestId !== state.requestId) return;
     state.data = mapDashboardSnapshot(payload);
     state.errorMessage = "";
   } catch (error) {
+    if (requestId !== state.requestId) return;
     state.data = emptyDashboardData();
     state.errorMessage = error?.message || "Nie udało się pobrać danych dashboardu z backendu.";
   } finally {
-    state.loading = false;
+    if (requestId === state.requestId) {
+      state.loading = false;
+    }
   }
+
+  if (requestId !== state.requestId) return;
+  state.pendingRefresh = false;
 
   if (!state.selectedInvestmentId && state.data.investments.length) {
     state.selectedInvestmentId = state.data.investments[0].id;
@@ -857,6 +871,27 @@ async function loadData() {
     },
   }));
   renderDashboardIfActive();
+}
+
+function isDashboardActive() {
+  return document.getElementById("dashboardView")?.classList.contains("is-active") || false;
+}
+
+function requestDashboardRefresh(delay = 180, options = {}) {
+  state.pendingRefresh = true;
+  const shouldRunNow = options.force || isDashboardActive() || !window.ClodeAuthClient?.isAuthenticated?.();
+  if (!shouldRunNow) {
+    return;
+  }
+
+  if (state.refreshHandle) {
+    window.clearTimeout(state.refreshHandle);
+  }
+
+  state.refreshHandle = window.setTimeout(() => {
+    state.refreshHandle = 0;
+    void loadData();
+  }, delay);
 }
 
 async function triggerRefresh() {
@@ -1583,20 +1618,20 @@ function bindEvents() {
 
   ["contract-registry-updated", "hours-registry-updated", "invoice-registry-updated", "clode-auth-changed"].forEach((eventName) => {
     window.addEventListener(eventName, () => {
-      void loadData();
+      requestDashboardRefresh();
     });
   });
 
   window.addEventListener("app-view-changed", (event) => {
     if (event.detail?.viewId === "dashboardView") {
-      void loadData();
+      requestDashboardRefresh(0, { force: true });
     }
   });
 }
 
 function init() {
   bindEvents();
-  void loadData();
+  requestDashboardRefresh(0, { force: true });
 }
 
 init();

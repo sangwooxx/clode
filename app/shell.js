@@ -683,11 +683,13 @@ function refreshAuthenticatedData(options = {}) {
 
   shellState.dataReady = false;
   shellState.dataBootstrapInFlight = true;
-  const bootstrapPromise = Promise.resolve(window.ClodeDataAccess?.initialize?.({
-    purgeLocal: true,
-    reset: options.reset !== false,
-  }))
-    .then(() => loadContractRegistryFromBackend({ includeArchived: true, force: true }))
+  const bootstrapPromise = Promise.all([
+    Promise.resolve(window.ClodeDataAccess?.initialize?.({
+      purgeLocal: true,
+      reset: options.reset !== false,
+    })),
+    loadContractRegistryFromBackend({ includeArchived: true, force: true }),
+  ])
     .then(() => {
       shellState.dataReady = true;
       renderRailAccess();

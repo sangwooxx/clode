@@ -22,11 +22,13 @@
       storageKey: storageKeys.contracts,
       fallback: [],
       eventName: "contract-registry-updated",
+      preloadInApi: false,
     },
     deletedContracts: {
       storeName: "contracts_deleted",
       storageKey: storageKeys.deletedContracts,
       fallback: [],
+      preloadInApi: false,
     },
     settings: {
       storeName: "settings",
@@ -69,6 +71,7 @@
       storageKey: storageKeys.invoices,
       fallback: { entries: [] },
       eventName: "invoice-registry-updated",
+      preloadInApi: false,
     },
     vacations: {
       storeName: "vacations",
@@ -98,6 +101,7 @@
       storeName: "legacy_seed_version",
       storageKey: storageKeys.legacySeedVersion,
       fallback: "",
+      preloadInApi: false,
     },
   });
 
@@ -303,7 +307,11 @@
 
     const repositoriesToLoad = Array.isArray(options.repositories) && options.repositories.length
       ? options.repositories
-      : Object.keys(repositoryDefinitions).filter((repositoryName) => repositoryName !== "uiState" && repositoryName !== "authSession");
+      : Object.entries(repositoryDefinitions)
+        .filter(([repositoryName, definition]) => repositoryName !== "uiState"
+          && repositoryName !== "authSession"
+          && definition.preloadInApi !== false)
+        .map(([repositoryName]) => repositoryName);
 
     await Promise.all(repositoriesToLoad.map((repositoryName) => load(repositoryName)));
     managerState.initialized = true;

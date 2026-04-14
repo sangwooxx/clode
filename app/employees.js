@@ -277,6 +277,30 @@ async function reloadEmployeeRegistryFromBackend() {
   return Array.isArray(refreshed) ? refreshed : [];
 }
 
+async function ensureEmployeeStoresLoaded(options = {}) {
+  const tasks = [];
+  const repositories = window.ClodeDataAccess?.repositories;
+  if (repositories?.employees?.load) {
+    tasks.push(repositories.employees.load([]));
+  }
+  if (options.includeRelations) {
+    if (repositories?.hours?.load) {
+      tasks.push(repositories.hours.load({ months: {}, selected_month_key: "" }));
+    }
+    if (repositories?.vacations?.load) {
+      tasks.push(repositories.vacations.load({ balances: {}, requests: [] }));
+    }
+    if (repositories?.planning?.load) {
+      tasks.push(repositories.planning.load({ assignments: {} }));
+    }
+    if (repositories?.workwearIssues?.load) {
+      tasks.push(repositories.workwearIssues.load([]));
+    }
+  }
+  if (!tasks.length) return;
+  await Promise.allSettled(tasks);
+}
+
 function loadEmployeeHoursSnapshot() {
   const parsed = employeeReadStore(EMPLOYEE_HOURS_STORAGE_KEY, null);
   if (parsed && typeof parsed === "object" && parsed.months) {
@@ -1202,9 +1226,9 @@ async function saveEmployeeFromForm() {
   }
 
   try {
-    await window.whenClodeDataReady?.();
-    const registry = loadEmployeeRegistry();
     const originalName = employeeViewState.editingName || name;
+    await ensureEmployeeStoresLoaded({ includeRelations: originalName !== name });
+    const registry = await reloadEmployeeRegistryFromBackend();
     const existing = registry.find((employee) => employee.name === originalName);
     const conflict = registry.find((employee) => employee.name === name && employee.name !== originalName);
     if (conflict) {
@@ -1241,6 +1265,7 @@ async function saveEmployeeFromForm() {
     }
 
     await persistEmployeeRegistry(registry);
+    await window.ClodeDataAccess?.flushPendingWrites?.();
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog(
@@ -1281,9 +1306,11 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   if (!window.confirm(`Czy na pewno chcesz usun\u0105\u0107 pracownika ${name}?`)) return;
 
   try {
-    await window.whenClodeDataReady?.();
+    await ensureEmployeeStoresLoaded({ includeRelations: true });
+    const registry = await reloadEmployeeRegistryFromBackend();
     removeEmployeeReferences(name);
-    await persistEmployeeRegistry(loadEmployeeRegistry().filter((employee) => employee.name !== name));
+    await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
+    await window.ClodeDataAccess?.flushPendingWrites?.();
     await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
@@ -1539,7 +1566,20 @@ function initEmployeesView() {
 
   window.addEventListener("hours-registry-updated", renderEmployeeModuleIfActive);
   window.addEventListener("employee-registry-updated", renderEmployeeModuleIfActive);
-  window.addEventListener("clode-data-ready", renderEmployeeModuleIfActive);
+  window.addEventListener("clode-data-ready", () => {
+    const formHasInput = [
+      "employeeFirstNameInput",
+      "employeeLastNameInput",
+      "employeePositionInput",
+      "employeeStreetInput",
+      "employeeCityInput",
+      "employeePhoneInput",
+    ].some((fieldId) => employeeNormalize(document.getElementById(fieldId)?.value).length);
+    if (window.isAppViewActive?.("employeesView") && formHasInput) {
+      return;
+    }
+    renderEmployeeModuleIfActive();
+  });
   window.addEventListener("app-view-changed", (event) => {
     if (event.detail?.viewId === "employeesView") renderEmployeeModule();
   });
