@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from clode_backend.auth.rbac import normalize_role
 from clode_backend.auth.sessions import utc_now_iso
-from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository
+from clode_backend.repositories.contract_metrics_repository import ALLOWED_COST_CATEGORIES, ContractMetricsRepository
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.validation.contracts import normalize_contract_status, normalize_time_scope, number, text
 
@@ -170,16 +170,34 @@ class ContractService:
                     "metrics": metrics,
                     "monthly_breakdown": monthly_breakdown,
                 })
-            global_metrics = self.metrics_repository.calculate_global_metrics(normalized_range, connection)
+            totals = {
+                "revenue_total": round(sum(float(item["metrics"].get("revenue_total") or 0) for item in contract_items), 2),
+                "invoice_cost_total": round(sum(float(item["metrics"].get("invoice_cost_total") or 0) for item in contract_items), 2),
+                "labor_cost_total": round(sum(float(item["metrics"].get("labor_cost_total") or 0) for item in contract_items), 2),
+                "labor_hours_total": round(sum(float(item["metrics"].get("labor_hours_total") or 0) for item in contract_items), 2),
+                "cost_total": round(sum(float(item["metrics"].get("cost_total") or 0) for item in contract_items), 2),
+                "margin": round(sum(float(item["metrics"].get("margin") or 0) for item in contract_items), 2),
+                "invoice_count": int(sum(int(item["metrics"].get("invoice_count") or 0) for item in contract_items)),
+                "cost_invoice_count": int(sum(int(item["metrics"].get("cost_invoice_count") or 0) for item in contract_items)),
+                "sales_invoice_count": int(sum(int(item["metrics"].get("sales_invoice_count") or 0) for item in contract_items)),
+                "cost_by_category": {
+                    category: round(
+                        sum(float(item["metrics"].get("cost_by_category", {}).get(category) or 0) for item in contract_items),
+                        2,
+                    )
+                    for category in ALLOWED_COST_CATEGORIES
+                },
+            }
+            unassigned = self.metrics_repository.calculate_contract_metrics("unassigned", normalized_range, connection)
             unassigned_invoices = self.metrics_repository.list_unassigned_invoices(normalized_range, connection)
             unmatched_hours = self.metrics_repository.list_unmatched_hours(normalized_range, connection)
         return {
             "range": normalized_range,
             "contracts": contract_items,
-            "unassigned": global_metrics["unassigned"],
+            "unassigned": unassigned,
             "unassigned_invoices": unassigned_invoices,
             "unmatched_hours": unmatched_hours,
-            "totals": global_metrics["totals"],
+            "totals": totals,
         }
 
     def _normalize_payload(self, payload: dict[str, Any], *, existing: dict[str, Any] | None = None) -> dict[str, Any]:
