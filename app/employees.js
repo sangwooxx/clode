@@ -1403,6 +1403,7 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     await removeEmployeeReferences(name);
     await window.ClodeDataAccess?.flushPendingWrites?.();
     employeeViewState.storesReady = false;
+    await ensureEmployeeStoresLoaded({ includeRelations: true });
     const refreshedRegistry = await reloadEmployeeRegistryFromBackend();
     if (typeof window.recordAuditLog === "function") {
       window.recordAuditLog("Kadry", "Usuni\u0119to pracownika", name, "");
@@ -1415,7 +1416,7 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
     employeeViewState.selectedName = refreshedRegistry[0]?.name || "";
     employeeViewState.editingName = "";
     resetEmployeeForm();
-    await renderEmployeeModuleIfActive({ force: true });
+    await renderEmployeeModuleIfActive({ force: true, includeRelations: true });
   } catch (error) {
     console.warn("Nie udało się usunąć pracownika.", error);
     window.alert("Nie udało się usunąć pracownika. Odśwież widok i spróbuj ponownie.");

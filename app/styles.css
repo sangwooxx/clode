@@ -109,12 +109,14 @@ body { min-height: 100vh; }
 }
 
 .rail-brand-logo {
-  width: min(100%, 186px);
+  width: min(100%, 192px);
   max-width: none;
-  height: 76px;
+  height: auto;
+  max-height: 72px;
   object-fit: contain;
   flex: 0 0 auto;
   display: block;
+  margin-inline: auto;
 }
 
 .rail-brand-button {
@@ -375,13 +377,14 @@ body { min-height: 100vh; }
 }
 
 .home-logo {
-  width: min(100%, 720px);
+  width: min(100%, 780px);
   max-width: none;
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.28));
   justify-self: start;
   align-self: end;
+  margin-left: 0;
   margin-bottom: -10px;
 }
 
@@ -3488,9 +3491,10 @@ th {
     padding: 9px 10px;
   }
   .rail-brand-logo {
-    width: min(100%, 172px);
+    width: min(100%, 178px);
     max-width: none;
-    height: 68px;
+    height: auto;
+    max-height: 64px;
   }
   .rail-main-link {
     min-height: 38px;
