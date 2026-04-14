@@ -52,11 +52,6 @@ const investmentColumns = {
   total_cost: { type: "number", defaultDirection: "desc" },
   labor_hours: { type: "number", defaultDirection: "desc" },
   margin: { type: "number", defaultDirection: "desc" },
-  trend: {
-    type: "number",
-    defaultDirection: "desc",
-    getValue: (item) => (item.monthly_breakdown || []).slice(-1)[0]?.total_cost || 0,
-  },
 };
 
 const unassignedInvoiceColumns = {
@@ -1057,7 +1052,6 @@ function renderInvestments() {
         <th class="text-right">${window.ClodeTableUtils.renderHeader("Łączny koszt", "investments", "total_cost", state.sorts.investments)}</th>
         <th class="text-right">${window.ClodeTableUtils.renderHeader("Godziny", "investments", "labor_hours", state.sorts.investments)}</th>
         <th class="text-right">${window.ClodeTableUtils.renderHeader("Marża", "investments", "margin", state.sorts.investments)}</th>
-        <th class="text-right">${window.ClodeTableUtils.renderHeader("Trend", "investments", "trend", state.sorts.investments)}</th>
       </tr>
     </thead>
   `;
@@ -1076,7 +1070,6 @@ function renderInvestments() {
       <td class="text-right">${formatMoney(item.total_cost)}</td>
       <td class="text-right">${formatNumber(item.labor_hours)}</td>
       <td class="text-right ${item.margin < 0 ? "status-bad" : "status-good"}">${formatMoney(item.margin)}</td>
-      <td class="text-right">${formatMoney((item.monthly_breakdown || []).slice(-1)[0]?.total_cost || 0)}</td>
     `;
     tbody.appendChild(row);
   });
