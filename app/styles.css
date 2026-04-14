@@ -384,7 +384,7 @@ body { min-height: 100vh; }
 
 .home-logo {
   grid-area: logo;
-  width: 100%;
+  width: 75%;
   max-width: none;
   height: auto;
   object-fit: contain;
@@ -3554,7 +3554,7 @@ th {
   }
 
   .home-logo {
-    width: 100%;
+    width: 75%;
   }
 
   .home-feature-strip {
@@ -3654,7 +3654,7 @@ th {
 
   .home-logo {
     justify-self: stretch;
-    width: 100%;
+    width: 75%;
   }
 
   .home-copy {
