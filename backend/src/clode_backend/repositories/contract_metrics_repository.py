@@ -44,9 +44,17 @@ def _hours_time_where(time_range: dict[str, Any], params: list[Any]) -> str:
 
 def _contract_selector(column_name: str, contract_id: str, params: list[Any]) -> str:
     if contract_id == "unassigned":
-        return f" AND ({column_name} IS NULL OR trim({column_name}) = '')"
+        return (
+            f" AND ("
+            f"{column_name} IS NULL OR trim({column_name}) = '' "
+            f"OR NOT EXISTS (SELECT 1 FROM contracts c WHERE c.id = {column_name} AND c.deleted_at IS NULL)"
+            f")"
+        )
     if contract_id == "__assigned__":
-        return f" AND {column_name} IS NOT NULL AND trim({column_name}) <> ''"
+        return (
+            f" AND {column_name} IS NOT NULL AND trim({column_name}) <> '' "
+            f"AND EXISTS (SELECT 1 FROM contracts c WHERE c.id = {column_name} AND c.deleted_at IS NULL)"
+        )
     if contract_id == "__all__":
         return ""
     params.append(contract_id)
@@ -224,7 +232,11 @@ class ContractMetricsRepository(RepositoryBase):
                     amount_gross
                 FROM invoices
                 WHERE is_deleted = 0
-                  AND (contract_id IS NULL OR trim(contract_id) = '')
+                  AND (
+                    contract_id IS NULL
+                    OR trim(contract_id) = ''
+                    OR NOT EXISTS (SELECT 1 FROM contracts c WHERE c.id = invoices.contract_id AND c.deleted_at IS NULL)
+                  )
                   {time_clause}
                 ORDER BY issue_date DESC, LOWER(invoice_number) ASC
                 """,
@@ -266,7 +278,11 @@ class ContractMetricsRepository(RepositoryBase):
                     COALESCE(SUM(te.cost_amount), 0) AS labor_cost
                 FROM time_entries te
                 JOIN hours_months hm ON hm.id = te.month_id
-                WHERE (te.contract_id IS NULL OR trim(te.contract_id) = '')
+                WHERE (
+                    te.contract_id IS NULL
+                    OR trim(te.contract_id) = ''
+                    OR NOT EXISTS (SELECT 1 FROM contracts c WHERE c.id = te.contract_id AND c.deleted_at IS NULL)
+                )
                   {time_clause}
                 GROUP BY source_name
                 ORDER BY labor_cost DESC, source_name ASC

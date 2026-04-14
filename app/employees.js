@@ -578,11 +578,11 @@ function renameEmployeeReferences(oldName, newName) {
   }
 }
 
-function removeEmployeeReferences(name) {
+async function removeEmployeeReferences(name) {
   if (!name) return;
 
   if (typeof window.removeEmployeeFromHoursData === "function") {
-    window.removeEmployeeFromHoursData(name);
+    await Promise.resolve(window.removeEmployeeFromHoursData(name));
   }
 
   const workwear = employeeReadStore(EMPLOYEE_WORKWEAR_STORAGE_KEY, []);
@@ -1398,7 +1398,7 @@ async function deleteEmployeeFromRegistry(employeeNameArg = "") {
   try {
     await ensureEmployeeStoresLoaded({ includeRelations: true });
     const registry = await reloadEmployeeRegistryFromBackend();
-    removeEmployeeReferences(name);
+    await removeEmployeeReferences(name);
     await persistEmployeeRegistry(registry.filter((employee) => employee.name !== name));
     await window.ClodeDataAccess?.flushPendingWrites?.();
     await reloadEmployeeRegistryFromBackend();

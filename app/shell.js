@@ -836,8 +836,10 @@ async function deleteContracts(contractIds) {
   const archivedIds = ids.filter((id) => contractsById.get(id)?.status === "archived");
   const activeIds = ids.filter((id) => contractsById.get(id)?.status !== "archived");
   const usageDetails = (await Promise.all(
-    activeIds.map(async (id) => ({ id, contract: contractsById.get(id) || null, usage: await getContractOperationalUsage(id) }))
+    ids.map(async (id) => ({ id, contract: contractsById.get(id) || null, usage: await getContractOperationalUsage(id) }))
   )).filter(({ usage }) => usage.hours > 0 || usage.invoices > 0 || usage.planning > 0);
+  const archivedWithUsage = usageDetails.filter(({ id }) => archivedIds.includes(id));
+  const archivedDeletableIds = archivedIds.filter((id) => !archivedWithUsage.some((entry) => entry.id === id));
 
   const names = ids.map((id) => contractsById.get(id)?.name || id);
   const usageLines = usageDetails.map(({ contract, usage }) => {
@@ -854,17 +856,26 @@ async function deleteContracts(contractIds) {
       ? `Czy na pewno chcesz zarchiwizować kontrakt "${names[0]}"?`
       : `Czy na pewno chcesz zarchiwizować ${ids.length} zaznaczone kontrakty?`);
   } else if (archivedIds.length === ids.length) {
-    promptParts.push(ids.length === 1
-      ? `Czy na pewno chcesz trwale usunąć zarchiwizowany kontrakt "${names[0]}"?`
-      : `Czy na pewno chcesz trwale usunąć ${ids.length} zarchiwizowane kontrakty?`);
+    if (archivedDeletableIds.length === ids.length) {
+      promptParts.push(ids.length === 1
+        ? `Czy na pewno chcesz trwale usunąć zarchiwizowany kontrakt "${names[0]}"?`
+        : `Czy na pewno chcesz trwale usunąć ${ids.length} zarchiwizowane kontrakty?`);
+    } else {
+      promptParts.push(ids.length === 1
+        ? `Kontrakt "${names[0]}" ma dane historyczne i pozostanie zarchiwizowany.`
+        : "Wybrane zarchiwizowane kontrakty mają dane historyczne i pozostaną zarchiwizowane.");
+    }
   } else {
-    promptParts.push(`Czy na pewno chcesz zarchiwizować ${activeIds.length} kontrakty i usunąć ${archivedIds.length} już zarchiwizowane pozycje?`);
+    promptParts.push(`Czy na pewno chcesz zarchiwizować ${activeIds.length} kontrakty i usunąć ${archivedDeletableIds.length} już zarchiwizowane pozycje bez danych historycznych?`);
   }
   if (usageLines.length) {
     promptParts.push(`Kontrakty z danymi historycznymi zostaną tylko zarchiwizowane:\n${usageLines.join("\n")}`);
   }
-  if (archivedIds.length) {
-    promptParts.push("Uwaga: usunięcie zarchiwizowanego kontraktu jest trwałe.");
+  if (archivedWithUsage.length) {
+    promptParts.push("Zarchiwizowane kontrakty z danymi historycznymi nie zostaną usunięte trwale.");
+  }
+  if (archivedDeletableIds.length) {
+    promptParts.push("Uwaga: usunięcie zarchiwizowanego kontraktu bez powiązanych danych jest trwałe.");
   }
   if (!window.confirm(promptParts.join("\n\n"))) return;
 
@@ -881,8 +892,8 @@ async function deleteContracts(contractIds) {
       await api.bulkArchive(activeIds);
     }
 
-    if (archivedIds.length) {
-      await Promise.all(archivedIds.map((id) => api.deletePermanently(id)));
+    if (archivedDeletableIds.length) {
+      await Promise.all(archivedDeletableIds.map((id) => api.deletePermanently(id)));
     }
 
     await loadContractRegistryFromBackend({ includeArchived: true, force: true });
@@ -891,8 +902,8 @@ async function deleteContracts(contractIds) {
     if (activeIds.length) {
       recordAuditLog("Kontrakty", "Zarchiwizowano kontrakty", activeIds.map((id) => contractsById.get(id)?.name || id).join(", "), `Liczba pozycji: ${activeIds.length}`);
     }
-    if (archivedIds.length) {
-      recordAuditLog("Kontrakty", "Usunięto zarchiwizowane kontrakty", archivedIds.map((id) => contractsById.get(id)?.name || id).join(", "), `Liczba pozycji: ${archivedIds.length}`);
+    if (archivedDeletableIds.length) {
+      recordAuditLog("Kontrakty", "Usunięto zarchiwizowane kontrakty", archivedDeletableIds.map((id) => contractsById.get(id)?.name || id).join(", "), `Liczba pozycji: ${archivedDeletableIds.length}`);
     }
     renderContractRegistry();
     renderInvoiceRegistry();

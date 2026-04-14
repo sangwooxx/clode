@@ -95,7 +95,12 @@ class TimeEntryRepository(RepositoryBase):
             params.append(month_key)
 
         if contract_id == "unassigned":
-            conditions.append("(te.contract_id IS NULL OR trim(te.contract_id) = '')")
+            conditions.append(
+                "("
+                "te.contract_id IS NULL OR trim(te.contract_id) = '' "
+                "OR NOT EXISTS (SELECT 1 FROM contracts c WHERE c.id = te.contract_id AND c.deleted_at IS NULL)"
+                ")"
+            )
         elif contract_id:
             conditions.append("te.contract_id = ?")
             params.append(contract_id)

@@ -5,6 +5,13 @@ from typing import Any
 from clode_backend.repositories.base import RepositoryBase
 
 
+def _orphan_contract_condition(column_name: str) -> str:
+    return (
+        f"({column_name} IS NOT NULL AND trim({column_name}) <> '' "
+        f"AND NOT EXISTS (SELECT 1 FROM contracts c WHERE c.id = {column_name} AND c.deleted_at IS NULL))"
+    )
+
+
 def _apply_invoice_filters(filters: dict[str, Any], params: list[Any]) -> str:
     conditions = ["is_deleted = 0"]
 
@@ -17,7 +24,7 @@ def _apply_invoice_filters(filters: dict[str, Any], params: list[Any]) -> str:
     month = str(filters.get("month") or "").strip().zfill(2) if str(filters.get("month") or "").strip() else ""
 
     if unassigned:
-        conditions.append("(contract_id IS NULL OR trim(contract_id) = '')")
+        conditions.append(f"((contract_id IS NULL OR trim(contract_id) = '') OR {_orphan_contract_condition('contract_id')})")
     elif contract_id:
         conditions.append("contract_id = ?")
         params.append(contract_id)

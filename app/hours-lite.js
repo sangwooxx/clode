@@ -1227,11 +1227,11 @@ async function hRemoveContract(contractId) {
 }
 
 window.removeEmployeeFromHoursData = function removeEmployeeFromHoursData(employeeName) {
-  void hRemoveEmployee(employeeName);
+  return hRemoveEmployee(employeeName);
 };
 
 window.removeContractFromHoursData = function removeContractFromHoursData(contractId) {
-  void hRemoveContract(contractId);
+  return hRemoveContract(contractId);
 };
 
 window.renderHoursLite = function renderHoursLite() {

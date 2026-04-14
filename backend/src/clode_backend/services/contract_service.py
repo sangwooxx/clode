@@ -77,6 +77,12 @@ class ContractService:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
         if normalize_contract_status(contract.get("status")) != "archived":
             raise ContractServiceError("Kontrakt musi zostać najpierw zarchiwizowany.", status_code=400)
+        usage = self.repository.get_usage_counts(contract_id)
+        if any(int(usage.get(key) or 0) > 0 for key in ("hours", "invoices", "planning")):
+            raise ContractServiceError(
+                "Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuń najpierw powiązane dane.",
+                status_code=409,
+            )
         deleted = self.repository.delete(contract_id, deleted_at=utc_now_iso())
         if not deleted:
             raise ContractServiceError("Nie udało się usunąć kontraktu.", status_code=500)
