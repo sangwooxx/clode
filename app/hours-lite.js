@@ -1198,8 +1198,10 @@ async function hRemoveEmployee(employeeName) {
   if (!api) return;
   const normalizedEmployeeName = hCanonicalEmployeeName(employeeName);
   const entryIds = new Set();
+  let removedWorkerRows = false;
   Object.values(hoursState.data.months || {}).forEach((month) => {
-    (month?.workers || []).forEach((worker) => {
+    const workers = Array.isArray(month?.workers) ? month.workers : [];
+    workers.forEach((worker) => {
       if (hCanonicalEmployeeName(worker?.employee_name) !== normalizedEmployeeName) return;
       Object.values(worker.entry_ids || {}).forEach((value) => {
         const entryId = hText(value);
@@ -1208,8 +1210,20 @@ async function hRemoveEmployee(employeeName) {
         }
       });
     });
+    const remainingWorkers = workers.filter((worker) => {
+      return hCanonicalEmployeeName(worker?.employee_name) !== normalizedEmployeeName;
+    });
+    if (remainingWorkers.length !== workers.length) {
+      month.workers = remainingWorkers;
+      removedWorkerRows = true;
+    }
   });
-  if (!entryIds.size) return;
+  if (removedWorkerRows) {
+    hoursState.data.employees = (hoursState.data.employees || []).filter((employee) => {
+      return hCanonicalEmployeeName(employee?.name) !== normalizedEmployeeName;
+    });
+    hMirrorStateToLegacyStore();
+  }
   for (const entryId of entryIds) {
     await api.remove(entryId);
   }
