@@ -49,6 +49,7 @@ class TimeEntryService:
 
     def list_time_entries(self, filters: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_read_access(current_user)
+        self._normalize_legacy_employee_duplicates()
         self._normalize_legacy_month_contract_links()
         normalized_filters = self._normalize_filters(filters)
         entries = self.repository.list_entries(normalized_filters)
@@ -66,6 +67,7 @@ class TimeEntryService:
 
     def create_time_entry(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
+        self._normalize_legacy_employee_duplicates()
         normalized = self._normalize_entry_payload(payload)
         existing = self.repository.find_entry(
             month_key=normalized["month_key"],
@@ -89,6 +91,7 @@ class TimeEntryService:
 
     def update_time_entry(self, entry_id: str, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
+        self._normalize_legacy_employee_duplicates()
         existing = self.repository.get_entry(entry_id)
         if not existing:
             raise TimeEntryServiceError("Nie znaleziono wpisu czasu pracy.", status_code=404)
@@ -215,24 +218,11 @@ class TimeEntryService:
         )
 
     def _recalculate_month_costs(self, month_key: str) -> None:
-        month = self.repository.get_month_by_key(month_key)
-        if not month:
-            return
-        entries = self.repository.list_entries_for_month(month_key)
-        total_hours = sum(float(entry.get("hours") or 0) for entry in entries)
-        finance = normalize_finance(month.get("finance") or {})
-        total_cost_pool = (
-            finance["payouts"]
-            + finance["zus_company_1"]
-            + finance["zus_company_2"]
-            + finance["zus_company_3"]
-            + finance["pit4_company_1"]
-            + finance["pit4_company_2"]
-            + finance["pit4_company_3"]
-        )
-        hourly_cost = (total_cost_pool / total_hours) if total_hours else 0.0
-        for entry in entries:
-            self.repository.update_entry_cost_amount(entry["id"], round(float(entry.get("hours") or 0) * hourly_cost, 2))
+        self.repository.recalculate_month_costs(month_key)
+
+    def _normalize_legacy_employee_duplicates(self) -> None:
+        for month_key in self.repository.normalize_legacy_employee_duplicates():
+            self._recalculate_month_costs(month_key)
 
     def _build_aggregates(self, entries: list[dict[str, Any]]) -> dict[str, Any]:
         per_contract: dict[str, dict[str, Any]] = {}

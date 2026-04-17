@@ -167,8 +167,17 @@ class TimeEntryRepository(RepositoryBase):
 
     def find_entry(self, *, month_key: str, employee_id: str | None, employee_name: str, contract_id: str | None) -> dict[str, Any] | None:
         params: list[Any] = [month_key]
-        employee_clause = "te.employee_id = ?" if employee_id else "lower(trim(te.employee_name)) = lower(trim(?))"
-        params.append(employee_id or employee_name)
+        if employee_id:
+            employee_clause = (
+                "("
+                "te.employee_id = ? "
+                "OR (trim(COALESCE(te.employee_id, '')) = '' AND lower(trim(te.employee_name)) = lower(trim(?)))"
+                ")"
+            )
+            params.extend([employee_id, employee_name])
+        else:
+            employee_clause = "lower(trim(te.employee_name)) = lower(trim(?))"
+            params.append(employee_name)
         if contract_id:
             contract_clause = "te.contract_id = ?"
             params.append(contract_id)
@@ -193,6 +202,12 @@ class TimeEntryRepository(RepositoryBase):
                 WHERE hm.month_key = ?
                   AND {employee_clause}
                   AND {contract_clause}
+                ORDER BY
+                  CASE
+                    WHEN trim(COALESCE(te.employee_id, '')) <> '' THEN 0
+                    ELSE 1
+                  END,
+                  te.id ASC
                 LIMIT 1
                 """,
                 tuple(params),
@@ -263,6 +278,33 @@ class TimeEntryRepository(RepositoryBase):
             connection.commit()
         return int(cursor.rowcount or 0)
 
+    def recalculate_month_costs(self, month_key: str) -> bool:
+        month = self.get_month_by_key(month_key)
+        if not month:
+            return False
+
+        entries = self.list_entries_for_month(month_key)
+        total_hours = sum(float(entry.get("hours") or 0) for entry in entries)
+        finance = month.get("finance") or {}
+        total_cost_pool = (
+            float(finance.get("payouts") or 0)
+            + float(finance.get("zus_company_1") or 0)
+            + float(finance.get("zus_company_2") or 0)
+            + float(finance.get("zus_company_3") or 0)
+            + float(finance.get("pit4_company_1") or 0)
+            + float(finance.get("pit4_company_2") or 0)
+            + float(finance.get("pit4_company_3") or 0)
+        )
+        hourly_cost = (total_cost_pool / total_hours) if total_hours else 0.0
+        with self.connect() as connection:
+            for entry in entries:
+                connection.execute(
+                    "UPDATE time_entries SET cost_amount = ? WHERE id = ?",
+                    (round(float(entry.get("hours") or 0) * hourly_cost, 2), entry["id"]),
+                )
+            connection.commit()
+        return True
+
     def normalize_month_visible_investments(self, rows: list[dict[str, Any]]) -> None:
         for row in rows:
             self.upsert_month(row)
@@ -305,6 +347,89 @@ class TimeEntryRepository(RepositoryBase):
             self.normalize_month_visible_investments(changed_rows)
 
         return len(changed_rows)
+
+    def normalize_legacy_employee_duplicates(self) -> list[str]:
+        with self.connect() as connection:
+            groups = connection.execute(
+                """
+                SELECT
+                    te.month_id,
+                    hm.month_key,
+                    lower(trim(te.employee_name)) AS employee_name_key,
+                    COALESCE(NULLIF(trim(te.contract_id), ''), '__unassigned__') AS contract_key,
+                    COUNT(*) AS rows_total,
+                    SUM(CASE WHEN trim(COALESCE(te.employee_id, '')) = '' THEN 1 ELSE 0 END) AS blank_id_rows,
+                    SUM(CASE WHEN trim(COALESCE(te.employee_id, '')) <> '' THEN 1 ELSE 0 END) AS linked_rows,
+                    COUNT(DISTINCT CASE WHEN trim(COALESCE(te.employee_id, '')) <> '' THEN trim(te.employee_id) END) AS linked_employee_ids
+                FROM time_entries te
+                JOIN hours_months hm ON hm.id = te.month_id
+                WHERE trim(COALESCE(te.employee_name, '')) <> ''
+                GROUP BY te.month_id, lower(trim(te.employee_name)), COALESCE(NULLIF(trim(te.contract_id), ''), '__unassigned__')
+                HAVING blank_id_rows > 0
+                   AND linked_rows > 0
+                   AND linked_employee_ids = 1
+                """
+            ).fetchall()
+
+            deleted_total = 0
+            affected_months: set[str] = set()
+            for group in groups:
+                contract_id = "" if group["contract_key"] == "__unassigned__" else group["contract_key"]
+                params: list[Any] = [
+                    group["month_id"],
+                    group["employee_name_key"],
+                ]
+                contract_clause = "(te.contract_id IS NULL OR trim(te.contract_id) = '')"
+                if contract_id:
+                    contract_clause = "trim(COALESCE(te.contract_id, '')) = ?"
+                    params.append(contract_id)
+
+                canonical = connection.execute(
+                    f"""
+                    SELECT te.id
+                    FROM time_entries te
+                    WHERE te.month_id = ?
+                      AND lower(trim(te.employee_name)) = ?
+                      AND {contract_clause}
+                      AND trim(COALESCE(te.employee_id, '')) <> ''
+                    ORDER BY te.id DESC
+                    LIMIT 1
+                    """,
+                    tuple(params),
+                ).fetchone()
+                if not canonical:
+                    continue
+
+                delete_params: list[Any] = [
+                    group["month_id"],
+                    group["employee_name_key"],
+                ]
+                delete_contract_clause = "(contract_id IS NULL OR trim(contract_id) = '')"
+                if contract_id:
+                    delete_contract_clause = "trim(COALESCE(contract_id, '')) = ?"
+                    delete_params.append(contract_id)
+                delete_params.append(canonical["id"])
+
+                cursor = connection.execute(
+                    f"""
+                    DELETE FROM time_entries
+                    WHERE month_id = ?
+                      AND lower(trim(employee_name)) = ?
+                      AND {delete_contract_clause}
+                      AND trim(COALESCE(employee_id, '')) = ''
+                      AND id <> ?
+                    """,
+                    tuple(delete_params),
+                )
+                deleted_count = int(cursor.rowcount or 0)
+                deleted_total += deleted_count
+                if deleted_count:
+                    affected_months.add(str(group["month_key"] or "").strip())
+
+            if deleted_total:
+                connection.commit()
+
+        return sorted(month_key for month_key in affected_months if month_key)
 
     @staticmethod
     def _serialize_month(row) -> dict[str, Any]:

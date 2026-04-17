@@ -127,6 +127,7 @@ class ContractService:
 
     def get_contract_usage(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_read_access(current_user)
+        self._normalize_legacy_time_entries()
         contract = self.repository.get_by_id(contract_id)
         if not contract:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
@@ -160,6 +161,7 @@ class ContractService:
         current_user: dict[str, Any] | None,
     ) -> dict[str, Any]:
         self.ensure_read_access(current_user)
+        self._normalize_legacy_time_entries()
         normalized_range = normalize_time_scope(
             time_range.get("scope"),
             time_range.get("year"),
@@ -190,6 +192,7 @@ class ContractService:
         include_archived: bool = False,
     ) -> dict[str, Any]:
         self.ensure_read_access(current_user)
+        self._normalize_legacy_time_entries()
         normalized_range = normalize_time_scope(
             time_range.get("scope"),
             time_range.get("year"),
@@ -273,4 +276,10 @@ class ContractService:
             normalized_contract_id,
             visible=make_visible,
         )
+
+    def _normalize_legacy_time_entries(self) -> None:
+        if not self.time_entry_repository:
+            return
+        for month_key in self.time_entry_repository.normalize_legacy_employee_duplicates():
+            self.time_entry_repository.recalculate_month_costs(month_key)
 
