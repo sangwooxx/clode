@@ -9,19 +9,16 @@
   },
   "routes": [
     {
-      "handle": "filesystem"
-    },
-    {
       "src": "^/api/(.*)$",
       "dest": "/api/index.py?__clode_path=$1"
     },
     {
       "src": "^/$",
-      "dest": "/app/index.html"
+      "dest": "https://clode-next.vercel.app/"
     },
     {
       "src": "^/(.*)$",
-      "dest": "/app/index.html"
+      "dest": "https://clode-next.vercel.app/$1"
     }
   ]
 }
