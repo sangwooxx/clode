@@ -98,6 +98,7 @@ class handler(BaseHTTPRequestHandler):
                 runtime["user_service"],
                 runtime["invoice_service"],
                 runtime["contract_service"],
+                runtime["employee_service"],
                 runtime["time_entry_service"],
             )
         finally:
