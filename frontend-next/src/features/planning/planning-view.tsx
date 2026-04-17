@@ -566,7 +566,6 @@ export function PlanningView({
       <SectionHeader
         eyebrow="Planowanie zasobów"
         title="Planowanie zasobów"
-        description="Dzienny plan pracowników, kontraktów i konfliktów z nieobecnościami na realnym runtime."
         actions={
           <div className="planning-header-actions">
             <ActionButton type="button" variant="secondary" onClick={handleCopyPreviousDay}>
@@ -611,17 +610,14 @@ export function PlanningView({
       ) : null}
 
       <div className="module-page__stats">
-        {summaryCards.map((card) => (
+        {summaryCards.slice(0, 4).map((card) => (
           <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
 
       <div className="planning-layout">
         <div className="planning-main-stack">
-          <Panel
-            title="Plan dnia"
-            description="Jeden wiersz to jeden aktywny pracownik. W tym miejscu dodajesz, poprawiasz albo czyścisz przypisanie dnia."
-          >
+            <Panel title="Plan dnia">
             <DataTable
               columns={planningEmployeeColumns({
                 canWrite,
@@ -646,10 +642,7 @@ export function PlanningView({
             />
           </Panel>
 
-          <Panel
-            title="Obsada kontraktów na wybrany dzień"
-            description="Podsumowanie aktywnych kontraktów na podstawie planu dnia i blokad nieobecności."
-          >
+            <Panel title="Obsada kontraktów na wybrany dzień">
             <div className="planning-summary-notes">
               <div className="planning-summary-note">
                 <strong>Bez przypisania</strong>

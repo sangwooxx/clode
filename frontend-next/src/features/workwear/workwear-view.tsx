@@ -708,7 +708,6 @@ export function WorkwearView({
         <SectionHeader
           eyebrow="Kartoteka BHP"
           title="Odziez robocza"
-          description="Ladowanie katalogu i historii wydan."
         />
         <p className="status-message">Trwa ladowanie modulu odziezy roboczej...</p>
       </div>
@@ -721,7 +720,6 @@ export function WorkwearView({
         <SectionHeader
           eyebrow="Kartoteka BHP"
           title="Odziez robocza"
-          description="Obszar wydan, katalogu i historii pracownikow."
           actions={
             <ActionButton type="button" variant="secondary" onClick={() => void handleRefresh()}>
               Sprobuj ponownie
@@ -853,7 +851,6 @@ export function WorkwearView({
       <SectionHeader
         eyebrow="Kartoteka BHP"
         title="Odziez robocza"
-        description="Katalog elementow, wydania pracownicze i historia kart odziezowych."
         actions={
           <div className="planning-header-actions">
             <ActionButton type="button" variant="secondary" onClick={handleNewIssue}>
@@ -875,7 +872,7 @@ export function WorkwearView({
       />
 
       <div className="module-page__stats">
-        {derived.summaryCards.map((card) => (
+        {derived.summaryCards.slice(0, 4).map((card) => (
           <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
@@ -899,10 +896,7 @@ export function WorkwearView({
 
       <div className="workwear-layout">
         <div className="workwear-main-stack">
-          <Panel
-            title="Aktywni pracownicy"
-            description="Glowna pula do nowych wydan. Wiersz pracownika otwiera jego karte."
-          >
+            <Panel title="Aktywni pracownicy">
             <DataTable
               columns={employeeColumns()}
               rows={activeRows}
@@ -917,10 +911,7 @@ export function WorkwearView({
           </Panel>
 
           {historicalRows.length > 0 ? (
-            <Panel
-              title="Historia pracownikow nieaktywnych"
-              description="Nowych wydan juz nie dostana, ale ich karta i historia pozostaja dostepne."
-            >
+              <Panel title="Historia pracownikow nieaktywnych">
               <div className="workwear-history-list">
                 {historicalRows.map((row) => (
                   <button
@@ -942,18 +933,13 @@ export function WorkwearView({
             </Panel>
           ) : null}
 
-          <Panel
-            title={
-              derived.selectedEmployee
-                ? `Karta wydan: ${derived.selectedEmployee.name}`
-                : "Karta wydan pracownika"
-            }
-            description={
-              derived.selectedEmployee?.status === "inactive"
-                ? "Tryb historyczny tylko do odczytu nowych przypisan."
-                : "Historia wydan i korekty wpisow dla wybranego pracownika."
-            }
-          >
+            <Panel
+              title={
+                derived.selectedEmployee
+                  ? `Karta wydan: ${derived.selectedEmployee.name}`
+                  : "Karta wydan pracownika"
+              }
+            >
             {derived.selectedEmployee ? (
               <div className="workwear-spotlight">
                 <div className="workwear-detail-grid">
@@ -1012,10 +998,7 @@ export function WorkwearView({
           </Panel>
 
           {derived.attentionRows.length > 0 ? (
-            <Panel
-              title="Wpisy wymagajace uwagi"
-              description="Historyczne rekordy legacy, ktore nie wskazuja jednoznacznie pracownika."
-            >
+              <Panel title="Wpisy wymagajace uwagi">
               <DataTable
                 columns={attentionColumns()}
                 rows={derived.attentionRows}
@@ -1025,10 +1008,7 @@ export function WorkwearView({
             </Panel>
           ) : null}
 
-          <Panel
-            title="Katalog elementow"
-            description="Realny katalog odziezy i wyposazenia, bez sztucznego modelu magazynowego."
-          >
+            <Panel title="Katalog elementow">
             <DataTable
               columns={catalogTableColumns}
               rows={catalogRows}
@@ -1039,10 +1019,7 @@ export function WorkwearView({
           </Panel>
         </div>
         <div className="workwear-side-stack">
-          <Panel
-            title={editingIssueId ? "Edycja wydania" : "Nowe wydanie"}
-            description="Nowe wydania sa dostepne tylko dla aktywnych pracownikow."
-          >
+            <Panel title={editingIssueId ? "Edycja wydania" : "Nowe wydanie"}>
             <form className="workwear-form" onSubmit={handleIssueSubmit}>
               <FormGrid columns={2}>
                 <label className="form-field">
@@ -1189,10 +1166,7 @@ export function WorkwearView({
             </form>
           </Panel>
 
-          <Panel
-            title={editingCatalogId ? "Edycja elementu katalogu" : "Nowy element katalogu"}
-            description="Katalog jest wspolna baza dla wszystkich wydan i historii pracownikow."
-          >
+            <Panel title={editingCatalogId ? "Edycja elementu katalogu" : "Nowy element katalogu"}>
             <form className="workwear-form" onSubmit={handleCatalogSubmit}>
               <FormGrid columns={2}>
                 <label className="form-field">

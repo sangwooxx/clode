@@ -405,10 +405,10 @@ export function EmployeesView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.map((card) => (
-          <StatCard
-            key={card.id}
-            label={card.label}
+          {summaryCards.slice(0, 4).map((card) => (
+            <StatCard
+              key={card.id}
+              label={card.label}
             value={card.value}
             accent={card.accent}
           />

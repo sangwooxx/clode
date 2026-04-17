@@ -480,14 +480,12 @@ export function DashboardView({
       <div className="module-page">
         <SectionHeader eyebrow="Dashboard" title="Dashboard" />
         <div className="module-page__stats module-page__stats--compact">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <StatCard key={index} label="Ladowanie" value="..." hint="Trwa pobieranie snapshotu" />
           ))}
         </div>
         <Panel title="Snapshot kontraktow">
-          <p className="panel__description">
-            Trwa odczyt KPI, kontraktow i danych nieprzypisanych.
-          </p>
+          <p className="status-message">Trwa odczyt danych.</p>
         </Panel>
       </div>
     );
@@ -555,7 +553,7 @@ export function DashboardView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {data.summary.map((item) => (
+        {data.summary.slice(0, 4).map((item) => (
           <StatCard
             key={item.id}
             label={item.label}
@@ -620,28 +618,10 @@ export function DashboardView({
                 }`}
               >
                 <div className="module-page__stats module-page__stats--compact">
-                  <StatCard
-                    label="Faktury sprzedazowe"
-                    value={formatMoney(selectedContract.metrics.revenue_total)}
-                    accent
-                  />
-                  <StatCard
-                    label="Faktury kosztowe"
-                    value={formatMoney(selectedContract.metrics.invoice_cost_total)}
-                  />
-                  <StatCard
-                    label="Koszt wynagrodzen"
-                    value={formatMoney(selectedContract.metrics.labor_cost_total)}
-                  />
-                  <StatCard
-                    label="Laczny koszt"
-                    value={formatMoney(selectedContract.metrics.cost_total)}
-                  />
-                  <StatCard
-                    label="Roboczogodziny"
-                    value={formatHours(selectedContract.metrics.labor_hours_total)}
-                  />
-                  <StatCard label="Marza" value={formatMoney(selectedContract.metrics.margin)} />
+                  <StatCard label="Sprzedaż" value={formatMoney(selectedContract.metrics.revenue_total)} accent />
+                  <StatCard label="Koszt" value={formatMoney(selectedContract.metrics.cost_total)} />
+                  <StatCard label="Godziny" value={formatHours(selectedContract.metrics.labor_hours_total)} />
+                  <StatCard label="Marża" value={formatMoney(selectedContract.metrics.margin)} />
                 </div>
               </Panel>
 

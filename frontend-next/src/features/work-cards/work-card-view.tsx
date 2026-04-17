@@ -502,12 +502,12 @@ export function WorkCardView({
       <div className="module-page">
         <SectionHeader eyebrow="Godziny" title="Karty pracy" />
         <div className="module-page__stats module-page__stats--compact">
-          {Array.from({ length: 5 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <StatCard key={index} label="Ładowanie" value="..." />
           ))}
         </div>
         <Panel title="Karty pracy">
-          <p className="status-message">Ładuję pracowników, miesiące i aktywne kontrakty.</p>
+          <p className="status-message">Ładuję pracowników i miesiące.</p>
         </Panel>
       </div>
     );
@@ -622,7 +622,7 @@ export function WorkCardView({
       </Panel>
 
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.map((card) => (
+        {summaryCards.slice(0, 4).map((card) => (
           <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>

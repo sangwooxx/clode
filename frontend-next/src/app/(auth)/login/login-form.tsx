@@ -44,40 +44,38 @@ export function LoginForm({
   }
 
   return (
-    <div className="auth-card">
-      <form className="auth-form" onSubmit={handleSubmit}>
-        <label className="field-card">
-          <span className="field-card__label">Uzytkownik</span>
-          <input
-            className="text-input"
-            value={username}
-            onChange={(event) => setUsername(event.target.value)}
-            autoComplete="username"
-            placeholder="admin"
-          />
-        </label>
+    <form className="auth-form auth-form--login" onSubmit={handleSubmit}>
+      <label className="field-card">
+        <span className="field-card__label">Użytkownik</span>
+        <input
+          className="text-input"
+          value={username}
+          onChange={(event) => setUsername(event.target.value)}
+          autoComplete="username"
+          placeholder="admin"
+        />
+      </label>
 
-        <label className="field-card">
-          <span className="field-card__label">Haslo</span>
-          <input
-            className="text-input"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            type="password"
-            autoComplete="current-password"
-            placeholder="admin"
-          />
-        </label>
+      <label className="field-card">
+        <span className="field-card__label">Hasło</span>
+        <input
+          className="text-input"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          type="password"
+          autoComplete="current-password"
+          placeholder="admin"
+        />
+      </label>
 
-        {error ? <p className="auth-form__error">{error}</p> : null}
-        {initialized && isAuthenticated ? (
-          <p className="auth-form__status">Sesja jest juz aktywna.</p>
-        ) : null}
+      {error ? <p className="auth-form__error">{error}</p> : null}
+      {initialized && isAuthenticated ? (
+        <p className="auth-form__status">Sesja jest już aktywna.</p>
+      ) : null}
 
-        <ActionButton type="submit" disabled={isLoading} fullWidth>
-          {isLoading ? "Logowanie..." : "Zaloguj"}
-        </ActionButton>
-      </form>
-    </div>
+      <ActionButton type="submit" disabled={isLoading} fullWidth>
+        {isLoading ? "Logowanie..." : "Zaloguj"}
+      </ActionButton>
+    </form>
   );
 }

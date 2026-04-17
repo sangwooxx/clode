@@ -537,7 +537,6 @@ export function SettingsView() {
       <SectionHeader
         eyebrow="Konto użytkownika"
         title="Konto i ustawienia"
-        description="To jest obszar konta dostępny przez klik w użytkownika w sidebarze. Dla administratora łączy profil, zarządzanie kontami, workflow urlopów i rejestr zmian."
         actions={
           <>
             <ActionButton
@@ -569,7 +568,7 @@ export function SettingsView() {
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.map((card) => (
+        {summaryCards.slice(0, 4).map((card) => (
           <StatCard key={card.id} label={card.label} value={card.value} accent={"accent" in card ? Boolean(card.accent) : false} />
         ))}
       </div>
@@ -578,10 +577,7 @@ export function SettingsView() {
 
       <div className="settings-layout">
         <div className="settings-main-stack">
-          <Panel
-            title="Profil i sesja"
-            description="Bieżące konto jest hydratowane z auth runtime, więc nie tworzy równoległej logiki obok logowania i sesji."
-          >
+            <Panel title="Profil i sesja">
             <dl>
               <div className="info-list__row"><dt>Nazwa wyświetlana</dt><dd>{currentUser.displayName}</dd></div>
               <div className="info-list__row"><dt>Login</dt><dd>{currentUser.username}</dd></div>
@@ -593,14 +589,9 @@ export function SettingsView() {
             </dl>
           </Panel>
 
-          <Panel
-            title={hasAdminAccess ? "Dostęp bieżącego konta" : "Dostęp w aplikacji"}
-            description={
-              hasAdminAccess
-                ? "Ten panel pokazuje realne uprawnienia zalogowanego administratora oraz to, że ustawienia pozostają częścią konta, a nie osobnym modułem menu."
-                : "Twoje konto korzysta z tych samych uprawnień, które shell i auth runtime stosują w całej aplikacji."
-            }
-          >
+            <Panel
+              title={hasAdminAccess ? "Dostęp bieżącego konta" : "Dostęp w aplikacji"}
+            >
             <div className="settings-module-pills">
               {currentUserPermissions.length ? currentUserPermissions.map((label) => (
                 <span key={label} className="employees-relation-pill">{label}</span>
@@ -636,10 +627,7 @@ export function SettingsView() {
 
               {adminData ? (
                 <>
-                  <Panel
-                    title="Konta użytkowników"
-                    description="To jest produktowy następca starego settings.js: realne konta, role, status, uprawnienia modułowe i akceptacja urlopów."
-                  >
+                    <Panel title="Konta użytkowników">
                     <DataTable
                       columns={buildUsersTableColumns({
                         currentUserId: currentUser.id || "",
@@ -662,10 +650,7 @@ export function SettingsView() {
                     />
                   </Panel>
 
-                  <Panel
-                    title="Rejestr zmian"
-                    description="Log operacyjny ustawień pokazuje realne zmiany kont, workflow i akcje resetu hasła wykonane z tego ekranu."
-                  >
+                    <Panel title="Rejestr zmian">
                     <div className="settings-audit-toolbar">
                       <SearchField value={auditSearch} onChange={(event) => setAuditSearch(event.target.value)} placeholder="Szukaj po użytkowniku, module, akcji lub obiekcie" />
                     </div>
@@ -681,10 +666,7 @@ export function SettingsView() {
               ) : null}
             </>
           ) : (
-            <Panel
-              title="Administracja systemu"
-              description="Zarządzanie użytkownikami, workflow urlopów i logami jest dostępne tylko dla administratora. To konto zachowuje jedynie własny profil i operacje sesji."
-            >
+              <Panel title="Administracja systemu">
               <p className="status-message">
                 Jeśli potrzebujesz dodać konto albo zmienić uprawnienia, zaloguj się jako administrator i użyj tego samego ekranu konta.
               </p>
@@ -693,7 +675,7 @@ export function SettingsView() {
         </div>
 
         <div className="settings-side-stack">
-          <Panel title="Konto bieżące" description="To konto korzysta ze wspólnej sesji auth dla całego shella.">
+            <Panel title="Konto bieżące">
             <div className="settings-detail-grid">
               <div className="settings-detail-card"><span className="field-card__label">Login</span><strong>{currentUser.username}</strong><small>{currentUser.email || "Brak e-maila"}</small></div>
               <div className="settings-detail-card"><span className="field-card__label">Rola</span><strong>{formatRoleLabel(currentUser.role)}</strong><small>{formatStatusLabel(currentUser.status)}</small></div>
@@ -704,10 +686,7 @@ export function SettingsView() {
 
           {hasAdminAccess && adminData ? (
             <>
-              <Panel
-                title={editingUser ? `Edycja konta: ${editingUser.name}` : "Nowe konto użytkownika"}
-                description="Administrator może tutaj tworzyć konta, nadawać role, ustawiać status i precyzyjne uprawnienia modułowe."
-              >
+                <Panel title={editingUser ? `Edycja konta: ${editingUser.name}` : "Nowe konto użytkownika"}>
                 {editingUser ? (
                   <div className="settings-user-spotlight">
                     <div className="data-table__stack">
@@ -741,7 +720,6 @@ export function SettingsView() {
                   <div className="settings-permissions">
                     <div className="panel__heading">
                       <h3 className="panel__title">Uprawnienia modułowe</h3>
-                      <p className="panel__description">Administrator może tu zarządzać dostępem do operacyjnych modułów aplikacji.</p>
                     </div>
                     <div className="settings-permissions-grid">
                       {settingsPermissionDefinitions.map((definition) => {
@@ -784,10 +762,7 @@ export function SettingsView() {
                 </form>
               </Panel>
 
-              <Panel
-                title="Workflow urlopów"
-                description="To jest odświeżona wersja reguł z legacy settings: kto akceptuje urlopy i czy system pokazuje powiadomienia."
-              >
+                <Panel title="Workflow urlopów">
                 <FormGrid columns={1}>
                   <label className="form-field"><span>Tryb akceptacji urlopów</span><select value={workflowValues.vacationApprovalMode} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationApprovalMode: event.target.value === "admin" ? "admin" : "permission" }))}><option value="permission">Według uprawnień użytkowników</option><option value="admin">Tylko administrator</option></select></label>
                   <label className="form-field"><span>Powiadomienia urlopowe</span><select value={workflowValues.vacationNotifications} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationNotifications: event.target.value === "off" ? "off" : "on" }))}><option value="on">Włączone</option><option value="off">Wyłączone</option></select></label>

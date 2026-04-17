@@ -16,8 +16,8 @@ export default async function LoginPage({
       <section className="auth-page__content">
         <BrandMark className="app-shell__brand auth-page__brand" labelClassName="app-shell__brand-mark" />
         <div className="auth-page__intro">
-          <h1 className="auth-page__title">Zaloguj sie</h1>
-          <p className="auth-page__description">Dostep do systemu Clode.</p>
+          <h1 className="auth-page__title">Zaloguj się</h1>
+          <p className="auth-page__description">Dostęp do systemu Clode.</p>
         </div>
       </section>
 

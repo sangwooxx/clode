@@ -7,7 +7,6 @@ import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
-import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   bulkDeleteInvoiceRecords,
@@ -804,18 +803,6 @@ export function InvoicesView({
                   ) : (
                     <span className="toolbar-strip__meta">Zaznaczone: {selectedInvoiceIds.length}</span>
                   )}
-                </div>
-
-                <div className="module-page__stats module-page__stats--compact invoices-summary-grid">
-                  {viewModel?.summaryCards.map((card) => (
-                    <StatCard
-                      key={card.id}
-                      label={card.label}
-                      value={card.value}
-                      hint={card.hint}
-                      accent={card.accent}
-                    />
-                  ))}
                 </div>
 
                 <DataTable

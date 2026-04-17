@@ -592,12 +592,12 @@ export function ContractsView({
       <div className="module-page">
         <SectionHeader eyebrow="Kontrakty" title="Rejestr kontraktów" />
         <div className="module-page__stats">
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <StatCard key={index} label="Ładowanie" value="..." hint="Trwa pobieranie rejestru" />
           ))}
         </div>
         <Panel title="Rejestr kontraktów">
-          <p className="panel__description">Trwa odczyt listy i przygotowanie modułu operacyjnego.</p>
+          <p className="status-message">Trwa odczyt listy.</p>
         </Panel>
       </div>
     );
@@ -657,7 +657,7 @@ export function ContractsView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {state.data.summary.map((item) => (
+        {state.data.summary.slice(0, 4).map((item) => (
           <StatCard
             key={item.id}
             label={item.label}
@@ -875,25 +875,23 @@ export function ContractsView({
                   <p><strong>Kwota:</strong> {formatMoney(selectedContract.contract_value)}</p>
                 </div>
 
-                {usageState.status === "loading" ? (
-                  <p className="panel__description">Ładowanie użycia kontraktu...</p>
-                ) : usageState.status === "error" ? (
-                  <p className="auth-form__error">{usageState.message}</p>
-                ) : usageState.status === "success" ? (
+                  {usageState.status === "loading" ? (
+                    <p className="status-message">Ładowanie użycia kontraktu...</p>
+                  ) : usageState.status === "error" ? (
+                    <p className="auth-form__error">{usageState.message}</p>
+                  ) : usageState.status === "success" ? (
                   <div className="contracts-usage-grid">
                     <StatCard label="Faktury" value={formatInteger(usageState.data.usage.invoices)} />
                     <StatCard label="Godziny" value={formatHoursValue(usageState.data.usage.hours)} />
                     <StatCard label="Planowanie" value={formatInteger(usageState.data.usage.planning)} />
                   </div>
-                ) : (
-                  <p className="panel__description">Brak podglądu użycia.</p>
-                )}
-              </div>
-            ) : (
-              <p className="panel__description">
-                Nic nie jest jeszcze wybrane. Możesz kliknąć kontrakt w tabeli albo od razu dodać nowy wpis.
-              </p>
-            )}
+                  ) : (
+                    <p className="status-message">Brak podglądu użycia.</p>
+                  )}
+                </div>
+              ) : (
+                <p className="status-message">Wybierz kontrakt z tabeli albo dodaj nowy wpis.</p>
+              )}
           </Panel>
         </div>
       </div>

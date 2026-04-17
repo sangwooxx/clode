@@ -949,12 +949,12 @@ export function HoursView({
       <div className="module-page">
         <SectionHeader eyebrow="Godziny" title="Ewidencja czasu pracy" />
         <div className="module-page__stats module-page__stats--compact">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <StatCard key={index} label="Ładowanie" value="..." />
           ))}
         </div>
         <Panel title="Ewidencja czasu pracy">
-          <p className="status-message">Ładuję miesiące, wpisy i relacje kontraktów.</p>
+          <p className="status-message">Ładuję miesiące i wpisy.</p>
         </Panel>
       </div>
     );
@@ -1012,7 +1012,7 @@ export function HoursView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.map((card) => (
+        {summaryCards.slice(0, 4).map((card) => (
           <StatCard
             key={card.id}
             label={card.label}

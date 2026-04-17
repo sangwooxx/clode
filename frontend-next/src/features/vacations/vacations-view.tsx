@@ -812,7 +812,7 @@ export function VacationsView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.map((card) => (
+        {summaryCards.slice(0, 4).map((card) => (
           <StatCard
             key={card.id}
             label={card.label}
