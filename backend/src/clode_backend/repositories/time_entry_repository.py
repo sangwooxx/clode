@@ -365,9 +365,9 @@ class TimeEntryRepository(RepositoryBase):
                 JOIN hours_months hm ON hm.id = te.month_id
                 WHERE trim(COALESCE(te.employee_name, '')) <> ''
                 GROUP BY te.month_id, lower(trim(te.employee_name)), COALESCE(NULLIF(trim(te.contract_id), ''), '__unassigned__')
-                HAVING blank_id_rows > 0
-                   AND linked_rows > 0
-                   AND linked_employee_ids = 1
+                HAVING SUM(CASE WHEN trim(COALESCE(te.employee_id, '')) = '' THEN 1 ELSE 0 END) > 0
+                   AND SUM(CASE WHEN trim(COALESCE(te.employee_id, '')) <> '' THEN 1 ELSE 0 END) > 0
+                   AND COUNT(DISTINCT CASE WHEN trim(COALESCE(te.employee_id, '')) <> '' THEN trim(te.employee_id) END) = 1
                 """
             ).fetchall()
 
