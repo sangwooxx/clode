@@ -1,50 +1,56 @@
-# MVP Roadmap
+# Product Roadmap
 
 ## Delivery principle
 
-Each stage follows the same rule:
-- Dev implements,
-- QA validates,
-- no PASS means no closure.
+The project still follows strict delivery gates:
+- Dev implements
+- QA validates
+- no PASS means no closure
 
 ## Completed
 
-### Stage 4
-- Invoice module: API + SQL
+### Foundation and migration
+- backend-first contracts
+- backend-first invoices
+- Next.js operational frontend in `frontend-next`
+- migration of operational modules:
+  - dashboard
+  - contracts
+  - invoices
+  - hours
+  - work cards
+  - employees
+  - vacations
+  - planning
+  - settings
+  - workwear
+- front-back integration pass for the operational MVP
+- cutover to `frontend-next` as the primary frontend
 
-### Stage 5
-- Contracts + dashboard logic foundation
-- contract backend source of truth
-- consistency between contracts, invoices, and operational contract lists
-- demo-safe data preparation
+## Current focus
 
-## Current
-
-### Stage 6
-- Time tracking backend-first + system consistency
+### Stage A
+- backend-first hardening of store-backed operational domains
+- reduction of overlay/compatibility layers where they are no longer needed
 
 ## Planned next stages
 
-### Stage 7
-- Labor cost logic and contract profitability
+### Stage B
+- security and deployment hardening
+- secret hygiene
+- cookie/session hardening
+- cleanup of legacy deployment assumptions
 
-### Stage 8
-- Backend-first management dashboard
+### Stage C
+- controlled retirement of the legacy fallback frontend
+- repository cleanup after cutover
+- simpler developer onboarding and runtime defaults
 
-### Stage 9
-- Employee registry backend-first
+### Stage D
+- product expansion into tender workflow integration
 
-### Stage 10
-- Vacations and absences
+### Stage E
+- labor cost logic and contract profitability
 
-### Stage 11
-- Resource planning
-
-### Stage 12
-- Permissions, safety, and audit hardening
-
-### Stage 13
-- UI polish and MVP readiness QA
-
-### Stage 14
-- Demo handoff and external verification package
+### Stage F
+- management analytics and reporting hardening

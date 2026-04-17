@@ -2,53 +2,80 @@
 
 ## Overview
 
-Clode MVP is a local-first operational system with an ongoing transition from legacy frontend state to backend-first domain logic.
-
-Current architecture:
+Clode currently runs as a split frontend/backend system with a controlled legacy fallback.
 
 ```text
-Frontend views (app/)
-    -> frontend data clients (frontend/src/data)
+Primary user entry
+    -> frontend-next (Next.js App Router)
+        -> same-origin /api/v1 proxy
+            -> backend HTTP API
+                -> services
+                    -> repositories
+                        -> SQL tables and transitional store documents
+
+Technical fallback
+    -> repo-root deploy
         -> backend HTTP API
-            -> services
-                -> repositories
-                    -> SQLite
+        -> legacy static frontend (app/ + frontend/)
 ```
 
-## Core domains
+## Current product surface
 
-### Contracts
-- backend source of truth,
-- stable `contract_id`,
-- active vs archived lifecycle,
-- shared operational registry for dependent modules.
+The primary product UI lives in `frontend-next/` and includes:
+- dashboard
+- contracts
+- invoices
+- hours
+- work cards
+- employees
+- vacations
+- planning
+- settings
+- workwear
 
-### Invoices
-- SQL-backed invoice records,
-- logic based on `contract_id`,
-- `unassigned` supported through `NULL contract_id`,
-- filters and aggregates exposed through API.
+The legacy frontend in `app/` and the compatibility data layer in `frontend/` are retained only for rollback/fallback and should not receive new product work.
 
-### Time tracking
-- currently in transition,
-- operational contract list aligned with backend active contracts,
-- Stage 6 will move the full `time_entries` model and CRUD to backend-first.
+## Source-of-truth map
 
 ### Employees
-- present in demo data and backend,
-- full backend-first hardening remains part of future roadmap.
+- canonical source: backend `/api/v1/employees`
+- persistence: SQL `employees` plus transitional overlay synchronization
+- cross-module key: stable employee id / employee key, never display name alone
+
+### Contracts
+- canonical source: backend `/api/v1/contracts`
+- lifecycle: active vs archived
+- usage: contracts drive selectors in hours, work cards, and planning
+
+### Invoices
+- canonical source: backend invoice endpoints and SQL storage
+- relation key: `contract_id`
+
+### Time entries
+- canonical source: backend `/api/v1/time-entries` and `/api/v1/time-months`
+- work cards synchronize into time entries for operational consistency
+
+### Store-backed transitional domains
+- vacations: `stores/vacations`
+- planning: `stores/planning`
+- work cards: `stores/work_cards`
+- workwear: `stores/workwear_catalog`, `stores/workwear_issues`
+- settings/audit: `stores/settings`, `stores/audit_logs`
+
+These domains are operationally integrated, but they are still not fully backend-first APIs.
 
 ## Design principles
 
-- backend first,
-- stable identifiers instead of names,
-- historical data preserved,
-- archived entities excluded from new operational input,
-- module-to-module consistency is mandatory.
+- stable identifiers over display names
+- one source of truth per business entity
+- historical records preserved even when entities leave the active pool
+- archived / inactive entities excluded from new operational input
+- module-to-module consistency is mandatory
+- fallback layers must not silently override canonical data
 
-## Data integrity rules
+## Current transitional debt
 
-- `contract_id` is the business key for cross-module logic,
-- missing relation should become `unassigned`, not guessed,
-- archived contracts may stay in history but must disappear from new-entry selectors,
-- demo data must remain isolated from real business records.
+- several operational domains remain store-backed
+- employee persistence still uses a synchronized SQL + overlay model
+- legacy fallback frontend is still present in the repository and deployment topology
+- some historical records still require defensive compatibility mapping

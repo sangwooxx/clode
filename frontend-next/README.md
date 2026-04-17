@@ -1,6 +1,6 @@
 # Clode Next Frontend
 
-`frontend-next` is the primary frontend of Clode. It replaces the older static frontend for normal product use and is designed to become the main deployed web entrypoint.
+`frontend-next` is the primary frontend of Clode. It replaced the older static frontend as the normal product entrypoint and is the main deployed web application.
 
 ## What it contains
 
@@ -42,10 +42,10 @@ npm run start -- --hostname 127.0.0.1 --port 3100
 
 ## Deployment
 
-Recommended deployment:
-- separate Vercel project,
-- `rootDirectory=frontend-next`,
-- framework detected as Next.js,
-- `CLODE_BACKEND_ORIGIN` configured to the backend service.
+Deployment model:
+- separate Vercel project
+- `rootDirectory=frontend-next`
+- framework detected as Next.js
+- `CLODE_BACKEND_ORIGIN` configured to the backend service
 
 The legacy frontend in `../app/` should remain only as an emergency fallback after cutover.

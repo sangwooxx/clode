@@ -1,29 +1,33 @@
 # Clode
 
-Clode is now operated primarily through `frontend-next`, the Next.js App Router frontend in this repository. The legacy static frontend in `app/` remains available only as a technical fallback.
+Clode is an operational ERP-style system for contract businesses. The primary product frontend is now `frontend-next`, the Next.js App Router application in this repository. The older static frontend in `app/` remains only as a technical fallback.
 
-## Current runtime map
+## Product state
 
-- Primary frontend: `http://127.0.0.1:3100`
-- Login entrypoint: `http://127.0.0.1:3100/login`
-- Backend API: `http://127.0.0.1:8787`
-- Legacy fallback frontend: `http://127.0.0.1:8082/app/index.html`
+The operational MVP is live on `frontend-next` and covers:
+- dashboard
+- contracts
+- invoices
+- hours
+- work cards
+- employees
+- vacations
+- planning
+- settings
+- workwear
 
-## Main product scope
+The main remaining engineering debt is not screen coverage. It is backend-first hardening of store-backed domains and eventual retirement of the legacy fallback.
 
-The operational MVP now runs in `frontend-next` and covers:
-- dashboard,
-- contracts,
-- invoices,
-- hours,
-- work cards,
-- employees,
-- vacations,
-- planning,
-- settings,
-- workwear.
+## Repository layout
 
-## Local quick start
+- `frontend-next/` - primary product frontend in Next.js
+- `backend/` - API, domain services, repositories, migrations, seed data
+- `app/` - legacy static frontend kept only for rollback/fallback
+- `frontend/` - legacy data-access layer used by `app/`
+- `docs/` - current architecture, roadmap, status, and release notes
+- `scripts/` - local runtime entrypoints
+
+## Local runtime
 
 ### Start the full app with the primary frontend
 
@@ -33,9 +37,9 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1
 ```
 
 This starts:
-- backend on `8787`,
-- primary frontend-next on `3100`,
-- the browser on `/login`.
+- backend on `8787`
+- primary frontend-next on `3100`
+- browser on `/login`
 
 ### Start only the primary frontend
 
@@ -63,13 +67,25 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1 -Frontend legac
 
 ## Deployment model
 
-Recommended cutover model:
-- deploy `frontend-next` as a separate Vercel project,
-- set `rootDirectory=frontend-next`,
-- set `CLODE_BACKEND_ORIGIN` to the backend origin,
-- keep the current repo-root deploy as backend plus legacy fallback.
+Current production-oriented model:
+- `frontend-next` is deployed as a dedicated Vercel project
+- `rootDirectory=frontend-next`
+- `CLODE_BACKEND_ORIGIN` points to the backend/legacy service
+- repo-root deploy stays available as backend plus legacy fallback
 
-See the runbook in [`docs/FRONTEND_NEXT_CUTOVER.md`](docs/FRONTEND_NEXT_CUTOVER.md).
+Operational details and rollback procedure live in [`docs/FRONTEND_NEXT_CUTOVER.md`](docs/FRONTEND_NEXT_CUTOVER.md).
+
+## Current priorities
+
+- backend-first hardening of store-backed domains:
+  - vacations
+  - planning
+  - work cards
+  - workwear
+  - settings
+- security hardening of auth/session and deployment secrets
+- planned retirement of the legacy fallback once rollback is no longer needed
+- product expansion toward tender workflow integration
 
 ## Repository guide
 

@@ -2,29 +2,37 @@
 
 ## Current delivery status
 
-- Stage 4: completed
-- Stage 5: partially accepted technically, still open for final demo handoff quality
-- Stage 6: ready for Dev implementation
+- operational MVP in `frontend-next`: complete
+- cross-module front-back integration of the operational MVP: complete
+- live cutover to `frontend-next` as the primary frontend: complete
+- legacy frontend status: fallback only
 
 ## What is stable today
 
-- backend-first contracts,
-- backend-first invoices,
-- contract consistency across contracts and invoices,
-- controlled demo data,
-- supported local runtime on `127.0.0.1`.
+- primary frontend is `frontend-next`
+- contracts and invoices are backend-first
+- employees, vacations, planning, work cards, workwear, settings, and hours are integrated end-to-end
+- `inactive` semantics are consistent across operational modules
+- workflow from settings affects vacations
+- legacy frontend remains available as a technical rollback surface
 
 ## What is not yet fully mature
 
-- full backend-first time entry model,
-- full employee module verification in UI,
-- final demo handoff package with explicit external-tester access flow,
-- complete UI polish pass.
+- store-backed operational domains still need backend-first hardening:
+  - vacations
+  - planning
+  - work cards
+  - workwear
+  - settings
+- employee persistence is still a synchronized SQL + overlay model, not a single physical source
+- deployment/security hygiene still needs follow-up:
+  - secret handling
+  - cookie hardening
+  - cleanup of fallback-only assets and documentation
 
-## MVP blockers still expected before final showcase
+## Current engineering priorities
 
-- backend-first time tracking,
-- financial dashboard hardening,
-- employee visibility consistency,
-- explicit demo account handoff,
-- dedicated UI QA pass.
+1. Reduce store-backed transitional domains behind backend APIs.
+2. Retire legacy fallback from active development and eventually from deployment.
+3. Harden security and secret-management practices.
+4. Expand toward the next product layer, including tender workflow integration.

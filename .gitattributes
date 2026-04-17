@@ -10,3 +10,8 @@
 *.gif binary
 *.ico binary
 *.db binary
+
+# Keep GitHub language stats focused on the primary product surface.
+app/** linguist-vendored
+frontend/** linguist-vendored
+data/** linguist-vendored

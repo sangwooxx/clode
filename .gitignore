@@ -30,10 +30,13 @@ test-results/
 # Environment files
 .env
 .env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 
 # SQLite runtime copies
 backend/var/*.db
+backend/var/*.sqlite3
 backend/var/*.db-wal
 backend/var/*.db-shm
 backend/var/qa_*.db

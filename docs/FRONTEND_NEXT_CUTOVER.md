@@ -1,73 +1,57 @@
 # Cutover `frontend-next` na glowny frontend
 
-## Aktualny stan
+## Status
 
-- `frontend-next` jest gotowy produktowo i integracyjnie do roli glownego frontendu.
-- Lokalny runtime i dokumentacja zostaly przepiete tak, aby promowac Next jako domyslny frontend.
-- Legacy frontend w `app/` zostaje tylko jako fallback techniczny.
+Cutover jest wykonany.
 
-## Co jest juz wykonane lokalnie
+- `frontend-next` jest glownym frontendem produktu
+- lokalne skrypty startowe promuja Next jako domyslny frontend
+- legacy frontend w `app/` zostaje tylko jako fallback techniczny
 
-- domyslny skrypt `scripts/start-frontend.ps1` uruchamia `frontend-next`
-- domyslny skrypt `scripts/start-mvp.ps1` uruchamia `frontend-next`
-- legacy zostal wydzielony do `scripts/start-frontend-legacy.ps1`
-- README repo i README `frontend-next` wskazuja Next jako glowny frontend
+## Aktualny model deployu
 
-## Docelowy model deployu
-
+### Frontend glowny
 - osobny projekt Vercel dla `frontend-next`
 - `rootDirectory=frontend-next`
 - framework: Next.js
-- env:
-  - `CLODE_BACKEND_ORIGIN=https://<backend-origin>`
-- obecny repo-root deploy pozostaje jako:
-  - backend API
-  - awaryjny legacy fallback
+- backend origin ustawiony przez `CLODE_BACKEND_ORIGIN`
 
-## Twardy blocker zdalnego cutoveru
+### Backend i fallback legacy
+- repo-root deploy nadal utrzymuje backend API
+- ten sam deploy moze dalej serwowac legacy frontend jako awaryjny fallback
 
-Realny cutover domeny nie moze byc wykonany z tego srodowiska bez poprawnej autoryzacji Vercela.
+## Stan repo po cutoverze
 
-Aktualny stan:
-- lokalny CLI `vercel` jest zainstalowany
-- zdalny dostep nie jest gotowy do uzycia
-- bez waznej autoryzacji nie da sie:
-  - utworzyc osobnego projektu Next
-  - ustawic env w projekcie
-  - wykonac preview deployu
-  - przepiac glownej domeny
+- `scripts/start-frontend.ps1` uruchamia `frontend-next`
+- `scripts/start-mvp.ps1` uruchamia `frontend-next` domyslnie
+- `scripts/start-frontend-legacy.ps1` zostawia jawny fallback lokalny
+- README repo i README `frontend-next` wskazuja Next jako glowny frontend
 
-## Checklista wykonania po odblokowaniu Vercela
+## Minimalny smoke po cutoverze
 
-1. Zalogowac `vercel` albo przywrocic wazny token.
-2. Utworzyc projekt dla `frontend-next`.
-3. Ustawic `rootDirectory=frontend-next`.
-4. Ustawic `CLODE_BACKEND_ORIGIN`.
-5. Zrobic preview deploy.
-6. Wykonac smoke:
-   - `/`
-   - `/login`
-   - login
-   - `/dashboard`
-   - `/contracts`
-   - `/invoices`
-   - `/hours`
-   - `/work-cards`
-   - `/employees`
-   - `/vacations`
-   - `/planning`
-   - `/settings`
-   - `/workwear`
-   - logout
-   - refresh sesji
-   - `/api/v1`
-7. Przepiac glowna domene na projekt Next.
-8. Zostawic repo-root deploy jako fallback legacy.
+Po kazdej zmianie deployowej powinny przejsc co najmniej:
+- `/` -> redirect do `/login`
+- `/login`
+- login
+- `/dashboard`
+- `/contracts`
+- `/invoices`
+- `/hours`
+- `/work-cards`
+- `/employees`
+- `/vacations`
+- `/planning`
+- `/settings`
+- `/workwear`
+- logout
+- refresh sesji
+- `/api/v1/auth/me`
+- backend `/api/health`
 
 ## Rollback
 
-1. Odpiac glowna domene od projektu `frontend-next`.
-2. Przepiac domene z powrotem na obecny repo-root deploy.
+1. Odpinac glowna domene od projektu `frontend-next`.
+2. Przepiac domene z powrotem na repo-root deploy.
 3. Sprawdzic:
    - `/app/index.html`
    - login
@@ -75,13 +59,10 @@ Aktualny stan:
    - contracts
    - invoices
    - hours
+   - backend `/api/health`
 
-## Rekomendacja
+## Co dalej po cutoverze
 
-Status wykonawczy:
-- lokalny cutover prep: gotowy
-- zdalny cutover domeny: zablokowany na autoryzacji Vercela
-
-Rekomendacja:
-- GO WITH CONDITIONS
-- warunek: przywrocic wazny dostep do Vercela i dopiero wtedy wykonac finalny cutover domeny
+- utwardzenie store-backed domen backend-first
+- wygaszenie legacy fallbacku, kiedy rollback nie bedzie juz potrzebny
+- porzadek w repo i dokumentacji pod finalny produkt

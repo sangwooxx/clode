@@ -50,11 +50,12 @@ def load_settings() -> Settings:
         or ""
     ).strip()
     configured_seed_path = str(os.getenv("CLODE_DATABASE_SEED_PATH") or os.getenv("AGENT_DATABASE_SEED_PATH") or "").strip()
-    allow_demo_seed_import = str(
+    configured_demo_seed_import = str(
         os.getenv("CLODE_ENABLE_DEMO_SEED_IMPORT")
         or os.getenv("AGENT_ENABLE_DEMO_SEED_IMPORT")
         or ""
     ).strip().lower() in {"1", "true", "yes", "on"}
+    local_seed_bootstrap = False
 
     if configured_database_url:
         database_url = configured_database_url
@@ -62,15 +63,17 @@ def load_settings() -> Settings:
         database_url = f"sqlite:///{(Path(tempfile.gettempdir()) / 'clode.db').as_posix()}"
     else:
         database_url = f"sqlite:///{default_db.as_posix()}"
+        local_seed_bootstrap = default_seed_db.exists() and not default_db.exists()
+
+    allow_demo_seed_import = configured_demo_seed_import or local_seed_bootstrap
 
     database_seed_path = None
     if configured_seed_path:
         database_seed_path = Path(configured_seed_path)
-    elif is_vercel and allow_demo_seed_import:
-        if default_seed_db.exists():
-            database_seed_path = default_seed_db
-        elif default_db.exists():
-            database_seed_path = default_db
+    elif allow_demo_seed_import and default_seed_db.exists():
+        database_seed_path = default_seed_db
+    elif is_vercel and allow_demo_seed_import and default_db.exists():
+        database_seed_path = default_db
 
     allowed_origins = tuple(
         origin.strip()
