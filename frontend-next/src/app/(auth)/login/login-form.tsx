@@ -50,7 +50,7 @@ export function LoginForm({
     <Panel
       className="auth-card"
       title="Logowanie"
-      description="Prawdziwy punkt wejscia do nowego frontendu z backend auth i sesja."
+      description="Zaloguj sie tym samym kontem, ktorym pracujesz w glownej aplikacji."
     >
       <form className="auth-form" onSubmit={handleSubmit}>
         <label className="field-card">

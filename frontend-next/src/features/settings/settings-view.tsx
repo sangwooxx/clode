@@ -78,11 +78,12 @@ function buildUsersTableColumns(args: {
   onEdit: (user: ManagedUserRecord) => void;
 }): Array<DataTableColumn<ManagedUserRecord>> {
   return [
-    { key: "lp", header: "Lp.", className: "settings-col-lp", render: (_row, index) => index + 1 },
+    { key: "lp", header: "Lp.", className: "settings-col-lp", sortValue: (_row, index) => index + 1, render: (_row, index) => index + 1 },
     {
       key: "user",
       header: "Konto",
       className: "settings-col-user",
+      sortValue: (row) => `${row.name} ${row.username} ${row.email || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.name}</span>
@@ -97,6 +98,7 @@ function buildUsersTableColumns(args: {
       key: "access",
       header: "Dostęp",
       className: "settings-col-access",
+      sortValue: (row) => `${row.role || ""} ${row.status || ""} ${row.canApproveVacations ? "1" : "0"}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{formatRoleLabel(row.role)}</span>
@@ -119,6 +121,7 @@ function buildUsersTableColumns(args: {
       key: "modules",
       header: "Uprawnienia",
       className: "settings-col-modules",
+      sortValue: (row) => buildPermissionLabels(row.permissions).length,
       render: (row) => {
         const labels = buildPermissionLabels(row.permissions);
         return (
@@ -135,6 +138,7 @@ function buildUsersTableColumns(args: {
       key: "activity",
       header: "Aktywność",
       className: "settings-col-activity",
+      sortValue: (row) => row.last_login_at || row.created_at,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -148,6 +152,7 @@ function buildUsersTableColumns(args: {
       key: "actions",
       header: "Akcje",
       className: "settings-col-actions",
+      sortable: false,
       render: (row) => (
         <div className="planning-row-actions">
           <ActionButton
@@ -173,6 +178,7 @@ function buildAuditTableColumns(): Array<DataTableColumn<SettingsAuditLogEntry>>
       key: "timestamp",
       header: "Data i użytkownik",
       className: "settings-col-audit-date",
+      sortValue: (row) => row.timestamp,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{formatTimestamp(row.timestamp)}</span>
@@ -184,6 +190,7 @@ function buildAuditTableColumns(): Array<DataTableColumn<SettingsAuditLogEntry>>
       key: "change",
       header: "Zmiana",
       className: "settings-col-audit-change",
+      sortValue: (row) => `${row.action || ""} ${row.module || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.action || "-"}</span>
@@ -195,6 +202,7 @@ function buildAuditTableColumns(): Array<DataTableColumn<SettingsAuditLogEntry>>
       key: "subject",
       header: "Obiekt",
       className: "settings-col-audit-subject",
+      sortValue: (row) => `${row.subject || ""} ${row.user_id || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.subject || "-"}</span>
@@ -206,6 +214,7 @@ function buildAuditTableColumns(): Array<DataTableColumn<SettingsAuditLogEntry>>
       key: "details",
       header: "Szczegóły",
       className: "settings-col-audit-details",
+      sortValue: (row) => row.details,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.details || "Brak dodatkowych szczegółów"}</span>

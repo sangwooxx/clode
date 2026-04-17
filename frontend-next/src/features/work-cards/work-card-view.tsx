@@ -8,6 +8,7 @@ import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { saveHoursMonth } from "@/features/hours/api";
 import { buildMonthOptions, getSelectedMonth } from "@/features/hours/mappers";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
 import { fetchWorkCardBootstrapClient, saveWorkCardAndSync } from "@/features/work-cards/api";
@@ -72,6 +73,16 @@ function normalizeEmployeeLookupKey(value: string | undefined) {
   return String(value || "").trim().toLowerCase();
 }
 
+function buildMonthKey(year: string, month: string) {
+  const normalizedYear = String(year || "").trim();
+  const normalizedMonth = String(month || "").trim();
+
+  if (!/^\d{4}$/.test(normalizedYear)) return "";
+  if (!/^(0[1-9]|1[0-2])$/.test(normalizedMonth)) return "";
+
+  return `${normalizedYear}-${normalizedMonth}`;
+}
+
 export function WorkCardView({
   initialBootstrap,
   initialError,
@@ -108,6 +119,13 @@ export function WorkCardView({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCreatingMonth, setIsCreatingMonth] = useState(false);
+  const [monthStatus, setMonthStatus] = useState<string | null>(null);
+  const [monthError, setMonthError] = useState<string | null>(null);
+  const [newMonthYear, setNewMonthYear] = useState(String(new Date().getFullYear()));
+  const [newMonthNumber, setNewMonthNumber] = useState(
+    String(new Date().getMonth() + 1).padStart(2, "0")
+  );
   const [selectedHistoricalCardId, setSelectedHistoricalCardId] = useState<string | null>(null);
 
   async function reloadWorkCards(options?: { preserveSelection?: boolean }) {
@@ -378,6 +396,48 @@ export function WorkCardView({
     }));
   }
 
+  async function handleCreateMonth() {
+    if (!canWrite) return;
+    const nextMonthKey = buildMonthKey(newMonthYear, newMonthNumber);
+
+    if (!nextMonthKey) {
+      setMonthError("Podaj poprawny rok i miesiąc nowej karty.");
+      return;
+    }
+
+    setMonthError(null);
+    setMonthStatus(null);
+
+    try {
+      setIsCreatingMonth(true);
+      await saveHoursMonth(null, {
+        month_key: nextMonthKey,
+        month_label: formatMonthLabel(nextMonthKey),
+        selected: true,
+        visible_investments: [],
+        finance: {
+          zus_company_1: 0,
+          zus_company_2: 0,
+          zus_company_3: 0,
+          pit4_company_1: 0,
+          pit4_company_2: 0,
+          pit4_company_3: 0,
+          payouts: 0,
+        },
+      });
+      await reloadWorkCards({ preserveSelection: true });
+      setSelectedMonthKey(nextMonthKey);
+      setSelectedHistoricalCardId(null);
+      setMonthStatus(`Dodano miesiąc ${formatMonthLabel(nextMonthKey)}.`);
+    } catch (error) {
+      setMonthError(
+        error instanceof Error ? error.message : "Nie udało się dodać miesiąca."
+      );
+    } finally {
+      setIsCreatingMonth(false);
+    }
+  }
+
   async function handleSaveCard() {
     setSaveError(null);
     setSaveStatus(null);
@@ -476,6 +536,43 @@ export function WorkCardView({
   }
 
   const monthOptions = buildMonthOptions(months);
+  const monthCreator = canWrite ? (
+    <div className="status-stack">
+      <div className="hours-inline-controls">
+        <select
+          value={newMonthNumber}
+          onChange={(event) => setNewMonthNumber(event.target.value)}
+          className="select-field"
+        >
+          {Array.from({ length: 12 }, (_, index) => {
+            const value = String(index + 1).padStart(2, "0");
+            return (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            );
+          })}
+        </select>
+        <input
+          className="text-input"
+          inputMode="numeric"
+          value={newMonthYear}
+          onChange={(event) => setNewMonthYear(event.target.value)}
+          placeholder="Rok"
+        />
+        <ActionButton
+          type="button"
+          variant="secondary"
+          onClick={() => void handleCreateMonth()}
+          disabled={isCreatingMonth}
+        >
+          {isCreatingMonth ? "Dodawanie..." : "Dodaj miesiąc"}
+        </ActionButton>
+      </div>
+      {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
+      {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
+    </div>
+  ) : null;
 
   return (
     <div className="module-page">
@@ -509,6 +606,8 @@ export function WorkCardView({
       />
 
       <Panel className="panel--toolbar panel--info">
+        {monthCreator}
+
         <div className="hours-info-panel">
           <div className="data-table__stack">
             <span className="data-table__primary">To jest główny moduł wpisywania godzin</span>
@@ -665,6 +764,7 @@ export function WorkCardView({
             <p className="status-message">
               Najpierw przygotuj miesiąc roboczy w ewidencji czasu pracy. Karta pracy wykorzystuje ten sam model miesięcy i potem zasila go automatycznie.
             </p>
+            {monthCreator}
             <Link className="action-button action-button--secondary" href="/hours">
               Przejdź do ewidencji czasu pracy
             </Link>

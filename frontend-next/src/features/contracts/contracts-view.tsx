@@ -65,6 +65,7 @@ const contractColumns = (
       />
     ),
     className: "contracts-col-select",
+    sortable: false,
     render: (row) => (
       <input
         type="checkbox"
@@ -79,54 +80,63 @@ const contractColumns = (
     key: "lp",
     header: "Lp.",
     className: "contracts-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "contract_number",
     header: "ID",
     className: "contracts-col-id",
+    sortValue: (row) => row.item.contract_number,
     render: (row) => row.item.contract_number || "-"
   },
   {
     key: "name",
     header: "Nazwa kontraktu",
     className: "contracts-col-name",
+    sortValue: (row) => row.item.name,
     render: (row) => <span className="data-table__primary">{row.item.name || "-"}</span>
   },
   {
     key: "investor",
     header: "Zamawiający / inwestor",
     className: "contracts-col-investor",
+    sortValue: (row) => row.item.investor,
     render: (row) => row.item.investor || "-"
   },
   {
     key: "signed_date",
     header: "Data podpisania",
     className: "contracts-col-date",
+    sortValue: (row) => row.item.signed_date,
     render: (row) => formatDate(row.item.signed_date)
   },
   {
     key: "end_date",
     header: "Termin zakończenia",
     className: "contracts-col-date",
+    sortValue: (row) => row.item.end_date,
     render: (row) => formatDate(row.item.end_date)
   },
   {
     key: "contract_value",
     header: "Kwota ryczałtowa",
     className: "data-table__numeric contracts-col-value",
+    sortValue: (row) => row.item.contract_value,
     render: (row) => formatMoney(row.item.contract_value)
   },
   {
     key: "status",
     header: "Status",
     className: "contracts-col-status",
+    sortValue: (row) => row.item.status,
     render: (row) => formatStatus(row.item.status)
   },
   {
     key: "actions",
     header: "Akcje",
     className: "contracts-table__actions",
+    sortable: false,
     render: (row) => (
       <div className="contracts-table__actions-stack">
         <ActionButton
@@ -624,14 +634,19 @@ export function ContractsView({
         eyebrow="Kontrakty"
         title="Rejestr kontraktów"
         actions={
-          <ActionButton
-            type="button"
-            variant="secondary"
-            onClick={() => void reloadContracts({ preserveState: true })}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-          </ActionButton>
+          <>
+            <ActionButton type="button" onClick={resetForm}>
+              Dodaj kontrakt
+            </ActionButton>
+            <ActionButton
+              type="button"
+              variant="secondary"
+              onClick={() => void reloadContracts({ preserveState: true })}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+            </ActionButton>
+          </>
         }
       />
 

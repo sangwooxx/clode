@@ -228,12 +228,14 @@ const hoursTableColumns = (handlers: {
     key: "lp",
     header: "Lp.",
     className: "hours-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index,
   },
   {
     key: "employee",
     header: "Pracownik",
     className: "hours-col-employee",
+    sortValue: (row) => `${row.employeeName} ${row.employeeCode} ${row.employeePosition}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.employeeName}</span>
@@ -252,6 +254,7 @@ const hoursTableColumns = (handlers: {
     key: "contracts",
     header: "Kontrakty i godziny",
     className: "hours-col-contracts",
+    sortValue: (row) => row.contracts.map((contract) => contract.label).join(" "),
     render: (row) => (
       <div className="hours-contract-list">
         {row.contracts.map((contract) => (
@@ -276,18 +279,21 @@ const hoursTableColumns = (handlers: {
     key: "hours",
     header: "Suma godzin",
     className: "data-table__numeric hours-col-hours",
+    sortValue: (row) => row.totalHours,
     render: (row) => formatHours(row.totalHours),
   },
   {
     key: "cost",
     header: "Koszt",
     className: "data-table__numeric hours-col-money",
+    sortValue: (row) => row.totalCost,
     render: (row) => formatMoney(row.totalCost),
   },
   {
     key: "actions",
     header: "Akcje",
     className: "hours-col-actions",
+    sortable: false,
     render: (row) =>
       handlers.canWrite ? (
         <div className="contracts-table__actions-stack">
@@ -313,12 +319,14 @@ const contractSummaryColumns: Array<DataTableColumn<HoursContractSummaryRow>> = 
     key: "lp",
     header: "Lp.",
     className: "hours-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index,
   },
   {
     key: "contract",
     header: "Kontrakt",
     className: "hours-col-contract",
+    sortValue: (row) => `${row.option.label} ${row.option.code}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.option.label}</span>
@@ -330,6 +338,7 @@ const contractSummaryColumns: Array<DataTableColumn<HoursContractSummaryRow>> = 
     key: "status",
     header: "Status",
     className: "hours-col-status",
+    sortValue: (row) => row.option.status,
     render: (row) => (
       <span
         className={
@@ -346,18 +355,21 @@ const contractSummaryColumns: Array<DataTableColumn<HoursContractSummaryRow>> = 
     key: "entries",
     header: "Wpisy",
     className: "data-table__numeric hours-col-count",
+    sortValue: (row) => row.aggregate.entries_count,
     render: (row) => formatNumber(row.aggregate.entries_count),
   },
   {
     key: "hours",
     header: "Godziny",
     className: "data-table__numeric hours-col-hours",
+    sortValue: (row) => row.aggregate.hours_total,
     render: (row) => formatHours(row.aggregate.hours_total),
   },
   {
     key: "cost",
     header: "Koszt",
     className: "data-table__numeric hours-col-money",
+    sortValue: (row) => row.aggregate.cost_total,
     render: (row) => formatMoney(row.aggregate.cost_total),
   },
 ];

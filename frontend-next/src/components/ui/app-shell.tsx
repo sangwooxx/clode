@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { BrandMark } from "@/components/ui/brand-mark";
 import { moduleNavigation } from "@/features/navigation/module-nav";
 import { useAuth } from "@/lib/auth/auth-context";
 import { cn } from "@/lib/utils/cn";
@@ -34,9 +35,7 @@ export function AppShell({
   return (
     <div className="app-shell">
       <aside className="app-shell__sidebar">
-        <div className="app-shell__brand">
-          <span className="app-shell__brand-mark">Clode</span>
-        </div>
+        <BrandMark className="app-shell__brand" labelClassName="app-shell__brand-mark" />
 
         <nav className="app-shell__nav">
           {moduleNavigation.map((item) => (

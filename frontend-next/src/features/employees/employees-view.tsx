@@ -47,12 +47,14 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "lp",
     header: "Lp.",
     className: "employees-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index,
   },
   {
     key: "employee",
     header: "Pracownik",
     className: "employees-col-employee",
+    sortValue: (row) => `${row.employee.name} ${row.employee.worker_code}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.employee.name}</span>
@@ -67,6 +69,7 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "hr",
     header: "Kadry",
     className: "employees-col-hr",
+    sortValue: (row) => `${row.employee.status} ${row.employee.position}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.employee.position || "Bez stanowiska"}</span>
@@ -88,6 +91,7 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "employment",
     header: "Zatrudnienie i kontakt",
     className: "employees-col-employment",
+    sortValue: (row) => row.employee.employment_date || row.employee.city || row.employee.phone,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">
@@ -105,6 +109,7 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "medical",
     header: "Badania",
     className: "employees-col-medical",
+    sortValue: (row) => row.employee.medical_exam_valid_until,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.medical.dateText}</span>
@@ -118,6 +123,7 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "relations",
     header: "Powiązania",
     className: "employees-col-relations",
+    sortValue: (row) => row.relations.hoursEntries,
     render: (row) => (
       <div className="employees-relation-list">
         <span className="employees-relation-pill">Czas: {row.relations.hoursEntries}</span>
@@ -383,6 +389,9 @@ export function EmployeesView({
         title="Kartoteka pracowników"
         actions={
           <>
+            <ActionButton type="button" onClick={handleCreateNew}>
+              Dodaj pracownika
+            </ActionButton>
             <ActionButton
               type="button"
               variant="secondary"
@@ -390,9 +399,6 @@ export function EmployeesView({
               disabled={isRefreshing}
             >
               {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-            </ActionButton>
-            <ActionButton type="button" onClick={handleCreateNew}>
-              Nowy pracownik
             </ActionButton>
           </>
         }

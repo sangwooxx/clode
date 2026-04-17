@@ -54,12 +54,13 @@ select {
 }
 
 .auth-page {
-  width: min(var(--content-max), calc(100vw - 40px));
+  width: min(1120px, calc(100vw - 40px));
   min-height: 100vh;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 430px);
-  gap: 28px;
+  grid-template-columns: minmax(0, 560px) minmax(360px, 420px);
+  justify-content: center;
+  gap: 32px;
   align-items: center;
   padding: 24px 0;
 }
@@ -68,6 +69,11 @@ select {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 560px;
+}
+
+.auth-page__brand {
+  max-width: 220px;
 }
 
 .auth-page__eyebrow,
@@ -539,6 +545,29 @@ select {
   font-size: 10px;
   border-top: 0;
   white-space: nowrap;
+}
+
+.data-table__sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  font: inherit;
+}
+
+.data-table__sort-button--active {
+  color: var(--text);
+}
+
+.data-table__sort-icon {
+  color: var(--text-muted);
+  font-size: 11px;
 }
 
 .data-table__empty {

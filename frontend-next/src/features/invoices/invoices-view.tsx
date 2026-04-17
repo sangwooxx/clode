@@ -132,6 +132,7 @@ const invoiceColumns = (
       ""
     ),
     className: "invoices-col-select",
+    sortable: false,
     render: (row) =>
       handlers.canWrite ? (
         <input
@@ -147,18 +148,21 @@ const invoiceColumns = (
     key: "lp",
     header: "Lp.",
     className: "invoices-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "issue_date",
     header: "Data",
     className: "invoices-col-date",
+    sortValue: (row) => row.item.issue_date,
     render: (row) => formatDate(row.item.issue_date)
   },
   {
     key: "number",
     header: "Numer / kontrahent",
     className: "invoices-col-number",
+    sortValue: (row) => `${row.item.invoice_number} ${row.item.counterparty_name}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.item.invoice_number}</span>
@@ -170,6 +174,7 @@ const invoiceColumns = (
     key: "description",
     header: "Kategoria / opis",
     className: "invoices-col-description",
+    sortValue: (row) => row.item.category_or_description,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.item.category_or_description || "-"}</span>
@@ -181,12 +186,14 @@ const invoiceColumns = (
     key: "net",
     header: "Netto",
     className: "data-table__numeric invoices-col-money",
+    sortValue: (row) => row.item.amount_net,
     render: (row) => formatMoney(row.item.amount_net)
   },
   {
     key: "vat",
     header: "VAT",
     className: "data-table__numeric invoices-col-vat",
+    sortValue: (row) => row.item.amount_vat,
     render: (row) => (
       <div className="data-table__stack data-table__stack--numeric">
         <span className="data-table__primary">
@@ -200,12 +207,14 @@ const invoiceColumns = (
     key: "gross",
     header: "Brutto",
     className: "data-table__numeric invoices-col-money",
+    sortValue: (row) => row.item.amount_gross,
     render: (row) => formatMoney(row.item.amount_gross)
   },
   {
     key: "payment",
     header: "Płatność",
     className: "invoices-col-payment",
+    sortValue: (row) => `${row.item.payment_status} ${row.item.due_date || ""}`,
     render: (row) => (
       <div className="data-table__stack">
         <span
@@ -227,6 +236,7 @@ const invoiceColumns = (
     key: "actions",
     header: "Akcje",
     className: "invoices-table__actions",
+    sortable: false,
     render: (row) =>
       handlers.canWrite ? (
         <div className="contracts-table__actions-stack">

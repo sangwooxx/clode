@@ -1,17 +1,18 @@
 import { LoginForm } from "@/app/(auth)/login/login-form";
+import { BrandMark } from "@/components/ui/brand-mark";
 
 const loginHighlights = [
   {
-    title: "Realny login",
-    description: "Nowy frontend loguje sie do tego samego backendu auth co obecne MVP."
+    title: "To samo konto",
+    description: "Logujesz sie tym samym kontem i sesja, ktorych uzywa glowny frontend produktu."
   },
   {
-    title: "Bootstrap sesji",
-    description: "Po refreshu sesja odtwarza sie z ciasteczka i naglowkow sesyjnych."
+    title: "Jeden runtime",
+    description: "Po zalogowaniu trafiasz do tego samego shellu i tych samych modulow operacyjnych."
   },
   {
-    title: "Bezpieczny shell",
-    description: "Czesc app jest chroniona i dziala rownolegle do legacy frontendu."
+    title: "Bezpieczna sesja",
+    description: "Refresh, ochrona tras i wylogowanie dzialaja na tym samym modelu auth co aplikacja."
   }
 ];
 
@@ -32,11 +33,12 @@ export default async function LoginPage({
   return (
     <div className="auth-page">
       <section className="auth-page__content">
-        <p className="auth-page__eyebrow">Clode / Next.js runtime</p>
-        <h1 className="auth-page__title">Logowanie do nowego runtime frontendu Clode.</h1>
+        <BrandMark className="app-shell__brand auth-page__brand" labelClassName="app-shell__brand-mark" />
+        <p className="auth-page__eyebrow">Wejscie do aplikacji</p>
+        <h1 className="auth-page__title">Zaloguj sie do Clode.</h1>
         <p className="auth-page__description">
-          Ten etap domyka prawdziwy login, bootstrap sesji, route protection i shell
-          aplikacji bez ruszania legacy MVP.
+          Ekran logowania korzysta z tego samego backendu auth i prowadzi bezposrednio do
+          glownego shellu operacyjnego.
         </p>
 
         <div className="auth-page__highlights">

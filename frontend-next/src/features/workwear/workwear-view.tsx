@@ -73,12 +73,14 @@ function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
       key: "lp",
       header: "Lp.",
       className: "workwear-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "employee",
       header: "Pracownik",
       className: "workwear-col-employee",
+      sortValue: (row) => `${row.employee.name} ${row.employee.worker_code} ${row.employee.position}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.employee.name}</span>
@@ -93,6 +95,7 @@ function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
       key: "status",
       header: "Status",
       className: "workwear-col-status",
+      sortValue: (row) => `${row.employee.status} ${row.issuesCount}`,
       render: (row) => (
         <div className="data-table__stack">
           <span
@@ -114,6 +117,7 @@ function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
       key: "issues",
       header: "Wydania",
       className: "workwear-col-issues",
+      sortValue: (row) => row.totalQuantity,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{formatWorkwearQuantity(row.totalQuantity)} szt.</span>
@@ -127,6 +131,7 @@ function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
       key: "last_issue",
       header: "Ostatnie wydanie",
       className: "workwear-col-date",
+      sortValue: (row) => row.lastIssueDate,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -147,12 +152,14 @@ function issueColumns(): Array<DataTableColumn<WorkwearIssueRow>> {
       key: "lp",
       header: "Lp.",
       className: "workwear-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "issue",
       header: "Data i element",
       className: "workwear-col-issue",
+      sortValue: (row) => `${row.entry.issue.issue_date} ${row.entry.issue.item_name || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -168,6 +175,7 @@ function issueColumns(): Array<DataTableColumn<WorkwearIssueRow>> {
       key: "spec",
       header: "Rozmiar / ilosc",
       className: "workwear-col-spec",
+      sortValue: (row) => `${row.entry.issue.size || ""} ${row.entry.issue.quantity}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -183,6 +191,7 @@ function issueColumns(): Array<DataTableColumn<WorkwearIssueRow>> {
       key: "state",
       header: "Semantyka wpisu",
       className: "workwear-col-state",
+      sortValue: (row) => `${row.entry.resolution} ${row.entry.issue.notes || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span
@@ -209,12 +218,14 @@ function catalogColumns(): Array<DataTableColumn<WorkwearCatalogRow>> {
       key: "lp",
       header: "Lp.",
       className: "workwear-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "item",
       header: "Element",
       className: "workwear-col-item",
+      sortValue: (row) => `${row.item.name} ${row.item.category || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.item.name}</span>
@@ -226,6 +237,7 @@ function catalogColumns(): Array<DataTableColumn<WorkwearCatalogRow>> {
       key: "usage",
       header: "Wydania",
       className: "workwear-col-issues",
+      sortValue: (row) => row.issuesCount,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.issuesCount}</span>
@@ -239,6 +251,7 @@ function catalogColumns(): Array<DataTableColumn<WorkwearCatalogRow>> {
       key: "notes",
       header: "Standard",
       className: "workwear-col-notes",
+      sortValue: (row) => `${row.item.notes || ""} ${row.lastIssueDate || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.item.notes || "Bez opisu"}</span>
@@ -257,12 +270,14 @@ function attentionColumns(): Array<DataTableColumn<WorkwearAttentionRow>> {
       key: "lp",
       header: "Lp.",
       className: "workwear-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "entry",
       header: "Wpis legacy",
       className: "workwear-col-issue",
+      sortValue: (row) => `${row.entry.issue.issue_date} ${row.entry.issue.employee_name || ""} ${row.entry.issue.item_name || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -278,6 +293,7 @@ function attentionColumns(): Array<DataTableColumn<WorkwearAttentionRow>> {
       key: "reason",
       header: "Powod",
       className: "workwear-col-notes",
+      sortValue: (row) => row.reason,
       render: (row) => row.reason,
     },
   ];

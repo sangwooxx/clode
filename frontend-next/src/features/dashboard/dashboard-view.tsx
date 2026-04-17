@@ -58,12 +58,14 @@ const contractColumns: Array<DataTableColumn<DashboardContractRow>> = [
     key: "lp",
     header: "Lp.",
     className: "dashboard-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "contract",
     header: "Kontrakt",
     className: "dashboard-col-contract",
+    sortValue: (row) => `${row.item.contract.contract_number} ${row.item.contract.name}`,
     render: (row) => (
       <span className="data-table__primary">
         {row.item.contract.contract_number
@@ -76,36 +78,42 @@ const contractColumns: Array<DataTableColumn<DashboardContractRow>> = [
     key: "sales",
     header: "Faktury sprzedażowe",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.metrics.revenue_total,
     render: (row) => formatMoney(row.item.metrics.revenue_total)
   },
   {
     key: "invoice-cost",
     header: "Faktury kosztowe",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.metrics.invoice_cost_total,
     render: (row) => formatMoney(row.item.metrics.invoice_cost_total)
   },
   {
     key: "labor-cost",
     header: "Koszt wynagrodzeń",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.metrics.labor_cost_total,
     render: (row) => formatMoney(row.item.metrics.labor_cost_total)
   },
   {
     key: "total-cost",
     header: "Łączny koszt",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.metrics.cost_total,
     render: (row) => formatMoney(row.item.metrics.cost_total)
   },
   {
     key: "hours",
     header: "Godziny",
     className: "data-table__numeric dashboard-col-hours",
+    sortValue: (row) => row.item.metrics.labor_hours_total,
     render: (row) => formatHours(row.item.metrics.labor_hours_total)
   },
   {
     key: "margin",
     header: "Marża",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.metrics.margin,
     render: (row) => formatMoney(row.item.metrics.margin)
   }
 ];
@@ -115,48 +123,56 @@ const monthlyColumns: Array<DataTableColumn<DashboardMonthlyRow>> = [
     key: "lp",
     header: "Lp.",
     className: "dashboard-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "month",
     header: "Miesiąc",
     className: "dashboard-col-month",
+    sortValue: (row) => row.item.month_key,
     render: (row) => formatMonthLabel(row.item.month_label || row.item.month_key)
   },
   {
     key: "sales",
     header: "Faktury sprzedażowe",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.revenue_total,
     render: (row) => formatMoney(row.item.revenue_total)
   },
   {
     key: "invoice-cost",
     header: "Faktury kosztowe",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.invoice_cost_total,
     render: (row) => formatMoney(row.item.invoice_cost_total)
   },
   {
     key: "labor-cost",
     header: "Koszt wynagrodzeń",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.labor_cost_total,
     render: (row) => formatMoney(row.item.labor_cost_total)
   },
   {
     key: "hours",
     header: "Godziny",
     className: "data-table__numeric dashboard-col-hours",
+    sortValue: (row) => row.item.labor_hours_total,
     render: (row) => formatHours(row.item.labor_hours_total)
   },
   {
     key: "total-cost",
     header: "Łączny koszt",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.cost_total,
     render: (row) => formatMoney(row.item.cost_total)
   },
   {
     key: "margin",
     header: "Marża",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.margin,
     render: (row) => formatMoney(row.item.margin)
   }
 ];
@@ -166,42 +182,49 @@ const unassignedInvoiceColumns: Array<DataTableColumn<DashboardUnassignedInvoice
     key: "lp",
     header: "Lp.",
     className: "dashboard-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "date",
     header: "Data wystawienia",
     className: "dashboard-col-date",
+    sortValue: (row) => row.item.issue_date,
     render: (row) => formatDate(row.item.issue_date)
   },
   {
     key: "type",
     header: "Typ",
     className: "dashboard-col-type",
+    sortValue: (row) => row.item.type,
     render: (row) => (row.item.type === "sales" ? "Faktura sprzedażowa" : "Faktura kosztowa")
   },
   {
     key: "number",
     header: "Numer faktury",
     className: "dashboard-col-number",
+    sortValue: (row) => row.item.document_number,
     render: (row) => row.item.document_number || "-"
   },
   {
     key: "contract",
     header: "Wpisany kontrakt",
     className: "dashboard-col-contract-name",
+    sortValue: (row) => row.item.contract_name,
     render: (row) => row.item.contract_name || "Brak kontraktu"
   },
   {
     key: "party",
     header: "Kontrahent",
     className: "dashboard-col-party",
+    sortValue: (row) => row.item.party,
     render: (row) => row.item.party || "-"
   },
   {
     key: "description",
     header: "Kategoria / opis",
     className: "dashboard-col-description",
+    sortValue: (row) => `${row.item.category || ""} ${row.item.description || ""}`,
     render: (row) => (
       <div className="data-table__stack">
         <span className="data-table__primary">{row.item.category || "-"}</span>
@@ -215,12 +238,15 @@ const unassignedInvoiceColumns: Array<DataTableColumn<DashboardUnassignedInvoice
     key: "net",
     header: "Netto",
     className: "data-table__numeric dashboard-col-money",
+    sortValue: (row) => row.item.net_amount,
     render: (row) => formatMoney(row.item.net_amount)
   },
   {
     key: "vat",
     header: "VAT",
     className: "data-table__numeric dashboard-col-vat",
+    sortValue: (row) =>
+      Math.max(0, Number(row.item.gross_amount || 0) - Number(row.item.net_amount || 0)),
     render: (row) => {
       const net = Number(row.item.net_amount || 0);
       const gross = Number(row.item.gross_amount || 0);
@@ -241,6 +267,7 @@ const unassignedInvoiceColumns: Array<DataTableColumn<DashboardUnassignedInvoice
     key: "gross",
     header: "Brutto",
     className: "data-table__numeric dashboard-col-money",
+    sortValue: (row) => row.item.gross_amount,
     render: (row) => formatMoney(row.item.gross_amount)
   }
 ];
@@ -250,30 +277,35 @@ const unmatchedHoursColumns: Array<DataTableColumn<DashboardUnmatchedHoursRow>> 
     key: "lp",
     header: "Lp.",
     className: "dashboard-col-lp",
+    sortValue: (row) => row.index,
     render: (row) => row.index
   },
   {
     key: "name",
     header: "Pozycja",
     className: "dashboard-col-position",
+    sortValue: (row) => row.item.source_name,
     render: (row) => row.item.source_name
   },
   {
     key: "entries",
     header: "Zapisy",
     className: "data-table__numeric dashboard-col-count",
+    sortValue: (row) => row.item.entries,
     render: (row) => formatInteger(row.item.entries)
   },
   {
     key: "hours",
     header: "Godziny",
     className: "data-table__numeric dashboard-col-hours",
+    sortValue: (row) => row.item.labor_hours,
     render: (row) => formatHours(row.item.labor_hours)
   },
   {
     key: "cost",
     header: "Koszt wynagrodzeń",
     className: "data-table__numeric dashboard-col-money-wide",
+    sortValue: (row) => row.item.labor_cost,
     render: (row) => formatMoney(row.item.labor_cost)
   }
 ];

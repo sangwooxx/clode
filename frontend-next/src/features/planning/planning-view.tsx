@@ -80,12 +80,14 @@ function planningEmployeeColumns(args: {
       key: "lp",
       header: "Lp.",
       className: "planning-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "employee",
       header: "Pracownik",
       className: "planning-col-employee",
+      sortValue: (row) => `${row.employee.name} ${row.employee.worker_code} ${row.employee.position}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.employee.name}</span>
@@ -100,6 +102,7 @@ function planningEmployeeColumns(args: {
       key: "status",
       header: "Status na dzień",
       className: "planning-col-status",
+      sortValue: (row) => `${row.statusLabel} ${row.assignment?.contractName || ""}`,
       render: (row) => (
         <div className="data-table__stack">
           <span
@@ -128,6 +131,7 @@ function planningEmployeeColumns(args: {
       key: "contract",
       header: "Kontrakt",
       className: "planning-col-contract",
+      sortValue: (row) => row.assignment?.contractName || "",
       render: (row) => {
         const draft = args.drafts[row.employee.key] || { contractId: "", note: "" };
         const hasCurrentMissingContract =
@@ -172,6 +176,7 @@ function planningEmployeeColumns(args: {
       key: "note",
       header: "Uwagi",
       className: "planning-col-note",
+      sortValue: (row) => row.assignment?.note || "",
       render: (row) => {
         const draft = args.drafts[row.employee.key] || { contractId: "", note: "" };
         return (
@@ -190,6 +195,7 @@ function planningEmployeeColumns(args: {
       key: "actions",
       header: "Akcje",
       className: "planning-col-actions",
+      sortable: false,
       render: (row) => {
         const rowBusy = args.busyKey === row.employee.key;
         return (
@@ -229,12 +235,14 @@ function planningContractsColumns(): Array<DataTableColumn<PlanningContractSumma
       key: "lp",
       header: "Lp.",
       className: "planning-col-lp",
+      sortValue: (row) => row.index,
       render: (row) => row.index,
     },
     {
       key: "contract",
       header: "Kontrakt",
       className: "planning-col-contract-summary",
+      sortValue: (row) => `${row.contract.contract_number} ${row.contract.name}`,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
@@ -248,6 +256,7 @@ function planningContractsColumns(): Array<DataTableColumn<PlanningContractSumma
       key: "staffing",
       header: "Obsada",
       className: "planning-col-status",
+      sortValue: (row) => row.assignedEmployees.length,
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">{row.staffingStatus}</span>
@@ -261,6 +270,7 @@ function planningContractsColumns(): Array<DataTableColumn<PlanningContractSumma
       key: "employees",
       header: "Przypisani pracownicy",
       className: "planning-col-employees",
+      sortValue: (row) => row.assignedEmployees.join(", "),
       render: (row) => (
         <div className="data-table__stack">
           <span className="data-table__primary">
