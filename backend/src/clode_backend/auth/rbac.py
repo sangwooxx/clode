@@ -73,6 +73,7 @@ STORE_PERMISSIONS = {
     "contracts_deleted": "contractsView",
     "employees": "employeesView",
     "hours": "hoursView",
+    "work_cards": "hoursView",
     "invoices": "invoicesView",
     "vacations": "vacationsView",
     "planning": "planningView",
@@ -120,3 +121,15 @@ def can_access_store(role: str | None, permissions: dict[str, Any] | None, store
     if not required_view:
         return normalize_role(role) == "admin"
     return can_access_view(role, permissions, required_view)
+
+
+def can_read_store(role: str | None, permissions: dict[str, Any] | None, store_name: str) -> bool:
+    if store_name == "settings":
+        return can_access_view(role, permissions, "settingsView") or can_access_view(
+            role, permissions, "vacationsView"
+        )
+    return can_access_store(role, permissions, store_name)
+
+
+def can_write_store(role: str | None, permissions: dict[str, Any] | None, store_name: str) -> bool:
+    return can_access_store(role, permissions, store_name)

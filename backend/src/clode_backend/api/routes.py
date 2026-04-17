@@ -12,6 +12,7 @@ from clode_backend.auth.sessions import (
 )
 from clode_backend.services.auth_service import AuthService, AuthServiceError
 from clode_backend.services.contract_service import ContractService, ContractServiceError
+from clode_backend.services.employee_service import EmployeeService, EmployeeServiceError
 from clode_backend.services.invoice_service import InvoiceService, InvoiceServiceError
 from clode_backend.services.store_service import StoreService
 from clode_backend.services.time_entry_service import TimeEntryService, TimeEntryServiceError
@@ -37,6 +38,7 @@ def route_request(
     user_service: UserService,
     invoice_service: InvoiceService,
     contract_service: ContractService,
+    employee_service: EmployeeService,
     time_entry_service: TimeEntryService,
 ):
     parsed = urlparse(handler.path)
@@ -54,6 +56,12 @@ def route_request(
 
     def require_store_access(store_name: str):
         auth_service.ensure_store_access(current_user, store_name)
+
+    def require_store_read_access(store_name: str):
+        auth_service.ensure_store_read_access(current_user, store_name)
+
+    def require_store_write_access(store_name: str):
+        auth_service.ensure_store_write_access(current_user, store_name)
 
     if method == "GET" and path == "/api/health":
         return json_response(200, {"ok": True, "service": "clode-backend"})
@@ -101,6 +109,27 @@ def route_request(
                 body = parse_json_body(handler)
                 created = user_service.create_or_update_user(body)
                 return json_response(201, {"ok": True, "user": created})
+
+        if path == "/api/v1/employees":
+            if method == "GET":
+                employees = employee_service.list_employees(current_user)
+                return json_response(200, {"ok": True, "employees": employees})
+            if method == "POST":
+                body = parse_json_body(handler)
+                created = employee_service.create_employee(body, current_user)
+                return json_response(201, {"ok": True, "employee": created})
+
+        if path.startswith("/api/v1/employees/"):
+            employee_id = path.split("/api/v1/employees/", 1)[1]
+            if not employee_id:
+                return json_response(400, {"ok": False, "error": "Missing employee id."})
+            if method == "PUT":
+                body = parse_json_body(handler)
+                updated = employee_service.update_employee(employee_id, body, current_user)
+                return json_response(200, {"ok": True, "employee": updated})
+            if method == "DELETE":
+                employee_service.delete_employee(employee_id, current_user)
+                return json_response(204, {})
 
         if path.startswith("/api/v1/users/"):
             require_admin()
@@ -281,6 +310,8 @@ def route_request(
         return json_response(400, {"ok": False, "error": str(error)})
     except ContractServiceError as error:
         return json_response(error.status_code, {"ok": False, "error": str(error)})
+    except EmployeeServiceError as error:
+        return json_response(error.status_code, {"ok": False, "error": str(error)})
     except InvoiceServiceError as error:
         return json_response(error.status_code, {"ok": False, "error": str(error)})
     except TimeEntryServiceError as error:
@@ -292,24 +323,32 @@ def route_request(
         store_name = path.split("/api/v1/stores/", 1)[1]
         if not store_name:
             return json_response(400, {"ok": False, "error": "Missing store name."})
-        try:
-            require_store_access(store_name)
-        except AuthServiceError as error:
-            return json_response(error.status_code, {"ok": False, "error": str(error)})
 
         if method == "GET":
+            try:
+                require_store_read_access(store_name)
+            except AuthServiceError as error:
+                return json_response(error.status_code, {"ok": False, "error": str(error)})
             payload = store_service.get_store(store_name)
             if payload is None:
                 return json_response(404, {"ok": False, "error": "Store not found."})
             return json_response(200, {"ok": True, "store": store_name, "payload": payload})
 
         if method == "PUT":
+            try:
+                require_store_write_access(store_name)
+            except AuthServiceError as error:
+                return json_response(error.status_code, {"ok": False, "error": str(error)})
             body = parse_json_body(handler)
             payload = body.get("payload")
             saved = store_service.save_store(store_name, payload)
             return json_response(200, {"ok": True, "store": store_name, "payload": saved})
 
         if method == "DELETE":
+            try:
+                require_store_write_access(store_name)
+            except AuthServiceError as error:
+                return json_response(error.status_code, {"ok": False, "error": str(error)})
             store_service.delete_store(store_name)
             return 204, {}, {}
 

@@ -1,0 +1,231 @@
+import type { HoursEmployeeRecord, HoursListResponse } from "@/features/hours/types";
+import { UNASSIGNED_TIME_CONTRACT_ID } from "@/features/hours/types";
+import {
+  fetchHoursContracts,
+  fetchHoursData,
+  fetchHoursEmployeeDirectory,
+  fetchHoursEmployees,
+  removeHoursEntry,
+  saveHoursEntry,
+} from "@/features/hours/api";
+import { getStore, saveStore } from "@/lib/api/stores";
+import {
+  buildWorkCardEmployeeOptions,
+  buildWorkCardSyncPayloads,
+} from "@/features/work-cards/mappers";
+import { WORK_CARDS_STORE_KEY, type WorkCardBootstrapData, type WorkCardRecord, type WorkCardStore } from "@/features/work-cards/types";
+
+function normalizeEmployeeMatch(
+  entry: { employee_id?: string; employee_name?: string },
+  employee: HoursEmployeeRecord,
+  options?: { allowNameFallback?: boolean }
+) {
+  const employeeId = String(employee.id || "").trim();
+  const entryEmployeeId = String(entry.employee_id || "").trim();
+
+  if (employeeId && entryEmployeeId) {
+    return employeeId === entryEmployeeId;
+  }
+
+  if (employeeId && !options?.allowNameFallback) {
+    return false;
+  }
+
+  return String(entry.employee_name || "").trim().toLowerCase() ===
+    String(employee.name || "").trim().toLowerCase();
+}
+
+function getContractKey(entry: { contract_id?: string }) {
+  return String(entry.contract_id || "").trim() || UNASSIGNED_TIME_CONTRACT_ID;
+}
+
+export async function fetchWorkCardStore() {
+  try {
+    const response = (await getStore<WorkCardStore>(WORK_CARDS_STORE_KEY)) as {
+      payload?: WorkCardStore;
+    };
+
+    if (response?.payload && Array.isArray(response.payload.cards)) {
+      return response.payload;
+    }
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (/404/.test(error.message) || /not found/i.test(error.message))
+    ) {
+      return {
+        version: 1,
+        cards: [],
+      } satisfies WorkCardStore;
+    }
+    throw error;
+  }
+
+  return {
+    version: 1,
+    cards: [],
+  } satisfies WorkCardStore;
+}
+
+export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapData> {
+  const [contracts, employees, historicalEmployees, payload, store] = await Promise.all([
+    fetchHoursContracts(),
+    fetchHoursEmployees(),
+    fetchHoursEmployeeDirectory(),
+    fetchHoursData(),
+    fetchWorkCardStore(),
+  ]);
+
+  const employeeOptions = buildWorkCardEmployeeOptions(employees);
+
+  return {
+    contracts,
+    employees,
+    historicalEmployees,
+    months: payload.months,
+    selectedMonthKey:
+      payload.months.find((month) => month.selected)?.month_key ||
+      payload.months[0]?.month_key ||
+      "",
+    selectedEmployeeKey:
+      employeeOptions.find((option) => option.status !== "inactive")?.key ||
+      employeeOptions[0]?.key ||
+      "",
+    store,
+  };
+}
+
+export async function saveWorkCardAndSync(args: {
+  store: WorkCardStore;
+  card: WorkCardRecord;
+  employee: HoursEmployeeRecord;
+  employees: HoursEmployeeRecord[];
+  syncableContractIds: string[];
+}) {
+  if (args.employee.status === "inactive") {
+    throw new Error("Nie można zapisać karty pracy dla nieaktywnego pracownika.");
+  }
+
+  const savedStoreResponse = (await saveStore(WORK_CARDS_STORE_KEY, args.store)) as {
+    payload?: WorkCardStore;
+  };
+  const savedStore =
+    savedStoreResponse.payload && Array.isArray(savedStoreResponse.payload.cards)
+      ? savedStoreResponse.payload
+      : args.store;
+
+  const syncPayloads = buildWorkCardSyncPayloads({
+    card: args.card,
+    employee: args.employee,
+  }).filter((payload) => {
+    const contractKey = payload.contract_id || UNASSIGNED_TIME_CONTRACT_ID;
+    return (
+      contractKey === UNASSIGNED_TIME_CONTRACT_ID ||
+      args.syncableContractIds.includes(contractKey)
+    );
+  });
+
+  try {
+    const employeeNameKey = String(args.employee.name || "").trim().toLowerCase();
+    const matchingNameCount = args.employees.filter(
+      (employee) => String(employee.name || "").trim().toLowerCase() === employeeNameKey
+    ).length;
+    const allowNameFallback = !String(args.employee.id || "").trim() || matchingNameCount <= 1;
+
+    const existingPayload = (await fetchHoursData({
+      month: args.card.month_key,
+      ...(String(args.employee.id || "").trim()
+        ? { employee_id: String(args.employee.id || "").trim() }
+        : { employee_name: args.employee.name }),
+    })) as HoursListResponse;
+
+    const existingEntries = existingPayload.entries.filter((entry) =>
+      normalizeEmployeeMatch(entry, args.employee, {
+        allowNameFallback,
+      })
+    );
+
+    const existingByContract = new Map<string, HoursListResponse["entries"][number]>();
+    const duplicateEntryIds = new Set<string>();
+
+    existingEntries.forEach((entry) => {
+      const contractKey = getContractKey(entry);
+      const current = existingByContract.get(contractKey);
+      const entryHasEmployeeId = String(entry.employee_id || "").trim().length > 0;
+      const currentHasEmployeeId = String(current?.employee_id || "").trim().length > 0;
+
+      if (!current) {
+        existingByContract.set(contractKey, entry);
+        return;
+      }
+
+      if (entryHasEmployeeId && !currentHasEmployeeId) {
+        duplicateEntryIds.add(current.id);
+        existingByContract.set(contractKey, entry);
+        return;
+      }
+
+      duplicateEntryIds.add(entry.id);
+    });
+
+    for (const payload of syncPayloads) {
+      const contractKey = payload.contract_id || UNASSIGNED_TIME_CONTRACT_ID;
+      const existingEntry = existingByContract.get(contractKey) ?? null;
+
+      const normalizedPayload = {
+        ...payload,
+        contract_id:
+          payload.contract_id && payload.contract_id !== UNASSIGNED_TIME_CONTRACT_ID
+            ? payload.contract_id
+            : "",
+      };
+
+      try {
+        await saveHoursEntry(existingEntry?.id ?? null, normalizedPayload);
+      } catch (error) {
+        if (!normalizedPayload.employee_id || !allowNameFallback) {
+          throw error;
+        }
+
+        await saveHoursEntry(existingEntry?.id ?? null, {
+          ...normalizedPayload,
+          employee_id: "",
+        });
+      }
+    }
+
+    const activeContractKeys = new Set(
+      syncPayloads.map((payload) => payload.contract_id || UNASSIGNED_TIME_CONTRACT_ID)
+    );
+
+    await Promise.all(
+      existingEntries
+        .filter((entry) => {
+          const entryContractKey = getContractKey(entry);
+          if (duplicateEntryIds.has(entry.id)) {
+            return true;
+          }
+          if (
+            entryContractKey !== UNASSIGNED_TIME_CONTRACT_ID &&
+            !args.syncableContractIds.includes(entryContractKey)
+          ) {
+            return false;
+          }
+          return !activeContractKeys.has(entryContractKey);
+        })
+        .map((entry) => removeHoursEntry(entry.id))
+    );
+
+    return {
+      store: savedStore,
+    };
+  } catch (error) {
+    return {
+      store: savedStore,
+      syncError:
+        error instanceof Error
+          ? `Karta pracy została zapisana, ale synchronizacja z ewidencją czasu pracy nie powiodła się: ${error.message}`
+          : "Karta pracy została zapisana, ale synchronizacja z ewidencją czasu pracy nie powiodła się.",
+    };
+  }
+}

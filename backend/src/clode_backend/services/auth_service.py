@@ -4,7 +4,14 @@ from typing import Any
 from uuid import uuid4
 
 from clode_backend.auth.passwords import verify_password
-from clode_backend.auth.rbac import can_access_store, can_access_view, effective_permissions, normalize_role
+from clode_backend.auth.rbac import (
+    can_access_store,
+    can_access_view,
+    can_read_store,
+    can_write_store,
+    effective_permissions,
+    normalize_role,
+)
 from clode_backend.auth.sessions import (
     generate_session_token,
     hash_session_token,
@@ -111,6 +118,18 @@ class AuthService:
         if not current_user:
             raise AuthServiceError("Brak aktywnej sesji.", status_code=401)
         if not can_access_store(current_user.get("role"), current_user.get("permissions"), store_name):
+            raise AuthServiceError("Brak uprawnien do tego zasobu.", status_code=403)
+
+    def ensure_store_read_access(self, current_user: dict[str, Any] | None, store_name: str) -> None:
+        if not current_user:
+            raise AuthServiceError("Brak aktywnej sesji.", status_code=401)
+        if not can_read_store(current_user.get("role"), current_user.get("permissions"), store_name):
+            raise AuthServiceError("Brak uprawnien do tego zasobu.", status_code=403)
+
+    def ensure_store_write_access(self, current_user: dict[str, Any] | None, store_name: str) -> None:
+        if not current_user:
+            raise AuthServiceError("Brak aktywnej sesji.", status_code=401)
+        if not can_write_store(current_user.get("role"), current_user.get("permissions"), store_name):
             raise AuthServiceError("Brak uprawnien do tego zasobu.", status_code=403)
 
     def ensure_admin(self, current_user: dict[str, Any] | None) -> None:

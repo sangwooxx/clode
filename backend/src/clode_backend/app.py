@@ -10,12 +10,14 @@ from clode_backend.db.bootstrap import ensure_database
 from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository
 from clode_backend.repositories.session_repository import SessionRepository
 from clode_backend.repositories.contract_repository import ContractRepository
+from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.invoice_repository import InvoiceRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.user_repository import UserRepository
 from clode_backend.services.auth_service import AuthService
 from clode_backend.services.contract_service import ContractService
+from clode_backend.services.employee_service import EmployeeService
 from clode_backend.services.invoice_service import InvoiceService
 from clode_backend.services.store_service import StoreService
 from clode_backend.services.time_entry_service import TimeEntryService
@@ -26,6 +28,8 @@ def create_runtime_context():
     settings = load_settings()
     ensure_database(settings)
     store_repository = StoreRepository(settings)
+    employee_repository = EmployeeRepository(settings)
+    time_entry_repository = TimeEntryRepository(settings)
     store_service = StoreService(store_repository)
     user_service = UserService(UserRepository(settings), store_repository)
     user_service.ensure_bootstrap_users()
@@ -33,7 +37,16 @@ def create_runtime_context():
     contract_repository = ContractRepository(settings)
     invoice_service = InvoiceService(InvoiceRepository(settings), contract_repository)
     contract_service = ContractService(contract_repository, ContractMetricsRepository(settings))
-    time_entry_service = TimeEntryService(TimeEntryRepository(settings), contract_repository)
+    employee_service = EmployeeService(
+        employee_repository,
+        time_entry_repository,
+        store_repository,
+    )
+    time_entry_service = TimeEntryService(
+        time_entry_repository,
+        contract_repository,
+        employee_repository,
+    )
 
     return {
         "settings": settings,
@@ -42,6 +55,7 @@ def create_runtime_context():
         "user_service": user_service,
         "invoice_service": invoice_service,
         "contract_service": contract_service,
+        "employee_service": employee_service,
         "time_entry_service": time_entry_service,
     }
 
@@ -54,6 +68,7 @@ def create_server():
     user_service = runtime["user_service"]
     invoice_service = runtime["invoice_service"]
     contract_service = runtime["contract_service"]
+    employee_service = runtime["employee_service"]
     time_entry_service = runtime["time_entry_service"]
 
     class ClodeRequestHandler(BaseHTTPRequestHandler):
@@ -87,19 +102,19 @@ def create_server():
             self._send(204)
 
         def do_GET(self) -> None:  # noqa: N802
-            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, time_entry_service)
+            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, employee_service, time_entry_service)
             self._send(status, payload, headers)
 
         def do_POST(self) -> None:  # noqa: N802
-            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, time_entry_service)
+            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, employee_service, time_entry_service)
             self._send(status, payload, headers)
 
         def do_PUT(self) -> None:  # noqa: N802
-            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, time_entry_service)
+            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, employee_service, time_entry_service)
             self._send(status, payload, headers)
 
         def do_DELETE(self) -> None:  # noqa: N802
-            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, time_entry_service)
+            status, payload, headers = route_request(self, store_service, auth_service, user_service, invoice_service, contract_service, employee_service, time_entry_service)
             self._send(status, payload, headers)
 
         def log_message(self, format_string: str, *args) -> None:

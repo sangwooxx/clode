@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from clode_backend.auth.rbac import normalize_role
 from clode_backend.repositories.contract_repository import ContractRepository
+from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
 from clode_backend.validation.time_entries import (
     normalize_contract_id,
@@ -24,9 +25,15 @@ class TimeEntryServiceError(RuntimeError):
 
 
 class TimeEntryService:
-    def __init__(self, repository: TimeEntryRepository, contract_repository: ContractRepository) -> None:
+    def __init__(
+        self,
+        repository: TimeEntryRepository,
+        contract_repository: ContractRepository,
+        employee_repository: EmployeeRepository,
+    ) -> None:
         self.repository = repository
         self.contract_repository = contract_repository
+        self.employee_repository = employee_repository
 
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
@@ -52,6 +59,10 @@ class TimeEntryService:
             "aggregates": self._build_aggregates(entries),
             "filters": normalized_filters,
         }
+
+    def list_employees(self, current_user: dict[str, Any] | None) -> list[dict[str, Any]]:
+        self.ensure_read_access(current_user)
+        return self.employee_repository.list_all()
 
     def create_time_entry(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
