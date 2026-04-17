@@ -80,7 +80,6 @@ export type InvoiceCard = {
 };
 
 export type InvoicesViewModel = {
-  analysisCards: InvoiceCard[];
   summaryCards: InvoiceCard[];
   scopeCaption: string;
 };

@@ -626,6 +626,16 @@ export function InvoicesView({
         eyebrow="Finanse"
         title="Rejestr faktur"
         actions={
+          <>
+          {canWrite ? (
+            <ActionButton
+              type="button"
+              onClick={openNewInvoiceForm}
+              disabled={selectedContractId === UNASSIGNED_CONTRACT_ID}
+            >
+              Dodaj fakture
+            </ActionButton>
+          ) : null}
           <ActionButton
             type="button"
             variant="secondary"
@@ -634,6 +644,7 @@ export function InvoicesView({
           >
             {isRefreshing ? "Odświeżanie..." : "Odśwież"}
           </ActionButton>
+          </>
         }
       />
 
@@ -741,30 +752,16 @@ export function InvoicesView({
         </Panel>
       ) : (
         <>
-          <Panel className="invoices-analysis-panel">
-            <div className="invoices-analysis-header">
-              <div>
-                <p className="panel__title">{selectedContractLabel}</p>
-                <p className="invoices-analysis-caption">
-                  {selectedContract
-                    ? selectedContract.investor || "Aktywny kontrakt do analizy."
-                    : "Pozycje bez przypisanego kontraktu."}
-                </p>
-              </div>
-              <p className="invoices-analysis-scope">{viewModel?.scopeCaption}</p>
+          <div className="summary-strip invoices-context-strip">
+            <div className="summary-strip__primary">
+              <span className="summary-strip__label">Kontrakt</span>
+              <strong className="summary-strip__value">{selectedContractLabel}</strong>
+              <span className="summary-strip__meta">
+                {selectedContract?.investor || "Pozycje bez przypisanego kontraktu"}
+              </span>
             </div>
-            <div className="module-page__stats module-page__stats--compact">
-              {viewModel?.analysisCards.map((card) => (
-                <StatCard
-                  key={card.id}
-                  label={card.label}
-                  value={card.value}
-                  hint={card.hint}
-                  accent={card.accent}
-                />
-              ))}
-            </div>
-          </Panel>
+            <span className="summary-strip__side">{viewModel?.scopeCaption}</span>
+          </div>
 
           <div className="invoices-layout">
             <div className="module-page__stack">

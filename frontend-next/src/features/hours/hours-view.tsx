@@ -1069,8 +1069,7 @@ export function HoursView({
           <div className="data-table__stack">
             <span className="data-table__primary">Nowe operacje działają tylko na aktywnych pracownikach</span>
             <span className="data-table__secondary">
-              Selektory korekty i nowe wpisy korzystają wyłącznie z aktywnej kartoteki. Nieaktywni pracownicy
-              zostają w tabeli tylko jako historia miesiąca.
+              Nowe wpisy korzystają z aktywnej kartoteki. Nieaktywni zostają tylko w historii miesiąca.
             </span>
           </div>
           <div className="hours-runtime-legend">

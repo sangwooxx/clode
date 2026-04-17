@@ -5,15 +5,12 @@ import type { FormEvent } from "react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
-import { Panel } from "@/components/ui/panel";
 import { useAuth } from "@/lib/auth/auth-context";
 
 export function LoginForm({
-  nextUrl,
-  backendLabel
+  nextUrl
 }: {
   nextUrl: string;
-  backendLabel: string;
 }) {
   const { login, isLoading, initialized, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -47,11 +44,7 @@ export function LoginForm({
   }
 
   return (
-    <Panel
-      className="auth-card"
-      title="Logowanie"
-      description="Zaloguj sie tym samym kontem, ktorym pracujesz w glownej aplikacji."
-    >
+    <div className="auth-card">
       <form className="auth-form" onSubmit={handleSubmit}>
         <label className="field-card">
           <span className="field-card__label">Uzytkownik</span>
@@ -78,17 +71,13 @@ export function LoginForm({
 
         {error ? <p className="auth-form__error">{error}</p> : null}
         {initialized && isAuthenticated ? (
-          <p className="auth-form__status">
-            Sesja jest juz aktywna. Po zalogowaniu wejdziesz od razu do czesci aplikacyjnej.
-          </p>
-        ) : (
-          <p className="auth-form__status">Backend auth: {backendLabel}</p>
-        )}
+          <p className="auth-form__status">Sesja jest juz aktywna.</p>
+        ) : null}
 
         <ActionButton type="submit" disabled={isLoading} fullWidth>
           {isLoading ? "Logowanie..." : "Zaloguj"}
         </ActionButton>
       </form>
-    </Panel>
+    </div>
   );
 }

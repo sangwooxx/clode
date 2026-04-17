@@ -9,53 +9,25 @@ import type {
 
 export function mapInvoicesViewModel(payload: InvoicesListResponse): InvoicesViewModel {
   return {
-    analysisCards: [
-      {
-        id: "cost-count",
-        label: "Faktury kosztowe",
-        value: formatInteger(payload.stats.cost_count)
-      },
-      {
-        id: "cost-net",
-        label: "Koszty netto",
-        value: formatMoney(payload.stats.cost_net)
-      },
-      {
-        id: "sales-count",
-        label: "Faktury sprzedażowe",
-        value: formatInteger(payload.stats.sales_count)
-      },
-      {
-        id: "sales-net",
-        label: "Sprzedaż netto",
-        value: formatMoney(payload.stats.sales_net),
-        accent: true
-      },
-      {
-        id: "saldo-net",
-        label: "Saldo netto",
-        value: formatMoney(payload.stats.saldo_net)
-      }
-    ],
     summaryCards: [
       {
         id: "count",
-        label: "Pozycji w tabeli",
+        label: "Pozycje",
         value: formatInteger(payload.summary.count)
       },
       {
         id: "net",
-        label: "Suma netto",
+        label: "Netto",
         value: formatMoney(payload.summary.amount_net)
       },
       {
         id: "vat",
-        label: "Suma VAT",
+        label: "VAT",
         value: formatMoney(payload.summary.amount_vat)
       },
       {
         id: "gross",
-        label: "Suma brutto",
+        label: "Brutto",
         value: formatMoney(payload.summary.amount_gross)
       }
     ],
@@ -69,14 +41,14 @@ export function mapInvoicesViewModel(payload: InvoicesListResponse): InvoicesVie
 
 export function buildScopeCaption(scope: InvoiceScope, year: string, month: string) {
   if (scope === "year") {
-    return `Zakres analizy: rok ${year}.`;
+    return `Rok ${year}`;
   }
 
   if (scope === "month") {
-    return `Zakres analizy: ${formatMonthLabel(year, month)}.`;
+    return formatMonthLabel(year, month);
   }
 
-  return "Zakres analizy: cały okres kontraktu.";
+  return "Caly okres";
 }
 
 export function toInvoiceFormValues(invoice?: InvoiceRecord | null): InvoiceFormValues {
