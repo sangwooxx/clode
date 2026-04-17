@@ -27,6 +27,14 @@ Cutover jest wykonany.
 - `scripts/start-frontend-legacy.ps1` zostawia jawny fallback lokalny
 - README repo i README `frontend-next` wskazuja Next jako glowny frontend
 
+## Zasada operacyjna po cutoverze
+
+- GitHub `main` jest jedynym zrodlem prawdy dla produktu
+- deployment robimy tylko z commita, ktory jest juz wypchniety na `origin/main`
+- QA robimy tylko na deploymentcie zgodnym z tym commitem
+- nie wdrazamy zmian z lokalnego, brudnego workspace
+- podstawowa kolejnosc pracy: `commit -> push -> deploy -> QA`
+
 ## Minimalny smoke po cutoverze
 
 Po kazdej zmianie deployowej powinny przejsc co najmniej:

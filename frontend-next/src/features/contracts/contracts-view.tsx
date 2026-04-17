@@ -17,7 +17,13 @@ import {
   normalizeContractPayload,
   saveContract
 } from "@/features/contracts/api";
-import { formatDate, formatInteger, formatMoney, formatStatus } from "@/features/contracts/formatters";
+import {
+  formatDate,
+  formatHoursValue,
+  formatInteger,
+  formatMoney,
+  formatStatus
+} from "@/features/contracts/formatters";
 import { mapContractsViewModel, toContractFormValues } from "@/features/contracts/mappers";
 import type {
   ContractFormValues,
@@ -381,7 +387,7 @@ export function ContractsView({
         if (usage.has_operational_data) {
           const parts = [];
           if (usage.usage.invoices) parts.push(`faktury: ${usage.usage.invoices}`);
-          if (usage.usage.hours) parts.push(`godziny: ${usage.usage.hours}`);
+          if (usage.usage.hours) parts.push(`godziny: ${formatHoursValue(usage.usage.hours)}`);
           if (usage.usage.planning) parts.push(`planowanie: ${usage.usage.planning}`);
           window.alert(
             `Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi.\n\n${parts.join("\n")}`
@@ -490,7 +496,7 @@ export function ContractsView({
           .map(({ contract, usage }) => {
             const details = [];
             if (usage.usage.invoices) details.push(`faktury: ${usage.usage.invoices}`);
-            if (usage.usage.hours) details.push(`godziny: ${usage.usage.hours}`);
+            if (usage.usage.hours) details.push(`godziny: ${formatHoursValue(usage.usage.hours)}`);
             if (usage.usage.planning) details.push(`planowanie: ${usage.usage.planning}`);
             return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
           })
@@ -876,7 +882,7 @@ export function ContractsView({
                 ) : usageState.status === "success" ? (
                   <div className="contracts-usage-grid">
                     <StatCard label="Faktury" value={formatInteger(usageState.data.usage.invoices)} />
-                    <StatCard label="Godziny" value={formatInteger(usageState.data.usage.hours)} />
+                    <StatCard label="Godziny" value={formatHoursValue(usageState.data.usage.hours)} />
                     <StatCard label="Planowanie" value={formatInteger(usageState.data.usage.planning)} />
                   </div>
                 ) : (

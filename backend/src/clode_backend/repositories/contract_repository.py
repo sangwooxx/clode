@@ -169,7 +169,7 @@ class ContractRepository(RepositoryBase):
                 """,
                 (contract_id,),
             ).fetchone()
-            hours = connection.execute(
+            hours_entries = connection.execute(
                 """
                 SELECT COUNT(*) AS total
                 FROM time_entries
@@ -187,7 +187,7 @@ class ContractRepository(RepositoryBase):
             ).fetchone()
         return {
             "invoices": int(invoices["total"] or 0),
-            "hours": int(hours["total"] or 0),
+            "hours_entries": int(hours_entries["total"] or 0),
             "planning": int(planning["total"] or 0),
         }
 

@@ -184,12 +184,12 @@ class TimeEntryService:
         visible_investments = normalize_visible_investments(
             payload.get("visible_investments") if payload.get("visible_investments") is not None else existing.get("visible_investments") if existing else []
         )
-        active_contract_ids = {
-            text(contract.get("id"))
-            for contract in self.contract_repository.list_all(include_archived=False)
-            if text(contract.get("id"))
-        }
-        visible_investments = [contract_id for contract_id in visible_investments if contract_id in active_contract_ids]
+        active_contract_ids = self._list_active_contract_ids()
+        active_contract_ids_set = set(active_contract_ids)
+        if not existing and not visible_investments:
+            visible_investments = active_contract_ids
+        else:
+            visible_investments = [contract_id for contract_id in visible_investments if contract_id in active_contract_ids_set]
 
         return {
             "id": existing.get("id") if existing else payload.get("id"),
@@ -209,7 +209,7 @@ class TimeEntryService:
                 "month_key": month_key,
                 "month_label": month_key,
                 "selected": False,
-                "visible_investments": [],
+                "visible_investments": self._list_active_contract_ids(),
                 "finance": normalize_finance({}),
             }
         )
@@ -331,4 +331,11 @@ class TimeEntryService:
 
         if changed:
             self.repository.normalize_month_visible_investments(normalized_rows)
+
+    def _list_active_contract_ids(self) -> list[str]:
+        return [
+            text(contract.get("id"))
+            for contract in self.contract_repository.list_all(include_archived=False)
+            if text(contract.get("id"))
+        ]
 

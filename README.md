@@ -75,6 +75,14 @@ Current production-oriented model:
 
 Operational details and rollback procedure live in [`docs/FRONTEND_NEXT_CUTOVER.md`](docs/FRONTEND_NEXT_CUTOVER.md).
 
+## Source Of Truth And Deploy Discipline
+
+- `origin/main` is the only source of truth for the product state
+- deploy only from a committed state that is already pushed to `origin/main`
+- QA only against a deployment that is known to come from that pushed commit
+- do not deploy from an uncommitted or undocumented local workspace
+- preferred order is: commit -> push -> deploy -> QA
+
 ## Current priorities
 
 - backend-first hardening of store-backed domains:

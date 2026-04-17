@@ -7,7 +7,7 @@ from clode_backend.auth.rbac import normalize_role
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.invoice_repository import InvoiceRepository
-from clode_backend.validation.contracts import normalize_cost_category
+from clode_backend.validation.contracts import normalize_contract_status, normalize_cost_category
 from clode_backend.validation.invoices import (
     normalize_invoice_type,
     normalize_payment_status,
@@ -243,6 +243,11 @@ class InvoiceService:
             resolved_contract = self.contract_repository.get_by_id(contract_id)
             if not resolved_contract:
                 raise InvoiceServiceError("Nie znaleziono kontraktu dla wskazanego identyfikatora.")
+            if normalize_contract_status(resolved_contract.get("status")) == "archived":
+                raise InvoiceServiceError(
+                    "Nie można zapisać faktury dla zarchiwizowanego kontraktu. Wybierz aktywny kontrakt z rejestru.",
+                    status_code=409,
+                )
             contract_name = resolved_contract["name"]
 
         cost_category = normalize_cost_category(

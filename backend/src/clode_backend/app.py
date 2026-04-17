@@ -36,7 +36,11 @@ def create_runtime_context():
     auth_service = AuthService(UserRepository(settings), SessionRepository(settings), settings.session_ttl_hours)
     contract_repository = ContractRepository(settings)
     invoice_service = InvoiceService(InvoiceRepository(settings), contract_repository)
-    contract_service = ContractService(contract_repository, ContractMetricsRepository(settings))
+    contract_service = ContractService(
+        contract_repository,
+        ContractMetricsRepository(settings),
+        time_entry_repository,
+    )
     employee_service = EmployeeService(
         employee_repository,
         time_entry_repository,

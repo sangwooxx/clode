@@ -71,11 +71,16 @@ function Stop-NextFrontendProcesses {
     param([string]$FrontendPath)
 
     $normalizedPath = [System.IO.Path]::GetFullPath($FrontendPath)
-    $processes = Get-CimInstance Win32_Process | Where-Object {
-        $_.Name -eq "node.exe" -and
-        $_.CommandLine -and
-        $_.CommandLine.Contains($normalizedPath) -and
-        $_.CommandLine -like "*next*"
+    try {
+        $processes = Get-CimInstance Win32_Process | Where-Object {
+            $_.Name -eq "node.exe" -and
+            $_.CommandLine -and
+            $_.CommandLine.Contains($normalizedPath) -and
+            $_.CommandLine -like "*next*"
+        }
+    } catch {
+        Write-Warning "Pominieto zatrzymywanie procesow frontend-next po CIM/WMI: $($_.Exception.Message)"
+        $processes = @()
     }
 
     foreach ($process in $processes) {

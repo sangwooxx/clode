@@ -10,12 +10,21 @@ const integerFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 0
 });
 
+const hoursFormatter = new Intl.NumberFormat("pl-PL", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2
+});
+
 export function formatMoney(value: number) {
   return moneyFormatter.format(Number(value || 0));
 }
 
 export function formatInteger(value: number) {
   return integerFormatter.format(Number(value || 0));
+}
+
+export function formatHoursValue(value: number) {
+  return hoursFormatter.format(Number(value || 0));
 }
 
 export function formatDate(value: string) {

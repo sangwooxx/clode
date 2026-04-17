@@ -7,6 +7,7 @@ from clode_backend.auth.rbac import normalize_role
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_metrics_repository import ALLOWED_COST_CATEGORIES, ContractMetricsRepository
 from clode_backend.repositories.contract_repository import ContractRepository
+from clode_backend.repositories.time_entry_repository import TimeEntryRepository
 from clode_backend.validation.contracts import normalize_contract_status, normalize_time_scope, number, text
 
 
@@ -17,9 +18,15 @@ class ContractServiceError(RuntimeError):
 
 
 class ContractService:
-    def __init__(self, repository: ContractRepository, metrics_repository: ContractMetricsRepository) -> None:
+    def __init__(
+        self,
+        repository: ContractRepository,
+        metrics_repository: ContractMetricsRepository,
+        time_entry_repository: TimeEntryRepository | None = None,
+    ) -> None:
         self.repository = repository
         self.metrics_repository = metrics_repository
+        self.time_entry_repository = time_entry_repository
 
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
@@ -40,7 +47,12 @@ class ContractService:
     def create_contract(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
         normalized = self._normalize_payload(payload)
-        return self.repository.insert(normalized)
+        created = self.repository.insert(normalized)
+        self._sync_contract_visibility(
+            created["id"],
+            make_visible=normalize_contract_status(created.get("status")) == "active",
+        )
+        return created
 
     def update_contract(self, contract_id: str, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
@@ -51,6 +63,10 @@ class ContractService:
         updated = self.repository.update(contract_id, normalized)
         if not updated:
             raise ContractServiceError("Nie udało się zapisać kontraktu.", status_code=500)
+        self._sync_contract_visibility(
+            updated["id"],
+            make_visible=normalize_contract_status(updated.get("status")) == "active",
+        )
         return updated
 
     def get_contract(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
@@ -68,6 +84,7 @@ class ContractService:
         archived = self.repository.archive(contract_id, updated_at=utc_now_iso())
         if not archived:
             raise ContractServiceError("Nie udało się zarchiwizować kontraktu.", status_code=500)
+        self._sync_contract_visibility(contract_id, make_visible=False)
         return archived
 
     def delete_contract(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
@@ -78,7 +95,7 @@ class ContractService:
         if normalize_contract_status(contract.get("status")) != "archived":
             raise ContractServiceError("Kontrakt musi zostać najpierw zarchiwizowany.", status_code=400)
         usage = self.repository.get_usage_counts(contract_id)
-        if any(int(usage.get(key) or 0) > 0 for key in ("hours", "invoices", "planning")):
+        if any(int(usage.get(key) or 0) > 0 for key in ("hours_entries", "invoices", "planning")):
             raise ContractServiceError(
                 "Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuń najpierw powiązane dane.",
                 status_code=409,
@@ -86,6 +103,7 @@ class ContractService:
         deleted = self.repository.delete(contract_id, deleted_at=utc_now_iso())
         if not deleted:
             raise ContractServiceError("Nie udało się usunąć kontraktu.", status_code=500)
+        self._sync_contract_visibility(contract_id, make_visible=False)
         return {
             "id": contract_id,
             "deleted": True,
@@ -98,6 +116,8 @@ class ContractService:
             return {"archived_count": 0, "contracts": []}
 
         archived_count = self.repository.bulk_archive(normalized_ids, updated_at=utc_now_iso())
+        for contract_id in normalized_ids:
+            self._sync_contract_visibility(contract_id, make_visible=False)
         refreshed = self.repository.list_all(include_archived=True)
         archived = [contract for contract in refreshed if contract["id"] in set(normalized_ids)]
         return {
@@ -110,11 +130,27 @@ class ContractService:
         contract = self.repository.get_by_id(contract_id)
         if not contract:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
-        usage = self.repository.get_usage_counts(contract_id)
+        usage_counts = self.repository.get_usage_counts(contract_id)
+        metrics = self.metrics_repository.calculate_contract_metrics(
+            contract_id,
+            {"scope": "all", "year": "", "month": ""},
+        )
+        usage = {
+            "invoices": int(usage_counts.get("invoices") or 0),
+            "hours": round(float(metrics.get("labor_hours_total") or 0), 2),
+            "hours_entries": int(usage_counts.get("hours_entries") or 0),
+            "planning": int(usage_counts.get("planning") or 0),
+        }
         return {
             "contract": contract,
             "usage": usage,
-            "has_operational_data": any(usage.values()),
+            "has_operational_data": any(
+                [
+                    usage["invoices"] > 0,
+                    usage["hours_entries"] > 0,
+                    usage["planning"] > 0,
+                ]
+            ),
         }
 
     def calculate_contract_metrics(
@@ -227,4 +263,14 @@ class ContractService:
             "created_at": existing.get("created_at") if existing else timestamp,
             "updated_at": timestamp,
         }
+
+    def _sync_contract_visibility(self, contract_id: str, *, make_visible: bool) -> None:
+        normalized_contract_id = text(contract_id)
+        if not normalized_contract_id or not self.time_entry_repository:
+            return
+
+        self.time_entry_repository.sync_contract_visibility(
+            normalized_contract_id,
+            visible=make_visible,
+        )
 

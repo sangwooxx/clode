@@ -17,6 +17,7 @@ export type ContractRecord = {
 export type ContractUsage = {
   invoices: number;
   hours: number;
+  hours_entries: number;
   planning: number;
 };
 

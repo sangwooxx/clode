@@ -50,8 +50,3 @@ export function getContractUsage(contractId: string) {
 export function getDashboardSnapshot() {
   return http("/dashboard/contracts", { method: "GET" });
 }
-
-export function getContractMetrics(contractId: string, range = "all") {
-  const query = new URLSearchParams({ contract_id: contractId, range });
-  return http(`/dashboard/contracts?${query.toString()}`, { method: "GET" });
-}

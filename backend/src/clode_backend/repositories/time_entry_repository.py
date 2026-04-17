@@ -267,6 +267,45 @@ class TimeEntryRepository(RepositoryBase):
         for row in rows:
             self.upsert_month(row)
 
+    def sync_contract_visibility(self, contract_id: str, *, visible: bool) -> int:
+        normalized_contract_id = str(contract_id or "").strip()
+        if not normalized_contract_id:
+            return 0
+
+        changed_rows: list[dict[str, Any]] = []
+        for month in self.list_months():
+            current_values = [
+                str(value or "").strip()
+                for value in (month.get("visible_investments") or [])
+                if str(value or "").strip()
+            ]
+            next_values: list[str] = []
+            seen = set()
+
+            for value in current_values:
+                if value == normalized_contract_id and not visible:
+                    continue
+                if value in seen:
+                    continue
+                seen.add(value)
+                next_values.append(value)
+
+            if visible and normalized_contract_id not in seen:
+                next_values.append(normalized_contract_id)
+
+            if next_values != current_values:
+                changed_rows.append(
+                    {
+                        **month,
+                        "visible_investments": next_values,
+                    }
+                )
+
+        if changed_rows:
+            self.normalize_month_visible_investments(changed_rows)
+
+        return len(changed_rows)
+
     @staticmethod
     def _serialize_month(row) -> dict[str, Any]:
         if row is None:
