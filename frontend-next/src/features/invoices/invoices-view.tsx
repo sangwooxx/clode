@@ -7,6 +7,7 @@ import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   bulkDeleteInvoiceRecords,
@@ -761,6 +762,19 @@ export function InvoicesView({
             </div>
             <span className="summary-strip__side">{viewModel?.scopeCaption}</span>
           </div>
+
+          {viewModel ? (
+            <div className="module-page__stats module-page__stats--compact">
+              {viewModel.summaryCards.map((card) => (
+                <StatCard
+                  key={card.id}
+                  label={card.label}
+                  value={card.value}
+                  accent={card.accent}
+                />
+              ))}
+            </div>
+          ) : null}
 
           <div className="invoices-layout">
             <div className="module-page__stack">
