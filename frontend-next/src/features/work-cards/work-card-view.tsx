@@ -340,6 +340,13 @@ export function WorkCardView({
       }),
     [contractOptions, draftRows, previewCard]
   );
+  const visibleSummaryCards = useMemo(
+    () =>
+      summaryCards.filter((card) =>
+        ["filled-days", "hours", "contracts"].includes(card.id)
+      ),
+    [summaryCards]
+  );
 
   const contractTotals = useMemo(
     () => buildWorkCardContractTotals(draftRows, contractOptions),
@@ -536,8 +543,9 @@ export function WorkCardView({
   }
 
   const monthOptions = buildMonthOptions(months);
-  const monthCreator = canWrite ? (
-    <div className="status-stack">
+  const monthCreatorField = canWrite ? (
+    <label className="form-field">
+      <span>Dodaj miesiąc</span>
       <div className="hours-inline-controls">
         <select
           value={newMonthNumber}
@@ -569,10 +577,16 @@ export function WorkCardView({
           {isCreatingMonth ? "Dodawanie..." : "Dodaj miesiąc"}
         </ActionButton>
       </div>
-      {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
-      {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
-    </div>
+    </label>
   ) : null;
+  const currentMonthLabel =
+    selectedMonth?.month_label ||
+    (selectedMonthKey ? formatMonthLabel(selectedMonthKey) : "Wybierz miesiąc");
+  const currentModeLabel = isHistoricalPreview ? "Historia" : "Aktywna karta";
+  const currentContextLabel = displayedEmployeeLabel || "Wybierz pracownika";
+  const currentContextMeta = [currentMonthLabel, displayedEmployeeMeta]
+    .filter(Boolean)
+    .join(" • ");
 
   return (
     <div className="module-page">
@@ -581,17 +595,6 @@ export function WorkCardView({
         title="Karty pracy"
         actions={
           <div className="section-header__actions-stack">
-            <Link className="action-button action-button--ghost" href="/hours">
-              Otwórz ewidencję
-            </Link>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={() => void reloadWorkCards({ preserveSelection: true })}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-            </ActionButton>
             {canWrite ? (
               <ActionButton
                 type="button"
@@ -601,34 +604,29 @@ export function WorkCardView({
                 {isSaving ? "Zapisywanie..." : "Zapisz kartę pracy"}
               </ActionButton>
             ) : null}
+            <ActionButton
+              type="button"
+              variant="secondary"
+              onClick={() => void reloadWorkCards({ preserveSelection: true })}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+            </ActionButton>
+            <Link className="action-button action-button--ghost" href="/hours">
+              Otwórz ewidencję
+            </Link>
           </div>
         }
       />
 
-      <Panel className="panel--toolbar panel--info">
-        {monthCreator}
-
-        <div className="hours-info-panel">
-          <div className="data-table__stack">
-            <span className="data-table__primary">To jest główny moduł wpisywania godzin</span>
-            <span className="data-table__secondary">
-              Wybierasz pracownika i miesiąc, wpisujesz godziny przy aktywnych kontraktach dla kolejnych dni, a Ewidencja czasu pracy aktualizuje się automatycznie jako widok zbiorczy.
-            </span>
-          </div>
-          <Link className="action-button action-button--secondary" href="/hours">
-            Zobacz ewidencję zbiorczą
-          </Link>
-        </div>
-      </Panel>
-
       <div className="module-page__stats module-page__stats--compact">
-        {summaryCards.slice(0, 4).map((card) => (
+        {visibleSummaryCards.map((card) => (
           <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
 
       <Panel className="panel--toolbar panel--toolbar--filters">
-        <FormGrid columns={3}>
+        <FormGrid columns={canWrite ? 3 : 2}>
           <label className="form-field">
             <span>Pracownik</span>
             <select
@@ -673,98 +671,33 @@ export function WorkCardView({
             </select>
           </label>
 
-          <div className="work-card-toolbar__meta">
-            <span className="work-card-toolbar__title">Tryb pracy</span>
-            <span className="work-card-toolbar__value">
-              Nowe karty tworzysz tylko dla aktywnych pracowników, a historia nieaktywnych zostaje niżej w osobnym widoku.
-            </span>
-          </div>
+          {monthCreatorField}
         </FormGrid>
 
-        <div className="hours-info-panel">
-          <div className="data-table__stack">
-            <span className="data-table__primary">
-              Aktywna pula do nowych kart i historia nieaktywnych sÄ… rozdzielone
-            </span>
-            <span className="data-table__secondary">
-              NowÄ… kartÄ™ pracy tworzysz tylko dla aktywnych pracownikÃ³w. Nieaktywni zostajÄ… poniÅ¼ej wyÅ‚Ä…cznie
-              w warstwie historii i odczytu.
-            </span>
+        <div className="summary-strip">
+          <div className="summary-strip__primary">
+            <span className="summary-strip__label">{currentModeLabel}</span>
+            <strong className="summary-strip__value">{currentContextLabel}</strong>
+            <span className="summary-strip__meta">{currentContextMeta}</span>
           </div>
-          <div className="hours-runtime-legend">
-            <span className="hours-runtime-legend__item">
-              <strong>{formatNumber(employees.length)}</strong>
-              <span>aktywni do nowych kart</span>
-            </span>
-            <span className="hours-runtime-legend__item hours-runtime-legend__item--muted">
-              <strong>{formatNumber(inactiveHistoricalEmployeesCount)}</strong>
-              <span>nieaktywni tylko w historii</span>
-            </span>
-          </div>
+          <span className="summary-strip__side">
+            {formatNumber(employees.length)} aktywnych • {formatNumber(inactiveHistoricalEmployeesCount)} w historii
+          </span>
         </div>
 
+        {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
+        {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
         {saveError ? <p className="status-message status-message--error">{saveError}</p> : null}
         {saveStatus ? <p className="status-message status-message--success">{saveStatus}</p> : null}
       </Panel>
-
-      {historicalWorkCards.length > 0 ? (
-        <Panel title="Historia pracowników nieaktywnych">
-          <div className="work-card-history">
-            <div className="hours-info-panel">
-              <div className="data-table__stack">
-                <span className="data-table__primary">Nieaktywni pracownicy są dostępni tylko historycznie</span>
-                <span className="data-table__secondary">
-                  Nie pojawiają się już w selektorze nowych kart pracy, ale ich zapisane miesiące możesz tutaj otworzyć do odczytu.
-                </span>
-              </div>
-              {isHistoricalPreview ? (
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setSelectedHistoricalCardId(null)}
-                >
-                  Wróć do aktywnej karty
-                </ActionButton>
-              ) : null}
-            </div>
-
-            <div className="work-card-history__list">
-              {historicalWorkCards.map((item) => (
-                <button
-                  key={item.cardId}
-                  type="button"
-                  className={`work-card-history__item${selectedHistoricalCardId === item.cardId ? " work-card-history__item--active" : ""}`}
-                  onClick={() => {
-                    setSelectedHistoricalCardId(item.cardId);
-                    setSelectedMonthKey(item.monthKey);
-                    setSaveError(null);
-                    setSaveStatus(null);
-                  }}
-                >
-                  <span className="work-card-history__item-main">
-                    <strong>{item.employeeLabel}</strong>
-                    <span>{item.employeeMeta}</span>
-                  </span>
-                  <span className="work-card-history__item-side">
-                    <strong>{item.monthLabel}</strong>
-                    <span>
-                      {formatHours(item.totalHours)} • {formatNumber(item.filledDays)} dni
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Panel>
-      ) : null}
 
       {months.length === 0 ? (
         <Panel title="Brak miesięcy roboczych">
           <div className="status-stack">
             <p className="status-message">
-              Najpierw przygotuj miesiąc roboczy w ewidencji czasu pracy. Karta pracy wykorzystuje ten sam model miesięcy i potem zasila go automatycznie.
+              Najpierw przygotuj miesiąc roboczy w ewidencji czasu pracy. Karta pracy korzysta z tych samych miesięcy.
             </p>
-            {monthCreator}
+            {monthCreatorField}
             <Link className="action-button action-button--secondary" href="/hours">
               Przejdź do ewidencji czasu pracy
             </Link>
@@ -773,7 +706,7 @@ export function WorkCardView({
       ) : !hasDisplayContext ? (
         <Panel title="Wybierz pracownika">
           <p className="status-message">
-            Wybierz pracownika z kartoteki, aby wygenerować jego miesięczną kartę pracy.
+            Wybierz pracownika i miesiąc, aby otworzyć kartę pracy.
           </p>
         </Panel>
       ) : (
@@ -797,7 +730,7 @@ export function WorkCardView({
 
           {isHistoricalPreview ? (
             <p className="status-message">
-              To jest karta historyczna pracownika nieaktywnego. Dane pozostają widoczne, ale nie można już tworzyć ani zapisywać nowych operacji z tego widoku.
+              To jest karta historyczna pracownika nieaktywnego. Ten widok pozostaje tylko do odczytu.
             </p>
           ) : null}
 
@@ -893,6 +826,51 @@ export function WorkCardView({
           </div>
         </Panel>
       )}
+
+      {historicalWorkCards.length > 0 ? (
+        <Panel title="Historia pracowników nieaktywnych">
+          <div className="work-card-history">
+            {isHistoricalPreview ? (
+              <div className="contracts-form__actions">
+                <ActionButton
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setSelectedHistoricalCardId(null)}
+                >
+                  Wróć do aktywnej karty
+                </ActionButton>
+              </div>
+            ) : null}
+
+            <div className="work-card-history__list">
+              {historicalWorkCards.map((item) => (
+                <button
+                  key={item.cardId}
+                  type="button"
+                  className={`work-card-history__item${selectedHistoricalCardId === item.cardId ? " work-card-history__item--active" : ""}`}
+                  onClick={() => {
+                    setSelectedHistoricalCardId(item.cardId);
+                    setSelectedMonthKey(item.monthKey);
+                    setSaveError(null);
+                    setSaveStatus(null);
+                  }}
+                >
+                  <span className="work-card-history__item-main">
+                    <strong>{item.employeeLabel}</strong>
+                    <span>{item.employeeMeta}</span>
+                  </span>
+                  <span className="work-card-history__item-side">
+                    <strong>{item.monthLabel}</strong>
+                    <span>
+                      {formatHours(item.totalHours)} • {formatNumber(item.filledDays)} dni
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </Panel>
+      ) : null}
     </div>
   );
 }
