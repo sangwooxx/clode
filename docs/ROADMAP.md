@@ -42,7 +42,7 @@ The project still follows strict delivery gates:
 - cleanup of legacy deployment assumptions
 
 ### Stage C
-- controlled retirement of the legacy fallback frontend
+- repository and deployment simplification around a single Next.js frontend
 - repository cleanup after cutover
 - simpler developer onboarding and runtime defaults
 

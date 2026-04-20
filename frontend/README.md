@@ -48,4 +48,4 @@ Deployment model:
 - framework detected as Next.js
 - `CLODE_BACKEND_ORIGIN` configured to the backend service
 
-The legacy frontend in `../app/` should remain only as an emergency fallback after cutover.
+This directory is the only product frontend in the repository after cutover.

@@ -5,7 +5,7 @@
 - operational MVP in `frontend/`: complete
 - cross-module front-back integration of the operational MVP: complete
 - live cutover to `frontend/` as the primary frontend: complete
-- legacy frontend status: fallback only
+- legacy frontend status: retired
 
 ## What is stable today
 
@@ -14,7 +14,7 @@
 - employees, vacations, planning, work cards, workwear, settings, and hours are integrated end-to-end
 - `inactive` semantics are consistent across operational modules
 - workflow from settings affects vacations
-- legacy frontend remains available as a technical rollback surface
+- rollback opiera sie na historii deploymentow, nie na drugim froncie w repo
 
 ## What is not yet fully mature
 
@@ -28,11 +28,11 @@
 - deployment/security hygiene still needs follow-up:
   - secret handling
   - cookie hardening
-  - cleanup of fallback-only assets and documentation
+  - deployment auditability and operational monitoring
 
 ## Current engineering priorities
 
 1. Reduce store-backed transitional domains behind backend APIs.
-2. Retire legacy fallback from active development and eventually from deployment.
+2. Continue backend-first hardening of transitional domains.
 3. Harden security and secret-management practices.
 4. Expand toward the next product layer, including tender workflow integration.

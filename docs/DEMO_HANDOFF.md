@@ -8,7 +8,7 @@ This repository can be handed off as a demo-safe operational MVP with `frontend/
 
 - Primary frontend: `http://127.0.0.1:3100/login`
 - Backend: `http://127.0.0.1:8787`
-- Optional legacy fallback: `http://127.0.0.1:8082/app/index.html`
+- Primary frontend: `http://127.0.0.1:3100/login`
 
 ## Demo data profile
 
@@ -31,7 +31,7 @@ Before sending the project to an external reviewer, confirm:
 ## Known current limitations
 
 - several operational domains are still store-backed under the backend/runtime layer
-- legacy frontend is still present as a rollback fallback
+- frontend runtime is single-source and Next.js-based
 - final backend-first hardening and security cleanup are still planned
 
 ## What should be included in the handoff package
@@ -42,4 +42,4 @@ Before sending the project to an external reviewer, confirm:
 - MVP scope
 - known limitations
 - latest QA result
-- note that `frontend/` is the primary frontend and `app/` is fallback only
+- note that `frontend/` is the only product frontend in the repository

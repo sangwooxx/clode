@@ -1,6 +1,6 @@
 # Clode
 
-Clode is an operational ERP-style system for contract businesses. The primary product frontend now lives in `frontend/`, the Next.js App Router application in this repository. The older static frontend in `app/` remains only as a technical fallback.
+Clode is an operational ERP-style system for contract businesses. The product frontend lives in `frontend/`, the Next.js App Router application in this repository.
 
 ## Product state
 
@@ -16,14 +16,12 @@ The operational MVP is live on `frontend/` and covers:
 - settings
 - workwear
 
-The main remaining engineering debt is not screen coverage. It is backend-first hardening of store-backed domains and eventual retirement of the legacy fallback.
+The main remaining engineering debt is not screen coverage. It is backend-first hardening of store-backed domains and compatibility hardening across the API surface.
 
 ## Repository layout
 
 - `frontend/` - primary product frontend in Next.js
 - `backend/` - API, domain services, repositories, migrations, seed data
-- `app/` - legacy static frontend kept only for rollback/fallback
-- `frontend-legacy/` - legacy data-access layer used by `app/`
 - `docs/` - current architecture, roadmap, status, and release notes
 - `scripts/` - local runtime entrypoints
 
@@ -53,25 +51,13 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1
 powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 ```
 
-### Start the legacy fallback frontend
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend-legacy.ps1
-```
-
-### Start the full app with legacy fallback instead of Next
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1 -Frontend legacy
-```
-
 ## Deployment model
 
 Current production-oriented model:
 - dedicated Vercel project `clode-next` deploys the main frontend
 - `rootDirectory=frontend`
-- `CLODE_BACKEND_ORIGIN` points to the backend/legacy service
-- repo-root deploy stays available as backend plus legacy fallback
+- `CLODE_BACKEND_ORIGIN` points to the backend service
+- repo-root deploy stays available as backend plus router for the main frontend
 
 Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
 
@@ -92,7 +78,6 @@ Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](
   - workwear
   - settings
 - security hardening of auth/session and deployment secrets
-- planned retirement of the legacy fallback once rollback is no longer needed
 - product expansion toward tender workflow integration
 
 ## Repository guide

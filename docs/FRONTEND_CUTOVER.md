@@ -6,7 +6,6 @@ Cutover jest wykonany.
 
 - `frontend` jest glownym frontendem produktu
 - lokalne skrypty startowe promuja Next jako domyslny frontend
-- legacy frontend w `app/` zostaje tylko jako fallback techniczny
 
 ## Aktualny model deployu
 
@@ -16,15 +15,14 @@ Cutover jest wykonany.
 - framework: Next.js
 - backend origin ustawiony przez `CLODE_BACKEND_ORIGIN`
 
-### Backend i fallback legacy
+### Backend i routing
 - repo-root deploy nadal utrzymuje backend API
-- ten sam deploy moze dalej serwowac legacy frontend jako awaryjny fallback
+- ten sam deploy sluzy jako backend/router dla glownego frontendu
 
 ## Stan repo po cutoverze
 
 - `scripts/start-frontend.ps1` uruchamia `frontend`
 - `scripts/start-mvp.ps1` uruchamia `frontend` domyslnie
-- `scripts/start-frontend-legacy.ps1` zostawia jawny fallback lokalny
 - README repo i README `frontend` wskazuja Next jako glowny frontend
 
 ## Zasada operacyjna po cutoverze
@@ -61,7 +59,7 @@ Po kazdej zmianie deployowej powinny przejsc co najmniej:
 1. Odpinac glowna domene od projektu `clode-next`.
 2. Przepiac domene z powrotem na repo-root deploy.
 3. Sprawdzic:
-   - `/app/index.html`
+   - `/login`
    - login
    - dashboard
    - contracts
@@ -72,5 +70,4 @@ Po kazdej zmianie deployowej powinny przejsc co najmniej:
 ## Co dalej po cutoverze
 
 - utwardzenie store-backed domen backend-first
-- wygaszenie legacy fallbacku, kiedy rollback nie bedzie juz potrzebny
 - porzadek w repo i dokumentacji pod finalny produkt

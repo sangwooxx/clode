@@ -2,9 +2,7 @@ param(
     [string]$RootDir = "",
     [string]$ExcelPath = "",
     [int]$Port = 0,
-    [string]$BindHost = "127.0.0.1",
-    [ValidateSet("next", "legacy")]
-    [string]$Frontend = "next"
+    [string]$BindHost = "127.0.0.1"
 )
 
 Set-StrictMode -Version Latest
@@ -16,11 +14,7 @@ if ([string]::IsNullOrWhiteSpace($RootDir)) {
 
 $watchScript = Join-Path $RootDir "scripts\watch-sync.ps1"
 $backendScript = Join-Path $RootDir "scripts\start-backend.ps1"
-$frontendScript = if ($Frontend -eq "legacy") {
-    Join-Path $RootDir "scripts\start-frontend-legacy.ps1"
-} else {
-    Join-Path $RootDir "scripts\start-frontend.ps1"
-}
+$frontendScript = Join-Path $RootDir "scripts\start-frontend.ps1"
 $watchArgs = @(
     "-ExecutionPolicy", "Bypass",
     "-File", $watchScript,
@@ -28,7 +22,7 @@ $watchArgs = @(
 )
 
 if ($Port -le 0) {
-    $Port = if ($Frontend -eq "legacy") { 8082 } else { 3100 }
+    $Port = 3100
 }
 
 if (-not [string]::IsNullOrWhiteSpace($ExcelPath)) {
@@ -45,10 +39,6 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) {
     throw "Frontend nie uruchomil sie poprawnie."
 }
-$frontendUrl = if ($Frontend -eq "legacy") {
-    "http://$BindHost`:$Port/app/index.html"
-} else {
-    "http://$BindHost`:$Port/login"
-}
+$frontendUrl = "http://$BindHost`:$Port/login"
 Start-Process $frontendUrl | Out-Null
 Write-Host "Uruchomiono Clode MVP pod $frontendUrl"

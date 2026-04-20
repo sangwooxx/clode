@@ -2,7 +2,7 @@
 
 ## Overview
 
-Clode currently runs as a split frontend/backend system with a controlled legacy fallback.
+Clode runs as a split frontend/backend system with a single product frontend.
 
 ```text
 Primary user entry
@@ -13,10 +13,9 @@ Primary user entry
                     -> repositories
                         -> SQL tables and transitional store documents
 
-Technical fallback
+Backend service / router
     -> repo-root deploy
         -> backend HTTP API
-        -> legacy static frontend (app/ + frontend-legacy/)
 ```
 
 ## Current product surface
@@ -32,8 +31,6 @@ The primary product UI lives in `frontend/` and includes:
 - planning
 - settings
 - workwear
-
-The legacy frontend in `app/` and the compatibility data layer in `frontend-legacy/` are retained only for rollback/fallback and should not receive new product work.
 
 ## Source-of-truth map
 
@@ -77,5 +74,4 @@ These domains are operationally integrated, but they are still not fully backend
 
 - several operational domains remain store-backed
 - employee persistence still uses a synchronized SQL + overlay model
-- legacy fallback frontend is still present in the repository and deployment topology
 - some historical records still require defensive compatibility mapping

@@ -131,7 +131,7 @@ if ($Mode -eq "prod") {
 }
 
 if (-not (Wait-FrontendReady -Url $frontendUrl -TimeoutSec $StartupTimeoutSec)) {
-    throw "Frontend-next nie zglosil gotowosci pod $frontendUrl w ciagu $StartupTimeoutSec s."
+    throw "Frontend nie zglosil gotowosci pod $frontendUrl w ciagu $StartupTimeoutSec s."
 }
 
 Write-Host "Uruchomiono frontend pod $frontendUrl"
