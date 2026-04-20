@@ -676,7 +676,6 @@ export function HoursView({
         `Suma godzin: ${formatHours(totalHours)}`,
       ],
       filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
-      landscape: true,
       sections: [
         {
           title: "Zakres raportu",
@@ -897,7 +896,6 @@ export function HoursView({
         : selectedMonth.month_label,
       context: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
       filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
-      landscape: true,
       meta: [
         isEmployeeContext ? "Raport pracownika" : "Raport miesiąca",
         `Wpisy: ${formatNumber(currentEntries.length)}`,

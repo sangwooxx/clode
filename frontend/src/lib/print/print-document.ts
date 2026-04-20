@@ -41,7 +41,6 @@ export type PrintDocumentOptions = {
   context?: string;
   meta?: string[];
   filename: string;
-  landscape?: boolean;
   generatedAt?: string;
   footerNote?: string;
   sections: PrintSection[];
@@ -164,7 +163,7 @@ function buildPrintHtml(options: PrintDocumentOptions) {
     <meta charset="utf-8" />
     <title>${escapeHtml(options.filename)}</title>
     <style>
-      @page { size: ${options.landscape ? "A4 landscape" : "A4"}; margin: 14mm 12mm 16mm; }
+      @page { size: A4; margin: 10mm 9mm 12mm; }
       * { box-sizing: border-box; }
       html, body {
         margin: 0;
@@ -172,20 +171,20 @@ function buildPrintHtml(options: PrintDocumentOptions) {
         background: #ffffff;
         color: #111827;
         font-family: "Segoe UI", Arial, sans-serif;
-        font-size: 13px;
-        line-height: 1.45;
+        font-size: 12px;
+        line-height: 1.35;
       }
       body {
         padding: 0;
       }
       .print-page {
         display: grid;
-        gap: 18px;
+        gap: 12px;
       }
       .print-header {
         display: grid;
-        gap: 10px;
-        padding-bottom: 12px;
+        gap: 8px;
+        padding-bottom: 10px;
         border-bottom: 2px solid #0f172a;
       }
       .print-brand {
@@ -195,12 +194,12 @@ function buildPrintHtml(options: PrintDocumentOptions) {
         gap: 16px;
       }
       .print-brand__name {
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 700;
         letter-spacing: 0.02em;
       }
       .print-brand__tag {
-        font-size: 11px;
+        font-size: 10px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
         color: #475569;
@@ -211,13 +210,13 @@ function buildPrintHtml(options: PrintDocumentOptions) {
       }
       .print-title h1 {
         margin: 0;
-        font-size: 24px;
+        font-size: 21px;
         line-height: 1.1;
       }
       .print-title p {
         margin: 0;
         color: #475569;
-        font-size: 13px;
+        font-size: 11px;
       }
       .print-meta {
         display: flex;
@@ -225,16 +224,16 @@ function buildPrintHtml(options: PrintDocumentOptions) {
         gap: 6px 12px;
       }
       .print-meta__item {
-        padding: 4px 8px;
+        padding: 3px 7px;
         border: 1px solid #d7dee8;
         border-radius: 999px;
         color: #334155;
-        font-size: 11px;
+        font-size: 10px;
         white-space: nowrap;
       }
       .print-section {
         display: grid;
-        gap: 10px;
+        gap: 8px;
         page-break-inside: avoid;
       }
       .print-section__header {
@@ -243,25 +242,25 @@ function buildPrintHtml(options: PrintDocumentOptions) {
       }
       .print-section__header h2 {
         margin: 0;
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.2;
       }
       .print-section__description {
         margin: 0;
-        font-size: 11px;
+        font-size: 10px;
         color: #64748b;
       }
       .print-detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px 12px;
+        gap: 6px 8px;
       }
       .print-detail {
         display: grid;
         gap: 3px;
-        padding: 8px 10px;
+        padding: 6px 8px;
         border: 1px solid #d7dee8;
-        border-radius: 10px;
+        border-radius: 8px;
       }
       .print-detail__label {
         font-size: 10px;
@@ -271,13 +270,14 @@ function buildPrintHtml(options: PrintDocumentOptions) {
         color: #64748b;
       }
       .print-detail__value {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: #0f172a;
       }
       .print-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
       }
       .print-table col {
         width: auto;
@@ -290,7 +290,7 @@ function buildPrintHtml(options: PrintDocumentOptions) {
       }
       .print-table th,
       .print-table td {
-        padding: 7px 8px;
+        padding: 5px 6px;
         border: 1px solid #d7dee8;
         text-align: left;
         vertical-align: top;
@@ -299,12 +299,12 @@ function buildPrintHtml(options: PrintDocumentOptions) {
       }
       .print-table th {
         background: #eef2f7;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         color: #0f172a;
       }
       .print-table td {
-        font-size: 11px;
+        font-size: 10px;
         color: #1f2937;
       }
       .print-table__cell--right {
@@ -317,7 +317,7 @@ function buildPrintHtml(options: PrintDocumentOptions) {
         display: flex;
         justify-content: space-between;
         gap: 12px;
-        padding-top: 12px;
+        padding-top: 10px;
         border-top: 1px solid #d7dee8;
         color: #64748b;
         font-size: 10px;

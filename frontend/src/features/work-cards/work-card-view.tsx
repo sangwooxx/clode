@@ -643,7 +643,6 @@ export function WorkCardView({
         `Suma godzin: ${formatHours(monthTotalHours)}`,
       ],
       filename: `clode-karta-pracy-${displayedEmployeeLabel}-${selectedMonthKey}`,
-      landscape: true,
       sections: [
         {
           title: "Dane karty",
@@ -786,7 +785,6 @@ export function WorkCardView({
       subtitle: displayedEmployeeLabel,
       context: currentMonthLabel,
       filename: `clode-karta-pracy-${displayedEmployeeLabel}-${selectedMonthKey}`,
-      landscape: true,
       meta: [
         currentModeLabel,
         `Dni z wpisami: ${formatNumber(filledDaysCount)}`,
