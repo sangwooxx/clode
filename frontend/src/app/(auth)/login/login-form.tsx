@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -11,6 +13,7 @@ export function LoginForm({
   nextUrl: string;
 }) {
   const { login, isLoading, initialized, isAuthenticated } = useAuth();
+  const router = useRouter();
   const resolvedNextUrl = useMemo(
     () => (nextUrl.startsWith("/") ? nextUrl : "/dashboard"),
     [nextUrl]
@@ -29,7 +32,8 @@ export function LoginForm({
         setError("Backend nie zwrócił użytkownika dla tej sesji.");
         return;
       }
-      window.location.assign(resolvedNextUrl);
+      router.replace(resolvedNextUrl as Route);
+      router.refresh();
     } catch (submitError) {
       setError(
         submitError instanceof Error
