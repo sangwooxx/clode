@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
@@ -640,10 +642,13 @@ export function ContractsView({
         eyebrow="Kontrakty"
         title="Rejestr kontraktów"
         actions={
-          <>
+          <div className="module-actions">
+            <div className="module-actions__primary">
             <ActionButton type="button" onClick={resetForm}>
               Dodaj kontrakt
             </ActionButton>
+            </div>
+            <div className="module-actions__secondary">
             <ActionButton
               type="button"
               variant="secondary"
@@ -652,7 +657,8 @@ export function ContractsView({
             >
               {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
             </ActionButton>
-          </>
+            </div>
+          </div>
         }
       />
 
@@ -843,21 +849,29 @@ export function ContractsView({
                 </label>
               </FormGrid>
 
-              {formError ? <p className="auth-form__error">{formError}</p> : null}
-              {formStatus ? <p className="auth-form__status">{formStatus}</p> : null}
+              <FormFeedback
+                items={[
+                  formError ? { tone: "error", text: formError } : null,
+                  formStatus ? { tone: "success", text: formStatus } : null,
+                ]}
+              />
 
-              <div className="contracts-form__actions">
-                <ActionButton type="button" variant="ghost" onClick={resetForm}>
+              <FormActions
+                leading={
+                  <ActionButton type="button" variant="ghost" onClick={resetForm}>
                   {isEditing ? "Anuluj" : "Wyczyść"}
-                </ActionButton>
-                <ActionButton type="submit" disabled={isSubmitting}>
+                  </ActionButton>
+                }
+                trailing={
+                  <ActionButton type="submit" disabled={isSubmitting}>
                   {isSubmitting
                     ? "Zapisywanie..."
                     : isEditing
                       ? "Zapisz zmiany"
                       : "Dodaj kontrakt"}
-                </ActionButton>
-              </div>
+                  </ActionButton>
+                }
+              />
             </form>
           </Panel>
 

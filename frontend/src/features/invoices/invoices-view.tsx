@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
@@ -626,7 +628,8 @@ export function InvoicesView({
         eyebrow="Finanse"
         title="Rejestr faktur"
         actions={
-          <>
+          <div className="module-actions">
+            <div className="module-actions__primary">
           {canWrite ? (
             <ActionButton
               type="button"
@@ -636,6 +639,8 @@ export function InvoicesView({
               Dodaj fakture
             </ActionButton>
           ) : null}
+            </div>
+            <div className="module-actions__secondary">
           <ActionButton
             type="button"
             variant="secondary"
@@ -644,7 +649,8 @@ export function InvoicesView({
           >
             {isRefreshing ? "Odświeżanie..." : "Odśwież"}
           </ActionButton>
-          </>
+            </div>
+          </div>
         }
       />
 
@@ -1066,21 +1072,30 @@ export function InvoicesView({
                           </label>
                         </FormGrid>
 
-                        {formError ? <p className="status-message status-message--error">{formError}</p> : null}
-                        {formStatus ? <p className="status-message status-message--success">{formStatus}</p> : null}
+                        <FormFeedback
+                          items={[
+                            formError ? { tone: "error", text: formError } : null,
+                            formStatus ? { tone: "success", text: formStatus } : null,
+                          ]}
+                        />
 
-                        <div className="contracts-form__actions">
-                          <ActionButton type="submit" disabled={isSubmitting}>
+                        <FormActions
+                          leading={
+                            <ActionButton type="button" variant="secondary" onClick={closeForm}>
+                              {editingInvoiceId ? "Anuluj" : "Wyczysc"}
+                            </ActionButton>
+                          }
+                          trailing={
+                            <ActionButton type="submit" disabled={isSubmitting}>
                             {isSubmitting
                               ? "Zapisywanie..."
                               : editingInvoiceId
                                 ? "Zapisz zmiany"
                                 : "Dodaj fakturę"}
-                          </ActionButton>
-                          <ActionButton type="button" variant="secondary" onClick={closeForm}>
                             {editingInvoiceId ? "Anuluj edycję" : "Wyczyść"}
                           </ActionButton>
-                        </div>
+                          }
+                        />
                       </form>
                     )}
                   </>

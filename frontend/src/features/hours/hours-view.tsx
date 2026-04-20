@@ -992,14 +992,31 @@ export function HoursView({
         eyebrow="Godziny"
         title="Ewidencja czasu pracy"
         actions={
-          <ActionButton
-            type="button"
-            variant="secondary"
-            onClick={() => void reloadHours({ preserveState: true, refreshRelations: true })}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-          </ActionButton>
+          <div className="module-actions">
+            <div className="module-actions__primary">
+              {canWrite ? (
+                <ActionButton
+                  type="button"
+                  onClick={() =>
+                    handleStartNewEntryForEmployee(selectedEmployeeRow?.employeeName ?? "")
+                  }
+                  disabled={!selectedMonthKey || selectedEmployeeRow?.employeeStatus === "inactive"}
+                >
+                  Nowy wpis
+                </ActionButton>
+              ) : null}
+            </div>
+            <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={() => void reloadHours({ preserveState: true, refreshRelations: true })}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+              </ActionButton>
+            </div>
+          </div>
         }
       />
 

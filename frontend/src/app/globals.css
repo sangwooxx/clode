@@ -132,6 +132,22 @@ select {
   gap: 8px;
 }
 
+.module-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px 12px;
+  align-items: center;
+}
+
+.module-actions__primary,
+.module-actions__secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .auth-card {
   border: 0;
   background: transparent;
@@ -811,9 +827,10 @@ select {
 
 .employees-form__actions {
   display: flex;
-  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .contracts-side-stack {
@@ -838,8 +855,30 @@ select {
 .contracts-form__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-actions__leading,
+.form-actions__trailing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.form-actions__trailing {
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 .contracts-bulk-toolbar {
@@ -1066,6 +1105,11 @@ select {
   color: var(--text-muted);
   font-size: 0.88rem;
   line-height: 1.45;
+}
+
+.form-feedback {
+  display: grid;
+  gap: 8px;
 }
 
 .status-message--error {
@@ -2360,9 +2404,10 @@ select {
 
 .vacations-form__actions {
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .settings-layout {
@@ -2517,9 +2562,10 @@ select {
 
 .settings-form-actions {
   display: flex;
-  justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .settings-audit-toolbar {

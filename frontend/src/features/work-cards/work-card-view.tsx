@@ -594,7 +594,17 @@ export function WorkCardView({
         eyebrow="Godziny"
         title="Karty pracy"
         actions={
-          <div className="section-header__actions-stack">
+          <div className="module-actions">
+            {canWrite ? (
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={() => void handleCreateMonth()}
+                disabled={isCreatingMonth}
+              >
+                {isCreatingMonth ? "Dodawanie..." : "Dodaj miesiÄ…c"}
+              </ActionButton>
+            ) : null}
             {canWrite ? (
               <ActionButton
                 type="button"

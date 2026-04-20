@@ -795,7 +795,7 @@ export function VacationsView({
         eyebrow="Kadry"
         title="Urlopy i nieobecności"
         actions={
-          <>
+          <div className="module-actions">
             <ActionButton
               type="button"
               variant="secondary"
@@ -805,9 +805,9 @@ export function VacationsView({
               {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
             </ActionButton>
             <ActionButton type="button" onClick={handleCreateNewRequest}>
-              Nowy wniosek
+              Dodaj nieobecnosc
             </ActionButton>
-          </>
+          </div>
         }
       />
 
