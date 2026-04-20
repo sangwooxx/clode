@@ -5,7 +5,14 @@ import {
 } from "@/features/hours/formatters";
 import type { EmployeeMedicalState } from "@/features/employees/types";
 
-const mojibakeMarkers = ["Ã", "Å", "Ä", "â"];
+type EmployeeDisplaySource = {
+  name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  worker_code?: string | null;
+};
+
+const mojibakeMarkers = ["Ãƒ", "Ã…", "Ã„", "Ã¢"];
 
 export { formatHours, formatMoney, formatNumber };
 
@@ -31,6 +38,24 @@ export function composeEmployeeName(firstName: string, lastName: string) {
     .filter(Boolean)
     .join(" ")
     .trim();
+}
+
+export function formatEmployeeDisplayName(
+  employee: EmployeeDisplaySource | null | undefined,
+  fallback = ""
+) {
+  const firstName = normalizeEmployeeText(employee?.first_name);
+  const lastName = normalizeEmployeeText(employee?.last_name);
+
+  if (firstName || lastName) {
+    return [firstName, lastName].filter(Boolean).join(" ").trim();
+  }
+
+  return normalizeEmployeeText(employee?.name) || fallback;
+}
+
+export function formatEmployeeCodeLabel(value: unknown, fallback = "Bez kodu") {
+  return normalizeEmployeeText(value) || fallback;
 }
 
 export function splitEmployeeName(value: string) {

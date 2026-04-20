@@ -1,3 +1,7 @@
+﻿import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
 import type { ContractRecord } from "@/features/contracts/types";
 import { getSelectedMonth } from "@/features/hours/mappers";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
@@ -54,42 +58,19 @@ export function buildWorkCardEmployeeKey(
 export function buildWorkCardEmployeeOptions(
   employees: HoursEmployeeRecord[]
 ): WorkCardEmployeeOption[] {
-  const nameCounts = new Map<string, number>();
-
-  employees.forEach((employee) => {
-    const normalizedName = normalizeName(employee.name);
-    if (!normalizedName) return;
-    nameCounts.set(normalizedName, (nameCounts.get(normalizedName) || 0) + 1);
-  });
-
   return employees
     .map((employee, index) => {
-      const normalizedName = normalizeName(employee.name);
       const employeeId = String(employee.id || "").trim();
       const status = normalizeEmployeeStatus(employee.status);
       const workerCode = String(employee.worker_code || "").trim();
-      const position = String(employee.position || "").trim();
-      const isDuplicateName = (nameCounts.get(normalizedName) || 0) > 1;
-      const duplicateLabelParts = [
-        position,
-        employeeId ? `ID ${employeeId}` : "",
-        workerCode ? `Kod ${workerCode}` : "",
-      ].filter(Boolean);
-
-      const descriptionParts = [
-        workerCode ? `Kod ${workerCode}` : "",
-        employeeId ? `ID ${employeeId}` : "",
-        position,
-        status === "inactive" ? "nieaktywny" : "aktywny",
-      ].filter(Boolean);
+      const position = String(employee.position || "").trim() || "Bez stanowiska";
+      const displayName = formatEmployeeDisplayName(employee, String(employee.name || "").trim());
 
       return {
         key: buildWorkCardEmployeeKey(employee, index),
         name: String(employee.name || "").trim(),
-        label: isDuplicateName
-          ? `${String(employee.name || "").trim()} • ${duplicateLabelParts.slice(0, 2).join(" • ") || `rekord ${index + 1}`}`
-          : String(employee.name || "").trim(),
-        description: descriptionParts.join(" • "),
+        label: displayName,
+        description: `${position} | Kod ${formatEmployeeCodeLabel(workerCode)}`,
         status,
         employee: {
           ...employee,
@@ -101,8 +82,8 @@ export function buildWorkCardEmployeeOptions(
     })
     .filter((option) => option.name)
     .sort((left, right) =>
-      `${left.name} ${left.employee.worker_code || ""} ${left.employee.id || ""}`.localeCompare(
-        `${right.name} ${right.employee.worker_code || ""} ${right.employee.id || ""}`,
+      `${left.label} ${left.employee.worker_code || ""} ${left.employee.id || ""}`.localeCompare(
+        `${right.label} ${right.employee.worker_code || ""} ${right.employee.id || ""}`,
         "pl",
         { sensitivity: "base", numeric: true }
       )
@@ -371,7 +352,7 @@ export function buildWorkCardSummaryCards(args: {
   return [
     {
       id: "days",
-      label: "Dni miesiąca",
+      label: "Dni miesiÄ…ca",
       value: formatNumber(args.rows.length),
     },
     {
@@ -381,13 +362,13 @@ export function buildWorkCardSummaryCards(args: {
     },
     {
       id: "hours",
-      label: "Łączne godziny",
+      label: "ÅÄ…czne godziny",
       value: formatHours(totalHours),
       accent: true,
     },
     {
       id: "contracts",
-      label: "Kontrakty w użyciu",
+      label: "Kontrakty w uÅ¼yciu",
       value: formatNumber(usedContracts.size),
     },
     {

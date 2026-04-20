@@ -27,6 +27,10 @@ import {
 } from "@/lib/print/print-document";
 import type { ContractRecord } from "@/features/contracts/types";
 import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
+import {
   fetchHoursContracts,
   fetchHoursData,
   fetchHoursEmployeeDirectory,
@@ -90,6 +94,7 @@ type HoursEmployeeRow = {
   index: number;
   employeeId: string;
   employeeName: string;
+  employeeLabel: string;
   employeeCode: string;
   employeePosition: string;
   employeeStatus: HoursEmployeeRecord["status"];
@@ -143,6 +148,8 @@ function buildHoursEmployeeRows(args: {
     );
     const employeeId = String(entry.employee_id || employee?.id || "").trim();
     const employeeName = String(entry.employee_name || employee?.name || "").trim() || "Nieznany pracownik";
+    const employeeLabel =
+      formatEmployeeDisplayName(employee, employeeName) || "Nieznany pracownik";
     const employeeCode = String(employee?.worker_code || "").trim() || "—";
     const employeePosition = String(employee?.position || "").trim() || "Bez stanowiska";
     const employeeStatus = employee?.status ?? "active";
@@ -166,6 +173,7 @@ function buildHoursEmployeeRows(args: {
         key: rowKey,
         employeeId,
         employeeName,
+        employeeLabel,
         employeeCode,
         employeePosition,
         employeeStatus,
@@ -214,6 +222,7 @@ function buildHoursEmployeeRows(args: {
     .filter((row) => {
       if (!searchTerm) return true;
       const haystack = [
+        row.employeeLabel,
         row.employeeName,
         row.employeeCode,
         row.employeePosition,
@@ -224,8 +233,8 @@ function buildHoursEmployeeRows(args: {
       return haystack.includes(searchTerm);
     })
     .sort((left, right) =>
-      `${left.employeeName} ${left.employeeId}`.localeCompare(
-        `${right.employeeName} ${right.employeeId}`,
+      `${left.employeeLabel} ${left.employeeId}`.localeCompare(
+        `${right.employeeLabel} ${right.employeeId}`,
         "pl",
         { sensitivity: "base", numeric: true }
       )
@@ -251,12 +260,12 @@ const hoursTableColumns = (handlers: {
     key: "employee",
     header: "Pracownik",
     className: "hours-col-employee",
-    sortValue: (row) => `${row.employeeName} ${row.employeeCode} ${row.employeePosition}`,
+    sortValue: (row) => `${row.employeeLabel} ${row.employeeCode}`,
     render: (row) => (
       <div className="data-table__stack">
-        <span className="data-table__primary">{row.employeeName}</span>
+        <span className="data-table__primary">{row.employeeLabel}</span>
         <span className="data-table__secondary">
-          {row.employeePosition} • Kod: {row.employeeCode}
+          {row.employeePosition} | Kod {formatEmployeeCodeLabel(row.employeeCode, "—")}
         </span>
         {row.employeeStatus === "inactive" ? (
           <span className="data-table__status-pill data-table__status-pill--muted">
@@ -565,6 +574,50 @@ export function HoursView({
       "";
     return String(candidate).trim();
   }, [editingEntry, entryFormValues.employee_name, selectedEmployeeRow, selectedEntry]);
+  const activeEmployeeRecord = useMemo(() => {
+    if (activeEmployeeId) {
+      const matchedById =
+        historicalEmployees.find(
+          (employee) => String(employee.id || "").trim() === activeEmployeeId
+        ) ?? null;
+      if (matchedById) {
+        return matchedById;
+      }
+    }
+
+    if (!activeEmployeeName) {
+      return null;
+    }
+
+    return (
+      roster.find((employee) => employee.name === activeEmployeeName) ??
+      historicalEmployees.find((employee) => employee.name === activeEmployeeName) ??
+      null
+    );
+  }, [activeEmployeeId, activeEmployeeName, historicalEmployees, roster]);
+  const activeEmployeeLabel = useMemo(() => {
+    return (
+      formatEmployeeDisplayName(activeEmployeeRecord, activeEmployeeName) ||
+      selectedEmployeeRow?.employeeLabel ||
+      activeEmployeeName
+    );
+  }, [activeEmployeeName, activeEmployeeRecord, selectedEmployeeRow?.employeeLabel]);
+  const activeEmployeeMeta = useMemo(() => {
+    const position =
+      String(activeEmployeeRecord?.position || selectedEmployeeRow?.employeePosition || "").trim() ||
+      "Bez stanowiska";
+    const employeeCode = formatEmployeeCodeLabel(
+      activeEmployeeRecord?.worker_code || selectedEmployeeRow?.employeeCode,
+      "—"
+    );
+
+    return `${position} | Kod ${employeeCode}`;
+  }, [
+    activeEmployeeRecord?.position,
+    activeEmployeeRecord?.worker_code,
+    selectedEmployeeRow?.employeeCode,
+    selectedEmployeeRow?.employeePosition,
+  ]);
   const activeEmployeeAllowsNewEntries = useMemo(
     () => roster.some((employee) => employee.name === activeEmployeeName),
     [activeEmployeeName, roster]
@@ -630,10 +683,10 @@ export function HoursView({
     if (!selectedMonth) return;
 
     const isEmployeeContext = Boolean(selectedEmployeeRow);
-    const reportTitle = "Ewidencja czasu pracy";
-    const reportSubtitle = isEmployeeContext
-      ? selectedEmployeeRow?.employeeName || selectedMonth.month_label
-      : selectedMonth.month_label;
+      const reportTitle = "Ewidencja czasu pracy";
+      const reportSubtitle = isEmployeeContext
+        ? selectedEmployeeRow?.employeeLabel || selectedMonth.month_label
+        : selectedMonth.month_label;
 
     const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
     const totalHours = isEmployeeContext
@@ -688,10 +741,10 @@ export function HoursView({
               label: "Kontekst",
               value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
             },
-            {
-              label: "Pracownik",
-              value: selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
-            },
+              {
+                label: "Pracownik",
+                value: selectedEmployeeRow?.employeeLabel || "Wszyscy pracownicy",
+              },
             { label: "Wpisy", value: formatNumber(currentEntries.length) },
             { label: "Suma godzin", value: formatHours(totalHours) },
             { label: "Suma kosztów", value: formatMoney(totalCost) },
@@ -736,9 +789,9 @@ export function HoursView({
         label: "Zakres raportu",
         description: "Miesiąc, kontekst i podstawowe sumy raportu.",
         preview: [
-          selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-          isEmployeeContext ? selectedEmployeeRow?.employeeName || "Pracownik" : "Cały miesiąc",
-        ],
+            selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+            isEmployeeContext ? selectedEmployeeRow?.employeeLabel || "Pracownik" : "Cały miesiąc",
+          ],
       },
       {
         id: "entries",
@@ -891,9 +944,9 @@ export function HoursView({
 
     printDocument({
       title: "Ewidencja czasu pracy",
-      subtitle: isEmployeeContext
-        ? selectedEmployeeRow?.employeeName || selectedMonth.month_label
-        : selectedMonth.month_label,
+        subtitle: isEmployeeContext
+          ? selectedEmployeeRow?.employeeLabel || selectedMonth.month_label
+          : selectedMonth.month_label,
       context: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
       filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
       meta: [
@@ -916,9 +969,9 @@ export function HoursView({
                   value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
                 },
                 {
-                  label: "Pracownik",
-                  value: selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
-                },
+                    label: "Pracownik",
+                    value: selectedEmployeeRow?.employeeLabel || "Wszyscy pracownicy",
+                  },
                 { label: "Wpisy", value: formatNumber(currentEntries.length) },
                 { label: "Suma godzin", value: formatHours(totalHours) },
                 { label: "Suma kosztów", value: formatMoney(totalCost) },
@@ -1608,9 +1661,11 @@ export function HoursView({
                 <div className="hours-selected-entry">
                   <div className="hours-selected-entry__meta">
                     <span className="hours-selected-entry__label">Wybrany pracownik</span>
-                    <strong>
-                      {selectedEmployeeRow.employeeName}
-                    </strong>
+                    <strong>{selectedEmployeeRow.employeeLabel}</strong>
+                    <span>
+                      {selectedEmployeeRow.employeePosition} | Kod{" "}
+                      {formatEmployeeCodeLabel(selectedEmployeeRow.employeeCode, "—")}
+                    </span>
                     <span>
                       {formatHours(selectedEmployeeRow.totalHours)} • {formatNumber(selectedEmployeeRow.contracts.length)} kontrakty •{" "}
                       {formatNumber(selectedEmployeeRow.entriesCount)} wpisy
@@ -1655,7 +1710,9 @@ export function HoursView({
                           .filter((employee) => employee.status !== "inactive")
                           .map((employee) => (
                             <option key={employee.name} value={employee.name}>
-                              {employee.name}
+                              {`${formatEmployeeDisplayName(employee, employee.name)} - ${
+                                employee.position || "Bez stanowiska"
+                              } | Kod ${formatEmployeeCodeLabel(employee.worker_code, "—")}`}
                             </option>
                           ))}
                         {editingEntry && !roster.some((employee) => employee.name === editingEntry.employee_name) ? (
@@ -1668,9 +1725,10 @@ export function HoursView({
                       <div className="hours-entry-helper">
                         <div className="hours-entry-helper__header">
                           <div className="data-table__stack">
-                            <span className="data-table__primary">{activeEmployeeName}</span>
+                            <span className="data-table__primary">{activeEmployeeLabel}</span>
                             <span className="data-table__secondary">
-                              Wpisy pracownika w wybranym miesiącu: {formatNumber(employeeEntries.length)}
+                              {activeEmployeeMeta} | Wpisy w wybranym miesiącu:{" "}
+                              {formatNumber(employeeEntries.length)}
                             </span>
                           </div>
                           {activeEmployeeAllowsNewEntries ? (
@@ -1689,8 +1747,8 @@ export function HoursView({
                             <div className="hours-entry-helper__summary">
                               <div className="hours-entry-helper__summary-card">
                                 <span className="hours-entry-helper__summary-label">Pracownik</span>
-                                <strong>{activeEmployeeName}</strong>
-                                <span>{formatNumber(employeeEntries.length)} wpisy</span>
+                                <strong>{activeEmployeeLabel}</strong>
+                                <span>{activeEmployeeMeta}</span>
                               </div>
                               <div className="hours-entry-helper__summary-card">
                                 <span className="hours-entry-helper__summary-label">Kontrakty</span>
@@ -1861,7 +1919,7 @@ export function HoursView({
           selectedMonth
             ? [
                 selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-                selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
+                selectedEmployeeRow?.employeeLabel || "Wszyscy pracownicy",
                 selectedEmployeeRow ? "Raport pracownika" : "Raport miesiąca",
               ]
             : []

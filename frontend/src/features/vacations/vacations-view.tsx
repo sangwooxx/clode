@@ -10,6 +10,10 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
+import {
   deleteVacationRequestRecord,
   fetchVacationsModuleData,
   saveVacationBalanceRecord,
@@ -73,13 +77,15 @@ function employeeTableColumns(): Array<DataTableColumn<VacationEmployeeRow>> {
       key: "employee",
       header: "Pracownik",
       className: "vacations-col-employee",
-      sortValue: (row) => `${row.employee.name} ${row.employee.worker_code} ${row.employee.position}`,
+      sortValue: (row) =>
+        `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
       render: (row) => (
         <div className="data-table__stack">
-          <span className="data-table__primary">{row.employee.name}</span>
+          <span className="data-table__primary">
+            {formatEmployeeDisplayName(row.employee, row.employee.name)}
+          </span>
           <span className="data-table__secondary">
-            {row.employee.worker_code ? `Kod ${row.employee.worker_code}` : "Bez kodu"} •{" "}
-            {row.employee.position || "Bez stanowiska"}
+            {row.employee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(row.employee.worker_code)}
           </span>
         </div>
       ),
@@ -906,10 +912,11 @@ export function VacationsView({
             {selectedEmployee ? (
               <div className="vacations-spotlight">
                 <div className="data-table__stack">
-                  <span className="data-table__primary">{selectedEmployee.name}</span>
+                  <span className="data-table__primary">
+                    {formatEmployeeDisplayName(selectedEmployee, selectedEmployee.name)}
+                  </span>
                   <span className="data-table__secondary">
-                    {selectedEmployee.position || "Bez stanowiska"} •{" "}
-                    {selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny"}
+                    {selectedEmployee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(selectedEmployee.worker_code)}
                   </span>
                 </div>
 
@@ -1025,8 +1032,9 @@ export function VacationsView({
                     <option value="">Wybierz pracownika</option>
                     {selectableEmployeeOptions.map((option) => (
                       <option key={option.key} value={option.key}>
-                        {option.label}
-                        {option.status === "inactive" ? " [historia]" : ""}
+                        {option.description
+                          ? `${option.label} - ${option.description}`
+                          : option.label}
                       </option>
                     ))}
                   </select>

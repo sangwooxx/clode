@@ -25,7 +25,9 @@ import {
   saveEmployeeRecord,
 } from "@/features/employees/api";
 import {
+  formatEmployeeCodeLabel,
   formatEmployeeDate,
+  formatEmployeeDisplayName,
   formatEmployeeMedicalState,
   formatEmployeeStatus,
   formatHours,
@@ -65,13 +67,16 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
     key: "employee",
     header: "Pracownik",
     className: "employees-col-employee",
-    sortValue: (row) => `${row.employee.name} ${row.employee.worker_code}`,
+    sortValue: (row) =>
+      `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
     render: (row) => (
       <div className="data-table__stack">
-        <span className="data-table__primary">{row.employee.name}</span>
+        <span className="data-table__primary">
+          {formatEmployeeDisplayName(row.employee, row.employee.name)}
+        </span>
         <span className="data-table__secondary">
-          {row.employee.worker_code ? `Kod ${row.employee.worker_code}` : "Bez kodu"} •{" "}
-          {row.employee.id || "bez ID"}
+          {(row.employee.position || "Bez stanowiska")} | Kod{" "}
+          {formatEmployeeCodeLabel(row.employee.worker_code)}
         </span>
       </div>
     ),

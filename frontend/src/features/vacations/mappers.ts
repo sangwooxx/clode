@@ -1,4 +1,8 @@
-import { normalizeEmployeeText } from "@/features/employees/formatters";
+﻿import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+  normalizeEmployeeText,
+} from "@/features/employees/formatters";
 import {
   buildEmployeeDirectory,
   findEmployeeByKey,
@@ -74,10 +78,10 @@ export function buildVacationApprovalMessage(args: {
   }
 
   if (args.approvalMode === "admin") {
-    return "Tryb workflow wymaga akceptacji administratora. To konto zapisuje nowe wpisy jako oczekujące.";
+    return "Tryb workflow wymaga akceptacji administratora. To konto zapisuje nowe wpisy jako oczekujÄ…ce.";
   }
 
-  return "To konto zapisuje nowe wpisy jako oczekujące. Zatwierdzenie pozostaje po stronie użytkowników z uprawnieniem akceptacji urlopów.";
+  return "To konto zapisuje nowe wpisy jako oczekujÄ…ce. Zatwierdzenie pozostaje po stronie uÅ¼ytkownikÃ³w z uprawnieniem akceptacji urlopÃ³w.";
 }
 
 function parseVacationNumber(value: unknown) {
@@ -194,19 +198,25 @@ export function buildVacationEmployeeOptions(
   employees: EmployeeDirectoryRecord[]
 ): VacationEmployeeOption[] {
   return employees
-    .map(
-      (employee) =>
-        ({
-          key: employee.key,
-          label: employee.name,
-          description:
-            [employee.worker_code ? `Kod ${employee.worker_code}` : "", employee.position]
-              .filter(Boolean)
-              .join(" • ") || (employee.status === "inactive" ? "Nieaktywny" : "Aktywny"),
-          employee,
-          status: employee.status === "inactive" ? "inactive" : "active",
-        }) satisfies VacationEmployeeOption
-    )
+    .map((employee) => {
+      const displayName = formatEmployeeDisplayName(employee, employee.name);
+      const details = [
+        employee.position || "Bez stanowiska",
+        `Kod ${formatEmployeeCodeLabel(employee.worker_code)}`,
+      ];
+
+      if (employee.status === "inactive") {
+        details.push("Historia");
+      }
+
+      return {
+        key: employee.key,
+        label: displayName,
+        description: details.join(" | "),
+        employee,
+        status: employee.status === "inactive" ? "inactive" : "active",
+      } satisfies VacationEmployeeOption;
+    })
     .sort((left, right) =>
       `${left.label} ${left.employee.id || ""}`.localeCompare(
         `${right.label} ${right.employee.id || ""}`,
@@ -277,7 +287,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "missing",
       message:
-        "Wpis wskazuje pracownika po stabilnym kluczu, ale tego rekordu nie ma już w kartotece.",
+        "Wpis wskazuje pracownika po stabilnym kluczu, ale tego rekordu nie ma juÅ¼ w kartotece.",
     };
   }
 
@@ -300,7 +310,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "missing",
       message:
-        "Wpis wskazuje pracownika po identyfikatorze, ale tego rekordu nie ma już w kartotece.",
+        "Wpis wskazuje pracownika po identyfikatorze, ale tego rekordu nie ma juÅ¼ w kartotece.",
     };
   }
 
@@ -319,7 +329,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "ambiguous",
       message:
-        "Ten wpis legacy zawiera tylko nazwę pracownika, a w kartotece istnieje więcej niż jedna osoba o tej samej nazwie. Wybierz właściwą osobę ręcznie przed zapisem.",
+        "Ten wpis legacy zawiera tylko nazwÄ™ pracownika, a w kartotece istnieje wiÄ™cej niÅ¼ jedna osoba o tej samej nazwie. Wybierz wÅ‚aÅ›ciwÄ… osobÄ™ rÄ™cznie przed zapisem.",
     };
   }
 
@@ -327,7 +337,7 @@ export function resolveVacationEditingEmployee(args: {
     employee: null,
     status: "legacy_name_only",
     message:
-      "Ten wpis legacy zawiera tylko nazwę pracownika. Rekord nie jest już przypinany automatycznie po nazwie; wybierz właściwą osobę ręcznie przed zapisem.",
+      "Ten wpis legacy zawiera tylko nazwÄ™ pracownika. Rekord nie jest juÅ¼ przypinany automatycznie po nazwie; wybierz wÅ‚aÅ›ciwÄ… osobÄ™ rÄ™cznie przed zapisem.",
   };
 }
 
@@ -600,7 +610,7 @@ export function buildVacationSummaryCards(args: {
     },
     {
       id: "vacations-pending",
-      label: "Wnioski oczekujące",
+      label: "Wnioski oczekujÄ…ce",
       value: String(pendingCount),
       accent: true,
     },
@@ -611,7 +621,7 @@ export function buildVacationSummaryCards(args: {
     },
     {
       id: "vacations-remaining-pool",
-      label: "Pozostała pula",
+      label: "PozostaÅ‚a pula",
       value: formatVacationDays(totalRemaining),
     },
     {
@@ -705,7 +715,7 @@ export function buildVacationApprovalRows(args: {
         subtitle: employee
           ? [employee.worker_code ? `Kod ${employee.worker_code}` : "", employee.position]
               .filter(Boolean)
-              .join(" • ") || (employee.status === "inactive" ? "Nieaktywny" : "Aktywny")
+              .join(" â€¢ ") || (employee.status === "inactive" ? "Nieaktywny" : "Aktywny")
           : "Historyczny wpis bez dopasowania do kartoteki",
       };
     });

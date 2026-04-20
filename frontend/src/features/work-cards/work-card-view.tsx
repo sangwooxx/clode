@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +9,10 @@ import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
 import {
   buildPdfDialogSections,
   createPdfConfigState,
@@ -241,10 +245,14 @@ export function WorkCardView({
           cardId: card.id,
           card,
           employee,
-          employeeLabel: String(employee?.name || card.employee_name || "Nieznany pracownik").trim(),
+          employeeLabel:
+            formatEmployeeDisplayName(
+              employee,
+              String(card.employee_name || "Nieznany pracownik").trim()
+            ) || "Nieznany pracownik",
           employeeMeta:
             employeeOption?.description ||
-            (card.employee_id ? `ID ${card.employee_id}` : "Pracownik nieaktywny"),
+            "Pracownik nieaktywny",
           monthKey: card.month_key,
           monthLabel: card.month_label || formatMonthLabel(card.month_key),
           totalHours: totals.totalHours,
@@ -305,9 +313,15 @@ export function WorkCardView({
   );
   const isHistoricalPreview = Boolean(selectedHistoricalCard);
   const displayedEmployeeLabel =
-    selectedHistoricalCard?.employeeLabel || selectedEmployee?.name || "";
+    selectedHistoricalCard?.employeeLabel ||
+    formatEmployeeDisplayName(selectedEmployee, selectedEmployee?.name || "") ||
+    "";
   const displayedEmployeeMeta =
-    selectedHistoricalCard?.employeeMeta || selectedEmployeeOption?.description || "";
+    selectedHistoricalCard?.employeeMeta ||
+    selectedEmployeeOption?.description ||
+    (selectedEmployee
+      ? `${String(selectedEmployee.position || "").trim() || "Bez stanowiska"} | Kod ${formatEmployeeCodeLabel(selectedEmployee.worker_code)}`
+      : "");
   const hasDisplayContext = Boolean(selectedHistoricalCard || selectedEmployee);
 
   const selectedMonth = useMemo(
@@ -426,7 +440,7 @@ export function WorkCardView({
     const nextMonthKey = buildMonthKey(newMonthYear, newMonthNumber);
 
     if (!nextMonthKey) {
-      setMonthError("Podaj poprawny rok i miesiąc nowej karty.");
+      setMonthError("Podaj poprawny rok i miesiąc karty pracy.");
       return;
     }
 
@@ -452,37 +466,22 @@ export function WorkCardView({
       });
       await reloadWorkCards({ preserveSelection: true });
       setSelectedMonthKey(nextMonthKey);
-      setSelectedHistoricalCardId(null);
       setMonthStatus(`Dodano miesiąc ${formatMonthLabel(nextMonthKey)}.`);
     } catch (error) {
-      setMonthError(
-        error instanceof Error ? error.message : "Nie udało się dodać miesiąca."
-      );
+      setMonthError(error instanceof Error ? error.message : "Nie udało się dodać miesiąca.");
     } finally {
       setIsCreatingMonth(false);
     }
   }
 
   async function handleSaveCard() {
+    if (!canWrite || !selectedEmployee || !selectedMonth) return;
+
     setSaveError(null);
     setSaveStatus(null);
 
-    if (!canWrite) {
-      setSaveError("Masz dostęp tylko do podglądu kart pracy.");
-      return;
-    }
-
-    if (isHistoricalPreview) {
-      setSaveError("Historyczne karty pracowników nieaktywnych są tylko do odczytu.");
-      return;
-    }
-
-    if (!selectedEmployee || !selectedMonthKey || !selectedMonth) {
-      setSaveError("Wybierz pracownika i miesiąc karty pracy.");
-      return;
-    }
-
     try {
+      setIsSaving(true);
       const nextCard = serializeWorkCard({
         rows: draftRows,
         employee: selectedEmployee,
@@ -493,7 +492,6 @@ export function WorkCardView({
       });
       const nextStore = upsertWorkCard(store, nextCard);
 
-      setIsSaving(true);
       const result = await saveWorkCardAndSync({
         store: nextStore,
         card: nextCard,
@@ -600,78 +598,6 @@ export function WorkCardView({
   const currentMonthLabel =
     selectedMonth?.month_label ||
     (selectedMonthKey ? formatMonthLabel(selectedMonthKey) : "Wybierz miesiąc");
-  const currentModeLabel = isHistoricalPreview ? "Historia" : "Aktywna karta";
-  function handlePrintWorkCard() {
-    if (!selectedMonthKey || !displayedEmployeeLabel) return;
-
-    const contractSummaryRows = Array.from(contractTotals.entries())
-      .filter(([, hours]) => hours > 0)
-      .map(([contractId, hours]) => {
-        const option = contractOptions.find((candidate) => candidate.id === contractId);
-        return [
-          option?.label || "Nieprzypisane",
-          option?.code || "—",
-          formatHours(hours),
-        ];
-      });
-
-    const dailyRows = draftRows.map((row) => {
-      const assignments = contractOptions
-        .map((option) => {
-          const value = parseDecimalInput(row.hoursByContract[option.id] || "");
-          if (!value) return "";
-          return `${option.label}: ${formatHours(value)}`;
-        })
-        .filter(Boolean)
-        .join(" | ");
-
-      return [
-        `${row.dayNumber} ${row.weekdayLabel}`,
-        assignments || "—",
-        formatHours(row.totalHours),
-        row.note || "—",
-      ];
-    });
-
-    printDocument({
-      title: "Karta pracy",
-      subtitle: displayedEmployeeLabel,
-      meta: [
-        currentMonthLabel,
-        currentModeLabel,
-        `Liczba dni z wpisami: ${formatNumber(filledDaysCount)}`,
-        `Suma godzin: ${formatHours(monthTotalHours)}`,
-      ],
-      filename: `clode-karta-pracy-${displayedEmployeeLabel}-${selectedMonthKey}`,
-      sections: [
-        {
-          title: "Dane karty",
-          details: [
-            { label: "Pracownik", value: displayedEmployeeLabel },
-            { label: "Miesiąc", value: currentMonthLabel },
-            { label: "Tryb", value: currentModeLabel },
-            { label: "Kontekst", value: displayedEmployeeMeta || "Aktywny pracownik" },
-            { label: "Dni z wpisami", value: formatNumber(filledDaysCount) },
-            { label: "Suma godzin", value: formatHours(monthTotalHours) },
-          ],
-        },
-        {
-          title: "Rozpiska dzienna",
-          table: {
-            columns: ["Dzień", "Kontrakty i godziny", "Razem", "Opis pracy"],
-            rows: dailyRows,
-          },
-        },
-        {
-          title: "Podsumowanie kontraktów",
-          table: {
-            columns: ["Kontrakt", "Kod", "Suma godzin"],
-            rows: contractSummaryRows,
-          },
-        },
-      ],
-    });
-  }
 
   const workCardPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
     if (!selectedMonthKey || !displayedEmployeeLabel) return [];
@@ -827,10 +753,11 @@ export function WorkCardView({
 
     setIsPdfDialogOpen(false);
   }
+  const currentModeLabel = isHistoricalPreview ? "Historia pracownika" : "Aktywna karta";
   const currentContextLabel = displayedEmployeeLabel || "Wybierz pracownika";
   const currentContextMeta = [currentMonthLabel, displayedEmployeeMeta]
     .filter(Boolean)
-    .join(" • ");
+    .join(" | ");
 
   return (
     <div className="module-page">
@@ -846,7 +773,7 @@ export function WorkCardView({
                 onClick={() => void handleCreateMonth()}
                 disabled={isCreatingMonth}
               >
-                {isCreatingMonth ? "Dodawanie..." : "Dodaj miesiÄ…c"}
+                {isCreatingMonth ? "Dodawanie..." : "Dodaj miesiąc"}
               </ActionButton>
             ) : null}
             {canWrite ? (
@@ -903,12 +830,10 @@ export function WorkCardView({
             >
               <option value="">Wybierz pracownika</option>
               {employeeOptions.map((option) => (
-                  <option key={option.key} value={option.key}>
-                    {option.description
-                      ? `${option.label} — ${option.description}`
-                      : option.label}
-                  </option>
-                ))}
+                <option key={option.key} value={option.key}>
+                  {option.description ? `${option.label} - ${option.description}` : option.label}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -952,7 +877,6 @@ export function WorkCardView({
         {saveError ? <p className="status-message status-message--error">{saveError}</p> : null}
         {saveStatus ? <p className="status-message status-message--success">{saveStatus}</p> : null}
       </Panel>
-
       {months.length === 0 ? (
         <Panel title="Brak miesięcy roboczych">
           <div className="status-stack">
@@ -976,7 +900,7 @@ export function WorkCardView({
           <div className="work-card-meta">
             <div className="data-table__stack">
               <span className="data-table__primary">
-                {displayedEmployeeLabel} • {selectedMonth?.month_label || formatMonthLabel(selectedMonthKey)}
+                {displayedEmployeeLabel} | {selectedMonth?.month_label || formatMonthLabel(selectedMonthKey)}
               </span>
               {displayedEmployeeMeta ? (
                 <span className="data-table__secondary">{displayedEmployeeMeta}</span>
@@ -1003,7 +927,7 @@ export function WorkCardView({
                 <div
                   key={`head-${option.id}`}
                   className={`work-card-grid__cell work-card-grid__cell--contract-head work-card-grid__cell--status-${option.status}`}
-                  title={`${option.code} • ${option.label}`}
+                  title={`${option.code} | ${option.label}`}
                 >
                   <span className="work-card-grid__contract-code">{option.code}</span>
                   <span className="work-card-grid__contract-name">{option.label}</span>
@@ -1124,7 +1048,7 @@ export function WorkCardView({
                   <span className="work-card-history__item-side">
                     <strong>{item.monthLabel}</strong>
                     <span>
-                      {formatHours(item.totalHours)} • {formatNumber(item.filledDays)} dni
+                      {formatHours(item.totalHours)} | {formatNumber(item.filledDays)} dni
                     </span>
                   </span>
                 </button>

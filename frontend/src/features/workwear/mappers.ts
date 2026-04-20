@@ -1,3 +1,7 @@
+﻿import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
 import { buildEmployeeDirectory, findEmployeeByKey } from "@/features/employees/mappers";
 import type { EmployeeDirectoryRecord } from "@/features/employees/types";
 import {
@@ -495,24 +499,20 @@ export function buildWorkwearEmployeeOptions(args: {
       })
     )
     .map((employee) => {
-      const duplicateCount = countEmployeesWithSameName(args.employees, employee.name);
-      const descriptorParts = [
-        employee.position || "",
-        employee.worker_code ? `Kod ${employee.worker_code}` : "",
-        duplicateCount > 1 && employee.id ? `ID ${employee.id}` : "",
-        employee.status === "inactive" ? "historia" : "",
-      ].filter(Boolean);
+      const displayName = formatEmployeeDisplayName(employee, employee.name);
+      const subtitleParts = [
+        employee.position || "Bez stanowiska",
+        `Kod ${formatEmployeeCodeLabel(employee.worker_code)}`,
+      ];
+
+      if (employee.status === "inactive") {
+        subtitleParts.push("Historia");
+      }
 
       return {
         key: employee.key,
-        label:
-          descriptorParts.length > 0
-            ? `${employee.name} • ${descriptorParts.join(" • ")}`
-            : employee.name,
-        subtitle: [
-          employee.position || "Bez stanowiska",
-          employee.status === "inactive" ? "Nieaktywny" : "Aktywny",
-        ].join(" • "),
+        label: displayName,
+        subtitle: subtitleParts.join(" | "),
         employee,
         historical: employee.status === "inactive",
       } satisfies WorkwearEmployeeOption;

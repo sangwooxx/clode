@@ -10,6 +10,10 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
+import {
   clearPlanningAssignmentRecord,
   copyPlanningFromPreviousDay,
   fetchPlanningModuleData,
@@ -88,13 +92,15 @@ function planningEmployeeColumns(args: {
       key: "employee",
       header: "Pracownik",
       className: "planning-col-employee",
-      sortValue: (row) => `${row.employee.name} ${row.employee.worker_code} ${row.employee.position}`,
+      sortValue: (row) =>
+        `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
       render: (row) => (
         <div className="data-table__stack">
-          <span className="data-table__primary">{row.employee.name}</span>
+          <span className="data-table__primary">
+            {formatEmployeeDisplayName(row.employee, row.employee.name)}
+          </span>
           <span className="data-table__secondary">
-            {row.employee.worker_code ? `Kod ${row.employee.worker_code}` : "Bez kodu"} •{" "}
-            {row.employee.position || "Bez stanowiska"}
+            {row.employee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(row.employee.worker_code)}
           </span>
         </div>
       ),

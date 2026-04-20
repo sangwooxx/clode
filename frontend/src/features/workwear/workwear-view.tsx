@@ -11,6 +11,10 @@ import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
+import {
+  formatEmployeeCodeLabel,
+  formatEmployeeDisplayName,
+} from "@/features/employees/formatters";
 import { findEmployeeByKey } from "@/features/employees/mappers";
 import type { EmployeeDirectoryRecord } from "@/features/employees/types";
 import {
@@ -98,13 +102,15 @@ function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
       key: "employee",
       header: "Pracownik",
       className: "workwear-col-employee",
-      sortValue: (row) => `${row.employee.name} ${row.employee.worker_code} ${row.employee.position}`,
+      sortValue: (row) =>
+        `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
       render: (row) => (
         <div className="data-table__stack">
-          <span className="data-table__primary">{row.employee.name}</span>
+          <span className="data-table__primary">
+            {formatEmployeeDisplayName(row.employee, row.employee.name)}
+          </span>
           <span className="data-table__secondary">
-            {row.employee.worker_code ? `Kod ${row.employee.worker_code}` : "Bez kodu"} •{" "}
-            {row.employee.position || "Bez stanowiska"}
+            {row.employee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(row.employee.worker_code)}
           </span>
         </div>
       ),
@@ -1122,7 +1128,10 @@ export function WorkwearView({
             <Panel
               title={
                 derived.selectedEmployee
-                  ? `Karta wydan: ${derived.selectedEmployee.name}`
+                  ? `Karta wydan: ${formatEmployeeDisplayName(
+                      derived.selectedEmployee,
+                      derived.selectedEmployee.name
+                    )}`
                   : "Karta wydan pracownika"
               }
             >
@@ -1136,8 +1145,11 @@ export function WorkwearView({
                     </strong>
                   </div>
                   <div className="workwear-detail-card">
-                    <small>Stanowisko</small>
-                    <strong>{derived.selectedEmployee.position || "Bez stanowiska"}</strong>
+                    <small>Kod i stanowisko</small>
+                    <strong>
+                      {formatEmployeeCodeLabel(derived.selectedEmployee.worker_code)} •{" "}
+                      {derived.selectedEmployee.position || "Bez stanowiska"}
+                    </strong>
                   </div>
                   <div className="workwear-detail-card">
                     <small>Liczba wydan</small>
@@ -1209,7 +1221,7 @@ export function WorkwearView({
                     <option value="">Wybierz pracownika</option>
                     {employeeOptions.map((option) => (
                       <option key={option.key} value={option.key}>
-                        {option.label}
+                        {option.subtitle ? `${option.label} - ${option.subtitle}` : option.label}
                       </option>
                     ))}
                   </select>
