@@ -5,10 +5,25 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
+import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
-import { printDocument } from "@/lib/print/print-document";
+import {
+  buildPdfDialogSections,
+  createPdfConfigState,
+  getEnabledPdfColumnIds,
+  togglePdfColumn,
+  togglePdfSection,
+  type PdfConfigState,
+  type PdfSectionDefinition,
+} from "@/lib/print/pdf-config";
+import {
+  compactPrintSections,
+  pickPrintTableColumns,
+  printDocument,
+  type PrintTable,
+} from "@/lib/print/print-document";
 import { saveHoursMonth } from "@/features/hours/api";
 import { buildMonthOptions, getSelectedMonth } from "@/features/hours/mappers";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
@@ -128,6 +143,8 @@ export function WorkCardView({
     String(new Date().getMonth() + 1).padStart(2, "0")
   );
   const [selectedHistoricalCardId, setSelectedHistoricalCardId] = useState<string | null>(null);
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+  const [workCardPdfConfig, setWorkCardPdfConfig] = useState<PdfConfigState>({});
 
   async function reloadWorkCards(options?: { preserveSelection?: boolean }) {
     if (options?.preserveSelection) {
@@ -656,6 +673,162 @@ export function WorkCardView({
       ],
     });
   }
+
+  const workCardPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
+    if (!selectedMonthKey || !displayedEmployeeLabel) return [];
+
+    return [
+      {
+        id: "card",
+        label: "Dane karty",
+        description: "Pracownik, miesiąc i podsumowanie miesięczne.",
+        preview: [displayedEmployeeLabel, currentMonthLabel, formatHours(monthTotalHours)],
+      },
+      {
+        id: "days",
+        label: "Rozpiska dzienna",
+        description: "Tabela dni roboczych i przypisań kontraktowych.",
+        preview: [`${formatNumber(filledDaysCount)} dni z wpisami`],
+        columns: [
+          { id: "day", label: "Dzień" },
+          { id: "assignments", label: "Kontrakty i godziny" },
+          { id: "total", label: "Razem" },
+          { id: "note", label: "Opis pracy" },
+        ],
+      },
+      {
+        id: "contracts",
+        label: "Podsumowanie kontraktów",
+        description: "Sumy godzin według kontraktów w karcie pracy.",
+        preview: [`${contractOptions.length} dostępnych kontraktów`],
+        columns: [
+          { id: "contract", label: "Kontrakt" },
+          { id: "code", label: "Kod" },
+          { id: "hours", label: "Suma godzin" },
+        ],
+      },
+    ];
+  }, [
+    contractOptions.length,
+    currentMonthLabel,
+    displayedEmployeeLabel,
+    filledDaysCount,
+    monthTotalHours,
+    selectedMonthKey,
+  ]);
+
+  const workCardPdfSections = useMemo(
+    () => buildPdfDialogSections(workCardPdfDefinitions, workCardPdfConfig),
+    [workCardPdfConfig, workCardPdfDefinitions]
+  );
+
+  function handleOpenWorkCardPdf() {
+    if (!selectedMonthKey || !displayedEmployeeLabel) return;
+    setWorkCardPdfConfig(createPdfConfigState(workCardPdfDefinitions));
+    setIsPdfDialogOpen(true);
+  }
+
+  function handleConfirmWorkCardPdf() {
+    if (!selectedMonthKey || !displayedEmployeeLabel) return;
+
+    const enabledSectionIds = new Set(
+      workCardPdfSections.filter((section) => section.enabled).map((section) => section.id)
+    );
+
+    const contractsTable: PrintTable = {
+      columns: [
+        { id: "contract", label: "Kontrakt", width: "54%" },
+        { id: "code", label: "Kod", width: "18%" },
+        { id: "hours", label: "Suma godzin", width: "28%", align: "right" },
+      ],
+      rows: Array.from(contractTotals.entries())
+        .filter(([, hours]) => hours > 0)
+        .map(([contractId, hours]) => {
+          const option = contractOptions.find((candidate) => candidate.id === contractId);
+          return {
+            contract: option?.label || "Nieprzypisane",
+            code: option?.code || "—",
+            hours: formatHours(hours),
+          };
+        }),
+      emptyText: "Brak kontraktów z godzinami w wybranej karcie.",
+    };
+
+    const dailyTable: PrintTable = {
+      columns: [
+        { id: "day", label: "Dzień", width: "16%" },
+        { id: "assignments", label: "Kontrakty i godziny", width: "48%" },
+        { id: "total", label: "Razem", width: "14%", align: "right" },
+        { id: "note", label: "Opis pracy", width: "22%" },
+      ],
+      rows: draftRows.map((row) => {
+        const assignments = contractOptions
+          .map((option) => {
+            const value = parseDecimalInput(row.hoursByContract[option.id] || "");
+            if (!value) return "";
+            return `${option.label}: ${formatHours(value)}`;
+          })
+          .filter(Boolean)
+          .join(" | ");
+
+        return {
+          day: `${row.dayNumber} ${row.weekdayLabel}`,
+          assignments: assignments || "—",
+          total: formatHours(row.totalHours),
+          note: row.note || "—",
+        };
+      }),
+      emptyText: "Brak wpisów dziennych do wydruku.",
+    };
+
+    printDocument({
+      title: "Karta pracy",
+      subtitle: displayedEmployeeLabel,
+      context: currentMonthLabel,
+      filename: `clode-karta-pracy-${displayedEmployeeLabel}-${selectedMonthKey}`,
+      landscape: true,
+      meta: [
+        currentModeLabel,
+        `Dni z wpisami: ${formatNumber(filledDaysCount)}`,
+        `Suma godzin: ${formatHours(monthTotalHours)}`,
+      ],
+      sections: compactPrintSections([
+        enabledSectionIds.has("card")
+          ? {
+              title: "Dane karty",
+              details: [
+                { label: "Pracownik", value: displayedEmployeeLabel },
+                { label: "Miesiąc", value: currentMonthLabel },
+                { label: "Tryb", value: currentModeLabel },
+                { label: "Kontekst", value: displayedEmployeeMeta || "Aktywny pracownik" },
+                { label: "Dni z wpisami", value: formatNumber(filledDaysCount) },
+                { label: "Suma godzin", value: formatHours(monthTotalHours) },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("days")
+          ? {
+              title: "Rozpiska dzienna",
+              table: pickPrintTableColumns(
+                dailyTable,
+                getEnabledPdfColumnIds(workCardPdfConfig, "days")
+              ),
+            }
+          : null,
+        enabledSectionIds.has("contracts")
+          ? {
+              title: "Podsumowanie kontraktów",
+              table: pickPrintTableColumns(
+                contractsTable,
+                getEnabledPdfColumnIds(workCardPdfConfig, "contracts")
+              ),
+            }
+          : null,
+      ]),
+    });
+
+    setIsPdfDialogOpen(false);
+  }
   const currentContextLabel = displayedEmployeeLabel || "Wybierz pracownika";
   const currentContextMeta = [currentMonthLabel, displayedEmployeeMeta]
     .filter(Boolean)
@@ -690,7 +863,7 @@ export function WorkCardView({
             <ActionButton
               type="button"
               variant="secondary"
-              onClick={handlePrintWorkCard}
+              onClick={handleOpenWorkCardPdf}
               disabled={!selectedMonthKey || !displayedEmployeeLabel}
             >
               PDF karty
@@ -962,6 +1135,23 @@ export function WorkCardView({
           </div>
         </Panel>
       ) : null}
+
+      <PdfExportDialog
+        open={isPdfDialogOpen}
+        title="PDF karty pracy"
+        description="Wybierz sekcje dokumentu i kolumny tabel przed wydrukiem."
+        context={[currentMonthLabel, displayedEmployeeLabel || "Brak pracownika", currentModeLabel].filter(Boolean)}
+        sections={workCardPdfSections}
+        onClose={() => setIsPdfDialogOpen(false)}
+        onToggleSection={(sectionId) =>
+          setWorkCardPdfConfig((current) => togglePdfSection(current, sectionId))
+        }
+        onToggleColumn={(sectionId, columnId) =>
+          setWorkCardPdfConfig((current) => togglePdfColumn(current, sectionId, columnId))
+        }
+        onReset={() => setWorkCardPdfConfig(createPdfConfigState(workCardPdfDefinitions))}
+        onConfirm={handleConfirmWorkCardPdf}
+      />
     </div>
   );
 }

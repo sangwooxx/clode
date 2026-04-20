@@ -5,11 +5,26 @@ import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
+import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
-import { printDocument } from "@/lib/print/print-document";
+import {
+  buildPdfDialogSections,
+  createPdfConfigState,
+  getEnabledPdfColumnIds,
+  togglePdfColumn,
+  togglePdfSection,
+  type PdfConfigState,
+  type PdfSectionDefinition,
+} from "@/lib/print/pdf-config";
+import {
+  compactPrintSections,
+  pickPrintTableColumns,
+  printDocument,
+  type PrintTable,
+} from "@/lib/print/print-document";
 import type { ContractRecord } from "@/features/contracts/types";
 import {
   fetchHoursContracts,
@@ -418,6 +433,8 @@ export function HoursView({
   const [showManualCorrection, setShowManualCorrection] = useState(false);
   const [newMonthYear, setNewMonthYear] = useState(String(new Date().getFullYear()));
   const [newMonthNumber, setNewMonthNumber] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+  const [hoursPdfConfig, setHoursPdfConfig] = useState<PdfConfigState>({});
 
   async function reloadHours(options?: {
     preserveState?: boolean;
@@ -706,6 +723,241 @@ export function HoursView({
         },
       ],
     });
+  }
+
+  const hoursPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
+    if (!selectedMonth) return [];
+
+    const isEmployeeContext = Boolean(selectedEmployeeRow);
+    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
+
+    return [
+      {
+        id: "scope",
+        label: "Zakres raportu",
+        description: "Miesiąc, kontekst i podstawowe sumy raportu.",
+        preview: [
+          selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+          isEmployeeContext ? selectedEmployeeRow?.employeeName || "Pracownik" : "Cały miesiąc",
+        ],
+      },
+      {
+        id: "entries",
+        label: "Wpisy ewidencji",
+        description: "Tabela wpisów lub agregat bieżącego kontekstu widoku.",
+        preview: [`${formatNumber(currentEntries.length)} wpisów`],
+        columns: isEmployeeContext
+          ? [
+              { id: "contract", label: "Kontrakt" },
+              { id: "status", label: "Status" },
+              { id: "hours", label: "Godziny" },
+              { id: "cost", label: "Koszt" },
+            ]
+          : [
+              { id: "employee", label: "Pracownik" },
+              { id: "contract", label: "Kontrakt" },
+              { id: "status", label: "Status" },
+              { id: "hours", label: "Godziny" },
+              { id: "cost", label: "Koszt" },
+            ],
+      },
+      ...(isEmployeeContext
+        ? []
+        : [
+            {
+              id: "employees",
+              label: "Podsumowanie pracowników",
+              description: "Agregacja godzin i kosztów per pracownik.",
+              preview: [`${hoursRows.length} pracowników`],
+              columns: [
+                { id: "employee", label: "Pracownik" },
+                { id: "contracts", label: "Kontrakty" },
+                { id: "hours", label: "Godziny" },
+                { id: "cost", label: "Koszt" },
+                { id: "entries", label: "Wpisy" },
+              ],
+            } satisfies PdfSectionDefinition,
+          ]),
+      {
+        id: "contracts",
+        label: "Agregacja kontraktowa",
+        description: "Podsumowanie kontraktów dla wybranego miesiąca.",
+        preview: [`${contractSummaryRows.length} kontraktów`],
+        columns: [
+          { id: "contract", label: "Kontrakt" },
+          { id: "code", label: "Kod" },
+          { id: "status", label: "Status" },
+          { id: "hours", label: "Godziny" },
+          { id: "cost", label: "Koszt" },
+          { id: "entries", label: "Wpisy" },
+        ],
+      },
+    ];
+  }, [contractSummaryRows.length, employeeEntries, hoursRows, monthEntries, selectedEmployeeRow, selectedMonth]);
+
+  const hoursPdfSections = useMemo(
+    () => buildPdfDialogSections(hoursPdfDefinitions, hoursPdfConfig),
+    [hoursPdfConfig, hoursPdfDefinitions]
+  );
+
+  function handleOpenHoursPdf() {
+    if (!selectedMonth) return;
+    setHoursPdfConfig(createPdfConfigState(hoursPdfDefinitions));
+    setIsPdfDialogOpen(true);
+  }
+
+  function handleConfirmHoursPdf() {
+    if (!selectedMonth) return;
+
+    const isEmployeeContext = Boolean(selectedEmployeeRow);
+    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
+    const totalHours = isEmployeeContext
+      ? employeeHoursTotal
+      : monthEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
+    const totalCost = currentEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0);
+    const enabledSectionIds = new Set(
+      hoursPdfSections.filter((section) => section.enabled).map((section) => section.id)
+    );
+
+    const entriesTable: PrintTable = {
+      columns: isEmployeeContext
+        ? [
+            { id: "contract", label: "Kontrakt", width: "42%" },
+            { id: "status", label: "Status", width: "18%" },
+            { id: "hours", label: "Godziny", width: "16%", align: "right" },
+            { id: "cost", label: "Koszt", width: "24%", align: "right" },
+          ]
+        : [
+            { id: "employee", label: "Pracownik", width: "26%" },
+            { id: "contract", label: "Kontrakt", width: "28%" },
+            { id: "status", label: "Status", width: "14%" },
+            { id: "hours", label: "Godziny", width: "14%", align: "right" },
+            { id: "cost", label: "Koszt", width: "18%", align: "right" },
+          ],
+      rows: currentEntries.map((entry) => {
+        const option =
+          contractOptions.find(
+            (candidate) =>
+              candidate.id === (String(entry.contract_id || "").trim() || UNASSIGNED_TIME_CONTRACT_ID)
+          ) ?? null;
+
+        return {
+          employee: entry.employee_name || "—",
+          contract: entry.contract_name || "Nieprzypisane",
+          status: option ? formatContractStatusLabel(option.status) : "Brak powiązania",
+          hours: formatHours(entry.hours || 0),
+          cost: formatMoney(entry.cost_amount || 0),
+        };
+      }),
+      emptyText: "Brak wpisów ewidencji do wydruku.",
+    };
+
+    const employeesTable: PrintTable = {
+      columns: [
+        { id: "employee", label: "Pracownik", width: "28%" },
+        { id: "contracts", label: "Kontrakty", width: "32%" },
+        { id: "hours", label: "Godziny", width: "14%", align: "right" },
+        { id: "cost", label: "Koszt", width: "16%", align: "right" },
+        { id: "entries", label: "Wpisy", width: "10%", align: "right" },
+      ],
+      rows: hoursRows.map((row) => ({
+        employee: row.employeeName,
+        contracts: row.contracts.map((contract) => contract.label).join(" | ") || "—",
+        hours: formatHours(row.totalHours),
+        cost: formatMoney(row.totalCost),
+        entries: formatNumber(row.entriesCount),
+      })),
+      emptyText: "Brak agregacji pracowników do wydruku.",
+    };
+
+    const contractsTable: PrintTable = {
+      columns: [
+        { id: "contract", label: "Kontrakt", width: "30%" },
+        { id: "code", label: "Kod", width: "14%" },
+        { id: "status", label: "Status", width: "14%" },
+        { id: "hours", label: "Godziny", width: "14%", align: "right" },
+        { id: "cost", label: "Koszt", width: "18%", align: "right" },
+        { id: "entries", label: "Wpisy", width: "10%", align: "right" },
+      ],
+      rows: contractSummaryRows.map((row) => ({
+        contract: row.option.label,
+        code: row.option.code || "—",
+        status: formatContractStatusLabel(row.option.status),
+        hours: formatHours(row.aggregate.hours_total),
+        cost: formatMoney(row.aggregate.cost_total),
+        entries: formatNumber(row.aggregate.entries_count),
+      })),
+      emptyText: "Brak kontraktów w wybranym miesiącu.",
+    };
+
+    printDocument({
+      title: "Ewidencja czasu pracy",
+      subtitle: isEmployeeContext
+        ? selectedEmployeeRow?.employeeName || selectedMonth.month_label
+        : selectedMonth.month_label,
+      context: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+      filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
+      landscape: true,
+      meta: [
+        isEmployeeContext ? "Raport pracownika" : "Raport miesiąca",
+        `Wpisy: ${formatNumber(currentEntries.length)}`,
+        `Suma godzin: ${formatHours(totalHours)}`,
+        `Suma kosztów: ${formatMoney(totalCost)}`,
+      ],
+      sections: compactPrintSections([
+        enabledSectionIds.has("scope")
+          ? {
+              title: "Zakres raportu",
+              details: [
+                {
+                  label: "Miesiąc",
+                  value: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+                },
+                {
+                  label: "Kontekst",
+                  value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
+                },
+                {
+                  label: "Pracownik",
+                  value: selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
+                },
+                { label: "Wpisy", value: formatNumber(currentEntries.length) },
+                { label: "Suma godzin", value: formatHours(totalHours) },
+                { label: "Suma kosztów", value: formatMoney(totalCost) },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("entries")
+          ? {
+              title: "Wpisy ewidencji",
+              table: pickPrintTableColumns(
+                entriesTable,
+                getEnabledPdfColumnIds(hoursPdfConfig, "entries")
+              ),
+            }
+          : null,
+        enabledSectionIds.has("employees") && !isEmployeeContext
+          ? {
+              title: "Podsumowanie pracowników",
+              table: pickPrintTableColumns(
+                employeesTable,
+                getEnabledPdfColumnIds(hoursPdfConfig, "employees")
+              ),
+            }
+          : null,
+        enabledSectionIds.has("contracts")
+          ? {
+              title: "Agregacja kontraktowa",
+              table: pickPrintTableColumns(
+                contractsTable,
+                getEnabledPdfColumnIds(hoursPdfConfig, "contracts")
+              ),
+            }
+          : null,
+      ]),
+    });
+
+    setIsPdfDialogOpen(false);
   }
 
   useEffect(() => {
@@ -1110,7 +1362,7 @@ export function HoursView({
               <ActionButton
                 type="button"
                 variant="secondary"
-                onClick={handlePrintHoursReport}
+                onClick={handleOpenHoursPdf}
                 disabled={!selectedMonth}
               >
                 PDF raportu
@@ -1602,6 +1854,31 @@ export function HoursView({
           </div>
         </Panel>
       )}
+
+      <PdfExportDialog
+        open={isPdfDialogOpen}
+        title="PDF ewidencji czasu"
+        description="Skonfiguruj sekcje raportu i kolumny tabel przed wydrukiem."
+        context={
+          selectedMonth
+            ? [
+                selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+                selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
+                selectedEmployeeRow ? "Raport pracownika" : "Raport miesiąca",
+              ]
+            : []
+        }
+        sections={hoursPdfSections}
+        onClose={() => setIsPdfDialogOpen(false)}
+        onToggleSection={(sectionId) =>
+          setHoursPdfConfig((current) => togglePdfSection(current, sectionId))
+        }
+        onToggleColumn={(sectionId, columnId) =>
+          setHoursPdfConfig((current) => togglePdfColumn(current, sectionId, columnId))
+        }
+        onReset={() => setHoursPdfConfig(createPdfConfigState(hoursPdfDefinitions))}
+        onConfirm={handleConfirmHoursPdf}
+      />
     </div>
   );
 }

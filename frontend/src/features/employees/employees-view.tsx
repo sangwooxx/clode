@@ -7,10 +7,18 @@ import { FormActions } from "@/components/ui/form-actions";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
+import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { printDocument } from "@/lib/print/print-document";
+import {
+  buildPdfDialogSections,
+  createPdfConfigState,
+  togglePdfSection,
+  type PdfConfigState,
+  type PdfSectionDefinition,
+} from "@/lib/print/pdf-config";
+import { compactPrintSections, printDocument } from "@/lib/print/print-document";
 import {
   deleteEmployeeRecord,
   fetchEmployeesModuleData,
@@ -168,6 +176,8 @@ export function EmployeesView({
   const [formValues, setFormValues] = useState<EmployeeFormValues>(() => emptyFormValues);
   const [formError, setFormError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<string | null>(null);
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+  const [employeePdfConfig, setEmployeePdfConfig] = useState<PdfConfigState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -333,6 +343,140 @@ export function EmployeesView({
     });
   }
 
+  const employeePdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
+    if (!detailEmployee) return [];
+
+    return [
+      {
+        id: "basic",
+        label: "Dane podstawowe",
+        description: "Tożsamość pracownika i identyfikatory rekordu.",
+        preview: [
+          detailEmployee.name || "Bez nazwy",
+          detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Bez kodu",
+        ],
+      },
+      {
+        id: "contact",
+        label: "Kontakt i adres",
+        description: "Telefon, miejscowość i adres pracownika.",
+        preview: [detailEmployee.phone || "Brak telefonu", detailEmployee.city || "Brak miasta"],
+      },
+      {
+        id: "hr",
+        label: "Status i dane kadrowe",
+        description: "Status aktywności, zatrudnienie i badania.",
+        preview: [
+          formatEmployeeStatus(detailEmployee.status),
+          detailEmployee.position || "Bez stanowiska",
+          selectedMedical.label,
+        ],
+      },
+      {
+        id: "relations",
+        label: "Powiązania operacyjne",
+        description: "Godziny, karty pracy i koszt pracy powiązany z pracownikiem.",
+        preview: [
+          detailRelations ? `${detailRelations.hoursEntries} wpisów` : "0 wpisów",
+          detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
+          detailRelations ? formatMoney(detailRelations.totalCost) : formatMoney(0),
+        ],
+      },
+    ];
+  }, [detailEmployee, detailRelations, selectedMedical.label]);
+
+  const employeePdfSections = useMemo(
+    () => buildPdfDialogSections(employeePdfDefinitions, employeePdfConfig),
+    [employeePdfConfig, employeePdfDefinitions]
+  );
+
+  function handleOpenEmployeePdf() {
+    if (!detailEmployee) return;
+    setEmployeePdfConfig(createPdfConfigState(employeePdfDefinitions));
+    setIsPdfDialogOpen(true);
+  }
+
+  function handleConfirmEmployeePdf() {
+    if (!detailEmployee) return;
+
+    const enabledSectionIds = new Set(
+      employeePdfSections.filter((section) => section.enabled).map((section) => section.id)
+    );
+    const contactValue =
+      [detailEmployee.phone, detailEmployee.city, detailEmployee.street].filter(Boolean).join(" • ") ||
+      "Brak danych";
+
+    printDocument({
+      title: "Kartoteka pracownika",
+      subtitle: detailEmployee.name,
+      context: detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Kartoteka bez kodu",
+      filename: `clode-pracownik-${detailEmployee.worker_code || detailEmployee.id || "rekord"}`,
+      meta: [
+        `Status: ${formatEmployeeStatus(detailEmployee.status)}`,
+        `Stanowisko: ${detailEmployee.position || "Brak danych"}`,
+      ],
+      sections: compactPrintSections([
+        enabledSectionIds.has("basic")
+          ? {
+              title: "Dane podstawowe",
+              details: [
+                { label: "Imię i nazwisko", value: detailEmployee.name || "Brak danych" },
+                { label: "Kod pracownika", value: detailEmployee.worker_code || "Brak danych" },
+                { label: "Identyfikator", value: detailEmployee.id || "Brak danych" },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("contact")
+          ? {
+              title: "Kontakt i adres",
+              details: [
+                { label: "Telefon", value: detailEmployee.phone || "Brak danych" },
+                { label: "Miasto", value: detailEmployee.city || "Brak danych" },
+                { label: "Ulica", value: detailEmployee.street || "Brak danych" },
+                { label: "Kontakt zbiorczy", value: contactValue },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("hr")
+          ? {
+              title: "Status i dane kadrowe",
+              details: [
+                { label: "Status", value: formatEmployeeStatus(detailEmployee.status) },
+                { label: "Stanowisko", value: detailEmployee.position || "Brak danych" },
+                { label: "Data zatrudnienia", value: formatEmployeeDate(detailEmployee.employment_date) },
+                { label: "Data zakończenia", value: formatEmployeeDate(detailEmployee.employment_end_date) },
+                { label: "Badania ważne do", value: selectedMedical.dateText },
+                { label: "Stan badań", value: selectedMedical.label },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("relations")
+          ? {
+              title: "Powiązania operacyjne",
+              details: [
+                { label: "Wpisy czasu", value: detailRelations ? String(detailRelations.hoursEntries) : "0" },
+                {
+                  label: "Godziny łącznie",
+                  value: detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
+                },
+                { label: "Karty pracy", value: detailRelations ? String(detailRelations.workCards) : "0" },
+                {
+                  label: "Miesiące aktywności",
+                  value: detailRelations ? String(detailRelations.monthsCount) : "0",
+                },
+                {
+                  label: "Koszt godzin",
+                  value: detailRelations ? formatMoney(detailRelations.totalCost) : formatMoney(0),
+                },
+              ],
+            }
+          : null,
+      ]),
+    });
+
+    setIsPdfDialogOpen(false);
+  }
+
   useEffect(() => {
     if (editingEmployee) {
       setFormValues(buildEmployeeFormValues(editingEmployee));
@@ -474,7 +618,7 @@ export function EmployeesView({
               <ActionButton
                 type="button"
                 variant="secondary"
-                onClick={handlePrintEmployee}
+                onClick={handleOpenEmployeePdf}
                 disabled={!detailEmployee}
               >
                 PDF pracownika
@@ -802,6 +946,29 @@ export function EmployeesView({
           </Panel>
         </div>
       </div>
+
+      <PdfExportDialog
+        open={isPdfDialogOpen}
+        title="PDF pracownika"
+        description="Wybierz sekcje kartoteki, które mają wejść do dokumentu."
+        context={
+          detailEmployee
+            ? [
+                detailEmployee.name || "Bez nazwy",
+                detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Bez kodu",
+                formatEmployeeStatus(detailEmployee.status),
+              ]
+            : []
+        }
+        sections={employeePdfSections}
+        onClose={() => setIsPdfDialogOpen(false)}
+        onToggleSection={(sectionId) =>
+          setEmployeePdfConfig((current) => togglePdfSection(current, sectionId))
+        }
+        onToggleColumn={() => undefined}
+        onReset={() => setEmployeePdfConfig(createPdfConfigState(employeePdfDefinitions))}
+        onConfirm={handleConfirmEmployeePdf}
+      />
     </div>
   );
 }

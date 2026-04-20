@@ -7,6 +7,7 @@ import { FormActions } from "@/components/ui/form-actions";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
+import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -48,7 +49,21 @@ import type {
 } from "@/features/workwear/types";
 import { WORKWEAR_SIZE_OPTIONS } from "@/features/workwear/types";
 import { useAuth } from "@/lib/auth/auth-context";
-import { printDocument } from "@/lib/print/print-document";
+import {
+  buildPdfDialogSections,
+  createPdfConfigState,
+  getEnabledPdfColumnIds,
+  togglePdfColumn,
+  togglePdfSection,
+  type PdfConfigState,
+  type PdfSectionDefinition,
+} from "@/lib/print/pdf-config";
+import {
+  compactPrintSections,
+  pickPrintTableColumns,
+  printDocument,
+  type PrintTable,
+} from "@/lib/print/print-document";
 
 type WorkwearScreenState =
   | { status: "loading" }
@@ -413,6 +428,8 @@ export function WorkwearView({
     buildWorkwearCatalogFormValues()
   );
   const [message, setMessage] = useState<FlashMessage>(null);
+  const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
+  const [workwearPdfConfig, setWorkwearPdfConfig] = useState<PdfConfigState>({});
   const [busyAction, setBusyAction] = useState<string | null>(null);
 
   const derived = useMemo(() => {
@@ -467,6 +484,54 @@ export function WorkwearView({
       attentionRows: buildWorkwearAttentionRows(issueEntries),
     };
   }, [screen, selectedEmployeeKey]);
+
+  const workwearPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
+    if (!derived?.selectedEmployee) return [];
+
+    const totalQuantity = derived.selectedIssueRows.reduce(
+      (sum, row) => sum + Number(row.entry.issue.quantity || 0),
+      0
+    );
+
+    return [
+      {
+        id: "employee",
+        label: "Dane pracownika",
+        description: "Identyfikacja pracownika i kontekst wydania.",
+        preview: [
+          derived.selectedEmployee.name || "Bez nazwy",
+          derived.selectedEmployee.position || "Bez stanowiska",
+        ],
+      },
+      {
+        id: "summary",
+        label: "Podsumowanie wydania",
+        description: "Liczba wydań i suma wydanych sztuk.",
+        preview: [
+          `${derived.selectedIssueRows.length} pozycji`,
+          `${formatWorkwearQuantity(totalQuantity)} szt.`,
+        ],
+      },
+      {
+        id: "items",
+        label: "Pozycje wydania",
+        description: "Tabela pozycji możliwych do przekazania lub archiwizacji.",
+        preview: [`${derived.selectedIssueRows.length} wierszy`],
+        columns: [
+          { id: "date", label: "Data" },
+          { id: "item", label: "Element" },
+          { id: "size", label: "Rozmiar" },
+          { id: "quantity", label: "Ilość" },
+          { id: "notes", label: "Uwagi" },
+        ],
+      },
+    ];
+  }, [derived]);
+
+  const workwearPdfSections = useMemo(
+    () => buildPdfDialogSections(workwearPdfDefinitions, workwearPdfConfig),
+    [workwearPdfConfig, workwearPdfDefinitions]
+  );
 
   useEffect(() => {
     if (!initialBootstrap) {
@@ -721,6 +786,94 @@ export function WorkwearView({
     setMessage(null);
   }
 
+  function handleOpenWorkwearPdf() {
+    if (!derived?.selectedEmployee) return;
+    setWorkwearPdfConfig(createPdfConfigState(workwearPdfDefinitions));
+    setIsPdfDialogOpen(true);
+  }
+
+  function handleConfirmWorkwearPdf() {
+    if (!derived?.selectedEmployee) return;
+
+    const enabledSectionIds = new Set(
+      workwearPdfSections.filter((section) => section.enabled).map((section) => section.id)
+    );
+    const totalQuantity = derived.selectedIssueRows.reduce(
+      (sum, row) => sum + Number(row.entry.issue.quantity || 0),
+      0
+    );
+
+    const itemsTable: PrintTable = {
+      columns: [
+        { id: "date", label: "Data", width: "16%" },
+        { id: "item", label: "Element", width: "34%" },
+        { id: "size", label: "Rozmiar", width: "14%", align: "center" },
+        { id: "quantity", label: "Ilość", width: "12%", align: "right" },
+        { id: "notes", label: "Uwagi", width: "24%" },
+      ],
+      rows: derived.selectedIssueRows.map((row) => ({
+        date: formatWorkwearDate(row.entry.issue.issue_date),
+        item: row.entry.issue.item_name || "—",
+        size: row.entry.issue.size || "—",
+        quantity: `${formatWorkwearQuantity(row.entry.issue.quantity)} szt.`,
+        notes: row.entry.issue.notes || "—",
+      })),
+      emptyText: "Brak pozycji wydania do wydruku.",
+    };
+
+    printDocument({
+      title: "Wydanie odzieży roboczej",
+      subtitle: derived.selectedEmployee.name,
+      context: derived.selectedEmployee.worker_code
+        ? `Kod ${derived.selectedEmployee.worker_code}`
+        : "Kartoteka bez kodu",
+      filename: `clode-wydanie-odziezy-${derived.selectedEmployee.worker_code || derived.selectedEmployee.id || "rekord"}`,
+      meta: [
+        `Status: ${derived.selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny"}`,
+        `Stanowisko: ${derived.selectedEmployee.position || "Brak danych"}`,
+      ],
+      sections: compactPrintSections([
+        enabledSectionIds.has("employee")
+          ? {
+              title: "Dane pracownika",
+              details: [
+                { label: "Imię i nazwisko", value: derived.selectedEmployee.name || "Brak danych" },
+                { label: "Kod pracownika", value: derived.selectedEmployee.worker_code || "Brak danych" },
+                { label: "Stanowisko", value: derived.selectedEmployee.position || "Brak danych" },
+                {
+                  label: "Status",
+                  value: derived.selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny",
+                },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("summary")
+          ? {
+              title: "Podsumowanie wydania",
+              details: [
+                { label: "Liczba wydań", value: String(derived.selectedIssueRows.length) },
+                {
+                  label: "Łączna ilość",
+                  value: `${formatWorkwearQuantity(totalQuantity)} szt.`,
+                },
+              ],
+            }
+          : null,
+        enabledSectionIds.has("items")
+          ? {
+              title: "Pozycje wydania",
+              table: pickPrintTableColumns(
+                itemsTable,
+                getEnabledPdfColumnIds(workwearPdfConfig, "items")
+              ),
+            }
+          : null,
+      ]),
+    });
+
+    setIsPdfDialogOpen(false);
+  }
+
   if (screen.status === "loading") {
     return (
       <div className="module-page status-stack">
@@ -884,10 +1037,7 @@ export function WorkwearView({
               <ActionButton
                 type="button"
                 variant="secondary"
-                onClick={() =>
-                  derived.selectedEmployee &&
-                  printWorkwearCard(derived.selectedEmployee, derived.selectedIssueRows)
-                }
+                onClick={handleOpenWorkwearPdf}
                 disabled={!derived.selectedEmployee}
               >
                 PDF wydania
@@ -1268,6 +1418,33 @@ export function WorkwearView({
           </Panel>
         </div>
       </div>
+
+      <PdfExportDialog
+        open={isPdfDialogOpen}
+        title="PDF wydania odzieży"
+        description="Skonfiguruj sekcje dokumentu i kolumny tabeli przed wydrukiem."
+        context={
+          derived?.selectedEmployee
+            ? [
+                derived.selectedEmployee.name || "Bez nazwy",
+                derived.selectedEmployee.worker_code
+                  ? `Kod ${derived.selectedEmployee.worker_code}`
+                  : "Bez kodu",
+                `${derived.selectedIssueRows.length} pozycji`,
+              ]
+            : []
+        }
+        sections={workwearPdfSections}
+        onClose={() => setIsPdfDialogOpen(false)}
+        onToggleSection={(sectionId) =>
+          setWorkwearPdfConfig((current) => togglePdfSection(current, sectionId))
+        }
+        onToggleColumn={(sectionId, columnId) =>
+          setWorkwearPdfConfig((current) => togglePdfColumn(current, sectionId, columnId))
+        }
+        onReset={() => setWorkwearPdfConfig(createPdfConfigState(workwearPdfDefinitions))}
+        onConfirm={handleConfirmWorkwearPdf}
+      />
     </div>
   );
 }

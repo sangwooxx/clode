@@ -1,27 +1,49 @@
 "use client";
 
-type PrintDetailItem = {
+export type PrintDetailItem = {
   label: string;
   value: string;
 };
 
-type PrintTable = {
-  columns: string[];
-  rows: string[][];
+export type PrintTableColumn = {
+  id: string;
+  label: string;
+  width?: string;
+  align?: "left" | "center" | "right";
 };
 
-type PrintSection = {
+export type PrintTableRow = Record<string, string>;
+
+type PrintStructuredTable = {
+  columns: PrintTableColumn[];
+  rows: PrintTableRow[];
+  emptyText?: string;
+};
+
+type PrintLegacyTable = {
+  columns: string[];
+  rows: string[][];
+  emptyText?: string;
+};
+
+export type PrintTable = PrintStructuredTable | PrintLegacyTable;
+
+export type PrintSection = {
   title: string;
+  description?: string;
   details?: PrintDetailItem[];
   table?: PrintTable;
 };
 
-type PrintDocumentOptions = {
+export type PrintDocumentOptions = {
   title: string;
   subtitle?: string;
+  context?: string;
   meta?: string[];
   filename: string;
   landscape?: boolean;
+  generatedAt?: string;
+  footerNote?: string;
   sections: PrintSection[];
 };
 
@@ -52,23 +74,45 @@ function renderDetails(details: PrintDetailItem[]) {
 }
 
 function renderTable(table: PrintTable) {
-  const header = table.columns
-    .map((column) => `<th>${escapeHtml(column)}</th>`)
+  const normalized =
+    typeof table.columns[0] === "string"
+      ? {
+          columns: (table.columns as string[]).map<PrintTableColumn>((label, index) => ({
+            id: `legacy-${index}`,
+            label,
+          })),
+          rows: (table.rows as string[][]).map((row) =>
+            Object.fromEntries(row.map((cell, index) => [`legacy-${index}`, cell]))
+          ),
+          emptyText: table.emptyText,
+        }
+      : (table as PrintStructuredTable);
+
+  const columns = normalized.columns.length ? normalized.columns : [];
+  const header = columns.map((column) => `<th>${escapeHtml(column.label)}</th>`).join("");
+  const colgroup = columns
+    .map((column) => `<col${column.width ? ` style="width:${escapeHtml(column.width)}"` : ""} />`)
     .join("");
-  const body = table.rows.length
-    ? table.rows
-        .map(
-          (row) => `
-            <tr>
-              ${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}
-            </tr>
-          `
-        )
+  const body = normalized.rows.length
+    ? normalized.rows
+        .map((row) => {
+          const cells = columns
+            .map((column) => {
+              const value = row[column.id] ?? "—";
+              const alignClass = column.align ? ` print-table__cell--${column.align}` : "";
+              return `<td class="${alignClass.trim()}">${escapeHtml(value)}</td>`;
+            })
+            .join("");
+          return `<tr>${cells}</tr>`;
+        })
         .join("")
-    : `<tr><td colspan="${table.columns.length}">Brak danych do wydruku.</td></tr>`;
+    : `<tr><td colspan="${Math.max(columns.length, 1)}">${escapeHtml(
+        normalized.emptyText || "Brak danych do wydruku."
+      )}</td></tr>`;
 
   return `
     <table class="print-table">
+      <colgroup>${colgroup}</colgroup>
       <thead><tr>${header}</tr></thead>
       <tbody>${body}</tbody>
     </table>
@@ -76,23 +120,42 @@ function renderTable(table: PrintTable) {
 }
 
 function buildPrintHtml(options: PrintDocumentOptions) {
+  const generatedAt =
+    options.generatedAt ||
+    new Intl.DateTimeFormat("pl-PL", {
+      dateStyle: "long",
+      timeStyle: "short",
+    }).format(new Date());
+
+  const metaItems = [
+    options.context ? `Kontekst: ${options.context}` : null,
+    `Wygenerowano: ${generatedAt}`,
+    ...(options.meta || []).filter(Boolean),
+  ].filter((item): item is string => Boolean(item));
+
+  const metaHtml = metaItems
+    .map((item) => `<span class="print-meta__item">${escapeHtml(item)}</span>`)
+    .join("");
+
   const sectionsHtml = options.sections
     .map((section) => {
-      const detailsHtml = section.details ? renderDetails(section.details) : "";
+      const detailsHtml = section.details?.length ? renderDetails(section.details) : "";
       const tableHtml = section.table ? renderTable(section.table) : "";
       return `
         <section class="print-section">
-          <h2>${escapeHtml(section.title)}</h2>
+          <div class="print-section__header">
+            <h2>${escapeHtml(section.title)}</h2>
+            ${
+              section.description
+                ? `<p class="print-section__description">${escapeHtml(section.description)}</p>`
+                : ""
+            }
+          </div>
           ${detailsHtml}
           ${tableHtml}
         </section>
       `;
     })
-    .join("");
-
-  const metaHtml = (options.meta || [])
-    .filter(Boolean)
-    .map((item) => `<span>${escapeHtml(item)}</span>`)
     .join("");
 
   return `<!DOCTYPE html>
@@ -101,95 +164,163 @@ function buildPrintHtml(options: PrintDocumentOptions) {
     <meta charset="utf-8" />
     <title>${escapeHtml(options.filename)}</title>
     <style>
-      @page { size: ${options.landscape ? "A4 landscape" : "A4"}; margin: 16mm; }
+      @page { size: ${options.landscape ? "A4 landscape" : "A4"}; margin: 14mm 12mm 16mm; }
       * { box-sizing: border-box; }
-      body {
+      html, body {
         margin: 0;
-        color: #111827;
-        font: 14px/1.45 "Segoe UI", Arial, sans-serif;
+        padding: 0;
         background: #ffffff;
+        color: #111827;
+        font-family: "Segoe UI", Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      body {
+        padding: 0;
       }
       .print-page {
         display: grid;
-        gap: 20px;
+        gap: 18px;
       }
       .print-header {
         display: grid;
-        gap: 8px;
+        gap: 10px;
         padding-bottom: 12px;
-        border-bottom: 2px solid #d1d5db;
+        border-bottom: 2px solid #0f172a;
       }
       .print-brand {
-        font-size: 12px;
-        letter-spacing: 0.08em;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .print-brand__name {
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .print-brand__tag {
+        font-size: 11px;
         text-transform: uppercase;
-        color: #4b5563;
+        letter-spacing: 0.08em;
+        color: #475569;
       }
       .print-title {
+        display: grid;
+        gap: 4px;
+      }
+      .print-title h1 {
         margin: 0;
-        font-size: 28px;
+        font-size: 24px;
         line-height: 1.1;
       }
-      .print-subtitle {
+      .print-title p {
         margin: 0;
-        font-size: 15px;
-        color: #4b5563;
+        color: #475569;
+        font-size: 13px;
       }
       .print-meta {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 16px;
-        color: #4b5563;
-        font-size: 12px;
+        gap: 6px 12px;
+      }
+      .print-meta__item {
+        padding: 4px 8px;
+        border: 1px solid #d7dee8;
+        border-radius: 999px;
+        color: #334155;
+        font-size: 11px;
+        white-space: nowrap;
       }
       .print-section {
         display: grid;
-        gap: 12px;
+        gap: 10px;
         page-break-inside: avoid;
       }
-      .print-section h2 {
+      .print-section__header {
+        display: grid;
+        gap: 4px;
+      }
+      .print-section__header h2 {
         margin: 0;
-        font-size: 16px;
+        font-size: 15px;
+        line-height: 1.2;
+      }
+      .print-section__description {
+        margin: 0;
+        font-size: 11px;
+        color: #64748b;
       }
       .print-detail-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px 16px;
+        gap: 8px 12px;
       }
       .print-detail {
         display: grid;
-        gap: 4px;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
+        gap: 3px;
+        padding: 8px 10px;
+        border: 1px solid #d7dee8;
         border-radius: 10px;
       }
       .print-detail__label {
-        font-size: 11px;
+        font-size: 10px;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: #6b7280;
+        letter-spacing: 0.05em;
+        color: #64748b;
       }
       .print-detail__value {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 600;
+        color: #0f172a;
       }
       .print-table {
         width: 100%;
         border-collapse: collapse;
       }
+      .print-table col {
+        width: auto;
+      }
+      .print-table thead {
+        display: table-header-group;
+      }
+      .print-table tr {
+        page-break-inside: avoid;
+      }
       .print-table th,
       .print-table td {
-        padding: 8px 10px;
-        border: 1px solid #d1d5db;
+        padding: 7px 8px;
+        border: 1px solid #d7dee8;
         text-align: left;
         vertical-align: top;
+        word-break: break-word;
+        overflow-wrap: anywhere;
       }
       .print-table th {
-        background: #f3f4f6;
-        font-size: 12px;
+        background: #eef2f7;
+        font-size: 11px;
+        font-weight: 700;
+        color: #0f172a;
       }
       .print-table td {
-        font-size: 12px;
+        font-size: 11px;
+        color: #1f2937;
+      }
+      .print-table__cell--right {
+        text-align: right;
+      }
+      .print-table__cell--center {
+        text-align: center;
+      }
+      .print-footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 12px;
+        border-top: 1px solid #d7dee8;
+        color: #64748b;
+        font-size: 10px;
       }
       @media print {
         body {
@@ -202,19 +333,62 @@ function buildPrintHtml(options: PrintDocumentOptions) {
   <body>
     <main class="print-page">
       <header class="print-header">
-        <span class="print-brand">Clode</span>
-        <h1 class="print-title">${escapeHtml(options.title)}</h1>
-        ${options.subtitle ? `<p class="print-subtitle">${escapeHtml(options.subtitle)}</p>` : ""}
+        <div class="print-brand">
+          <span class="print-brand__name">Clode</span>
+          <span class="print-brand__tag">Dokument operacyjny</span>
+        </div>
+        <div class="print-title">
+          <h1>${escapeHtml(options.title)}</h1>
+          ${options.subtitle ? `<p>${escapeHtml(options.subtitle)}</p>` : ""}
+        </div>
         ${metaHtml ? `<div class="print-meta">${metaHtml}</div>` : ""}
       </header>
       ${sectionsHtml}
+      <footer class="print-footer">
+        <span>${escapeHtml(options.footerNote || "Dokument wygenerowany w systemie Clode.")}</span>
+        <span>${escapeHtml(options.filename)}</span>
+      </footer>
     </main>
   </body>
 </html>`;
 }
 
+export function pickPrintTableColumns(table: PrintTable, enabledColumnIds: string[]) {
+  if (typeof table.columns[0] === "string") {
+    return table;
+  }
+
+  const structuredTable = table as PrintStructuredTable;
+  const selectedIds = new Set(enabledColumnIds);
+  const columns = structuredTable.columns.filter((column) => selectedIds.has(column.id));
+
+  if (columns.length === 0) {
+    return structuredTable;
+  }
+
+  const rows = structuredTable.rows.map((row) => {
+    const filteredRow: PrintTableRow = {};
+    columns.forEach((column) => {
+      filteredRow[column.id] = row[column.id] ?? "—";
+    });
+    return filteredRow;
+  });
+
+  return {
+    ...structuredTable,
+    columns,
+    rows,
+  };
+}
+
+export function compactPrintSections(
+  sections: Array<PrintSection | null | undefined | false>
+): PrintSection[] {
+  return sections.filter((section): section is PrintSection => Boolean(section));
+}
+
 export function printDocument(options: PrintDocumentOptions) {
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=1100,height=900");
+  const popup = window.open("", "_blank", "noopener,noreferrer,width=1120,height=920");
   if (!popup) {
     return false;
   }
@@ -224,6 +398,6 @@ export function printDocument(options: PrintDocumentOptions) {
   popup.document.close();
   popup.document.title = options.filename;
   popup.focus();
-  window.setTimeout(() => popup.print(), 200);
+  window.setTimeout(() => popup.print(), 180);
   return true;
 }
