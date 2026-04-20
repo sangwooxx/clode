@@ -174,33 +174,65 @@ select {
 }
 
 .action-button {
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  min-height: 40px;
-  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  min-height: 38px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.02);
   color: var(--text);
   cursor: pointer;
-  font-size: 0.92rem;
-  transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
 }
 
 .action-button:hover {
-  transform: translateY(-1px);
+  transform: none;
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .action-button--primary {
-  background: var(--accent);
+  background: rgba(45, 161, 129, 0.2);
+  border-color: rgba(45, 161, 129, 0.45);
+}
+
+.action-button--primary:hover {
+  background: rgba(45, 161, 129, 0.28);
 }
 
 .action-button--secondary {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.025);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.action-button--secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .action-button--ghost {
   background: transparent;
-  border-color: var(--border);
+  border-color: transparent;
   color: var(--text-muted);
+}
+
+.action-button--ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
 }
 
 .action-button--full {
