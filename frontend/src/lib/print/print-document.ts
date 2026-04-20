@@ -388,16 +388,49 @@ export function compactPrintSections(
 }
 
 export function printDocument(options: PrintDocumentOptions) {
-  const popup = window.open("", "_blank", "noopener,noreferrer,width=1120,height=920");
+  const popup = window.open("", "_blank", "width=1120,height=920");
   if (!popup) {
     return false;
   }
 
-  popup.document.open();
-  popup.document.write(buildPrintHtml(options));
-  popup.document.close();
-  popup.document.title = options.filename;
-  popup.focus();
-  window.setTimeout(() => popup.print(), 180);
+  const html = buildPrintHtml(options);
+
+  try {
+    popup.opener = null;
+  } catch {
+    // Ignore browsers that do not allow mutating opener.
+  }
+
+  try {
+    popup.document.open();
+    popup.document.write(html);
+    popup.document.close();
+    popup.document.title = options.filename;
+  } catch {
+    try {
+      popup.close();
+    } catch {
+      // Ignore popup close failures.
+    }
+    return false;
+  }
+
+  let printStarted = false;
+  const startPrint = () => {
+    if (printStarted) return;
+    printStarted = true;
+    window.setTimeout(() => {
+      popup.focus();
+      popup.print();
+    }, 250);
+  };
+
+  if (popup.document.readyState === "complete") {
+    startPrint();
+  } else {
+    popup.addEventListener("load", startPrint, { once: true });
+    window.setTimeout(startPrint, 1200);
+  }
+
   return true;
 }
