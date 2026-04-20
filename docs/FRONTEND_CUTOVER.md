@@ -1,18 +1,18 @@
-# Cutover `frontend-next` na glowny frontend
+# Cutover `frontend` na glowny frontend
 
 ## Status
 
 Cutover jest wykonany.
 
-- `frontend-next` jest glownym frontendem produktu
+- `frontend` jest glownym frontendem produktu
 - lokalne skrypty startowe promuja Next jako domyslny frontend
 - legacy frontend w `app/` zostaje tylko jako fallback techniczny
 
 ## Aktualny model deployu
 
 ### Frontend glowny
-- osobny projekt Vercel dla `frontend-next`
-- `rootDirectory=frontend-next`
+- osobny projekt Vercel `clode-next` dla glownego frontendu
+- `rootDirectory=frontend`
 - framework: Next.js
 - backend origin ustawiony przez `CLODE_BACKEND_ORIGIN`
 
@@ -22,10 +22,10 @@ Cutover jest wykonany.
 
 ## Stan repo po cutoverze
 
-- `scripts/start-frontend.ps1` uruchamia `frontend-next`
-- `scripts/start-mvp.ps1` uruchamia `frontend-next` domyslnie
+- `scripts/start-frontend.ps1` uruchamia `frontend`
+- `scripts/start-mvp.ps1` uruchamia `frontend` domyslnie
 - `scripts/start-frontend-legacy.ps1` zostawia jawny fallback lokalny
-- README repo i README `frontend-next` wskazuja Next jako glowny frontend
+- README repo i README `frontend` wskazuja Next jako glowny frontend
 
 ## Zasada operacyjna po cutoverze
 
@@ -58,7 +58,7 @@ Po kazdej zmianie deployowej powinny przejsc co najmniej:
 
 ## Rollback
 
-1. Odpinac glowna domene od projektu `frontend-next`.
+1. Odpinac glowna domene od projektu `clode-next`.
 2. Przepiac domene z powrotem na repo-root deploy.
 3. Sprawdzic:
    - `/app/index.html`

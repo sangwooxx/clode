@@ -13,5 +13,5 @@
 
 # Keep GitHub language stats focused on the primary product surface.
 app/** linguist-vendored
-frontend/** linguist-vendored
+frontend-legacy/** linguist-vendored
 data/** linguist-vendored

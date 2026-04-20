@@ -1,25 +1,51 @@
-# Legacy frontend data layer
+# Clode Frontend
 
-This directory is not the primary product frontend anymore.
+`frontend` is the primary frontend of Clode. It replaced the older static frontend as the normal product entrypoint and is the main deployed web application.
 
-It exists only to support the legacy static fallback in `app/`. New product work should go to `frontend-next/`.
+## What it contains
 
-## What it does
+- Next.js App Router shell and auth flow
+- same-origin `/api/v1/*` proxy to the backend
+- operational modules:
+  - dashboard
+  - contracts
+  - invoices
+  - hours
+  - work cards
+  - employees
+  - vacations
+  - planning
+  - settings
+  - workwear
 
-- provides `window.ClodeDataAccess` for the legacy frontend
-- bridges the old static UI in `app/` to local storage / API helpers
-- remains available only for rollback and emergency fallback scenarios
+## Local development
 
-## Maintenance rule
+From the repo root, the default startup path is:
 
-- keep it stable enough for fallback use
-- do not add new product modules here
-- do not treat it as the main application surface
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\start-frontend.ps1
+```
 
-## Key files
+Direct commands from this directory:
 
-- `src/data/storage-keys.js`
-- `src/data/adapters/local-storage-adapter.js`
-- `src/data/adapters/api-adapter.js`
-- `src/data/data-access.js`
-- `src/data/migration-tools.js`
+```powershell
+npm install
+npm run dev
+```
+
+Production-like local start:
+
+```powershell
+npm run build
+npm run start -- --hostname 127.0.0.1 --port 3100
+```
+
+## Deployment
+
+Deployment model:
+- separate Vercel project
+- `rootDirectory=frontend`
+- framework detected as Next.js
+- `CLODE_BACKEND_ORIGIN` configured to the backend service
+
+The legacy frontend in `../app/` should remain only as an emergency fallback after cutover.

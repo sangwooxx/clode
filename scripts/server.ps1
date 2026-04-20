@@ -16,7 +16,7 @@ $workspaceRoot = Split-Path -Parent $RootDir
 
 $appDir = Join-Path $RootDir "app"
 $dataDir = Join-Path $RootDir "data"
-$frontendDir = Join-Path $RootDir "frontend"
+$frontendDir = Join-Path $RootDir "frontend-legacy"
 $sharedDir = Join-Path $RootDir "shared"
 $syncScript = Join-Path $RootDir "scripts\sync-excel.ps1"
 
@@ -109,8 +109,8 @@ try {
             $filePath = Join-Path $appDir "index.html"
         } elseif ($requestPath.StartsWith("/app/")) {
             $filePath = Join-Path $appDir ($requestPath.Substring(5).Replace("/", "\"))
-        } elseif ($requestPath.StartsWith("/frontend/")) {
-            $filePath = Join-Path $frontendDir ($requestPath.Substring(10).Replace("/", "\"))
+        } elseif ($requestPath.StartsWith("/frontend-legacy/")) {
+            $filePath = Join-Path $frontendDir ($requestPath.Substring(17).Replace("/", "\"))
         } elseif ($requestPath.StartsWith("/shared/")) {
             $filePath = Join-Path $sharedDir ($requestPath.Substring(8).Replace("/", "\"))
         } elseif ($requestPath.StartsWith("/data/")) {

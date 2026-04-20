@@ -14,11 +14,11 @@ if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
     $ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 }
 
-$frontendRoot = Join-Path $ProjectRoot "frontend-next"
+$frontendRoot = Join-Path $ProjectRoot "frontend"
 $packageJsonPath = Join-Path $frontendRoot "package.json"
 
 if (-not (Test-Path -LiteralPath $packageJsonPath)) {
-    throw "Nie znaleziono frontend-next pod $frontendRoot."
+    throw "Nie znaleziono glownego frontendu pod $frontendRoot."
 }
 
 $npmCommand = Get-Command npm.cmd -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -ErrorAction SilentlyContinue
@@ -79,7 +79,7 @@ function Stop-NextFrontendProcesses {
             $_.CommandLine -like "*next*"
         }
     } catch {
-        Write-Warning "Pominieto zatrzymywanie procesow frontend-next po CIM/WMI: $($_.Exception.Message)"
+        Write-Warning "Pominieto zatrzymywanie procesow frontendu po CIM/WMI: $($_.Exception.Message)"
         $processes = @()
     }
 
@@ -87,7 +87,7 @@ function Stop-NextFrontendProcesses {
         try {
             Stop-Process -Id $process.ProcessId -Force -ErrorAction Stop
         } catch {
-            Write-Warning "Nie udalo sie zatrzymac procesu PID $($process.ProcessId) dla frontend-next: $($_.Exception.Message)"
+            Write-Warning "Nie udalo sie zatrzymac procesu PID $($process.ProcessId) dla frontendu: $($_.Exception.Message)"
         }
     }
 }
@@ -117,7 +117,7 @@ if ($Mode -eq "prod") {
     try {
         & $npmCommand "run" "build"
         if ($LASTEXITCODE -ne 0) {
-            throw "Build frontend-next zakonczyl sie bledem."
+            throw "Build glownego frontendu zakonczyl sie bledem."
         }
     } finally {
         Pop-Location
@@ -134,4 +134,4 @@ if (-not (Wait-FrontendReady -Url $frontendUrl -TimeoutSec $StartupTimeoutSec)) 
     throw "Frontend-next nie zglosil gotowosci pod $frontendUrl w ciagu $StartupTimeoutSec s."
 }
 
-Write-Host "Uruchomiono frontend-next pod $frontendUrl"
+Write-Host "Uruchomiono frontend pod $frontendUrl"

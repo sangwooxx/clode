@@ -2,14 +2,14 @@
 
 ## Current delivery status
 
-- operational MVP in `frontend-next`: complete
+- operational MVP in `frontend/`: complete
 - cross-module front-back integration of the operational MVP: complete
-- live cutover to `frontend-next` as the primary frontend: complete
+- live cutover to `frontend/` as the primary frontend: complete
 - legacy frontend status: fallback only
 
 ## What is stable today
 
-- primary frontend is `frontend-next`
+- primary frontend is `frontend/`
 - contracts and invoices are backend-first
 - employees, vacations, planning, work cards, workwear, settings, and hours are integrated end-to-end
 - `inactive` semantics are consistent across operational modules

@@ -12,7 +12,7 @@ The project still follows strict delivery gates:
 ### Foundation and migration
 - backend-first contracts
 - backend-first invoices
-- Next.js operational frontend in `frontend-next`
+- Next.js operational frontend in `frontend`
 - migration of operational modules:
   - dashboard
   - contracts
@@ -25,7 +25,7 @@ The project still follows strict delivery gates:
   - settings
   - workwear
 - front-back integration pass for the operational MVP
-- cutover to `frontend-next` as the primary frontend
+- cutover to `frontend` as the primary frontend
 
 ## Current focus
 

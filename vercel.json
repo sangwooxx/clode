@@ -4,7 +4,7 @@
   "functions": {
     "api/index.py": {
       "regions": ["fra1"],
-      "excludeFiles": "{tmp/**,tests/**,docs/**,.git/**,**/__pycache__/**,backend/var/**,scripts/**,frontend/**,shared/**,config/**,data/**,app/**}"
+      "excludeFiles": "{tmp/**,tests/**,docs/**,.git/**,**/__pycache__/**,backend/var/**,scripts/**,frontend/**,frontend-legacy/**,shared/**,config/**,data/**,app/**}"
     }
   },
   "routes": [

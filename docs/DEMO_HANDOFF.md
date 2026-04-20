@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository can be handed off as a demo-safe operational MVP with `frontend-next` as the primary frontend.
+This repository can be handed off as a demo-safe operational MVP with `frontend/` as the primary frontend.
 
 ## Supported local runtime
 
@@ -42,4 +42,4 @@ Before sending the project to an external reviewer, confirm:
 - MVP scope
 - known limitations
 - latest QA result
-- note that `frontend-next` is the primary frontend and `app/` is fallback only
+- note that `frontend/` is the primary frontend and `app/` is fallback only

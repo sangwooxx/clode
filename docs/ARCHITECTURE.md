@@ -6,7 +6,7 @@ Clode currently runs as a split frontend/backend system with a controlled legacy
 
 ```text
 Primary user entry
-    -> frontend-next (Next.js App Router)
+    -> frontend (Next.js App Router)
         -> same-origin /api/v1 proxy
             -> backend HTTP API
                 -> services
@@ -16,12 +16,12 @@ Primary user entry
 Technical fallback
     -> repo-root deploy
         -> backend HTTP API
-        -> legacy static frontend (app/ + frontend/)
+        -> legacy static frontend (app/ + frontend-legacy/)
 ```
 
 ## Current product surface
 
-The primary product UI lives in `frontend-next/` and includes:
+The primary product UI lives in `frontend/` and includes:
 - dashboard
 - contracts
 - invoices
@@ -33,7 +33,7 @@ The primary product UI lives in `frontend-next/` and includes:
 - settings
 - workwear
 
-The legacy frontend in `app/` and the compatibility data layer in `frontend/` are retained only for rollback/fallback and should not receive new product work.
+The legacy frontend in `app/` and the compatibility data layer in `frontend-legacy/` are retained only for rollback/fallback and should not receive new product work.
 
 ## Source-of-truth map
 

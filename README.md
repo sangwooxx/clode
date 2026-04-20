@@ -1,10 +1,10 @@
 # Clode
 
-Clode is an operational ERP-style system for contract businesses. The primary product frontend is now `frontend-next`, the Next.js App Router application in this repository. The older static frontend in `app/` remains only as a technical fallback.
+Clode is an operational ERP-style system for contract businesses. The primary product frontend now lives in `frontend/`, the Next.js App Router application in this repository. The older static frontend in `app/` remains only as a technical fallback.
 
 ## Product state
 
-The operational MVP is live on `frontend-next` and covers:
+The operational MVP is live on `frontend/` and covers:
 - dashboard
 - contracts
 - invoices
@@ -20,10 +20,10 @@ The main remaining engineering debt is not screen coverage. It is backend-first 
 
 ## Repository layout
 
-- `frontend-next/` - primary product frontend in Next.js
+- `frontend/` - primary product frontend in Next.js
 - `backend/` - API, domain services, repositories, migrations, seed data
 - `app/` - legacy static frontend kept only for rollback/fallback
-- `frontend/` - legacy data-access layer used by `app/`
+- `frontend-legacy/` - legacy data-access layer used by `app/`
 - `docs/` - current architecture, roadmap, status, and release notes
 - `scripts/` - local runtime entrypoints
 
@@ -38,7 +38,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1
 
 This starts:
 - backend on `8787`
-- primary frontend-next on `3100`
+- primary frontend on `3100`
 - browser on `/login`
 
 ### Start only the primary frontend
@@ -68,12 +68,12 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-mvp.ps1 -Frontend legac
 ## Deployment model
 
 Current production-oriented model:
-- `frontend-next` is deployed as a dedicated Vercel project
-- `rootDirectory=frontend-next`
+- dedicated Vercel project `clode-next` deploys the main frontend
+- `rootDirectory=frontend`
 - `CLODE_BACKEND_ORIGIN` points to the backend/legacy service
 - repo-root deploy stays available as backend plus legacy fallback
 
-Operational details and rollback procedure live in [`docs/FRONTEND_NEXT_CUTOVER.md`](docs/FRONTEND_NEXT_CUTOVER.md).
+Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
 
 ## Source Of Truth And Deploy Discipline
 
@@ -102,6 +102,6 @@ Operational details and rollback procedure live in [`docs/FRONTEND_NEXT_CUTOVER.
 - [Project Status](docs/PROJECT_STATUS.md)
 - [QA Process](docs/QA_PROCESS.md)
 - [Demo Handoff](docs/DEMO_HANDOFF.md)
-- [Cutover Runbook](docs/FRONTEND_NEXT_CUTOVER.md)
+- [Cutover Runbook](docs/FRONTEND_CUTOVER.md)
 - [Contributing](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
