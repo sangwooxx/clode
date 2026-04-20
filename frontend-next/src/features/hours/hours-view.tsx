@@ -517,11 +517,6 @@ export function HoursView({
       }),
     [contracts, historicalEmployees, monthEntries, search]
   );
-  const inactiveHistoryRowsCount = useMemo(
-    () => hoursRows.filter((row) => row.employeeStatus === "inactive").length,
-    [hoursRows]
-  );
-
   const selectedEntry = useMemo(
     () => findHoursEntryById(monthEntries, selectedEntryId),
     [monthEntries, selectedEntryId]
@@ -978,9 +973,6 @@ export function HoursView({
         <Panel title="Błąd odczytu">
           <div className="status-stack">
             <p className="status-message status-message--error">{state.message}</p>
-            <p className="status-message">
-              Sprawdź sesję lub dostępność backendu, a potem odśwież ekran.
-            </p>
           </div>
         </Panel>
       </div>
@@ -1062,27 +1054,6 @@ export function HoursView({
 
         {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
         {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
-      </Panel>
-
-      <Panel className="panel--toolbar panel--info">
-        <div className="hours-info-panel">
-          <div className="data-table__stack">
-            <span className="data-table__primary">Nowe operacje działają tylko na aktywnych pracownikach</span>
-            <span className="data-table__secondary">
-              Nowe wpisy korzystają z aktywnej kartoteki. Nieaktywni zostają tylko w historii miesiąca.
-            </span>
-          </div>
-          <div className="hours-runtime-legend">
-            <span className="hours-runtime-legend__item">
-              <strong>{formatNumber(employees.length)}</strong>
-              <span>aktywni do operacji</span>
-            </span>
-            <span className="hours-runtime-legend__item hours-runtime-legend__item--muted">
-              <strong>{formatNumber(inactiveHistoryRowsCount)}</strong>
-              <span>nieaktywni tylko w historii</span>
-            </span>
-          </div>
-        </div>
       </Panel>
 
       {selectedMonth ? (

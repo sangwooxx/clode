@@ -121,13 +121,13 @@ select {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .section-header__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .auth-card {
@@ -167,7 +167,7 @@ select {
   background: #252525;
   color: var(--text);
   border-radius: var(--radius-sm);
-  min-height: 42px;
+  min-height: 40px;
   padding: 0 12px;
 }
 
@@ -359,30 +359,30 @@ select {
 
 .module-page__stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 6px;
 }
 
 .module-page__stats--compact {
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
 }
 
 .stat-card {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.035);
+  background: rgba(255, 255, 255, 0.012);
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  min-height: 58px;
-  padding: 9px 11px;
+  gap: 2px;
+  min-height: 50px;
+  padding: 8px 10px;
 }
 
 .stat-card--accent {
-  border-color: rgba(45, 161, 129, 0.35);
-  background: rgba(45, 161, 129, 0.08);
+  border-color: rgba(45, 161, 129, 0.22);
+  background: rgba(45, 161, 129, 0.05);
 }
 
 .stat-card__label,
@@ -404,9 +404,9 @@ select {
 
 .stat-card__value {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  line-height: 1.18;
+  font-size: 0.96rem;
+  font-weight: 650;
+  line-height: 1.15;
 }
 
 .stat-card__hint {
@@ -416,40 +416,35 @@ select {
 }
 
 .panel {
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(24, 24, 24, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(24, 24, 24, 0.46);
   box-shadow: none;
-  border-radius: 14px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 10px;
 }
 
 .panel__heading {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .panel__title {
   margin: 0 0 4px;
-  font-size: 0.95rem;
-}
-
-.panel--toolbar {
-  background: rgba(255, 255, 255, 0.015);
-  border-color: rgba(255, 255, 255, 0.04);
-  box-shadow: none;
-  padding: 10px;
-}
-
-.panel--toolbar .panel__heading {
-  margin-bottom: 8px;
-}
-
-.panel--toolbar .panel__title {
-  margin-bottom: 0;
   font-size: 0.9rem;
 }
 
+.panel--toolbar {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.03);
+  box-shadow: none;
+  padding: 8px 10px;
+}
+
+.panel--toolbar .panel__heading {
+  display: none;
+}
+
 .panel--toolbar--filters {
-  padding: 10px 12px;
+  padding: 8px 10px;
 }
 
 .form-grid {
@@ -628,29 +623,25 @@ select {
 .contracts-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
 .toolbar-strip {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(240px, 320px);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
 }
 
 .toolbar-strip__label {
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.11em;
-  font-size: 10px;
-  white-space: nowrap;
+  display: none;
 }
 
 .dashboard-toolbar__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .contracts-layout {
@@ -1056,7 +1047,7 @@ select {
 
 .toolbar-strip__meta {
   color: var(--text-muted);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   text-align: right;
 }
 
@@ -1066,10 +1057,10 @@ select {
   gap: 12px;
   align-items: center;
   min-width: 0;
-  padding: 9px 11px;
+  padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.012);
 }
 
 .summary-strip__primary {

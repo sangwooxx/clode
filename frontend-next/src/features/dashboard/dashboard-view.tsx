@@ -481,10 +481,10 @@ export function DashboardView({
         <SectionHeader eyebrow="Dashboard" title="Dashboard" />
         <div className="module-page__stats module-page__stats--compact">
           {Array.from({ length: 4 }).map((_, index) => (
-            <StatCard key={index} label="Ladowanie" value="..." hint="Trwa pobieranie snapshotu" />
+            <StatCard key={index} label="Ładowanie" value="..." hint="Trwa pobieranie snapshotu" />
           ))}
         </div>
-        <Panel title="Snapshot kontraktow">
+        <Panel title="Snapshot kontraktów">
           <p className="status-message">Trwa odczyt danych.</p>
         </Panel>
       </div>
@@ -499,14 +499,12 @@ export function DashboardView({
           title="Dashboard"
           actions={
             <ActionButton type="button" onClick={() => setRefreshTick((value) => value + 1)}>
-              Sprobuj ponownie
+              Spróbuj ponownie
             </ActionButton>
           }
         />
-        <Panel title="Blad odczytu" description={state.message}>
-          <p className="panel__description">
-            Sprawdz dostepnosc backendu lub sesje uzytkownika, a potem odswiez dashboard.
-          </p>
+        <Panel title="Błąd odczytu">
+          <p className="status-message status-message--error">{state.message}</p>
         </Panel>
       </div>
     );
@@ -520,15 +518,12 @@ export function DashboardView({
           title="Dashboard"
           actions={
             <ActionButton type="button" onClick={() => setRefreshTick((value) => value + 1)}>
-              Odswiez
+              Odśwież
             </ActionButton>
           }
         />
-        <Panel title="Pusty stan">
-          <p className="panel__description">
-            Backend zwrocil pusty snapshot. Gdy pojawia sie kontrakty, faktury lub godziny,
-            dashboard wypelni sie automatycznie.
-          </p>
+        <Panel title="Brak danych">
+          <p className="status-message">Brak danych do pokazania.</p>
         </Panel>
       </div>
     );
@@ -547,7 +542,7 @@ export function DashboardView({
             variant="secondary"
             onClick={() => setRefreshTick((value) => value + 1)}
           >
-            Odswiez snapshot
+            Odśwież snapshot
           </ActionButton>
         }
       />
@@ -564,7 +559,7 @@ export function DashboardView({
         ))}
       </div>
 
-      <Panel className="panel--toolbar" title="Tryb pracy dashboardu">
+      <Panel className="panel--toolbar panel--toolbar--filters">
         <div className="dashboard-toolbar">
           <div className="dashboard-toolbar__tabs">
             <ActionButton
@@ -639,24 +634,16 @@ export function DashboardView({
         </>
       ) : (
         <>
-          <Panel title="Snapshot nieprzypisanych pozycji">
+          <Panel title="Nieprzypisane pozycje">
             <div className="module-page__stats module-page__stats--compact">
-              <StatCard
-                label="Faktury kosztowe"
-                value={formatInteger(data.unassigned.cost_invoice_count)}
-              />
               <StatCard
                 label="Koszty netto"
                 value={formatMoney(data.unassigned.invoice_cost_total)}
               />
               <StatCard
-                label="Faktury sprzedażowe"
-                value={formatInteger(data.unassigned.sales_invoice_count)}
-                accent
-              />
-              <StatCard
-                label="Faktury sprzedażowe netto"
+                label="Sprzedaż netto"
                 value={formatMoney(data.unassigned.revenue_total)}
+                accent
               />
               <StatCard
                 label="Godziny poza kontraktami"

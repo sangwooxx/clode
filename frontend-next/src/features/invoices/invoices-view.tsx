@@ -803,7 +803,6 @@ export function InvoicesView({
                 </div>
 
                 <div className="toolbar-strip invoices-toolbar-strip">
-                  <span className="toolbar-strip__label">Filtruj</span>
                   <SearchField
                     value={invoiceSearch}
                     onChange={(event) => setInvoiceSearch(event.target.value)}
@@ -865,7 +864,7 @@ export function InvoicesView({
                     </div>
                   </dl>
                 ) : (
-                  <p className="status-message">Wybierz rekord z tabeli, aby podejrzeć szczegóły.</p>
+                  <p className="status-message">Wybierz rekord.</p>
                 )}
                 {canWrite && selectedInvoice ? (
                   <ActionButton

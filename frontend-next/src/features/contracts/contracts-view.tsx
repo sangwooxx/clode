@@ -670,7 +670,6 @@ export function ContractsView({
 
       <Panel className="panel--toolbar panel--toolbar--filters">
         <div className="toolbar-strip">
-          <span className="toolbar-strip__label">Filtry rejestru</span>
           <div className="dashboard-toolbar__tabs">
             <ActionButton
               type="button"

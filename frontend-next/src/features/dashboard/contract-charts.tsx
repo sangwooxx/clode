@@ -28,20 +28,14 @@ function ContractStructureChart({ contract }: { contract: DashboardContractItem 
 
   if (!totalValue) {
     return (
-      <Panel
-        title="Struktura kontraktu"
-        description="Brak danych finansowych dla wybranego kontraktu."
-      >
-        <p className="panel__description">Nie ma jeszcze wartości do pokazania na wykresie struktury.</p>
+      <Panel title="Struktura kontraktu">
+        <p className="status-message">Brak danych finansowych.</p>
       </Panel>
     );
   }
 
   return (
-    <Panel
-      title="Struktura kontraktu"
-      description="Taki sam zakres treści jak w obecnej aplikacji: faktury kosztowe, koszt wynagrodzeń i faktury sprzedażowe."
-    >
+    <Panel title="Struktura kontraktu">
       <div className="contract-chart contract-chart--structure">
         {rows.map((row) => {
           const share = totalValue ? Math.round((Math.abs(row.value) / totalValue) * 1000) / 10 : 0;
@@ -84,20 +78,14 @@ function ContractMonthlyChart({
 
   if (!visibleRows.length) {
     return (
-      <Panel
-        title="Miesięczny przebieg kontraktu"
-        description="Brak danych miesięcznych dla wybranego kontraktu."
-      >
-        <p className="panel__description">Kontrakt nie ma jeszcze miesięcznego rozbicia do pokazania.</p>
+      <Panel title="Miesięczny przebieg kontraktu">
+        <p className="status-message">Brak danych miesięcznych.</p>
       </Panel>
     );
   }
 
   return (
-    <Panel
-      title="Miesięczny przebieg kontraktu"
-      description="Zakres zgodny z obecną aplikacją: faktury kosztowe, koszt wynagrodzeń i faktury sprzedażowe w układzie miesięcznym."
-    >
+    <Panel title="Miesięczny przebieg kontraktu">
       <div className="contract-monthly-chart">
         {visibleRows.map((row) => (
           <article key={row.month_key} className="contract-monthly-chart__row">
@@ -147,17 +135,11 @@ export function DashboardContractCharts({
   if (!contract) {
     return (
       <div className="dashboard-chart-grid">
-        <Panel
-          title="Struktura kontraktu"
-          description="Wybierz kontrakt w tabeli, aby zobaczyć wykres zgodny z obecną aplikacją."
-        >
-          <p className="panel__description">Brak aktywnego kontraktu do analizy struktury.</p>
+        <Panel title="Struktura kontraktu">
+          <p className="status-message">Wybierz kontrakt.</p>
         </Panel>
-        <Panel
-          title="Miesięczny przebieg kontraktu"
-          description="Wybierz kontrakt w tabeli, aby zobaczyć miesięczne rozbicie."
-        >
-          <p className="panel__description">Brak aktywnego kontraktu do analizy miesięcznej.</p>
+        <Panel title="Miesięczny przebieg kontraktu">
+          <p className="status-message">Wybierz kontrakt.</p>
         </Panel>
       </div>
     );

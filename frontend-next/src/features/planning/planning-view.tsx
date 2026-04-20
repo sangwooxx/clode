@@ -672,10 +672,7 @@ export function PlanningView({
         </div>
 
         <div className="planning-side-stack">
-          <Panel
-            title="Kalendarz planowania"
-            description="Wybierz dzień z bieżącego miesiąca, żeby od razu zobaczyć obsadę, nieobecności i wpisy historyczne."
-          >
+          <Panel title="Kalendarz planowania">
             <div className="planning-calendar__header">
               <ActionButton
                 type="button"
@@ -727,10 +724,7 @@ export function PlanningView({
             </div>
           </Panel>
 
-          <Panel
-            title="Nieobecności na wybrany dzień"
-            description="Ta lista pokazuje aktywnych pracowników z zatwierdzoną nieobecnością, więc nie mogą dostać nowego przypisania."
-          >
+          <Panel title="Nieobecności na wybrany dzień">
             <div className="planning-side-list">
               {absenceRows.length ? (
                 absenceRows.map((item) => (
@@ -745,10 +739,7 @@ export function PlanningView({
             </div>
           </Panel>
 
-          <Panel
-            title="Historia i wpisy wymagające uwagi"
-            description="Tu trafiają rekordy legacy, nieaktywne albo takie, których nie da się jednoznacznie dopasować do aktywnej kartoteki."
-          >
+          <Panel title="Historia i wpisy wymagające uwagi">
             <div className="planning-side-list">
               {historicalRows.length ? (
                 historicalRows.map((row) => (

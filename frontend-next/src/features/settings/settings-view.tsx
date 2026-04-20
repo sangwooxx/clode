@@ -667,9 +667,7 @@ export function SettingsView() {
             </>
           ) : (
               <Panel title="Administracja systemu">
-              <p className="status-message">
-                Jeśli potrzebujesz dodać konto albo zmienić uprawnienia, zaloguj się jako administrator i użyj tego samego ekranu konta.
-              </p>
+              <p className="status-message">Wymaga roli administratora.</p>
             </Panel>
           )}
         </div>
@@ -700,7 +698,7 @@ export function SettingsView() {
                     </div>
                   </div>
                 ) : (
-                  <p className="status-message">Dodaj nowe konto użytkownika albo wybierz konto z tabeli po lewej stronie.</p>
+                  <p className="status-message">Nowe konto użytkownika.</p>
                 )}
 
                 <form className="settings-user-form" onSubmit={handleSaveUser}>
