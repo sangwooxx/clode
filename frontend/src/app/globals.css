@@ -518,6 +518,10 @@ select {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.form-grid__span-2 {
+  grid-column: span 2;
+}
+
 .field-card {
   display: grid;
 }

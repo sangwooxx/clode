@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
@@ -852,21 +854,25 @@ export function WorkwearView({
         eyebrow="Kartoteka BHP"
         title="Odziez robocza"
         actions={
-          <div className="planning-header-actions">
-            <ActionButton type="button" variant="secondary" onClick={handleNewIssue}>
-              Nowe wydanie
-            </ActionButton>
-            <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
-              Nowy element
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant="ghost"
-              onClick={() => void handleRefresh()}
-              disabled={busyAction === "refresh"}
-            >
-              {busyAction === "refresh" ? "Odswiezanie..." : "Odswiez"}
-            </ActionButton>
+          <div className="module-actions">
+            <div className="module-actions__primary">
+              <ActionButton type="button" onClick={handleNewIssue}>
+                Dodaj wydanie
+              </ActionButton>
+              <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
+                Dodaj element katalogu
+              </ActionButton>
+            </div>
+            <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={() => void handleRefresh()}
+                disabled={busyAction === "refresh"}
+              >
+                {busyAction === "refresh" ? "Odswiezanie..." : "Odswiez"}
+              </ActionButton>
+            </div>
           </div>
         }
       />
@@ -890,9 +896,11 @@ export function WorkwearView({
         />
       </div>
 
-      {message ? (
-        <p className={`status-message status-message--${message.tone}`}>{message.text}</p>
-      ) : null}
+      <FormFeedback
+        items={[
+          message ? { tone: message.tone, text: message.text } : null,
+        ]}
+      />
 
       <div className="workwear-layout">
         <div className="workwear-main-stack">
@@ -1127,42 +1135,54 @@ export function WorkwearView({
                 />
               </label>
 
-              {!canWrite ? (
-                <p className="status-message status-message--warning">
-                  Twoja rola ma dostep tylko do odczytu tego modulu.
-                </p>
-              ) : null}
-              {derived.selectedEmployee?.status === "inactive" && !editingIssueId ? (
-                <p className="status-message status-message--warning">
-                  Wybrany pracownik jest nieaktywny. Historia pozostaje widoczna, ale nie dodasz nowego wydania.
-                </p>
-              ) : null}
-              {editingHistoricalEmployee ? (
-                <p className="status-message status-message--warning">
-                  Edytujesz historyczny wpis pracownika nieaktywnego. Zapis dotyczy korekty historii, nie nowego wydania.
-                </p>
-              ) : null}
-              {screen.data.catalog.length === 0 ? (
-                <p className="status-message status-message--warning">
-                  Najpierw dodaj element do katalogu odziezy.
-                </p>
-              ) : null}
+              <FormFeedback
+                items={[
+                  !canWrite
+                    ? {
+                        tone: "warning",
+                        text: "Twoja rola ma dostep tylko do odczytu tego modulu.",
+                      }
+                    : null,
+                  derived.selectedEmployee?.status === "inactive" && !editingIssueId
+                    ? {
+                        tone: "warning",
+                        text: "Wybrany pracownik jest nieaktywny. Historia pozostaje widoczna, ale nie dodasz nowego wydania.",
+                      }
+                    : null,
+                  editingHistoricalEmployee
+                    ? {
+                        tone: "warning",
+                        text: "Edytujesz historyczny wpis pracownika nieaktywnego. Zapis dotyczy korekty historii, nie nowego wydania.",
+                      }
+                    : null,
+                  screen.data.catalog.length === 0
+                    ? {
+                        tone: "warning",
+                        text: "Najpierw dodaj element do katalogu odziezy.",
+                      }
+                    : null,
+                ]}
+              />
 
-              <div className="workwear-form__actions">
-                <ActionButton type="button" variant="ghost" onClick={handleNewIssue}>
-                  Wyczysc
-                </ActionButton>
-                <ActionButton
-                  type="submit"
-                  disabled={!canWrite || busyAction === "save-issue" || screen.data.catalog.length === 0}
-                >
-                  {busyAction === "save-issue"
-                    ? "Zapisywanie..."
-                    : editingIssueId
-                      ? "Zapisz zmiany"
-                      : "Zapisz wydanie"}
-                </ActionButton>
-              </div>
+              <FormActions
+                leading={
+                  <ActionButton type="button" variant="secondary" onClick={handleNewIssue}>
+                    {editingIssueId ? "Nowe wydanie" : "Wyczysc formularz"}
+                  </ActionButton>
+                }
+                trailing={
+                  <ActionButton
+                    type="submit"
+                    disabled={!canWrite || busyAction === "save-issue" || screen.data.catalog.length === 0}
+                  >
+                    {busyAction === "save-issue"
+                      ? "Zapisywanie..."
+                      : editingIssueId
+                        ? "Zapisz zmiany"
+                        : "Zapisz wydanie"}
+                  </ActionButton>
+                }
+              />
             </form>
           </Panel>
 
@@ -1211,21 +1231,25 @@ export function WorkwearView({
                 />
               </label>
 
-              <div className="workwear-form__actions">
-                <ActionButton type="button" variant="ghost" onClick={handleNewCatalogItem}>
-                  Wyczysc
-                </ActionButton>
-                <ActionButton
-                  type="submit"
-                  disabled={!canWrite || busyAction === "save-catalog"}
-                >
-                  {busyAction === "save-catalog"
-                    ? "Zapisywanie..."
-                    : editingCatalogId
-                      ? "Zapisz zmiany"
-                      : "Dodaj do katalogu"}
-                </ActionButton>
-              </div>
+              <FormActions
+                leading={
+                  <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
+                    {editingCatalogId ? "Nowy element" : "Wyczysc formularz"}
+                  </ActionButton>
+                }
+                trailing={
+                  <ActionButton
+                    type="submit"
+                    disabled={!canWrite || busyAction === "save-catalog"}
+                  >
+                    {busyAction === "save-catalog"
+                      ? "Zapisywanie..."
+                      : editingCatalogId
+                        ? "Zapisz zmiany"
+                        : "Dodaj do katalogu"}
+                  </ActionButton>
+                }
+              />
             </form>
           </Panel>
         </div>

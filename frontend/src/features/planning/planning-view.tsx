@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -567,13 +568,19 @@ export function PlanningView({
         eyebrow="Planowanie zasobów"
         title="Planowanie zasobów"
         actions={
-          <div className="planning-header-actions">
-            <ActionButton type="button" variant="secondary" onClick={handleCopyPreviousDay}>
-              Skopiuj poprzedni dzień
-            </ActionButton>
-            <ActionButton type="button" variant="secondary" onClick={() => refreshModule()}>
-              Odśwież
-            </ActionButton>
+          <div className="module-actions">
+            <div className="module-actions__primary">
+              {canWrite ? (
+                <ActionButton type="button" onClick={handleCopyPreviousDay}>
+                  Skopiuj poprzedni dzień
+                </ActionButton>
+              ) : null}
+            </div>
+            <div className="module-actions__secondary">
+              <ActionButton type="button" variant="secondary" onClick={() => refreshModule()}>
+                Odśwież
+              </ActionButton>
+            </div>
           </div>
         }
       />
@@ -603,11 +610,13 @@ export function PlanningView({
         </div>
       </div>
 
-      {statusMessage ? (
-        <p className={`status-message status-message--${statusMessage.tone}`}>
-          {statusMessage.text}
-        </p>
-      ) : null}
+      <FormFeedback
+        items={[
+          statusMessage
+            ? { tone: statusMessage.tone, text: statusMessage.text }
+            : null,
+        ]}
+      />
 
       <div className="module-page__stats">
         {summaryCards.slice(0, 4).map((card) => (
@@ -618,7 +627,7 @@ export function PlanningView({
       <div className="planning-layout">
         <div className="planning-main-stack">
             <Panel title="Plan dnia">
-            <DataTable
+              <DataTable
               columns={planningEmployeeColumns({
                 canWrite,
                 contractOptions,

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
@@ -538,32 +540,46 @@ export function SettingsView() {
         eyebrow="Konto użytkownika"
         title="Konto i ustawienia"
         actions={
-          <>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              disabled={isRefreshingAccount || isRefreshingAdmin}
-              onClick={() => void handleRefreshAll()}
-            >
-              {isRefreshingAccount || isRefreshingAdmin ? "Odświeżanie..." : "Odśwież dane"}
-            </ActionButton>
-            {hasAdminAccess ? (
-              <ActionButton type="button" variant="secondary" onClick={handleCreateNewUser}>
-                Nowe konto
+          <div className="module-actions">
+            <div className="module-actions__primary">
+              {hasAdminAccess ? (
+                <ActionButton type="button" onClick={handleCreateNewUser}>
+                  Nowe konto
+                </ActionButton>
+              ) : (
+                <ActionButton
+                  type="button"
+                  onClick={() => void handleCurrentPasswordReset()}
+                  disabled={resetTargetUsername === currentUser.username}
+                >
+                  {resetTargetUsername === currentUser.username ? "Wysyłanie..." : "Reset hasła"}
+                </ActionButton>
+              )}
+            </div>
+            <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                disabled={isRefreshingAccount || isRefreshingAdmin}
+                onClick={() => void handleRefreshAll()}
+              >
+                {isRefreshingAccount || isRefreshingAdmin ? "Odświeżanie..." : "Odśwież dane"}
               </ActionButton>
-            ) : null}
-            <ActionButton
-              type="button"
-              variant="secondary"
-              disabled={resetTargetUsername === currentUser.username}
-              onClick={() => void handleCurrentPasswordReset()}
-            >
-              {resetTargetUsername === currentUser.username ? "Wysyłanie..." : "Reset hasła"}
-            </ActionButton>
-            <ActionButton type="button" variant="ghost" disabled={isLoggingOut} onClick={() => void handleLogout()}>
-              {isLoggingOut ? "Wylogowywanie..." : "Wyloguj"}
-            </ActionButton>
-          </>
+              {hasAdminAccess ? (
+                <ActionButton
+                  type="button"
+                  variant="secondary"
+                  disabled={resetTargetUsername === currentUser.username}
+                  onClick={() => void handleCurrentPasswordReset()}
+                >
+                  {resetTargetUsername === currentUser.username ? "Wysyłanie..." : "Reset hasła"}
+                </ActionButton>
+              ) : null}
+              <ActionButton type="button" variant="ghost" disabled={isLoggingOut} onClick={() => void handleLogout()}>
+                {isLoggingOut ? "Wylogowywanie..." : "Wyloguj"}
+              </ActionButton>
+            </div>
+          </div>
         }
       />
 
@@ -573,7 +589,11 @@ export function SettingsView() {
         ))}
       </div>
 
-      {pageMessage ? <p className={`status-message status-message--${pageMessage.tone}`}>{pageMessage.text}</p> : null}
+      <FormFeedback
+        items={[
+          pageMessage ? { tone: pageMessage.tone, text: pageMessage.text } : null,
+        ]}
+      />
 
       <div className="settings-layout">
         <div className="settings-main-stack">
@@ -585,7 +605,6 @@ export function SettingsView() {
               <div className="info-list__row"><dt>Status</dt><dd>{formatStatusLabel(currentUser.status)}</dd></div>
               <div className="info-list__row"><dt>Adres e-mail</dt><dd>{currentUser.email || "Brak danych"}</dd></div>
               <div className="info-list__row"><dt>Ostatnie logowanie</dt><dd>{formatTimestamp(currentUser.lastLoginAt)}</dd></div>
-              <div className="info-list__row"><dt>Wejście do ustawień</dt><dd>Wyłącznie przez kafelek konta w sidebarze</dd></div>
             </dl>
           </Panel>
 
@@ -745,18 +764,52 @@ export function SettingsView() {
                     </div>
                   </div>
 
-                  {formError ? <p className="status-message status-message--error">{formError}</p> : null}
-                  {formStatus ? <p className="status-message status-message--success">{formStatus}</p> : null}
+                  <FormFeedback
+                    items={[
+                      formError ? { tone: "error", text: formError } : null,
+                      formStatus ? { tone: "success", text: formStatus } : null,
+                    ]}
+                  />
 
-                  <div className="settings-form-actions">
-                    {editingUser ? (
+                  <FormActions
+                    leading={
                       <>
-                        <ActionButton type="button" variant="ghost" disabled={isDeletingUser || editingUser.id === currentUser.id} onClick={() => void handleDeleteUser()}>{isDeletingUser ? "Usuwanie..." : "Usuń konto"}</ActionButton>
-                        <ActionButton type="button" variant="secondary" disabled={resetTargetUsername === editingUser.username} onClick={() => void handleManagedUserPasswordReset()}>{resetTargetUsername === editingUser.username ? "Wysyłanie..." : "Reset hasła użytkownika"}</ActionButton>
+                        <ActionButton
+                          type="button"
+                          variant="secondary"
+                          onClick={handleCreateNewUser}
+                          disabled={isSubmittingUser || isDeletingUser}
+                        >
+                          {editingUser ? "Nowe konto" : "Wyczyść formularz"}
+                        </ActionButton>
+                        {editingUser ? (
+                          <ActionButton
+                            type="button"
+                            variant="secondary"
+                            disabled={resetTargetUsername === editingUser.username}
+                            onClick={() => void handleManagedUserPasswordReset()}
+                          >
+                            {resetTargetUsername === editingUser.username ? "Wysyłanie..." : "Reset hasła użytkownika"}
+                          </ActionButton>
+                        ) : null}
+                        {editingUser ? (
+                          <ActionButton
+                            type="button"
+                            variant="ghost"
+                            disabled={isDeletingUser || editingUser.id === currentUser.id}
+                            onClick={() => void handleDeleteUser()}
+                          >
+                            {isDeletingUser ? "Usuwanie..." : "Usuń konto"}
+                          </ActionButton>
+                        ) : null}
                       </>
-                    ) : null}
-                    <ActionButton type="submit" disabled={isSubmittingUser}>{isSubmittingUser ? "Zapisywanie..." : editingUser ? "Zapisz zmiany" : "Dodaj konto"}</ActionButton>
-                  </div>
+                    }
+                    trailing={
+                      <ActionButton type="submit" disabled={isSubmittingUser}>
+                        {isSubmittingUser ? "Zapisywanie..." : editingUser ? "Zapisz zmiany" : "Dodaj konto"}
+                      </ActionButton>
+                    }
+                  />
                 </form>
               </Panel>
 
@@ -765,10 +818,23 @@ export function SettingsView() {
                   <label className="form-field"><span>Tryb akceptacji urlopów</span><select value={workflowValues.vacationApprovalMode} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationApprovalMode: event.target.value === "admin" ? "admin" : "permission" }))}><option value="permission">Według uprawnień użytkowników</option><option value="admin">Tylko administrator</option></select></label>
                   <label className="form-field"><span>Powiadomienia urlopowe</span><select value={workflowValues.vacationNotifications} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationNotifications: event.target.value === "off" ? "off" : "on" }))}><option value="on">Włączone</option><option value="off">Wyłączone</option></select></label>
                 </FormGrid>
-                {workflowStatus ? <p className={`status-message ${workflowStatus.includes("Nie udało") ? "status-message--error" : "status-message--success"}`}>{workflowStatus}</p> : null}
-                <div className="settings-form-actions">
-                  <ActionButton type="button" disabled={isSavingWorkflow} onClick={() => void handleSaveWorkflow()}>{isSavingWorkflow ? "Zapisywanie..." : "Zapisz workflow"}</ActionButton>
-                </div>
+                <FormFeedback
+                  items={[
+                    workflowStatus
+                      ? {
+                          tone: workflowStatus.includes("Nie udało") ? "error" : "success",
+                          text: workflowStatus,
+                        }
+                      : null,
+                  ]}
+                />
+                <FormActions
+                  trailing={
+                    <ActionButton type="button" disabled={isSavingWorkflow} onClick={() => void handleSaveWorkflow()}>
+                      {isSavingWorkflow ? "Zapisywanie..." : "Zapisz workflow"}
+                    </ActionButton>
+                  }
+                />
               </Panel>
             </>
           ) : null}

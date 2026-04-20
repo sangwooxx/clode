@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
+import { FormActions } from "@/components/ui/form-actions";
+import { FormFeedback } from "@/components/ui/form-feedback";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
@@ -388,19 +390,23 @@ export function EmployeesView({
         eyebrow="Pracownicy"
         title="Kartoteka pracowników"
         actions={
-          <>
-            <ActionButton type="button" onClick={handleCreateNew}>
-              Dodaj pracownika
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={() => void reloadEmployees({ preserveState: true })}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-            </ActionButton>
-          </>
+          <div className="module-actions">
+            <div className="module-actions__primary">
+              <ActionButton type="button" onClick={handleCreateNew}>
+                Dodaj pracownika
+              </ActionButton>
+            </div>
+            <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={() => void reloadEmployees({ preserveState: true })}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+              </ActionButton>
+            </div>
+          </div>
         }
       />
 
@@ -464,7 +470,7 @@ export function EmployeesView({
         </Panel>
 
         <div className="employees-side-stack">
-          <Panel title={editingEmployee ? "Dane pracownika" : "Nowy pracownik"}>
+          <Panel title={editingEmployee ? "Edycja pracownika" : "Nowy pracownik"}>
             {detailEmployee ? (
               <div className="employees-spotlight">
                 <div className="data-table__stack">
@@ -505,7 +511,7 @@ export function EmployeesView({
             )}
 
             <form className="employees-form" onSubmit={handleSubmit}>
-              <FormGrid columns={1}>
+              <FormGrid columns={2}>
                 <label className="form-field">
                   <span>Imię</span>
                   <input
@@ -620,7 +626,7 @@ export function EmployeesView({
                   />
                 </label>
 
-                <label className="form-field">
+                <label className="form-field form-grid__span-2">
                   <span>Ulica</span>
                   <input
                     value={formValues.street}
@@ -663,37 +669,53 @@ export function EmployeesView({
                 </label>
               </FormGrid>
 
-              {formError ? <p className="status-message status-message--error">{formError}</p> : null}
-              {formStatus ? (
-                <p className="status-message status-message--success">{formStatus}</p>
-              ) : null}
+              <FormFeedback
+                items={[
+                  formError ? { tone: "error", text: formError } : null,
+                  formStatus ? { tone: "success", text: formStatus } : null,
+                  editingEmployee && deleteBlocked
+                    ? {
+                        tone: "warning",
+                        text:
+                          "Rekord ma powiązane wpisy czasu lub karty pracy. Zmień status na nieaktywny zamiast usuwać pracownika.",
+                      }
+                    : null,
+                ]}
+              />
 
-              {editingEmployee && deleteBlocked ? (
-                <p className="status-message">
-                  Rekord ma powiązane wpisy czasu lub karty pracy. Zmień status na nieaktywny,
-                  zamiast usuwać pracownika.
-                </p>
-              ) : null}
-
-              <div className="employees-form__actions">
-                {editingEmployee ? (
-                  <ActionButton
-                    type="button"
-                    variant="ghost"
-                    onClick={handleDeleteEmployee}
-                    disabled={isSubmitting || deleteBlocked}
-                  >
-                    Usuń
+              <FormActions
+                leading={
+                  <>
+                    <ActionButton
+                      type="button"
+                      variant="secondary"
+                      onClick={handleCreateNew}
+                      disabled={isSubmitting}
+                    >
+                      {editingEmployee ? "Nowy rekord" : "Wyczyść formularz"}
+                    </ActionButton>
+                    {editingEmployee ? (
+                      <ActionButton
+                        type="button"
+                        variant="ghost"
+                        onClick={handleDeleteEmployee}
+                        disabled={isSubmitting || deleteBlocked}
+                      >
+                        Usuń
+                      </ActionButton>
+                    ) : null}
+                  </>
+                }
+                trailing={
+                  <ActionButton type="submit" disabled={isSubmitting}>
+                    {isSubmitting
+                      ? "Zapisywanie..."
+                      : editingEmployee
+                        ? "Zapisz zmiany"
+                        : "Dodaj pracownika"}
                   </ActionButton>
-                ) : null}
-                <ActionButton type="submit" disabled={isSubmitting}>
-                  {isSubmitting
-                    ? "Zapisywanie..."
-                    : editingEmployee
-                      ? "Zapisz zmiany"
-                      : "Dodaj pracownika"}
-                </ActionButton>
-              </div>
+                }
+              />
             </form>
           </Panel>
         </div>
