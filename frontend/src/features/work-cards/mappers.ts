@@ -352,7 +352,7 @@ export function buildWorkCardSummaryCards(args: {
   return [
     {
       id: "days",
-      label: "Dni miesiÄ…ca",
+      label: "Dni miesiaca",
       value: formatNumber(args.rows.length),
     },
     {
@@ -362,13 +362,13 @@ export function buildWorkCardSummaryCards(args: {
     },
     {
       id: "hours",
-      label: "ÅÄ…czne godziny",
+      label: "Laczne godziny",
       value: formatHours(totalHours),
       accent: true,
     },
     {
       id: "contracts",
-      label: "Kontrakty w uÅ¼yciu",
+      label: "Kontrakty w uzyciu",
       value: formatNumber(usedContracts.size),
     },
     {

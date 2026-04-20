@@ -7,6 +7,13 @@ from clode_backend.auth.rbac import normalize_role
 from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
+from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
+from clode_backend.validation.employees import (
+    normalize_employee_status,
+    split_legacy_employee_name,
+    text as employee_text,
+    validate_iso_date,
+)
 
 
 class EmployeeServiceError(RuntimeError):
@@ -17,10 +24,6 @@ class EmployeeServiceError(RuntimeError):
 
 def _normalize_text(value: Any) -> str:
     return str(value or "").strip()
-
-
-def _normalize_status(value: Any) -> str:
-    return "inactive" if _normalize_text(value).lower() == "inactive" else "active"
 
 
 def _compose_name(first_name: str, last_name: str) -> str:
@@ -42,7 +45,7 @@ class EmployeeService:
         if not current_user:
             raise EmployeeServiceError("Brak aktywnej sesji.", status_code=401)
         if normalize_role(current_user.get("role")) not in {"admin", "kierownik"}:
-            raise EmployeeServiceError("Brak uprawnień do kartoteki pracowników.", status_code=403)
+            raise EmployeeServiceError("Brak uprawnien do kartoteki pracownikow.", status_code=403)
 
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
         self.ensure_read_access(current_user)
@@ -61,7 +64,8 @@ class EmployeeService:
         candidate_id = _normalize_text(normalized.get("id")) or f"emp-{uuid4().hex}"
         if any(_normalize_text(employee.get("id")) == candidate_id for employee in employees):
             raise EmployeeServiceError(
-                "Pracownik o podanym identyfikatorze już istnieje.", status_code=409
+                "Pracownik o podanym identyfikatorze juz istnieje.",
+                status_code=409,
             )
 
         created = {
@@ -120,7 +124,7 @@ class EmployeeService:
 
         if self._has_history(employee):
             raise EmployeeServiceError(
-                "Nie można usunąć pracownika z historią czasu pracy lub kart pracy. Zmień status na nieaktywny.",
+                "Nie mozna usunac pracownika z historia czasu pracy lub kart pracy. Zmien status na nieaktywny.",
                 status_code=409,
             )
 
@@ -203,29 +207,53 @@ class EmployeeService:
         )
 
     def _normalize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
-        first_name = _normalize_text(payload.get("first_name"))
-        last_name = _normalize_text(payload.get("last_name"))
-        provided_name = _normalize_text(payload.get("name"))
+        provided_name = employee_text(payload.get("name"))
+        derived_last_name, derived_first_name = split_legacy_employee_name(provided_name)
+        first_name = employee_text(payload.get("first_name")) or derived_first_name
+        last_name = employee_text(payload.get("last_name")) or derived_last_name
         name = provided_name or _compose_name(first_name, last_name)
 
         if not first_name or not last_name:
-            raise EmployeeServiceError("Podaj imię i nazwisko pracownika.", status_code=400)
+            raise EmployeeServiceError("Podaj imie i nazwisko pracownika.", status_code=400)
 
-        status = _normalize_status(payload.get("status"))
-        employment_end_date = _normalize_text(payload.get("employment_end_date"))
+        employment_date = validate_iso_date(
+            payload.get("employment_date"),
+            "Data zatrudnienia",
+            required=False,
+        )
+        employment_end_date = validate_iso_date(
+            payload.get("employment_end_date"),
+            "Data zakonczenia zatrudnienia",
+            required=False,
+        )
+        medical_exam_valid_until = validate_iso_date(
+            payload.get("medical_exam_valid_until"),
+            "Waznosc badan lekarskich",
+            required=False,
+        )
+        if employment_date and employment_end_date and employment_end_date < employment_date:
+            raise EmployeeServiceError(
+                "Data zakonczenia zatrudnienia nie moze byc wczesniejsza niz data zatrudnienia.",
+                status_code=400,
+            )
 
-        return {
-            "id": _normalize_text(payload.get("id")),
+        record = {
+            "id": employee_text(payload.get("id")),
             "name": name,
             "first_name": first_name,
             "last_name": last_name,
-            "position": _normalize_text(payload.get("position")),
-            "status": status,
-            "employment_date": _normalize_text(payload.get("employment_date")),
+            "position": employee_text(payload.get("position")),
+            "status": normalize_employee_status(payload.get("status")),
+            "employment_date": employment_date,
             "employment_end_date": employment_end_date,
-            "street": _normalize_text(payload.get("street")),
-            "city": _normalize_text(payload.get("city")),
-            "phone": _normalize_text(payload.get("phone")),
-            "medical_exam_valid_until": _normalize_text(payload.get("medical_exam_valid_until")),
-            "worker_code": _normalize_text(payload.get("worker_code")),
+            "street": employee_text(payload.get("street")),
+            "city": employee_text(payload.get("city")),
+            "phone": employee_text(payload.get("phone")),
+            "medical_exam_valid_until": medical_exam_valid_until,
+            "worker_code": employee_text(payload.get("worker_code")),
         }
+        try:
+            validate_shared_contract("employee", record)
+        except ContractValidationError as error:
+            raise EmployeeServiceError(str(error), status_code=400) from error
+        return record

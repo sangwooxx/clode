@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "PlanningAssignment",
   "type": "object",
-  "required": ["assignment_date", "employee_name"],
+  "required": ["employee_name"],
   "properties": {
-    "id": { "type": "string" },
-    "assignment_date": { "type": "string" },
+    "employee_id": { "type": "string" },
+    "employee_key": { "type": "string" },
     "employee_name": { "type": "string" },
     "contract_id": { "type": ["string", "null"] },
     "contract_name": { "type": "string" },

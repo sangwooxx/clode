@@ -1,19 +1,19 @@
 import { PlanningView } from "@/features/planning";
 import { fetchPlanningBootstrapServer } from "@/features/planning/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function PlanningPage() {
+  await requireServerSession("/planning");
+
+  let initialError: string | undefined;
+  let initialBootstrap;
+
   try {
-    const bootstrap = await fetchPlanningBootstrapServer();
-    return <PlanningView initialBootstrap={bootstrap} />;
+    initialBootstrap = await fetchPlanningBootstrapServer();
   } catch (error) {
-    return (
-      <PlanningView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udało się załadować modułu planowania zasobów."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie zaladowac modulu planowania zasobow.";
   }
+
+  return <PlanningView initialBootstrap={initialBootstrap} initialError={initialError} />;
 }

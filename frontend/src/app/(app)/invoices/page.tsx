@@ -1,19 +1,19 @@
 import { InvoicesView } from "@/features/invoices";
 import { fetchInvoicesBootstrapServer } from "@/features/invoices/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function InvoicesPage() {
+  await requireServerSession("/invoices");
+
+  let initialError: string | undefined;
+  let initialBootstrap;
+
   try {
-    const bootstrap = await fetchInvoicesBootstrapServer();
-    return <InvoicesView initialBootstrap={bootstrap} />;
+    initialBootstrap = await fetchInvoicesBootstrapServer();
   } catch (error) {
-    return (
-      <InvoicesView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udało się uruchomić rejestru faktur."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie uruchomic rejestru faktur.";
   }
+
+  return <InvoicesView initialBootstrap={initialBootstrap} initialError={initialError} />;
 }

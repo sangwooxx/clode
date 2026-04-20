@@ -29,7 +29,7 @@ class TimeEntryService:
         self,
         repository: TimeEntryRepository,
         contract_repository: ContractRepository,
-        employee_repository: EmployeeRepository,
+        employee_repository: EmployeeRepository | None = None,
     ) -> None:
         self.repository = repository
         self.contract_repository = contract_repository
@@ -63,6 +63,8 @@ class TimeEntryService:
 
     def list_employees(self, current_user: dict[str, Any] | None) -> list[dict[str, Any]]:
         self.ensure_read_access(current_user)
+        if not self.employee_repository:
+            return []
         return self.employee_repository.list_all()
 
     def create_time_entry(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:

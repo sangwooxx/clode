@@ -1,19 +1,19 @@
 import { ContractsView } from "@/features/contracts";
 import { fetchContractsServer } from "@/features/contracts/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function ContractsPage() {
+  await requireServerSession("/contracts");
+
+  let initialError: string | undefined;
+  let initialContracts;
+
   try {
-    const contracts = await fetchContractsServer(true);
-    return <ContractsView initialContracts={contracts} />;
+    initialContracts = await fetchContractsServer(true);
   } catch (error) {
-    return (
-      <ContractsView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udało się pobrać rejestru kontraktów."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie pobrac rejestru kontraktow.";
   }
+
+  return <ContractsView initialContracts={initialContracts} initialError={initialError} />;
 }

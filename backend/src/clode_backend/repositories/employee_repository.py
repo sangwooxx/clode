@@ -4,11 +4,13 @@ import json
 from typing import Any
 
 from clode_backend.repositories.base import RepositoryBase
+from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
+from clode_backend.validation.employees import split_legacy_employee_name
 
 
 def _repair_mojibake(value: Any) -> str:
     text = str(value or "")
-    if not any(marker in text for marker in ("Ãƒ", "Ã…", "Ã„", "Ã¢")):
+    if not any(marker in text for marker in ("ÃƒÆ’", "Ãƒâ€¦", "Ãƒâ€ž", "ÃƒÂ¢")):
         return text
     try:
         return text.encode("latin-1").decode("utf-8")
@@ -32,6 +34,36 @@ def _employee_merge_key(employee: dict[str, Any], index: int) -> str:
     name = _normalize_text(employee.get("name")).casefold()
     position = _normalize_text(employee.get("position")).casefold()
     return f"fallback:{name}|{position}|{index}"
+
+
+def _complete_name_parts(
+    *,
+    name: str,
+    first_name: str,
+    last_name: str,
+) -> tuple[str, str, str]:
+    resolved_name = _normalize_text(name)
+    resolved_first_name = _normalize_text(first_name)
+    resolved_last_name = _normalize_text(last_name)
+
+    if not resolved_first_name or not resolved_last_name:
+        derived_last_name, derived_first_name = split_legacy_employee_name(resolved_name)
+        resolved_first_name = resolved_first_name or derived_first_name
+        resolved_last_name = resolved_last_name or derived_last_name
+
+    if not resolved_name:
+        resolved_name = " ".join(
+            part for part in (resolved_last_name, resolved_first_name) if part
+        ).strip()
+
+    return resolved_name, resolved_first_name, resolved_last_name
+
+
+def _row_value(row, key: str) -> Any:
+    try:
+        return row[key]
+    except Exception:
+        return ""
 
 
 class EmployeeRepository(RepositoryBase):
@@ -106,6 +138,7 @@ class EmployeeRepository(RepositoryBase):
                         name,
                         first_name,
                         last_name,
+                        worker_code,
                         position,
                         status,
                         employment_date,
@@ -115,11 +148,12 @@ class EmployeeRepository(RepositoryBase):
                         phone,
                         medical_exam_valid_until
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT(id) DO UPDATE SET
                         name = excluded.name,
                         first_name = excluded.first_name,
                         last_name = excluded.last_name,
+                        worker_code = excluded.worker_code,
                         position = excluded.position,
                         status = excluded.status,
                         employment_date = excluded.employment_date,
@@ -134,6 +168,7 @@ class EmployeeRepository(RepositoryBase):
                         employee["name"],
                         employee["first_name"],
                         employee["last_name"],
+                        employee["worker_code"],
                         employee["position"],
                         employee["status"],
                         employee["employment_date"],
@@ -196,6 +231,7 @@ class EmployeeRepository(RepositoryBase):
                     name,
                     first_name,
                     last_name,
+                    worker_code,
                     position,
                     status,
                     employment_date,
@@ -217,13 +253,12 @@ class EmployeeRepository(RepositoryBase):
             or _normalize_text(item.get("worker_code"))
             or f"employee-store-{index}"
         )
-        first_name = _normalize_text(item.get("first_name"))
-        last_name = _normalize_text(item.get("last_name"))
-        full_name = _normalize_text(item.get("name"))
-        if not full_name:
-            full_name = " ".join(part for part in (last_name, first_name) if part).strip()
-
-        return {
+        full_name, first_name, last_name = _complete_name_parts(
+            name=_normalize_text(item.get("name")),
+            first_name=_normalize_text(item.get("first_name")),
+            last_name=_normalize_text(item.get("last_name")),
+        )
+        record = {
             "id": employee_id,
             "name": full_name,
             "first_name": first_name,
@@ -238,21 +273,37 @@ class EmployeeRepository(RepositoryBase):
             "medical_exam_valid_until": _normalize_text(item.get("medical_exam_valid_until")),
             "worker_code": _normalize_text(item.get("worker_code")),
         }
+        EmployeeRepository._validate_record(record)
+        return record
 
     @staticmethod
     def _serialize_row(row) -> dict[str, Any]:
-        return {
-            "id": row["id"],
-            "name": _normalize_text(row["name"]),
-            "first_name": _normalize_text(row["first_name"]),
-            "last_name": _normalize_text(row["last_name"]),
-            "position": _normalize_text(row["position"]),
-            "status": _normalize_text(row["status"]) or "active",
-            "employment_date": _normalize_text(row["employment_date"]),
-            "employment_end_date": _normalize_text(row["employment_end_date"]),
-            "street": _normalize_text(row["street"]),
-            "city": _normalize_text(row["city"]),
-            "phone": _normalize_text(row["phone"]),
-            "medical_exam_valid_until": _normalize_text(row["medical_exam_valid_until"]),
-            "worker_code": "",
+        full_name, first_name, last_name = _complete_name_parts(
+            name=_normalize_text(_row_value(row, "name")),
+            first_name=_normalize_text(_row_value(row, "first_name")),
+            last_name=_normalize_text(_row_value(row, "last_name")),
+        )
+        record = {
+            "id": _normalize_text(_row_value(row, "id")),
+            "name": full_name,
+            "first_name": first_name,
+            "last_name": last_name,
+            "position": _normalize_text(_row_value(row, "position")),
+            "status": _normalize_text(_row_value(row, "status")) or "active",
+            "employment_date": _normalize_text(_row_value(row, "employment_date")),
+            "employment_end_date": _normalize_text(_row_value(row, "employment_end_date")),
+            "street": _normalize_text(_row_value(row, "street")),
+            "city": _normalize_text(_row_value(row, "city")),
+            "phone": _normalize_text(_row_value(row, "phone")),
+            "medical_exam_valid_until": _normalize_text(_row_value(row, "medical_exam_valid_until")),
+            "worker_code": _normalize_text(_row_value(row, "worker_code")),
         }
+        EmployeeRepository._validate_record(record)
+        return record
+
+    @staticmethod
+    def _validate_record(record: dict[str, Any]) -> None:
+        try:
+            validate_shared_contract("employee", record)
+        except ContractValidationError as error:
+            raise ValueError(str(error)) from error

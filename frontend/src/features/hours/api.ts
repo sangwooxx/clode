@@ -1,6 +1,5 @@
 import { listContracts } from "@/lib/api/contracts";
 import { listEmployees } from "@/lib/api/employees";
-import { getStore } from "@/lib/api/stores";
 import {
   createTimeEntry,
   createTimeMonth,
@@ -37,25 +36,10 @@ export async function fetchHoursContracts() {
 }
 
 export async function fetchHoursEmployeeDirectory() {
-  try {
-    const directoryResponse = (await listEmployees()) as {
-      employees?: HoursEmployeeRecord[];
-    };
-    const canonicalEmployees = Array.isArray(directoryResponse.employees)
-      ? directoryResponse.employees || []
-      : [];
-    if (canonicalEmployees.length > 0) {
-      return canonicalEmployees;
-    }
-  } catch {
-    // Fallback store remains only as an emergency guard for bootstrap safety.
-  }
-
-  const storeResponse = (await getStore<HoursEmployeeRecord[]>("employees").catch(() => ({
-    payload: [] as HoursEmployeeRecord[],
-  }))) as { payload?: HoursEmployeeRecord[] };
-
-  return Array.isArray(storeResponse.payload) ? storeResponse.payload || [] : [];
+  const directoryResponse = (await listEmployees()) as {
+    employees?: HoursEmployeeRecord[];
+  };
+  return Array.isArray(directoryResponse.employees) ? directoryResponse.employees || [] : [];
 }
 
 export async function fetchHoursEmployees() {
@@ -91,7 +75,12 @@ export async function saveHoursMonth(monthKey: string | null, payload: TimeMonth
     return response.month;
   }
 
-  const { month_key: _monthKey, ...updatePayload } = payload;
+  const updatePayload = {
+    month_label: payload.month_label,
+    selected: payload.selected,
+    visible_investments: payload.visible_investments,
+    finance: payload.finance,
+  };
   const response = (await updateTimeMonth(monthKey, updatePayload)) as HoursMonthResponse;
   return response.month;
 }

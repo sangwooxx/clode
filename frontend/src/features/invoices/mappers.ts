@@ -48,7 +48,7 @@ export function buildScopeCaption(scope: InvoiceScope, year: string, month: stri
     return formatMonthLabel(year, month);
   }
 
-  return "Caly okres";
+  return "Cały okres";
 }
 
 export function toInvoiceFormValues(invoice?: InvoiceRecord | null): InvoiceFormValues {

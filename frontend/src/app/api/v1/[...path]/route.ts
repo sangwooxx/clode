@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveBackendOrigin } from "@/lib/api/backend-origin";
+import { buildExpiredSessionCookieHeaders } from "@/lib/auth/session-cookies";
 
 export const dynamic = "force-dynamic";
 
@@ -16,14 +17,11 @@ async function proxyRequest(
   const contentType = request.headers.get("content-type");
   const accept = request.headers.get("accept");
   const cookie = request.headers.get("cookie");
-  const clodeSession = request.headers.get("x-clode-session");
-  const agentSession = request.headers.get("x-agent-session");
+  const secureCookies = request.nextUrl.protocol === "https:";
 
   if (contentType) headers.set("content-type", contentType);
   if (accept) headers.set("accept", accept);
   if (cookie) headers.set("cookie", cookie);
-  if (clodeSession) headers.set("x-clode-session", clodeSession);
-  if (agentSession) headers.set("x-agent-session", agentSession);
 
   const body =
     request.method === "GET" || request.method === "HEAD"
@@ -41,13 +39,24 @@ async function proxyRequest(
 
     const responseHeaders = new Headers();
     const responseContentType = upstream.headers.get("content-type");
-    const setCookie = upstream.headers.get("set-cookie");
+    const setCookies =
+      "getSetCookie" in upstream.headers &&
+      typeof upstream.headers.getSetCookie === "function"
+        ? upstream.headers.getSetCookie()
+        : upstream.headers.get("set-cookie")
+          ? [upstream.headers.get("set-cookie") as string]
+          : [];
 
     if (responseContentType) {
       responseHeaders.set("content-type", responseContentType);
     }
-    if (setCookie) {
-      responseHeaders.append("set-cookie", setCookie);
+    for (const cookieValue of setCookies) {
+      responseHeaders.append("set-cookie", cookieValue);
+    }
+    if (upstream.status === 401 && cookie) {
+      for (const expiredCookie of buildExpiredSessionCookieHeaders(secureCookies)) {
+        responseHeaders.append("set-cookie", expiredCookie);
+      }
     }
 
     const payload = upstream.status === 204 ? null : await upstream.text();

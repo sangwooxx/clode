@@ -1,85 +1,83 @@
-import { cookies } from "next/headers";
-import { resolveBackendOrigin } from "@/lib/api/backend-origin";
-import { SESSION_COOKIE_NAMES } from "@/lib/auth/session-keys";
+import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
 import { fetchEmployeesBootstrapServer } from "@/features/employees/server";
-import { createDefaultWorkflowValues } from "@/features/settings/types";
-import { emptyPlanningStore, emptyVacationStore, normalizePlanningStore, normalizeVacationStore } from "@/features/vacations/mappers";
+import {
+  createDefaultWorkflowValues,
+  type SettingsWorkflowValues,
+} from "@/features/settings/types";
+import {
+  emptyPlanningStore,
+  emptyVacationStore,
+  normalizePlanningStore,
+  normalizeVacationStore,
+} from "@/features/vacations/mappers";
 import type { PlanningStore, VacationStore, VacationsBootstrapData } from "@/features/vacations/types";
-import { PLANNING_STORE_KEY, VACATIONS_STORE_KEY } from "@/features/vacations/types";
 
-function buildCookieHeader(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  const cookiePairs = SESSION_COOKIE_NAMES.map((name) => {
-    const value = cookieStore.get(name)?.value;
-    return value ? `${name}=${value}` : "";
-  }).filter(Boolean);
+async function fetchVacationStateServer() {
+  const { status, payload } = await fetchBackendJsonServer<{ vacation_store?: VacationStore }>(
+    "/vacations/state",
+    {
+      nextPath: "/vacations",
+      allowStatuses: [404],
+    }
+  );
 
-  return cookiePairs.join("; ");
+  if (status === 404) {
+    return emptyVacationStore();
+  }
+
+  return normalizeVacationStore(payload?.vacation_store);
 }
 
-async function fetchStoreServer<T>(storeKey: string, fallback: T, options?: { allowForbidden?: boolean }) {
-  const cookieStore = await cookies();
-  const cookieHeader = buildCookieHeader(cookieStore);
+async function fetchPlanningStateServer() {
+  const { status, payload } = await fetchBackendJsonServer<{ planning_store?: PlanningStore }>(
+    "/planning/state",
+    {
+      nextPath: "/vacations",
+      allowStatuses: [403, 404],
+    }
+  );
 
-  const response = await fetch(`${resolveBackendOrigin()}/api/v1/stores/${storeKey}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    },
-    cache: "no-store",
+  if (status === 403 || status === 404) {
+    return emptyPlanningStore();
+  }
+
+  return normalizePlanningStore(payload?.planning_store);
+}
+
+async function fetchSettingsWorkflowServer() {
+  const { status, payload } = await fetchBackendJsonServer<{
+    workflow?: Partial<SettingsWorkflowValues>;
+  }>(
+    "/settings/workflow",
+    {
+      nextPath: "/vacations",
+      allowStatuses: [404],
+    }
+  );
+
+  if (status === 404) {
+    return createDefaultWorkflowValues();
+  }
+
+  const workflow = payload?.workflow;
+  return createDefaultWorkflowValues({
+    vacationApprovalMode: workflow?.vacationApprovalMode === "admin" ? "admin" : "permission",
+    vacationNotifications: workflow?.vacationNotifications === "off" ? "off" : "on",
   });
-
-  if (
-    response.status === 404 ||
-    (options?.allowForbidden && (response.status === 401 || response.status === 403))
-  ) {
-    return fallback;
-  }
-
-  const payload = (await response.json().catch(() => null)) as
-    | ({ payload?: T; error?: string })
-    | null;
-
-  if (!response.ok || !payload) {
-    throw new Error(payload?.error || `Store ${storeKey} returned status ${response.status}.`);
-  }
-
-  return payload.payload ?? fallback;
 }
 
 export async function fetchVacationsBootstrapServer(): Promise<VacationsBootstrapData> {
-  const [employeesBootstrap, vacationStorePayload, planningStorePayload, settingsStorePayload] = await Promise.all([
+  const [employeesBootstrap, vacationStore, planningStore, workflow] = await Promise.all([
     fetchEmployeesBootstrapServer(),
-    fetchStoreServer<VacationStore>(VACATIONS_STORE_KEY, emptyVacationStore()),
-    fetchStoreServer<PlanningStore>(PLANNING_STORE_KEY, emptyPlanningStore(), {
-      allowForbidden: true,
-    }),
-    fetchStoreServer<Record<string, unknown>>("settings", {}),
+    fetchVacationStateServer(),
+    fetchPlanningStateServer(),
+    fetchSettingsWorkflowServer(),
   ]);
-
-  const rawWorkflow =
-    settingsStorePayload &&
-    typeof settingsStorePayload === "object" &&
-    settingsStorePayload.workflow &&
-    typeof settingsStorePayload.workflow === "object"
-      ? settingsStorePayload.workflow
-      : settingsStorePayload;
 
   return {
     ...employeesBootstrap,
-    vacationStore: normalizeVacationStore(vacationStorePayload),
-    planningStore: normalizePlanningStore(planningStorePayload),
-    workflow: createDefaultWorkflowValues({
-      vacationApprovalMode:
-        String((rawWorkflow as { vacationApprovalMode?: string } | null)?.vacationApprovalMode || "") ===
-        "admin"
-          ? "admin"
-          : "permission",
-      vacationNotifications:
-        String((rawWorkflow as { vacationNotifications?: string } | null)?.vacationNotifications || "") ===
-        "off"
-          ? "off"
-          : "on",
-    }),
+    vacationStore,
+    planningStore,
+    workflow,
   };
 }

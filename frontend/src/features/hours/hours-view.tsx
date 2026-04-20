@@ -1,54 +1,26 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { FormGrid } from "@/components/ui/form-grid";
+import { DataTable } from "@/components/ui/data-table";
 import { Panel } from "@/components/ui/panel";
 import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
-import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
-import {
-  buildPdfDialogSections,
-  createPdfConfigState,
-  getEnabledPdfColumnIds,
-  togglePdfColumn,
-  togglePdfSection,
-  type PdfConfigState,
-  type PdfSectionDefinition,
-} from "@/lib/print/pdf-config";
-import {
-  compactPrintSections,
-  pickPrintTableColumns,
-  printDocument,
-  type PrintTable,
-} from "@/lib/print/print-document";
+import { togglePdfColumn, togglePdfSection, type PdfConfigState } from "@/lib/print/pdf-config";
 import type { ContractRecord } from "@/features/contracts/types";
-import {
-  formatEmployeeCodeLabel,
-  formatEmployeeDisplayName,
-} from "@/features/employees/formatters";
+import { formatEmployeeCodeLabel, formatEmployeeDisplayName } from "@/features/employees/formatters";
 import {
   fetchHoursContracts,
   fetchHoursData,
   fetchHoursEmployeeDirectory,
   findHoursEntryById,
-  removeHoursEntry,
   removeHoursMonth,
   saveHoursEntry,
   saveHoursMonth,
 } from "@/features/hours/api";
-import {
-  formatContractStatusLabel,
-  formatHours,
-  HOURS_FINANCE_FIELDS,
-  formatMonthLabel,
-  formatMoney,
-  formatNumber,
-  parseDecimalInput,
-} from "@/features/hours/formatters";
+import { formatMonthLabel, parseDecimalInput } from "@/features/hours/formatters";
 import {
   buildContractAggregates,
   buildContractOptions,
@@ -63,52 +35,29 @@ import {
 } from "@/features/hours/mappers";
 import type {
   HoursBootstrapData,
-  HoursContractAggregate,
-  HoursContractOption,
   HoursEmployeeRecord,
-  HoursEntryDetails,
   HoursEntryFormValues,
   HoursFinanceDraft,
   HoursListResponse,
   TimeEntryRecord,
 } from "@/features/hours/types";
 import { UNASSIGNED_TIME_CONTRACT_ID } from "@/features/hours/types";
+import { HoursToolbar } from "@/features/hours/hours-toolbar";
+import { HoursMonthSettingsPanel } from "@/features/hours/hours-month-settings-panel";
+import { HoursEmployeeTablePanel, hoursContractSummaryColumns } from "@/features/hours/hours-employee-table-panel";
+import { HoursCorrectionPanel } from "@/features/hours/hours-correction-panel";
+import {
+  buildHoursPdfConfig,
+  buildHoursPdfSections,
+  printHoursReport,
+  type HoursPdfContext,
+} from "@/features/hours/hours-pdf";
+import type { HoursContractSummaryRow, HoursEmployeeRow } from "@/features/hours/view-types";
 
 type HoursState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "success"; data: HoursListResponse };
-
-type HoursEmployeeContractCell = {
-  key: string;
-  label: string;
-  code: string;
-  status: HoursEntryDetails["contractStatus"];
-  hours: number;
-  cost: number;
-  entriesCount: number;
-};
-
-type HoursEmployeeRow = {
-  key: string;
-  index: number;
-  employeeId: string;
-  employeeName: string;
-  employeeLabel: string;
-  employeeCode: string;
-  employeePosition: string;
-  employeeStatus: HoursEmployeeRecord["status"];
-  contracts: HoursEmployeeContractCell[];
-  totalHours: number;
-  totalCost: number;
-  entriesCount: number;
-};
-
-type HoursContractSummaryRow = {
-  index: number;
-  aggregate: HoursContractAggregate;
-  option: HoursContractOption;
-};
 
 const emptyEntryFormValues: HoursEntryFormValues = {
   employee_name: "",
@@ -245,160 +194,6 @@ function buildHoursEmployeeRows(args: {
     }));
 }
 
-const hoursTableColumns = (handlers: {
-  canWrite: boolean;
-  onOpenCorrection: (row: HoursEmployeeRow) => void;
-}): Array<DataTableColumn<HoursEmployeeRow>> => [
-  {
-    key: "lp",
-    header: "Lp.",
-    className: "hours-col-lp",
-    sortValue: (row) => row.index,
-    render: (row) => row.index,
-  },
-  {
-    key: "employee",
-    header: "Pracownik",
-    className: "hours-col-employee",
-    sortValue: (row) => `${row.employeeLabel} ${row.employeeCode}`,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">{row.employeeLabel}</span>
-        <span className="data-table__secondary">
-          {row.employeePosition} | Kod {formatEmployeeCodeLabel(row.employeeCode, "—")}
-        </span>
-        {row.employeeStatus === "inactive" ? (
-          <span className="data-table__status-pill data-table__status-pill--muted">
-            Historia • nieaktywny
-          </span>
-        ) : null}
-      </div>
-    ),
-  },
-  {
-    key: "contracts",
-    header: "Kontrakty i godziny",
-    className: "hours-col-contracts",
-    sortValue: (row) => row.contracts.map((contract) => contract.label).join(" "),
-    render: (row) => (
-      <div className="hours-contract-list">
-        {row.contracts.map((contract) => (
-          <div
-            key={contract.key}
-            className={
-              contract.status === "active"
-                ? "hours-contract-pill"
-                : "hours-contract-pill hours-contract-pill--muted"
-            }
-          >
-            <span className="hours-contract-pill__name">{contract.label}</span>
-            <span className="hours-contract-pill__meta">
-              {contract.code} • {formatHours(contract.hours)}
-            </span>
-          </div>
-        ))}
-      </div>
-    ),
-  },
-  {
-    key: "hours",
-    header: "Suma godzin",
-    className: "data-table__numeric hours-col-hours",
-    sortValue: (row) => row.totalHours,
-    render: (row) => formatHours(row.totalHours),
-  },
-  {
-    key: "cost",
-    header: "Koszt",
-    className: "data-table__numeric hours-col-money",
-    sortValue: (row) => row.totalCost,
-    render: (row) => formatMoney(row.totalCost),
-  },
-  {
-    key: "actions",
-    header: "Akcje",
-    className: "hours-col-actions",
-    sortable: false,
-    render: (row) =>
-      handlers.canWrite ? (
-        <div className="contracts-table__actions-stack">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            onClick={(event) => {
-              event.stopPropagation();
-              handlers.onOpenCorrection(row);
-            }}
-          >
-            {row.employeeStatus === "inactive" ? "Historia" : "Korekta"}
-          </ActionButton>
-        </div>
-      ) : (
-        <span className="data-table__secondary">Podgląd</span>
-      ),
-  },
-];
-
-const contractSummaryColumns: Array<DataTableColumn<HoursContractSummaryRow>> = [
-  {
-    key: "lp",
-    header: "Lp.",
-    className: "hours-col-lp",
-    sortValue: (row) => row.index,
-    render: (row) => row.index,
-  },
-  {
-    key: "contract",
-    header: "Kontrakt",
-    className: "hours-col-contract",
-    sortValue: (row) => `${row.option.label} ${row.option.code}`,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">{row.option.label}</span>
-        <span className="data-table__secondary">ID: {row.option.code}</span>
-      </div>
-    ),
-  },
-  {
-    key: "status",
-    header: "Status",
-    className: "hours-col-status",
-    sortValue: (row) => row.option.status,
-    render: (row) => (
-      <span
-        className={
-          row.option.status === "active"
-            ? "data-table__status-pill"
-            : "data-table__status-pill data-table__status-pill--muted"
-        }
-      >
-        {formatContractStatusLabel(row.option.status)}
-      </span>
-    ),
-  },
-  {
-    key: "entries",
-    header: "Wpisy",
-    className: "data-table__numeric hours-col-count",
-    sortValue: (row) => row.aggregate.entries_count,
-    render: (row) => formatNumber(row.aggregate.entries_count),
-  },
-  {
-    key: "hours",
-    header: "Godziny",
-    className: "data-table__numeric hours-col-hours",
-    sortValue: (row) => row.aggregate.hours_total,
-    render: (row) => formatHours(row.aggregate.hours_total),
-  },
-  {
-    key: "cost",
-    header: "Koszt",
-    className: "data-table__numeric hours-col-money",
-    sortValue: (row) => row.aggregate.cost_total,
-    render: (row) => formatMoney(row.aggregate.cost_total),
-  },
-];
-
 export function HoursView({
   initialBootstrap,
   initialError,
@@ -498,13 +293,17 @@ export function HoursView({
     }
   }
 
+  const loadInitialHours = useEffectEvent(() => {
+    void reloadHours({ refreshRelations: true });
+  });
+
   useEffect(() => {
     const shouldUseInitialData = Boolean(initialBootstrap?.payload);
     if (shouldUseInitialData) {
       return;
     }
 
-    void reloadHours({ refreshRelations: true });
+    loadInitialHours();
   }, [initialBootstrap, initialError]);
 
   const roster = useMemo(() => buildEmployeeRoster(employees), [employees]);
@@ -618,11 +417,6 @@ export function HoursView({
     selectedEmployeeRow?.employeeCode,
     selectedEmployeeRow?.employeePosition,
   ]);
-  const activeEmployeeAllowsNewEntries = useMemo(
-    () => roster.some((employee) => employee.name === activeEmployeeName),
-    [activeEmployeeName, roster]
-  );
-
   const employeeEntries = useMemo(() => {
     if (!activeEmployeeId && !activeEmployeeName) return [];
     const normalizedId = activeEmployeeId.toLowerCase();
@@ -679,335 +473,43 @@ export function HoursView({
     [contractOptions, monthEntries]
   );
 
-  function handlePrintHoursReport() {
-    if (!selectedMonth) return;
-
-    const isEmployeeContext = Boolean(selectedEmployeeRow);
-      const reportTitle = "Ewidencja czasu pracy";
-      const reportSubtitle = isEmployeeContext
-        ? selectedEmployeeRow?.employeeLabel || selectedMonth.month_label
-        : selectedMonth.month_label;
-
-    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
-    const totalHours = isEmployeeContext
-      ? employeeHoursTotal
-      : monthEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
-    const totalCost = isEmployeeContext
-      ? employeeEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0)
-      : monthEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0);
-
-    const mainTableRows = isEmployeeContext
-      ? employeeEntries.map((entry) => {
-          const option =
-            contractOptions.find(
-              (candidate) =>
-                candidate.id === (String(entry.contract_id || "").trim() || UNASSIGNED_TIME_CONTRACT_ID)
-            ) ?? null;
-
-          return [
-            entry.contract_name || "Nieprzypisane",
-            option ? formatContractStatusLabel(option.status) : "Brak powiązania",
-            formatHours(entry.hours || 0),
-            formatMoney(entry.cost_amount || 0),
-          ];
-        })
-      : hoursRows.map((row) => [
-          row.employeeName,
-          row.contracts.map((contract) => contract.label).join(" | ") || "—",
-          formatHours(row.totalHours),
-          formatMoney(row.totalCost),
-          formatNumber(row.entriesCount),
-        ]);
-
-    printDocument({
-      title: reportTitle,
-      subtitle: reportSubtitle,
-      meta: [
-        selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-        isEmployeeContext ? "Raport pracownika" : "Raport miesiąca",
-        `Wpisy: ${formatNumber(currentEntries.length)}`,
-        `Suma godzin: ${formatHours(totalHours)}`,
-      ],
-      filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
-      sections: [
-        {
-          title: "Zakres raportu",
-          details: [
-            {
-              label: "Miesiąc",
-              value: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-            },
-            {
-              label: "Kontekst",
-              value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
-            },
-              {
-                label: "Pracownik",
-                value: selectedEmployeeRow?.employeeLabel || "Wszyscy pracownicy",
-              },
-            { label: "Wpisy", value: formatNumber(currentEntries.length) },
-            { label: "Suma godzin", value: formatHours(totalHours) },
-            { label: "Suma kosztów", value: formatMoney(totalCost) },
-          ],
-        },
-        {
-          title: isEmployeeContext ? "Wpisy pracownika" : "Zestawienie pracowników",
-          table: {
-            columns: isEmployeeContext
-              ? ["Kontrakt", "Status", "Godziny", "Koszt"]
-              : ["Pracownik", "Kontrakty", "Godziny", "Koszt", "Wpisy"],
-            rows: mainTableRows,
-          },
-        },
-        {
-          title: "Podsumowanie kontraktów miesiąca",
-          table: {
-            columns: ["Kontrakt", "Kod", "Status", "Godziny", "Koszt", "Wpisy"],
-            rows: contractSummaryRows.map((row) => [
-              row.option.label,
-              row.option.code || "—",
-              formatContractStatusLabel(row.option.status),
-              formatHours(row.aggregate.hours_total),
-              formatMoney(row.aggregate.cost_total),
-              formatNumber(row.aggregate.entries_count),
-            ]),
-          },
-        },
-      ],
-    });
-  }
-
-  const hoursPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
-    if (!selectedMonth) return [];
-
-    const isEmployeeContext = Boolean(selectedEmployeeRow);
-    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
-
-    return [
-      {
-        id: "scope",
-        label: "Zakres raportu",
-        description: "Miesiąc, kontekst i podstawowe sumy raportu.",
-        preview: [
-            selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-            isEmployeeContext ? selectedEmployeeRow?.employeeLabel || "Pracownik" : "Cały miesiąc",
-          ],
-      },
-      {
-        id: "entries",
-        label: "Wpisy ewidencji",
-        description: "Tabela wpisów lub agregat bieżącego kontekstu widoku.",
-        preview: [`${formatNumber(currentEntries.length)} wpisów`],
-        columns: isEmployeeContext
-          ? [
-              { id: "contract", label: "Kontrakt" },
-              { id: "status", label: "Status" },
-              { id: "hours", label: "Godziny" },
-              { id: "cost", label: "Koszt" },
-            ]
-          : [
-              { id: "employee", label: "Pracownik" },
-              { id: "contract", label: "Kontrakt" },
-              { id: "status", label: "Status" },
-              { id: "hours", label: "Godziny" },
-              { id: "cost", label: "Koszt" },
-            ],
-      },
-      ...(isEmployeeContext
-        ? []
-        : [
-            {
-              id: "employees",
-              label: "Podsumowanie pracowników",
-              description: "Agregacja godzin i kosztów per pracownik.",
-              preview: [`${hoursRows.length} pracowników`],
-              columns: [
-                { id: "employee", label: "Pracownik" },
-                { id: "contracts", label: "Kontrakty" },
-                { id: "hours", label: "Godziny" },
-                { id: "cost", label: "Koszt" },
-                { id: "entries", label: "Wpisy" },
-              ],
-            } satisfies PdfSectionDefinition,
-          ]),
-      {
-        id: "contracts",
-        label: "Agregacja kontraktowa",
-        description: "Podsumowanie kontraktów dla wybranego miesiąca.",
-        preview: [`${contractSummaryRows.length} kontraktów`],
-        columns: [
-          { id: "contract", label: "Kontrakt" },
-          { id: "code", label: "Kod" },
-          { id: "status", label: "Status" },
-          { id: "hours", label: "Godziny" },
-          { id: "cost", label: "Koszt" },
-          { id: "entries", label: "Wpisy" },
-        ],
-      },
-    ];
-  }, [contractSummaryRows.length, employeeEntries, hoursRows, monthEntries, selectedEmployeeRow, selectedMonth]);
+  const hoursPdfContext = useMemo<HoursPdfContext | null>(() => {
+    if (!selectedMonth) return null;
+    return {
+      selectedMonth,
+      selectedEmployeeRow,
+      employeeEntries,
+      monthEntries,
+      hoursRows,
+      contractSummaryRows,
+      contractOptions,
+      employeeHoursTotal,
+    };
+  }, [
+    contractOptions,
+    contractSummaryRows,
+    employeeEntries,
+    employeeHoursTotal,
+    hoursRows,
+    monthEntries,
+    selectedEmployeeRow,
+    selectedMonth,
+  ]);
 
   const hoursPdfSections = useMemo(
-    () => buildPdfDialogSections(hoursPdfDefinitions, hoursPdfConfig),
-    [hoursPdfConfig, hoursPdfDefinitions]
+    () => (hoursPdfContext ? buildHoursPdfSections(hoursPdfContext, hoursPdfConfig) : []),
+    [hoursPdfConfig, hoursPdfContext]
   );
 
   function handleOpenHoursPdf() {
-    if (!selectedMonth) return;
-    setHoursPdfConfig(createPdfConfigState(hoursPdfDefinitions));
+    if (!hoursPdfContext) return;
+    setHoursPdfConfig(buildHoursPdfConfig(hoursPdfContext));
     setIsPdfDialogOpen(true);
   }
 
   function handleConfirmHoursPdf() {
-    if (!selectedMonth) return;
-
-    const isEmployeeContext = Boolean(selectedEmployeeRow);
-    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
-    const totalHours = isEmployeeContext
-      ? employeeHoursTotal
-      : monthEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
-    const totalCost = currentEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0);
-    const enabledSectionIds = new Set(
-      hoursPdfSections.filter((section) => section.enabled).map((section) => section.id)
-    );
-
-    const entriesTable: PrintTable = {
-      columns: isEmployeeContext
-        ? [
-            { id: "contract", label: "Kontrakt", width: "42%" },
-            { id: "status", label: "Status", width: "18%" },
-            { id: "hours", label: "Godziny", width: "16%", align: "right" },
-            { id: "cost", label: "Koszt", width: "24%", align: "right" },
-          ]
-        : [
-            { id: "employee", label: "Pracownik", width: "26%" },
-            { id: "contract", label: "Kontrakt", width: "28%" },
-            { id: "status", label: "Status", width: "14%" },
-            { id: "hours", label: "Godziny", width: "14%", align: "right" },
-            { id: "cost", label: "Koszt", width: "18%", align: "right" },
-          ],
-      rows: currentEntries.map((entry) => {
-        const option =
-          contractOptions.find(
-            (candidate) =>
-              candidate.id === (String(entry.contract_id || "").trim() || UNASSIGNED_TIME_CONTRACT_ID)
-          ) ?? null;
-
-        return {
-          employee: entry.employee_name || "—",
-          contract: entry.contract_name || "Nieprzypisane",
-          status: option ? formatContractStatusLabel(option.status) : "Brak powiązania",
-          hours: formatHours(entry.hours || 0),
-          cost: formatMoney(entry.cost_amount || 0),
-        };
-      }),
-      emptyText: "Brak wpisów ewidencji do wydruku.",
-    };
-
-    const employeesTable: PrintTable = {
-      columns: [
-        { id: "employee", label: "Pracownik", width: "28%" },
-        { id: "contracts", label: "Kontrakty", width: "32%" },
-        { id: "hours", label: "Godziny", width: "14%", align: "right" },
-        { id: "cost", label: "Koszt", width: "16%", align: "right" },
-        { id: "entries", label: "Wpisy", width: "10%", align: "right" },
-      ],
-      rows: hoursRows.map((row) => ({
-        employee: row.employeeName,
-        contracts: row.contracts.map((contract) => contract.label).join(" | ") || "—",
-        hours: formatHours(row.totalHours),
-        cost: formatMoney(row.totalCost),
-        entries: formatNumber(row.entriesCount),
-      })),
-      emptyText: "Brak agregacji pracowników do wydruku.",
-    };
-
-    const contractsTable: PrintTable = {
-      columns: [
-        { id: "contract", label: "Kontrakt", width: "30%" },
-        { id: "code", label: "Kod", width: "14%" },
-        { id: "status", label: "Status", width: "14%" },
-        { id: "hours", label: "Godziny", width: "14%", align: "right" },
-        { id: "cost", label: "Koszt", width: "18%", align: "right" },
-        { id: "entries", label: "Wpisy", width: "10%", align: "right" },
-      ],
-      rows: contractSummaryRows.map((row) => ({
-        contract: row.option.label,
-        code: row.option.code || "—",
-        status: formatContractStatusLabel(row.option.status),
-        hours: formatHours(row.aggregate.hours_total),
-        cost: formatMoney(row.aggregate.cost_total),
-        entries: formatNumber(row.aggregate.entries_count),
-      })),
-      emptyText: "Brak kontraktów w wybranym miesiącu.",
-    };
-
-    printDocument({
-      title: "Ewidencja czasu pracy",
-        subtitle: isEmployeeContext
-          ? selectedEmployeeRow?.employeeLabel || selectedMonth.month_label
-          : selectedMonth.month_label,
-      context: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-      filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
-      meta: [
-        isEmployeeContext ? "Raport pracownika" : "Raport miesiąca",
-        `Wpisy: ${formatNumber(currentEntries.length)}`,
-        `Suma godzin: ${formatHours(totalHours)}`,
-        `Suma kosztów: ${formatMoney(totalCost)}`,
-      ],
-      sections: compactPrintSections([
-        enabledSectionIds.has("scope")
-          ? {
-              title: "Zakres raportu",
-              details: [
-                {
-                  label: "Miesiąc",
-                  value: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
-                },
-                {
-                  label: "Kontekst",
-                  value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
-                },
-                {
-                    label: "Pracownik",
-                    value: selectedEmployeeRow?.employeeLabel || "Wszyscy pracownicy",
-                  },
-                { label: "Wpisy", value: formatNumber(currentEntries.length) },
-                { label: "Suma godzin", value: formatHours(totalHours) },
-                { label: "Suma kosztów", value: formatMoney(totalCost) },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("entries")
-          ? {
-              title: "Wpisy ewidencji",
-              table: pickPrintTableColumns(
-                entriesTable,
-                getEnabledPdfColumnIds(hoursPdfConfig, "entries")
-              ),
-            }
-          : null,
-        enabledSectionIds.has("employees") && !isEmployeeContext
-          ? {
-              title: "Podsumowanie pracowników",
-              table: pickPrintTableColumns(
-                employeesTable,
-                getEnabledPdfColumnIds(hoursPdfConfig, "employees")
-              ),
-            }
-          : null,
-        enabledSectionIds.has("contracts")
-          ? {
-              title: "Agregacja kontraktowa",
-              table: pickPrintTableColumns(
-                contractsTable,
-                getEnabledPdfColumnIds(hoursPdfConfig, "contracts")
-              ),
-            }
-          : null,
-      ]),
-    });
-
+    if (!hoursPdfContext) return;
+    printHoursReport(hoursPdfContext, hoursPdfConfig);
     setIsPdfDialogOpen(false);
   }
 
@@ -1106,33 +608,6 @@ export function HoursView({
       ) ?? null;
     setSelectedEmployeeRowKey(matchingRow?.key ?? null);
     resetEntryForm(entry);
-  }
-
-  async function handleDeleteEntry(entry: TimeEntryRecord) {
-    if (!canWrite) return;
-    if (
-      !window.confirm(
-        `Czy na pewno chcesz usunąć wpis ${entry.employee_name} / ${entry.contract_name || "Nieprzypisane"}?`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await removeHoursEntry(entry.id);
-      if (selectedEntryId === entry.id) {
-        setSelectedEntryId(null);
-      }
-      if (editingEntryId === entry.id) {
-        resetEntryForm(null, { preservedEmployeeName: entry.employee_name });
-      }
-      await reloadHours({ preserveState: true, preferredMonthKey: selectedMonthKey });
-      setFormStatus("Wpis czasu pracy został usunięty.");
-    } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się usunąć wpisu czasu pracy."
-      );
-    }
   }
 
   async function handleSaveEntry(event: FormEvent<HTMLFormElement>) {
@@ -1433,212 +908,76 @@ export function HoursView({
 
       <div className="module-page__stats module-page__stats--compact">
         {summaryCards.slice(0, 4).map((card) => (
-          <StatCard
-            key={card.id}
-            label={card.label}
-            value={card.value}
-            accent={card.accent}
-          />
+          <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
 
-      <Panel className="panel--toolbar panel--toolbar--filters">
-        <div className="hours-toolbar">
-          <label className="form-field">
-            <span>Miesiąc roboczy</span>
-            <select
-              value={selectedMonthKey}
-              onChange={(event) => void handleSelectMonth(event.target.value)}
-              className="select-field"
-            >
-              {monthOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="form-field">
-            <span>Szukaj pracownika lub kontraktu</span>
-            <SearchField
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Pracownik lub kontrakt"
-              aria-label="Szukaj pracowników i kontraktów w ewidencji czasu pracy"
-            />
-          </label>
-
-          <div className="hours-toolbar__actions">
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={() => setShowMonthSettings((current) => !current)}
-            >
-              {showMonthSettings ? "Ukryj ustawienia miesiąca" : "Ustawienia miesiąca"}
-            </ActionButton>
-          </div>
-        </div>
-
-        {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
-        {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
-      </Panel>
+      <HoursToolbar
+        monthOptions={monthOptions}
+        selectedMonthKey={selectedMonthKey}
+        search={search}
+        showMonthSettings={showMonthSettings}
+        monthError={monthError}
+        monthStatus={monthStatus}
+        onSelectMonth={(monthKey) => void handleSelectMonth(monthKey)}
+        onSearchChange={setSearch}
+        onToggleMonthSettings={() => setShowMonthSettings((current) => !current)}
+      />
 
       {selectedMonth ? (
         <div className="hours-layout">
           <div className="module-page__stack">
             {showMonthSettings ? (
-              <Panel title="Ustawienia miesiąca">
-                <div className="hours-month-meta">
-                  <div className="data-table__stack">
-                    <span className="data-table__primary">{selectedMonth.month_label}</span>
-                    <span className="data-table__secondary">
-                      Aktywne kontrakty: {formatNumber(monthContractIds.length)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="hours-settings-grid">
-                  <div className="hours-settings-block">
-                    <p className="panel__title">Operacje na miesiącu</p>
-                    <div className="hours-inline-controls">
-                      <select
-                        value={newMonthNumber}
-                        onChange={(event) => setNewMonthNumber(event.target.value)}
-                        className="select-field"
-                      >
-                        {Array.from({ length: 12 }, (_, index) => {
-                          const value = String(index + 1).padStart(2, "0");
-                          return (
-                            <option key={value} value={value}>
-                              {value}
-                            </option>
-                          );
-                        })}
-                      </select>
-                      <input
-                        className="text-input"
-                        inputMode="numeric"
-                        value={newMonthYear}
-                        onChange={(event) => setNewMonthYear(event.target.value)}
-                        placeholder="Rok"
-                      />
-                      <ActionButton
-                        type="button"
-                        variant="secondary"
-                        onClick={() => void handleCreateMonth()}
-                        disabled={!canWrite}
-                      >
-                        Dodaj miesiąc
-                      </ActionButton>
-                    </div>
-
-                    <FormGrid columns={4}>
-                      {HOURS_FINANCE_FIELDS.map((field) => (
-                        <label key={field.key} className="form-field">
-                          <span>{field.label}</span>
-                          <input
-                            className="text-input"
-                            inputMode="decimal"
-                            value={financeDraft[field.key]}
-                            onChange={(event) =>
-                              setFinanceDraft((current) => ({
-                                ...current,
-                                [field.key]: event.target.value,
-                              }))
-                            }
-                            disabled={!canWrite}
-                          />
-                        </label>
-                      ))}
-                    </FormGrid>
-                  </div>
-
-                  <div className="hours-settings-block">
-                    <p className="panel__title">Aktywne kontrakty w miesiącu</p>
-                    <div className="hours-contract-checklist">
-                      {activeContracts.map((contract) => (
-                        <label key={contract.id} className="hours-contract-checklist__item">
-                          <input
-                            type="checkbox"
-                            checked={monthContractIds.includes(contract.id)}
-                            onChange={(event) =>
-                              setMonthContractIds((current) =>
-                                event.target.checked
-                                  ? Array.from(new Set([...current, contract.id]))
-                                  : current.filter((item) => item !== contract.id)
-                              )
-                            }
-                            disabled={!canWrite}
-                          />
-                          <div className="data-table__stack">
-                            <span className="data-table__primary">{contract.name}</span>
-                            <span className="data-table__secondary">{contract.contract_number || "---"}</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="contracts-form__actions">
-                  <ActionButton
-                    type="button"
-                    variant="ghost"
-                    onClick={() => void handleDeleteMonth()}
-                    disabled={!canWrite || !selectedMonth}
-                  >
-                    Usuń miesiąc
-                  </ActionButton>
-                  <ActionButton
-                    type="button"
-                    onClick={() => void handleSaveMonthSettings()}
-                    disabled={!canWrite}
-                  >
-                    Zapisz ustawienia miesiąca
-                  </ActionButton>
-                </div>
-              </Panel>
+              <HoursMonthSettingsPanel
+                canWrite={canWrite}
+                selectedMonth={selectedMonth}
+                activeContracts={activeContracts}
+                monthContractIds={monthContractIds}
+                newMonthYear={newMonthYear}
+                newMonthNumber={newMonthNumber}
+                financeDraft={financeDraft}
+                onToggleContractId={(contractId, checked) =>
+                  setMonthContractIds((current) =>
+                    checked
+                      ? Array.from(new Set([...current, contractId]))
+                      : current.filter((item) => item !== contractId)
+                  )
+                }
+                onSetNewMonthYear={setNewMonthYear}
+                onSetNewMonthNumber={setNewMonthNumber}
+                onSetFinanceDraft={setFinanceDraft}
+                onCreateMonth={() => void handleCreateMonth()}
+                onDeleteMonth={() => void handleDeleteMonth()}
+                onSaveMonthSettings={() => void handleSaveMonthSettings()}
+              />
             ) : null}
 
-            <Panel title="Zbiorcza ewidencja pracowników">
-              <DataTable
-                columns={hoursTableColumns({
-                  canWrite,
-                  onOpenCorrection: (row) => {
-                    setSelectedEmployeeRowKey(row.key);
-                    if (row.employeeStatus === "inactive") {
-                      setShowManualCorrection(false);
-                      setSelectedEntryId(null);
-                      setEditingEntryId(null);
-                      setFormError(null);
-                      setFormStatus(null);
-                      return;
-                    }
-                    handleStartNewEntryForEmployee(row.employeeName);
-                  },
-                })}
-                rows={hoursRows}
-                rowKey={(row) => row.key}
-                tableClassName="hours-employee-table"
-                onRowClick={(row) => {
-                  setSelectedEmployeeRowKey(row.key);
+            <HoursEmployeeTablePanel
+              rows={hoursRows}
+              canWrite={canWrite}
+              selectedEmployeeRowKey={selectedEmployeeRowKey}
+              monthEntriesCount={monthEntries.length}
+              onOpenCorrection={(row) => {
+                setSelectedEmployeeRowKey(row.key);
+                if (row.employeeStatus === "inactive") {
+                  setShowManualCorrection(false);
                   setSelectedEntryId(null);
-                }}
-                getRowClassName={(row) =>
-                  row.key === selectedEmployeeRowKey ? "data-table__row--active" : undefined
+                  setEditingEntryId(null);
+                  setFormError(null);
+                  setFormStatus(null);
+                  return;
                 }
-                emptyMessage={
-                  monthEntries.length === 0
-                    ? "Brak wpisów czasu pracy w wybranym miesiącu."
-                    : "Brak pracowników dla podanego wyszukiwania."
-                }
-              />
-            </Panel>
+                handleStartNewEntryForEmployee(row.employeeName);
+              }}
+              onSelectRow={(row) => {
+                setSelectedEmployeeRowKey(row.key);
+                setSelectedEntryId(null);
+              }}
+            />
 
             <Panel title="Podsumowanie kontraktów w miesiącu">
               <DataTable
-                columns={contractSummaryColumns}
+                columns={hoursContractSummaryColumns}
                 rows={contractSummaryRows}
                 rowKey={(row) => row.aggregate.contract_id || row.aggregate.contract_name}
                 tableClassName="hours-summary-table"
@@ -1648,257 +987,32 @@ export function HoursView({
           </div>
 
           <div className="hours-side-stack">
-            <Panel
-              title={
-                showManualCorrection
-                  ? editingEntry
-                    ? "Korekta wpisu czasu"
-                    : "Ręczna korekta wpisów"
-                  : "Korekta ręczna"
-              }
-            >
-              {selectedEmployeeRow ? (
-                <div className="hours-selected-entry">
-                  <div className="hours-selected-entry__meta">
-                    <span className="hours-selected-entry__label">Wybrany pracownik</span>
-                    <strong>{selectedEmployeeRow.employeeLabel}</strong>
-                    <span>
-                      {selectedEmployeeRow.employeePosition} | Kod{" "}
-                      {formatEmployeeCodeLabel(selectedEmployeeRow.employeeCode, "—")}
-                    </span>
-                    <span>
-                      {formatHours(selectedEmployeeRow.totalHours)} • {formatNumber(selectedEmployeeRow.contracts.length)} kontrakty •{" "}
-                      {formatNumber(selectedEmployeeRow.entriesCount)} wpisy
-                    </span>
-                  </div>
-                  {canWrite && selectedEmployeeAllowsNewEntries ? (
-                    <ActionButton
-                      type="button"
-                      variant="secondary"
-                      onClick={() => handleStartNewEntryForEmployee(selectedEmployeeRow.employeeName)}
-                    >
-                      Dodaj lub popraw godziny
-                    </ActionButton>
-                  ) : null}
-                </div>
-              ) : null}
-
-              {selectedEmployeeRow?.employeeStatus === "inactive" ? (
-                <p className="status-message">
-                  Pracownik jest nieaktywny. W ewidencji zostają jego wpisy historyczne, ale nie można dodać
-                  nowego wpisu z tego panelu.
-                </p>
-              ) : null}
-
-              {canWrite ? showManualCorrection ? (
-                <form className="contracts-form" onSubmit={handleSaveEntry}>
-                  <FormGrid columns={1}>
-                    <label className="form-field">
-                      <span>Pracownik</span>
-                      <select
-                        value={entryFormValues.employee_name}
-                        onChange={(event) =>
-                          setEntryFormValues((current) => ({
-                            ...current,
-                            employee_name: event.target.value,
-                          }))
-                        }
-                        className="select-field"
-                      >
-                        <option value="">Wybierz pracownika</option>
-                        {roster
-                          .filter((employee) => employee.status !== "inactive")
-                          .map((employee) => (
-                            <option key={employee.name} value={employee.name}>
-                              {`${formatEmployeeDisplayName(employee, employee.name)} - ${
-                                employee.position || "Bez stanowiska"
-                              } | Kod ${formatEmployeeCodeLabel(employee.worker_code, "—")}`}
-                            </option>
-                          ))}
-                        {editingEntry && !roster.some((employee) => employee.name === editingEntry.employee_name) ? (
-                          <option value={editingEntry.employee_name}>{editingEntry.employee_name}</option>
-                        ) : null}
-                      </select>
-                    </label>
-
-                    {activeEmployeeName ? (
-                      <div className="hours-entry-helper">
-                        <div className="hours-entry-helper__header">
-                          <div className="data-table__stack">
-                            <span className="data-table__primary">{activeEmployeeLabel}</span>
-                            <span className="data-table__secondary">
-                              {activeEmployeeMeta} | Wpisy w wybranym miesiącu:{" "}
-                              {formatNumber(employeeEntries.length)}
-                            </span>
-                          </div>
-                          {activeEmployeeAllowsNewEntries ? (
-                            <ActionButton
-                              type="button"
-                              variant="ghost"
-                              onClick={() => handleStartNewEntryForEmployee(activeEmployeeName)}
-                            >
-                              Nowy wpis
-                            </ActionButton>
-                          ) : null}
-                        </div>
-
-                        {employeeEntries.length > 0 ? (
-                          <>
-                            <div className="hours-entry-helper__summary">
-                              <div className="hours-entry-helper__summary-card">
-                                <span className="hours-entry-helper__summary-label">Pracownik</span>
-                                <strong>{activeEmployeeLabel}</strong>
-                                <span>{activeEmployeeMeta}</span>
-                              </div>
-                              <div className="hours-entry-helper__summary-card">
-                                <span className="hours-entry-helper__summary-label">Kontrakty</span>
-                                <strong>{formatNumber(employeeContractsCount)}</strong>
-                                <span>aktywny przekrój</span>
-                              </div>
-                              <div className="hours-entry-helper__summary-card">
-                                <span className="hours-entry-helper__summary-label">Suma</span>
-                                <strong>{formatHours(employeeHoursTotal)}</strong>
-                                <span>Razem w miesiącu</span>
-                              </div>
-                            </div>
-
-                            <div className="hours-entry-helper__list">
-                            {employeeEntries.map((entry) => (
-                              <button
-                                key={entry.id}
-                                type="button"
-                                className={
-                                  entry.id === editingEntryId
-                                    ? "hours-entry-helper__row hours-entry-helper__row--active"
-                                    : "hours-entry-helper__row"
-                                }
-                                onClick={() => handleEditEntry(entry)}
-                              >
-                                <div className="hours-entry-helper__row-main">
-                                  <span className="hours-entry-helper__row-title">
-                                    {entry.contract_name || "Nieprzypisane"}
-                                  </span>
-                                  <span className="hours-entry-helper__row-subtitle">
-                                    {entry.contract_id ? "Powiązany kontrakt" : "Bez przypisanego kontraktu"}
-                                  </span>
-                                </div>
-                                <div className="hours-entry-helper__row-side">
-                                  <strong>{formatHours(entry.hours)}</strong>
-                                  <span>Kliknij, aby poprawić</span>
-                                </div>
-                              </button>
-                            ))}
-                            </div>
-                          </>
-                        ) : (
-                          <p className="status-message">
-                            Ten pracownik nie ma jeszcze wpisów w wybranym miesiącu.
-                          </p>
-                        )}
-                        {!activeEmployeeAllowsNewEntries && activeEmployeeName ? (
-                          <p className="status-message">
-                            Ten pracownik jest nieaktywny, więc można przeglądać lub poprawiać historię, ale nie
-                            można zacząć nowego wpisu od zera.
-                          </p>
-                        ) : null}
-                      </div>
-                    ) : null}
-
-                    <label className="form-field">
-                      <span>Kontrakt</span>
-                      <select
-                        value={entryFormValues.contract_id}
-                        onChange={(event) =>
-                          setEntryFormValues((current) => ({
-                            ...current,
-                            contract_id: event.target.value,
-                          }))
-                        }
-                        className="select-field"
-                      >
-                        {contractOptions.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {option.code} • {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label className="form-field">
-                      <span>Liczba godzin</span>
-                      <input
-                        className="text-input"
-                        inputMode="decimal"
-                        value={entryFormValues.hours}
-                        onChange={(event) =>
-                          setEntryFormValues((current) => ({
-                            ...current,
-                            hours: event.target.value,
-                          }))
-                        }
-                        placeholder="Np. 8"
-                      />
-                    </label>
-                  </FormGrid>
-
-                  {formError ? <p className="status-message status-message--error">{formError}</p> : null}
-                  {formStatus ? <p className="status-message status-message--success">{formStatus}</p> : null}
-
-                  <div className="contracts-form__actions">
-                    <ActionButton
-                      type="button"
-                      variant="ghost"
-                      onClick={() => {
-                        if (editingEntry) {
-                          handleStartNewEntryForEmployee(activeEmployeeName);
-                          return;
-                        }
-
-                        setShowManualCorrection(false);
-                        setFormError(null);
-                        setFormStatus(null);
-                      }}
-                    >
-                      {editingEntry ? "Anuluj edycję" : "Zamknij panel"}
-                    </ActionButton>
-                    <ActionButton type="submit" disabled={isSubmitting}>
-                      {isSubmitting
-                        ? "Zapisywanie..."
-                        : editingEntry
-                          ? "Zapisz zmiany"
-                          : "Dodaj wpis"}
-                    </ActionButton>
-                  </div>
-
-                  <p className="status-message">
-                    Obsługiwane jest też przypisanie do opcji "Nieprzypisane". Po zapisie zachowujemy wybranego pracownika,
-                    żeby szybciej dodać kolejny wpis na inny kontrakt.
-                  </p>
-                </form>
-              ) : (
-                <div className="status-stack">
-                  <p className="status-message">
-                    Główne godziny wpisujemy teraz przez kartę pracy pracownika. Ten panel zostawiamy do korekt,
-                    wyjątków i ręcznego dopisania pojedynczego wpisu.
-                  </p>
-                  <ActionButton
-                    type="button"
-                    onClick={() => {
-                      setShowManualCorrection(true);
-                      handleStartNewEntryForEmployee(
-                        activeEmployeeAllowsNewEntries ? activeEmployeeName : ""
-                      );
-                    }}
-                  >
-                    Otwórz korektę ręczną
-                  </ActionButton>
-                </div>
-              ) : (
-                <p className="status-message">
-                  Masz dostęp tylko do podglądu ewidencji czasu pracy.
-                </p>
-              )}
-            </Panel>
+            <HoursCorrectionPanel
+              canWrite={canWrite}
+              showManualCorrection={showManualCorrection}
+              editingEntry={editingEntry}
+              selectedEmployeeRow={selectedEmployeeRow}
+              selectedEmployeeAllowsNewEntries={selectedEmployeeAllowsNewEntries}
+              activeEmployeeName={activeEmployeeName}
+              activeEmployeeLabel={activeEmployeeLabel}
+              activeEmployeeMeta={activeEmployeeMeta}
+              employeeEntries={employeeEntries}
+              employeeHoursTotal={employeeHoursTotal}
+              employeeContractsCount={employeeContractsCount}
+              roster={roster}
+              contractOptions={contractOptions}
+              entryFormValues={entryFormValues}
+              isSubmitting={isSubmitting}
+              formError={formError}
+              formStatus={formStatus}
+              onStartNewEntryForEmployee={handleStartNewEntryForEmployee}
+              onSetShowManualCorrection={setShowManualCorrection}
+              onSetFormError={setFormError}
+              onSetFormStatus={setFormStatus}
+              onSetEntryFormValues={setEntryFormValues}
+              onEditEntry={handleEditEntry}
+              onSaveEntry={handleSaveEntry}
+            />
           </div>
         </div>
       ) : (
@@ -1926,13 +1040,14 @@ export function HoursView({
         }
         sections={hoursPdfSections}
         onClose={() => setIsPdfDialogOpen(false)}
-        onToggleSection={(sectionId) =>
-          setHoursPdfConfig((current) => togglePdfSection(current, sectionId))
-        }
+        onToggleSection={(sectionId) => setHoursPdfConfig((current) => togglePdfSection(current, sectionId))}
         onToggleColumn={(sectionId, columnId) =>
           setHoursPdfConfig((current) => togglePdfColumn(current, sectionId, columnId))
         }
-        onReset={() => setHoursPdfConfig(createPdfConfigState(hoursPdfDefinitions))}
+        onReset={() => {
+          if (!hoursPdfContext) return;
+          setHoursPdfConfig(buildHoursPdfConfig(hoursPdfContext));
+        }}
         onConfirm={handleConfirmHoursPdf}
       />
     </div>

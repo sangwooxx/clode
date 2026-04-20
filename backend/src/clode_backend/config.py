@@ -16,6 +16,7 @@ class Settings:
     project_root: Path
     allowed_origins: tuple[str, ...]
     session_ttl_hours: int
+    secure_cookies: bool
     is_vercel: bool
 
     @property
@@ -41,6 +42,12 @@ def load_settings() -> Settings:
 
     def read_env(primary_name: str, legacy_name: str, default: str) -> str:
         return str(os.getenv(primary_name) or os.getenv(legacy_name) or default)
+
+    def read_env_flag(primary_name: str, legacy_name: str, default: bool) -> bool:
+        raw = str(os.getenv(primary_name) or os.getenv(legacy_name) or "").strip().lower()
+        if not raw:
+            return default
+        return raw in {"1", "true", "yes", "on"}
 
     is_vercel = bool(str(os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or "").strip())
     configured_database_url = str(
@@ -93,6 +100,7 @@ def load_settings() -> Settings:
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
+        secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_vercel),
         is_vercel=is_vercel,
     )
 

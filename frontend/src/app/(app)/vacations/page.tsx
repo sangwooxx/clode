@@ -1,19 +1,19 @@
 import { VacationsView } from "@/features/vacations";
 import { fetchVacationsBootstrapServer } from "@/features/vacations/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function VacationsPage() {
+  await requireServerSession("/vacations");
+
+  let initialError: string | undefined;
+  let initialBootstrap;
+
   try {
-    const bootstrap = await fetchVacationsBootstrapServer();
-    return <VacationsView initialBootstrap={bootstrap} />;
+    initialBootstrap = await fetchVacationsBootstrapServer();
   } catch (error) {
-    return (
-      <VacationsView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udało się załadować modułu urlopów i nieobecności."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie zaladowac modulu urlopow i nieobecnosci.";
   }
+
+  return <VacationsView initialBootstrap={initialBootstrap} initialError={initialError} />;
 }

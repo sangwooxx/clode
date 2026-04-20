@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorkCardStore",
+  "type": "object",
+  "required": ["version", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer" },
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "employee_id", "employee_name", "month_key", "month_label", "updated_at", "rows"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "employee_id": { "type": "string" },
+          "employee_name": { "type": "string" },
+          "month_key": { "type": "string" },
+          "month_label": { "type": "string" },
+          "updated_at": { "type": "string" },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["date", "note", "entries"],
+              "additionalProperties": false,
+              "properties": {
+                "date": { "type": "string" },
+                "note": { "type": "string" },
+                "entries": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "contract_id", "contract_name", "hours"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": { "type": "string" },
+                      "contract_id": { "type": "string" },
+                      "contract_name": { "type": "string" },
+                      "hours": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

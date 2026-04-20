@@ -599,53 +599,42 @@ export function WorkCardView({
     selectedMonth?.month_label ||
     (selectedMonthKey ? formatMonthLabel(selectedMonthKey) : "Wybierz miesiąc");
 
-  const workCardPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
-    if (!selectedMonthKey || !displayedEmployeeLabel) return [];
+  const workCardPdfDefinitions: PdfSectionDefinition[] =
+    !selectedMonthKey || !displayedEmployeeLabel
+      ? []
+      : [
+          {
+            id: "card",
+            label: "Dane karty",
+            description: "Pracownik, miesiąc i podsumowanie miesięczne.",
+            preview: [displayedEmployeeLabel, currentMonthLabel, formatHours(monthTotalHours)],
+          },
+          {
+            id: "days",
+            label: "Rozpiska dzienna",
+            description: "Tabela dni roboczych i przypisań kontraktowych.",
+            preview: [`${formatNumber(filledDaysCount)} dni z wpisami`],
+            columns: [
+              { id: "day", label: "Dzień" },
+              { id: "assignments", label: "Kontrakty i godziny" },
+              { id: "total", label: "Razem" },
+              { id: "note", label: "Opis pracy" },
+            ],
+          },
+          {
+            id: "contracts",
+            label: "Podsumowanie kontraktów",
+            description: "Sumy godzin według kontraktów w karcie pracy.",
+            preview: [`${contractOptions.length} dostępnych kontraktów`],
+            columns: [
+              { id: "contract", label: "Kontrakt" },
+              { id: "code", label: "Kod" },
+              { id: "hours", label: "Suma godzin" },
+            ],
+          },
+        ];
 
-    return [
-      {
-        id: "card",
-        label: "Dane karty",
-        description: "Pracownik, miesiąc i podsumowanie miesięczne.",
-        preview: [displayedEmployeeLabel, currentMonthLabel, formatHours(monthTotalHours)],
-      },
-      {
-        id: "days",
-        label: "Rozpiska dzienna",
-        description: "Tabela dni roboczych i przypisań kontraktowych.",
-        preview: [`${formatNumber(filledDaysCount)} dni z wpisami`],
-        columns: [
-          { id: "day", label: "Dzień" },
-          { id: "assignments", label: "Kontrakty i godziny" },
-          { id: "total", label: "Razem" },
-          { id: "note", label: "Opis pracy" },
-        ],
-      },
-      {
-        id: "contracts",
-        label: "Podsumowanie kontraktów",
-        description: "Sumy godzin według kontraktów w karcie pracy.",
-        preview: [`${contractOptions.length} dostępnych kontraktów`],
-        columns: [
-          { id: "contract", label: "Kontrakt" },
-          { id: "code", label: "Kod" },
-          { id: "hours", label: "Suma godzin" },
-        ],
-      },
-    ];
-  }, [
-    contractOptions.length,
-    currentMonthLabel,
-    displayedEmployeeLabel,
-    filledDaysCount,
-    monthTotalHours,
-    selectedMonthKey,
-  ]);
-
-  const workCardPdfSections = useMemo(
-    () => buildPdfDialogSections(workCardPdfDefinitions, workCardPdfConfig),
-    [workCardPdfConfig, workCardPdfDefinitions]
-  );
+  const workCardPdfSections = buildPdfDialogSections(workCardPdfDefinitions, workCardPdfConfig);
 
   function handleOpenWorkCardPdf() {
     if (!selectedMonthKey || !displayedEmployeeLabel) return;

@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "lint": "eslint . --max-warnings=0",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --environment node --pool threads",
+    "quality": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
     "next": "^16.0.0",
@@ -17,6 +20,9 @@
     "@types/node": "^24.6.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^16.0.0",
+    "vitest": "^3.0.0",
     "typescript": "^5.9.3"
   }
 }

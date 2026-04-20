@@ -6,7 +6,7 @@ import {
   listEmployees,
   updateEmployee,
 } from "@/lib/api/employees";
-import { getStore, saveStore } from "@/lib/api/stores";
+import { http } from "@/lib/api/http";
 import { fetchHoursData, saveHoursEntry } from "@/features/hours/api";
 import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/types";
 import { normalizeEmployeeText } from "@/features/employees/formatters";
@@ -22,11 +22,7 @@ import type {
   EmployeesBootstrapData,
 } from "@/features/employees/types";
 import { fetchWorkCardStore } from "@/features/work-cards/api";
-import {
-  WORK_CARDS_STORE_KEY,
-  type WorkCardRecord,
-  type WorkCardStore,
-} from "@/features/work-cards/types";
+import { type WorkCardRecord, type WorkCardStore } from "@/features/work-cards/types";
 
 function emptyWorkCardStore(): WorkCardStore {
   return {
@@ -38,15 +34,6 @@ function emptyWorkCardStore(): WorkCardStore {
 async function fetchEmployeesDirectory() {
   const response = await listEmployees();
   return Array.isArray(response.employees) ? response.employees : [];
-}
-
-async function fetchEmployeesStore() {
-  try {
-    const response = await getStore<HoursEmployeeRecord[]>("employees");
-    return Array.isArray(response.payload) ? response.payload : [];
-  } catch {
-    return [];
-  }
 }
 
 function buildCurrentDirectory(args: EmployeesBootstrapData) {
@@ -148,17 +135,15 @@ async function syncEmployeeTimeEntries(args: {
 }
 
 export async function fetchEmployeesModuleData(): Promise<EmployeesBootstrapData> {
-  const [directoryEmployees, storeEmployees, hoursPayload, workCardStore] =
-    await Promise.all([
-      fetchEmployeesDirectory(),
-      fetchEmployeesStore(),
-      fetchHoursData(),
-      fetchWorkCardStore().catch(() => emptyWorkCardStore()),
-    ]);
+  const [directoryEmployees, hoursPayload, workCardStore] = await Promise.all([
+    fetchEmployeesDirectory(),
+    fetchHoursData(),
+    fetchWorkCardStore().catch(() => emptyWorkCardStore()),
+  ]);
 
   return {
     directoryEmployees,
-    storeEmployees,
+    storeEmployees: [],
     timeEntries: hoursPayload.entries,
     workCardStore,
   };
@@ -225,7 +210,10 @@ export async function saveEmployeeRecord(args: {
     JSON.stringify(args.bootstrap.workCardStore.cards) !== JSON.stringify(nextWorkCardStore.cards)
   ) {
     try {
-      await saveStore(WORK_CARDS_STORE_KEY, nextWorkCardStore);
+      await http("/work-cards/state", {
+        method: "PUT",
+        body: JSON.stringify({ store: nextWorkCardStore }),
+      });
     } catch (error) {
       throw new Error(
         `Nie udało się zsynchronizować kart pracy pracownika: ${error instanceof Error ? error.message : "nieznany błąd"}`

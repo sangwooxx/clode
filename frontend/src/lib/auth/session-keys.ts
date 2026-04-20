@@ -1,8 +1,8 @@
-export const SESSION_STORAGE_KEYS = [
-  "clode_backend_session_token",
-  "agent_backend_session_token",
-  "clode_backend_persisted_session_token",
-  "agent_backend_persisted_session_token"
-] as const;
+export const PRIMARY_SESSION_COOKIE_NAME = "clode_session";
 
-export const SESSION_COOKIE_NAMES = ["clode_session", "agent_session"] as const;
+export const LEGACY_SESSION_COOKIE_NAMES = ["agent_session"] as const;
+
+export const SESSION_COOKIE_NAMES = [
+  PRIMARY_SESSION_COOKIE_NAME,
+  ...LEGACY_SESSION_COOKIE_NAMES,
+] as const;

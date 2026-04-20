@@ -28,7 +28,6 @@ import type {
   VacationPlanningConflict,
   VacationRequestFormValues,
   VacationRequestRecord,
-  VacationStatus,
   VacationStore,
   VacationSummaryCard,
   VacationType,
@@ -78,10 +77,10 @@ export function buildVacationApprovalMessage(args: {
   }
 
   if (args.approvalMode === "admin") {
-    return "Tryb workflow wymaga akceptacji administratora. To konto zapisuje nowe wpisy jako oczekujÄ…ce.";
+    return "Tryb workflow wymaga akceptacji administratora. To konto zapisuje nowe wpisy jako oczekujace.";
   }
 
-  return "To konto zapisuje nowe wpisy jako oczekujÄ…ce. Zatwierdzenie pozostaje po stronie uÅ¼ytkownikÃ³w z uprawnieniem akceptacji urlopÃ³w.";
+  return "To konto zapisuje nowe wpisy jako oczekujace. Zatwierdzenie pozostaje po stronie uzytkownikow z uprawnieniem akceptacji urlopow.";
 }
 
 function parseVacationNumber(value: unknown) {
@@ -287,7 +286,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "missing",
       message:
-        "Wpis wskazuje pracownika po stabilnym kluczu, ale tego rekordu nie ma juÅ¼ w kartotece.",
+        "Wpis wskazuje pracownika po stabilnym kluczu, ale tego rekordu nie ma juz w kartotece.",
     };
   }
 
@@ -310,7 +309,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "missing",
       message:
-        "Wpis wskazuje pracownika po identyfikatorze, ale tego rekordu nie ma juÅ¼ w kartotece.",
+        "Wpis wskazuje pracownika po identyfikatorze, ale tego rekordu nie ma juz w kartotece.",
     };
   }
 
@@ -329,7 +328,7 @@ export function resolveVacationEditingEmployee(args: {
       employee: null,
       status: "ambiguous",
       message:
-        "Ten wpis legacy zawiera tylko nazwÄ™ pracownika, a w kartotece istnieje wiÄ™cej niÅ¼ jedna osoba o tej samej nazwie. Wybierz wÅ‚aÅ›ciwÄ… osobÄ™ rÄ™cznie przed zapisem.",
+        "Ten wpis legacy zawiera tylko nazwe pracownika, a w kartotece istnieje wiecej niz jedna osoba o tej samej nazwie. Wybierz wlasciwa osobe recznie przed zapisem.",
     };
   }
 
@@ -337,7 +336,7 @@ export function resolveVacationEditingEmployee(args: {
     employee: null,
     status: "legacy_name_only",
     message:
-      "Ten wpis legacy zawiera tylko nazwÄ™ pracownika. Rekord nie jest juÅ¼ przypinany automatycznie po nazwie; wybierz wÅ‚aÅ›ciwÄ… osobÄ™ rÄ™cznie przed zapisem.",
+      "Ten wpis legacy zawiera tylko nazwe pracownika. Rekord nie jest juz przypinany automatycznie po nazwie; wybierz wlasciwa osobe recznie przed zapisem.",
   };
 }
 
@@ -610,7 +609,7 @@ export function buildVacationSummaryCards(args: {
     },
     {
       id: "vacations-pending",
-      label: "Wnioski oczekujÄ…ce",
+      label: "Wnioski oczekujace",
       value: String(pendingCount),
       accent: true,
     },
@@ -621,7 +620,7 @@ export function buildVacationSummaryCards(args: {
     },
     {
       id: "vacations-remaining-pool",
-      label: "PozostaÅ‚a pula",
+      label: "Pozostala pula",
       value: formatVacationDays(totalRemaining),
     },
     {
@@ -715,7 +714,7 @@ export function buildVacationApprovalRows(args: {
         subtitle: employee
           ? [employee.worker_code ? `Kod ${employee.worker_code}` : "", employee.position]
               .filter(Boolean)
-              .join(" â€¢ ") || (employee.status === "inactive" ? "Nieaktywny" : "Aktywny")
+              .join(" • ") || (employee.status === "inactive" ? "Nieaktywny" : "Aktywny")
           : "Historyczny wpis bez dopasowania do kartoteki",
       };
     });

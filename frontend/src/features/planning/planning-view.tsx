@@ -26,7 +26,6 @@ import {
 } from "@/features/planning/formatters";
 import {
   buildPlanningAbsenceRows,
-  buildPlanningAssignmentEntries,
   buildPlanningCalendarCells,
   buildPlanningContractOptions,
   buildPlanningContractSummaryRows,

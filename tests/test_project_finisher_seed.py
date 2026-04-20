@@ -19,11 +19,14 @@ def extract_json_object(path: pathlib.Path, prefix_pattern: str, suffix_pattern:
 
 
 def load_project_seed() -> dict:
-    return extract_json_object(
+    seed = extract_json_object(
         ROOT / "data" / "project-finisher-seed.js",
         r"const PROJECT_FINISHER_SEED = ",
         r";\s*window\.PROJECT_FINISHER_SEED",
     )
+    if seed.get("disabled") is True:
+        raise unittest.SkipTest("Project finisher demo seed is intentionally disabled.")
+    return seed
 
 
 def load_hours_seed() -> dict:

@@ -1,7 +1,6 @@
 "use client";
 
-import { ApiError } from "@/lib/api/http";
-import { getStore, saveStore } from "@/lib/api/stores";
+import { ApiError, http } from "@/lib/api/http";
 import { fetchEmployeesModuleData } from "@/features/employees/api";
 import { findEmployeeByKey } from "@/features/employees/mappers";
 import { createDefaultWorkflowValues } from "@/features/settings/types";
@@ -37,7 +36,6 @@ import type {
   VacationStore,
   VacationsBootstrapData,
 } from "@/features/vacations/types";
-import { PLANNING_STORE_KEY, VACATIONS_STORE_KEY } from "@/features/vacations/types";
 
 function generateVacationRequestId() {
   const randomPart =
@@ -56,8 +54,10 @@ function parseFormNumber(value: string) {
 
 async function fetchVacationStore() {
   try {
-    const response = await getStore<VacationStore>(VACATIONS_STORE_KEY);
-    return normalizeVacationStore(response.payload);
+    const response = await http<{ vacation_store?: VacationStore }>("/vacations/state", {
+      method: "GET",
+    });
+    return normalizeVacationStore(response.vacation_store);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return emptyVacationStore();
@@ -68,8 +68,10 @@ async function fetchVacationStore() {
 
 async function fetchPlanningStore() {
   try {
-    const response = await getStore<PlanningStore>(PLANNING_STORE_KEY);
-    return normalizePlanningStore(response.payload);
+    const response = await http<{ planning_store?: PlanningStore }>("/planning/state", {
+      method: "GET",
+    });
+    return normalizePlanningStore(response.planning_store);
   } catch (error) {
     if (
       error instanceof ApiError &&
@@ -83,23 +85,10 @@ async function fetchPlanningStore() {
 
 async function fetchWorkflowSettings() {
   try {
-    const response = await getStore<Record<string, unknown>>("settings");
-    const payload = response.payload;
-    const rawWorkflow =
-      payload &&
-      typeof payload === "object" &&
-      "workflow" in payload &&
-      payload.workflow &&
-      typeof payload.workflow === "object"
-        ? (payload.workflow as Record<string, unknown>)
-        : (payload as Record<string, unknown> | null);
-
-    return createDefaultWorkflowValues({
-      vacationApprovalMode:
-        String(rawWorkflow?.vacationApprovalMode || "") === "admin" ? "admin" : "permission",
-      vacationNotifications:
-        String(rawWorkflow?.vacationNotifications || "") === "off" ? "off" : "on",
+    const response = await http<{ workflow?: Record<string, unknown> }>("/settings/workflow", {
+      method: "GET",
     });
+    return createDefaultWorkflowValues(response.workflow);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return createDefaultWorkflowValues();
@@ -157,7 +146,10 @@ function resolveEditableEmployee(args: {
 }
 
 function saveVacationStoreRemote(store: VacationStore) {
-  return saveStore(VACATIONS_STORE_KEY, store);
+  return http<{ vacation_store?: VacationStore }>("/vacations/state", {
+    method: "PUT",
+    body: JSON.stringify({ vacation_store: store }),
+  });
 }
 
 export async function saveVacationBalanceRecord(args: {

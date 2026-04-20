@@ -148,7 +148,7 @@ class ContractBackendSourceOfTruthTestCase(unittest.TestCase):
         self.assertEqual(archived["status"], "archived")
 
         usage = self.repository.get_usage_counts(contract["id"])
-        self.assertEqual(usage["hours"], 1)
+        self.assertEqual(usage["hours_entries"], 1)
 
 
 if __name__ == "__main__":

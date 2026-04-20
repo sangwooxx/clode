@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS employees (
     name TEXT NOT NULL,
     first_name TEXT NOT NULL DEFAULT '',
     last_name TEXT NOT NULL DEFAULT '',
+    worker_code TEXT NOT NULL DEFAULT '',
     position TEXT NOT NULL DEFAULT '',
     status TEXT NOT NULL DEFAULT 'active',
     employment_date TEXT NOT NULL DEFAULT '',
@@ -146,6 +147,7 @@ CREATE TABLE IF NOT EXISTS workwear_catalog (
 CREATE TABLE IF NOT EXISTS workwear_issues (
     id TEXT PRIMARY KEY,
     employee_id TEXT,
+    employee_key TEXT NOT NULL DEFAULT '',
     employee_name TEXT NOT NULL,
     issue_date TEXT NOT NULL,
     item_id TEXT,
@@ -166,6 +168,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     details TEXT NOT NULL DEFAULT '',
     user_id TEXT NOT NULL,
     user_name TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS settings_workflow (
+    id TEXT PRIMARY KEY,
+    vacation_approval_mode TEXT NOT NULL DEFAULT 'permission',
+    vacation_notifications TEXT NOT NULL DEFAULT 'on',
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP::text
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -211,3 +220,4 @@ CREATE INDEX IF NOT EXISTS time_entries_month_employee_idx ON time_entries(month
 CREATE INDEX IF NOT EXISTS hours_months_month_key_idx ON hours_months(month_key);
 CREATE INDEX IF NOT EXISTS planning_assignments_contract_id_idx ON planning_assignments(contract_id);
 CREATE INDEX IF NOT EXISTS planning_assignments_assignment_date_idx ON planning_assignments(assignment_date);
+CREATE INDEX IF NOT EXISTS audit_logs_timestamp_idx ON audit_logs(timestamp);

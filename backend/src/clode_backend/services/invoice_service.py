@@ -7,6 +7,7 @@ from clode_backend.auth.rbac import normalize_role
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.invoice_repository import InvoiceRepository
+from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
 from clode_backend.validation.contracts import normalize_contract_status, normalize_cost_category
 from clode_backend.validation.invoices import (
     normalize_invoice_type,
@@ -266,7 +267,7 @@ class InvoiceService:
         created_at = existing.get("created_at") if existing else timestamp
         invoice_id = explicit_id or (existing.get("id") if existing else f"invoice-{uuid4().hex}")
 
-        return {
+        record = {
             "id": invoice_id,
             "contract_id": contract_id or None,
             "contract_name": contract_name,
@@ -290,4 +291,9 @@ class InvoiceService:
             "updated_by": str(current_user.get("id") or ""),
             "is_deleted": False,
         }
+        try:
+            validate_shared_contract("invoice", record)
+        except ContractValidationError as error:
+            raise InvoiceServiceError(str(error)) from error
+        return record
 

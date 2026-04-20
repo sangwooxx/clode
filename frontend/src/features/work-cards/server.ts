@@ -1,55 +1,25 @@
-import { cookies } from "next/headers";
-import { resolveBackendOrigin } from "@/lib/api/backend-origin";
-import { SESSION_COOKIE_NAMES } from "@/lib/auth/session-keys";
+import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
 import { fetchHoursBootstrapServer } from "@/features/hours/server";
 import { buildWorkCardEmployeeOptions } from "@/features/work-cards/mappers";
-import { WORK_CARDS_STORE_KEY, type WorkCardBootstrapData, type WorkCardStore } from "@/features/work-cards/types";
-
-function buildCookieHeader(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  const cookiePairs = SESSION_COOKIE_NAMES.map((name) => {
-    const value = cookieStore.get(name)?.value;
-    return value ? `${name}=${value}` : "";
-  }).filter(Boolean);
-
-  return cookiePairs.join("; ");
-}
+import type { WorkCardBootstrapData, WorkCardStore } from "@/features/work-cards/types";
 
 async function fetchWorkCardsStoreServer() {
-  const cookieStore = await cookies();
-  const cookieHeader = buildCookieHeader(cookieStore);
+  const { status, payload } = await fetchBackendJsonServer<{ store?: WorkCardStore }>(
+    "/work-cards/state",
+    {
+      nextPath: "/work-cards",
+      allowStatuses: [404],
+    }
+  );
 
-  const response = await fetch(`${resolveBackendOrigin()}/api/v1/stores/${WORK_CARDS_STORE_KEY}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    },
-    cache: "no-store",
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | ({ payload?: WorkCardStore; error?: string })
-    | null;
-
-  if (response.status === 404) {
+  if (status === 404 || !payload?.store || !Array.isArray(payload.store.cards)) {
     return {
       version: 1,
       cards: [],
     } satisfies WorkCardStore;
   }
 
-  if (!response.ok || !payload) {
-    throw new Error(payload?.error || `Work cards store returned status ${response.status}.`);
-  }
-
-  if (payload.payload && Array.isArray(payload.payload.cards)) {
-    return payload.payload;
-  }
-
-  return {
-    version: 1,
-    cards: [],
-  } satisfies WorkCardStore;
+  return payload.store;
 }
 
 export async function fetchWorkCardsBootstrapServer(): Promise<WorkCardBootstrapData> {

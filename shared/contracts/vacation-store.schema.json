@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "VacationStore",
+  "type": "object",
+  "required": ["balances", "requests"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer" },
+    "balances": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "employee_id": { "type": "string" },
+          "employee_key": { "type": "string" },
+          "employee_name": { "type": "string" },
+          "base_days": { "type": "number" },
+          "carryover_days": { "type": "number" },
+          "extra_days": { "type": "number" }
+        }
+      }
+    },
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "employee_name", "type", "start_date", "end_date", "days", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "employee_id": { "type": "string" },
+          "employee_key": { "type": "string" },
+          "employee_name": { "type": "string" },
+          "type": { "type": "string" },
+          "start_date": { "type": "string" },
+          "end_date": { "type": "string" },
+          "days": { "type": "number" },
+          "status": { "type": "string" },
+          "requested_by": { "type": "string" },
+          "notes": { "type": "string" },
+          "created_at": { "type": "string" }
+        }
+      }
+    }
+  }
+}

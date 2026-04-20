@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlanningStore",
+  "type": "object",
+  "required": ["assignments"],
+  "additionalProperties": false,
+  "properties": {
+    "assignments": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "contract_id": { "type": "string" },
+            "employee_id": { "type": "string" },
+            "employee_key": { "type": "string" },
+            "employee_name": { "type": "string" },
+            "contract_name": { "type": "string" },
+            "note": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

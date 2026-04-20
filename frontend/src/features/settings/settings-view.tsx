@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { FormActions } from "@/components/ui/form-actions";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
-import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import {
@@ -19,15 +15,26 @@ import {
   saveSettingsWorkflow,
 } from "@/features/settings/api";
 import {
+  SettingsCurrentAccountPanel,
+  SettingsProfilePanels,
+} from "@/features/settings/components/SettingsAccountPanels";
+import { SettingsAuditPanel } from "@/features/settings/components/SettingsAuditPanel";
+import {
+  buildPermissionLabels,
+  formatRoleLabel,
+  formatStatusLabel,
+} from "@/features/settings/components/settings-formatters";
+import { SettingsUserFormPanel } from "@/features/settings/components/SettingsUserFormPanel";
+import { SettingsUsersPanel } from "@/features/settings/components/SettingsUsersPanel";
+import { SettingsWorkflowPanel } from "@/features/settings/components/SettingsWorkflowPanel";
+import {
   buildSettingsUserFormValues,
   createDefaultWorkflowValues,
   createEmptySettingsUserForm,
   isAdminRole,
   normalizeSettingsPermissions,
-  settingsPermissionDefinitions,
   type SettingsAdminBootstrap,
   type SettingsAuditLogEntry,
-  type SettingsPermissionId,
   type SettingsUserFormValues,
   type SettingsUsersFilter,
   type SettingsWorkflowValues,
@@ -41,190 +48,8 @@ type AdminState =
   | { status: "error"; message: string }
   | { status: "success"; data: SettingsAdminBootstrap };
 
-function formatRoleLabel(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  if (normalized === "admin" || normalized === "administrator") return "Administrator";
-  if (normalized === "kierownik") return "Kierownik";
-  if (normalized === "księgowość" || normalized === "ksiegowosc") return "Księgowość";
-  if (normalized === "read-only" || normalized === "readonly") return "Tylko odczyt";
-  if (!normalized) return "Użytkownik";
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
-}
-
-function formatStatusLabel(status: string | null | undefined) {
-  return String(status || "").trim() === "inactive" ? "Nieaktywne" : "Aktywne";
-}
-
-function formatTimestamp(value: string | null | undefined) {
-  const normalized = String(value || "").trim();
-  if (!normalized) return "Brak danych";
-  const date = new Date(normalized);
-  if (Number.isNaN(date.getTime())) return normalized;
-  return date.toLocaleString("pl-PL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function buildPermissionLabels(permissions: Record<string, boolean> | null | undefined) {
-  return settingsPermissionDefinitions
-    .filter((definition) => Boolean(permissions?.[definition.viewId]))
-    .map((definition) => definition.label);
-}
-
-function buildUsersTableColumns(args: {
-  currentUserId: string;
-  onEdit: (user: ManagedUserRecord) => void;
-}): Array<DataTableColumn<ManagedUserRecord>> {
-  return [
-    { key: "lp", header: "Lp.", className: "settings-col-lp", sortValue: (_row, index) => index + 1, render: (_row, index) => index + 1 },
-    {
-      key: "user",
-      header: "Konto",
-      className: "settings-col-user",
-      sortValue: (row) => `${row.name} ${row.username} ${row.email || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.name}</span>
-          <span className="data-table__secondary">
-            {row.username}
-            {row.email ? ` • ${row.email}` : ""}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "access",
-      header: "Dostęp",
-      className: "settings-col-access",
-      sortValue: (row) => `${row.role || ""} ${row.status || ""} ${row.canApproveVacations ? "1" : "0"}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{formatRoleLabel(row.role)}</span>
-          <span className="data-table__secondary">
-            <span
-              className={
-                row.status === "inactive"
-                  ? "data-table__status-pill data-table__status-pill--muted"
-                  : "data-table__status-pill"
-              }
-            >
-              {formatStatusLabel(row.status)}
-            </span>
-            {row.canApproveVacations ? " • Akceptuje urlopy" : ""}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "modules",
-      header: "Uprawnienia",
-      className: "settings-col-modules",
-      sortValue: (row) => buildPermissionLabels(row.permissions).length,
-      render: (row) => {
-        const labels = buildPermissionLabels(row.permissions);
-        return (
-          <div className="data-table__stack">
-            <span className="data-table__primary">{labels.length} modułów</span>
-            <span className="data-table__secondary">
-              {labels.length ? labels.join(", ") : "Brak dostępu do modułów"}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      key: "activity",
-      header: "Aktywność",
-      className: "settings-col-activity",
-      sortValue: (row) => row.last_login_at || row.created_at,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {row.last_login_at ? formatTimestamp(row.last_login_at) : "Brak logowania"}
-          </span>
-          <span className="data-table__secondary">Utworzono: {formatTimestamp(row.created_at)}</span>
-        </div>
-      ),
-    },
-    {
-      key: "actions",
-      header: "Akcje",
-      className: "settings-col-actions",
-      sortable: false,
-      render: (row) => (
-        <div className="planning-row-actions">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            onClick={(event) => {
-              event.stopPropagation();
-              args.onEdit(row);
-            }}
-          >
-            Edytuj
-          </ActionButton>
-          {row.id === args.currentUserId ? <span className="data-table__secondary">Bieżące konto</span> : null}
-        </div>
-      ),
-    },
-  ];
-}
-
-function buildAuditTableColumns(): Array<DataTableColumn<SettingsAuditLogEntry>> {
-  return [
-    {
-      key: "timestamp",
-      header: "Data i użytkownik",
-      className: "settings-col-audit-date",
-      sortValue: (row) => row.timestamp,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{formatTimestamp(row.timestamp)}</span>
-          <span className="data-table__secondary">{row.user_name || "System"}</span>
-        </div>
-      ),
-    },
-    {
-      key: "change",
-      header: "Zmiana",
-      className: "settings-col-audit-change",
-      sortValue: (row) => `${row.action || ""} ${row.module || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.action || "-"}</span>
-          <span className="data-table__secondary">{row.module || "-"}</span>
-        </div>
-      ),
-    },
-    {
-      key: "subject",
-      header: "Obiekt",
-      className: "settings-col-audit-subject",
-      sortValue: (row) => `${row.subject || ""} ${row.user_id || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.subject || "-"}</span>
-          <span className="data-table__secondary">{row.user_id || "-"}</span>
-        </div>
-      ),
-    },
-    {
-      key: "details",
-      header: "Szczegóły",
-      className: "settings-col-audit-details",
-      sortValue: (row) => row.details,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.details || "Brak dodatkowych szczegółów"}</span>
-        </div>
-      ),
-    },
-  ];
-}
+const EMPTY_MANAGED_USERS: ManagedUserRecord[] = [];
+const EMPTY_AUDIT_LOG: SettingsAuditLogEntry[] = [];
 
 export function SettingsView() {
   const router = useRouter();
@@ -255,8 +80,11 @@ export function SettingsView() {
   async function reloadAdminData(options?: { preserveState?: boolean; message?: string }) {
     if (!hasAdminAccess) return;
 
-    if (options?.preserveState && adminData) setIsRefreshingAdmin(true);
-    else setAdminState({ status: "loading" });
+    if (options?.preserveState && adminData) {
+      setIsRefreshingAdmin(true);
+    } else {
+      setAdminState({ status: "loading" });
+    }
 
     try {
       const bootstrap = await fetchSettingsAdminBootstrap();
@@ -266,13 +94,21 @@ export function SettingsView() {
         setPageMessage({ tone: "success", text: options.message });
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Nie udało się pobrać danych administracyjnych.";
-      if (options?.preserveState && adminData) setPageMessage({ tone: "error", text: message });
-      else setAdminState({ status: "error", message });
+      const message =
+        error instanceof Error ? error.message : "Nie udało się pobrać danych administracyjnych.";
+      if (options?.preserveState && adminData) {
+        setPageMessage({ tone: "error", text: message });
+      } else {
+        setAdminState({ status: "error", message });
+      }
     } finally {
       setIsRefreshingAdmin(false);
     }
   }
+
+  const loadAdminData = useEffectEvent(() => {
+    void reloadAdminData();
+  });
 
   useEffect(() => {
     if (!initialized || !currentUser) return;
@@ -280,11 +116,14 @@ export function SettingsView() {
       setAdminState({ status: "idle" });
       return;
     }
-    void reloadAdminData();
-  }, [currentUser?.id, currentUser?.role, hasAdminAccess, initialized]);
+    loadAdminData();
+  }, [currentUser, hasAdminAccess, initialized]);
 
-  const managedUsers = adminData?.users ?? [];
-  const currentAuditLog = adminData?.auditLog ?? [];
+  const managedUsers = useMemo(() => adminData?.users ?? EMPTY_MANAGED_USERS, [adminData]);
+  const currentAuditLog = useMemo(
+    () => adminData?.auditLog ?? EMPTY_AUDIT_LOG,
+    [adminData]
+  );
 
   useEffect(() => {
     if (!adminData) {
@@ -314,9 +153,13 @@ export function SettingsView() {
       if (filter === "active" && entry.status === "inactive") return false;
       if (filter === "inactive" && entry.status !== "inactive") return false;
       if (!query) return true;
-      return [entry.name, entry.username, entry.email, formatRoleLabel(entry.role), formatStatusLabel(entry.status)].some((value) =>
-        String(value || "").toLowerCase().includes(query)
-      );
+      return [
+        entry.name,
+        entry.username,
+        entry.email,
+        formatRoleLabel(entry.role),
+        formatStatusLabel(entry.status),
+      ].some((value) => String(value || "").toLowerCase().includes(query));
     });
   }, [filter, managedUsers, search]);
 
@@ -331,7 +174,6 @@ export function SettingsView() {
   }, [auditSearch, currentAuditLog]);
 
   const currentUserPermissions = buildPermissionLabels(currentUser?.permissions);
-  const editingUserPermissions = buildPermissionLabels(editingUser?.permissions);
   const activeUsersCount = managedUsers.filter((entry) => entry.status !== "inactive").length;
   const summaryCards = hasAdminAccess
     ? [
@@ -353,7 +195,10 @@ export function SettingsView() {
     try {
       await refresh();
       if (hasAdminAccess) {
-        await reloadAdminData({ preserveState: true, message: "Odświeżono konto, użytkowników, workflow i logi." });
+        await reloadAdminData({
+          preserveState: true,
+          message: "Odświeżono konto, użytkowników, workflow i logi.",
+        });
       } else {
         setPageMessage({ tone: "success", text: "Odświeżono dane bieżącej sesji użytkownika." });
       }
@@ -381,9 +226,15 @@ export function SettingsView() {
           subject: currentUser.displayName,
           details: `Login: ${currentUser.username}`,
         });
-        await reloadAdminData({ preserveState: true, message: `Zarejestrowano reset hasła dla ${currentUser.username}.` });
+        await reloadAdminData({
+          preserveState: true,
+          message: `Zarejestrowano reset hasła dla ${currentUser.username}.`,
+        });
       } else {
-        setPageMessage({ tone: "success", text: `Zarejestrowano reset hasła dla ${currentUser.username}.` });
+        setPageMessage({
+          tone: "success",
+          text: `Zarejestrowano reset hasła dla ${currentUser.username}.`,
+        });
       }
     } catch (error) {
       setPageMessage({
@@ -409,11 +260,16 @@ export function SettingsView() {
         subject: editingUser.name,
         details: `Login: ${editingUser.username}`,
       });
-      await reloadAdminData({ preserveState: true, message: `Zarejestrowano reset hasła dla konta ${editingUser.username}.` });
+      await reloadAdminData({
+        preserveState: true,
+        message: `Zarejestrowano reset hasła dla konta ${editingUser.username}.`,
+      });
       setEditingUserId(editingUser.id);
     } catch (error) {
       setFormError(
-        error instanceof Error ? error.message : "Nie udało się wysłać żądania resetu hasła dla wybranego konta."
+        error instanceof Error
+          ? error.message
+          : "Nie udało się wysłać żądania resetu hasła dla wybranego konta."
       );
     } finally {
       setResetTargetUsername(null);
@@ -445,6 +301,12 @@ export function SettingsView() {
       canApproveVacations: isAdminRole(nextRole) ? true : current.canApproveVacations,
       permissions: normalizeSettingsPermissions(nextRole, current.permissions),
     }));
+  }
+
+  function handleSelectManagedUser(selectedUser: ManagedUserRecord) {
+    setEditingUserId(selectedUser.id);
+    setFormError(null);
+    setFormStatus(null);
   }
 
   async function handleSaveUser(event: FormEvent<HTMLFormElement>) {
@@ -585,257 +447,105 @@ export function SettingsView() {
 
       <div className="module-page__stats module-page__stats--compact">
         {summaryCards.slice(0, 4).map((card) => (
-          <StatCard key={card.id} label={card.label} value={card.value} accent={"accent" in card ? Boolean(card.accent) : false} />
+          <StatCard
+            key={card.id}
+            label={card.label}
+            value={card.value}
+            accent={"accent" in card ? Boolean(card.accent) : false}
+          />
         ))}
       </div>
 
-      <FormFeedback
-        items={[
-          pageMessage ? { tone: pageMessage.tone, text: pageMessage.text } : null,
-        ]}
-      />
+      <FormFeedback items={[pageMessage ? { tone: pageMessage.tone, text: pageMessage.text } : null]} />
 
       <div className="settings-layout">
         <div className="settings-main-stack">
-            <Panel title="Profil i sesja">
-            <dl>
-              <div className="info-list__row"><dt>Nazwa wyświetlana</dt><dd>{currentUser.displayName}</dd></div>
-              <div className="info-list__row"><dt>Login</dt><dd>{currentUser.username}</dd></div>
-              <div className="info-list__row"><dt>Rola</dt><dd>{formatRoleLabel(currentUser.role)}</dd></div>
-              <div className="info-list__row"><dt>Status</dt><dd>{formatStatusLabel(currentUser.status)}</dd></div>
-              <div className="info-list__row"><dt>Adres e-mail</dt><dd>{currentUser.email || "Brak danych"}</dd></div>
-              <div className="info-list__row"><dt>Ostatnie logowanie</dt><dd>{formatTimestamp(currentUser.lastLoginAt)}</dd></div>
-            </dl>
-          </Panel>
-
-            <Panel
-              title={hasAdminAccess ? "Dostęp bieżącego konta" : "Dostęp w aplikacji"}
-            >
-            <div className="settings-module-pills">
-              {currentUserPermissions.length ? currentUserPermissions.map((label) => (
-                <span key={label} className="employees-relation-pill">{label}</span>
-              )) : <p className="status-message">Brak aktywnych modułów dla tego konta.</p>}
-            </div>
-          </Panel>
+          <SettingsProfilePanels
+            currentUser={currentUser}
+            currentUserPermissions={currentUserPermissions}
+            hasAdminAccess={hasAdminAccess}
+          />
 
           {hasAdminAccess ? (
             <>
-              <Panel className="panel--toolbar panel--toolbar--filters">
-                <div className="settings-toolbar">
-                  <div className="toolbar-tabs">
-                    <ActionButton type="button" variant={filter === "all" ? "primary" : "secondary"} onClick={() => setFilter("all")}>Wszystkie</ActionButton>
-                    <ActionButton type="button" variant={filter === "active" ? "primary" : "secondary"} onClick={() => setFilter("active")}>Aktywne</ActionButton>
-                    <ActionButton type="button" variant={filter === "inactive" ? "primary" : "secondary"} onClick={() => setFilter("inactive")}>Nieaktywne</ActionButton>
-                  </div>
-                  <SearchField value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Szukaj po nazwie, loginie, e-mailu lub roli" />
-                </div>
-              </Panel>
+              <SettingsUsersPanel
+                currentUserId={currentUser.id || ""}
+                editingUserId={editingUser?.id ?? null}
+                filter={filter}
+                search={search}
+                rows={filteredUsers}
+                showTable={Boolean(adminData)}
+                onEdit={handleSelectManagedUser}
+                onFilterChange={setFilter}
+                onSearchChange={setSearch}
+                onSelect={handleSelectManagedUser}
+              />
 
               {adminState.status === "loading" ? (
-                <Panel><div className="status-stack"><p className="status-message">Ładowanie administracji użytkownikami...</p></div></Panel>
+                <Panel>
+                  <div className="status-stack">
+                    <p className="status-message">Ładowanie administracji użytkownikami...</p>
+                  </div>
+                </Panel>
               ) : null}
 
               {adminState.status === "error" ? (
                 <Panel>
                   <div className="status-stack">
                     <p className="status-message status-message--error">{adminState.message}</p>
-                    <ActionButton type="button" onClick={() => void reloadAdminData()}>Spróbuj ponownie</ActionButton>
+                    <ActionButton type="button" onClick={() => void reloadAdminData()}>
+                      Spróbuj ponownie
+                    </ActionButton>
                   </div>
                 </Panel>
               ) : null}
 
               {adminData ? (
-                <>
-                    <Panel title="Konta użytkowników">
-                    <DataTable
-                      columns={buildUsersTableColumns({
-                        currentUserId: currentUser.id || "",
-                        onEdit: (selectedUser) => {
-                          setEditingUserId(selectedUser.id);
-                          setFormError(null);
-                          setFormStatus(null);
-                        },
-                      })}
-                      rows={filteredUsers}
-                      rowKey={(row) => row.id}
-                      emptyMessage="Brak kont użytkowników dla bieżącego filtra."
-                      onRowClick={(row) => {
-                        setEditingUserId(row.id);
-                        setFormError(null);
-                        setFormStatus(null);
-                      }}
-                      getRowClassName={(row) => (row.id === editingUser?.id ? "data-table__row--active" : undefined)}
-                      tableClassName="settings-table"
-                    />
-                  </Panel>
-
-                    <Panel title="Rejestr zmian">
-                    <div className="settings-audit-toolbar">
-                      <SearchField value={auditSearch} onChange={(event) => setAuditSearch(event.target.value)} placeholder="Szukaj po użytkowniku, module, akcji lub obiekcie" />
-                    </div>
-                    <DataTable
-                      columns={buildAuditTableColumns()}
-                      rows={filteredAuditLog}
-                      rowKey={(row) => row.id}
-                      emptyMessage="Rejestr zmian jest pusty."
-                      tableClassName="settings-table settings-table--audit"
-                    />
-                  </Panel>
-                </>
+                <SettingsAuditPanel
+                  rows={filteredAuditLog}
+                  search={auditSearch}
+                  onSearchChange={setAuditSearch}
+                />
               ) : null}
             </>
           ) : (
-              <Panel title="Administracja systemu">
+            <Panel title="Administracja systemu">
               <p className="status-message">Wymaga roli administratora.</p>
             </Panel>
           )}
         </div>
 
         <div className="settings-side-stack">
-            <Panel title="Konto bieżące">
-            <div className="settings-detail-grid">
-              <div className="settings-detail-card"><span className="field-card__label">Login</span><strong>{currentUser.username}</strong><small>{currentUser.email || "Brak e-maila"}</small></div>
-              <div className="settings-detail-card"><span className="field-card__label">Rola</span><strong>{formatRoleLabel(currentUser.role)}</strong><small>{formatStatusLabel(currentUser.status)}</small></div>
-              <div className="settings-detail-card"><span className="field-card__label">Uprawnienia</span><strong>{currentUserPermissions.length}</strong><small>aktywnych modułów</small></div>
-              <div className="settings-detail-card"><span className="field-card__label">Sesja</span><strong>Aktywna</strong><small>{formatTimestamp(currentUser.lastLoginAt)}</small></div>
-            </div>
-          </Panel>
+          <SettingsCurrentAccountPanel
+            currentUser={currentUser}
+            currentUserPermissions={currentUserPermissions}
+          />
 
           {hasAdminAccess && adminData ? (
             <>
-                <Panel title={editingUser ? `Edycja konta: ${editingUser.name}` : "Nowe konto użytkownika"}>
-                {editingUser ? (
-                  <div className="settings-user-spotlight">
-                    <div className="data-table__stack">
-                      <span className="data-table__primary">{editingUser.name}</span>
-                      <span className="data-table__secondary">{editingUser.username} • {formatRoleLabel(editingUser.role)}</span>
-                    </div>
-                    <div className="settings-module-pills">
-                      {editingUserPermissions.length ? editingUserPermissions.map((label) => (
-                        <span key={label} className="employees-relation-pill employees-relation-pill--muted">{label}</span>
-                      )) : <p className="status-message">To konto nie ma aktywnych modułów.</p>}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="status-message">Nowe konto użytkownika.</p>
-                )}
-
-                <form className="settings-user-form" onSubmit={handleSaveUser}>
-                  <FormGrid columns={2}>
-                    <label className="form-field"><span>Imię i nazwisko</span><input value={formValues.name} onChange={(event) => setFormValues((current) => ({ ...current, name: event.target.value }))} placeholder="Jan Kowalski" /></label>
-                    <label className="form-field"><span>Login</span><input value={formValues.username} onChange={(event) => setFormValues((current) => ({ ...current, username: event.target.value }))} placeholder="jan.kowalski" /></label>
-                    <label className="form-field"><span>Adres e-mail</span><input value={formValues.email} onChange={(event) => setFormValues((current) => ({ ...current, email: event.target.value }))} placeholder="jan.kowalski@clode.pl" /></label>
-                    <label className="form-field"><span>{editingUser ? "Nowe hasło (opcjonalnie)" : "Hasło startowe"}</span><input type="password" value={formValues.password} onChange={(event) => setFormValues((current) => ({ ...current, password: event.target.value }))} placeholder={editingUser ? "Pozostaw puste bez zmiany" : "Minimum startowe"} /></label>
-                    <label className="form-field"><span>Rola</span><select value={formValues.role} onChange={(event) => handleRoleChange(event.target.value)}><option value="admin">Administrator</option><option value="kierownik">Kierownik</option><option value="księgowość">Księgowość</option><option value="read-only">Tylko odczyt</option></select></label>
-                    <label className="form-field"><span>Status konta</span><select value={formValues.status} onChange={(event) => setFormValues((current) => ({ ...current, status: event.target.value === "inactive" ? "inactive" : "active" }))}><option value="active">Aktywne</option><option value="inactive">Nieaktywne</option></select></label>
-                    <label className="settings-toggle-card">
-                      <input type="checkbox" checked={formValues.canApproveVacations} disabled={isAdminRole(formValues.role)} onChange={(event) => setFormValues((current) => ({ ...current, canApproveVacations: event.target.checked }))} />
-                      <div><strong>Akceptacja urlopów</strong><small>{isAdminRole(formValues.role) ? "Administrator akceptuje urlopy zawsze." : "Włącz, jeśli konto ma zatwierdzać wnioski urlopowe."}</small></div>
-                    </label>
-                  </FormGrid>
-
-                  <div className="settings-permissions">
-                    <div className="panel__heading">
-                      <h3 className="panel__title">Uprawnienia modułowe</h3>
-                    </div>
-                    <div className="settings-permissions-grid">
-                      {settingsPermissionDefinitions.map((definition) => {
-                        const locked = isAdminRole(formValues.role) || definition.viewId === "settingsView";
-                        return (
-                          <label key={definition.viewId} className={["settings-permission-card", locked ? "settings-permission-card--locked" : ""].join(" ")}>
-                            <input
-                              type="checkbox"
-                              checked={Boolean(formValues.permissions[definition.viewId])}
-                              disabled={locked}
-                              onChange={(event) =>
-                                setFormValues((current) => ({
-                                  ...current,
-                                  permissions: {
-                                    ...current.permissions,
-                                    [definition.viewId]: definition.viewId === "settingsView" ? false : event.target.checked,
-                                  },
-                                }))
-                              }
-                            />
-                            <div><strong>{definition.label}</strong><small>{definition.viewId}</small></div>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <FormFeedback
-                    items={[
-                      formError ? { tone: "error", text: formError } : null,
-                      formStatus ? { tone: "success", text: formStatus } : null,
-                    ]}
-                  />
-
-                  <FormActions
-                    leading={
-                      <>
-                        <ActionButton
-                          type="button"
-                          variant="secondary"
-                          onClick={handleCreateNewUser}
-                          disabled={isSubmittingUser || isDeletingUser}
-                        >
-                          {editingUser ? "Nowe konto" : "Wyczyść formularz"}
-                        </ActionButton>
-                        {editingUser ? (
-                          <ActionButton
-                            type="button"
-                            variant="secondary"
-                            disabled={resetTargetUsername === editingUser.username}
-                            onClick={() => void handleManagedUserPasswordReset()}
-                          >
-                            {resetTargetUsername === editingUser.username ? "Wysyłanie..." : "Reset hasła użytkownika"}
-                          </ActionButton>
-                        ) : null}
-                        {editingUser ? (
-                          <ActionButton
-                            type="button"
-                            variant="ghost"
-                            disabled={isDeletingUser || editingUser.id === currentUser.id}
-                            onClick={() => void handleDeleteUser()}
-                          >
-                            {isDeletingUser ? "Usuwanie..." : "Usuń konto"}
-                          </ActionButton>
-                        ) : null}
-                      </>
-                    }
-                    trailing={
-                      <ActionButton type="submit" disabled={isSubmittingUser}>
-                        {isSubmittingUser ? "Zapisywanie..." : editingUser ? "Zapisz zmiany" : "Dodaj konto"}
-                      </ActionButton>
-                    }
-                  />
-                </form>
-              </Panel>
-
-                <Panel title="Workflow urlopów">
-                <FormGrid columns={1}>
-                  <label className="form-field"><span>Tryb akceptacji urlopów</span><select value={workflowValues.vacationApprovalMode} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationApprovalMode: event.target.value === "admin" ? "admin" : "permission" }))}><option value="permission">Według uprawnień użytkowników</option><option value="admin">Tylko administrator</option></select></label>
-                  <label className="form-field"><span>Powiadomienia urlopowe</span><select value={workflowValues.vacationNotifications} onChange={(event) => setWorkflowValues((current) => ({ ...current, vacationNotifications: event.target.value === "off" ? "off" : "on" }))}><option value="on">Włączone</option><option value="off">Wyłączone</option></select></label>
-                </FormGrid>
-                <FormFeedback
-                  items={[
-                    workflowStatus
-                      ? {
-                          tone: workflowStatus.includes("Nie udało") ? "error" : "success",
-                          text: workflowStatus,
-                        }
-                      : null,
-                  ]}
-                />
-                <FormActions
-                  trailing={
-                    <ActionButton type="button" disabled={isSavingWorkflow} onClick={() => void handleSaveWorkflow()}>
-                      {isSavingWorkflow ? "Zapisywanie..." : "Zapisz workflow"}
-                    </ActionButton>
-                  }
-                />
-              </Panel>
+              <SettingsUserFormPanel
+                currentUserId={currentUser.id || ""}
+                editingUser={editingUser}
+                formError={formError}
+                formStatus={formStatus}
+                formValues={formValues}
+                isDeletingUser={isDeletingUser}
+                isSubmittingUser={isSubmittingUser}
+                onCreateNewUser={handleCreateNewUser}
+                onDeleteUser={handleDeleteUser}
+                onPasswordReset={handleManagedUserPasswordReset}
+                onRoleChange={handleRoleChange}
+                onSubmit={handleSaveUser}
+                resetTargetUsername={resetTargetUsername}
+                setFormValues={setFormValues}
+              />
+              <SettingsWorkflowPanel
+                isSavingWorkflow={isSavingWorkflow}
+                onSave={handleSaveWorkflow}
+                setWorkflowValues={setWorkflowValues}
+                workflowStatus={workflowStatus}
+                workflowValues={workflowValues}
+              />
             </>
           ) : null}
         </div>

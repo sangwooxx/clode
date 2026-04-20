@@ -1,19 +1,19 @@
 import { EmployeesView } from "@/features/employees";
 import { fetchEmployeesBootstrapServer } from "@/features/employees/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function EmployeesPage() {
+  await requireServerSession("/employees");
+
+  let initialError: string | undefined;
+  let initialBootstrap;
+
   try {
-    const bootstrap = await fetchEmployeesBootstrapServer();
-    return <EmployeesView initialBootstrap={bootstrap} />;
+    initialBootstrap = await fetchEmployeesBootstrapServer();
   } catch (error) {
-    return (
-      <EmployeesView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udało się przygotować kartoteki pracowników."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie przygotowac kartoteki pracownikow.";
   }
+
+  return <EmployeesView initialBootstrap={initialBootstrap} initialError={initialError} />;
 }

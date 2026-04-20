@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { FormActions } from "@/components/ui/form-actions";
 import { FormFeedback } from "@/components/ui/form-feedback";
-import { FormGrid } from "@/components/ui/form-grid";
-import { Panel } from "@/components/ui/panel";
 import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
-import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
-import {
-  formatEmployeeCodeLabel,
-  formatEmployeeDisplayName,
-} from "@/features/employees/formatters";
 import { findEmployeeByKey } from "@/features/employees/mappers";
 import type { EmployeeDirectoryRecord } from "@/features/employees/types";
 import {
@@ -24,10 +15,6 @@ import {
   saveWorkwearCatalogItem,
   saveWorkwearIssueRecord,
 } from "@/features/workwear/api";
-import {
-  formatWorkwearDate,
-  formatWorkwearQuantity,
-} from "@/features/workwear/formatters";
 import {
   buildWorkwearAttentionRows,
   buildWorkwearCatalogFormValues,
@@ -41,33 +28,37 @@ import {
   buildWorkwearSummaryCards,
   resolveInitialWorkwearEmployeeKey,
 } from "@/features/workwear/mappers";
+import {
+  filterWorkwearCatalogRows,
+  filterWorkwearEmployeeRows,
+} from "@/features/workwear/workwear-filters";
+import { buildWorkwearPdfDefinitions, printWorkwearPdf } from "@/features/workwear/workwear-pdf";
+import { WorkwearToolbar } from "@/features/workwear/workwear-toolbar";
+import {
+  WorkwearAttentionPanel,
+  WorkwearCatalogPanel,
+  WorkwearDirectoryPanels,
+} from "@/features/workwear/components/WorkwearDirectoryPanels";
+import {
+  WorkwearCatalogFormPanel,
+  WorkwearIssueFormPanel,
+} from "@/features/workwear/components/WorkwearFormsPanels";
 import type {
-  WorkwearAttentionRow,
   WorkwearBootstrapData,
   WorkwearCatalogFormValues,
   WorkwearCatalogRow,
-  WorkwearEmployeeRow,
   WorkwearIssueEntry,
   WorkwearIssueFormValues,
-  WorkwearIssueRow,
 } from "@/features/workwear/types";
-import { WORKWEAR_SIZE_OPTIONS } from "@/features/workwear/types";
 import { useAuth } from "@/lib/auth/auth-context";
 import {
   buildPdfDialogSections,
   createPdfConfigState,
-  getEnabledPdfColumnIds,
   togglePdfColumn,
   togglePdfSection,
   type PdfConfigState,
   type PdfSectionDefinition,
 } from "@/lib/print/pdf-config";
-import {
-  compactPrintSections,
-  pickPrintTableColumns,
-  printDocument,
-  type PrintTable,
-} from "@/lib/print/print-document";
 
 type WorkwearScreenState =
   | { status: "loading" }
@@ -89,240 +80,6 @@ function normalizeIssueSelection(value: string | null | undefined) {
   return normalized || null;
 }
 
-function employeeColumns(): Array<DataTableColumn<WorkwearEmployeeRow>> {
-  return [
-    {
-      key: "lp",
-      header: "Lp.",
-      className: "workwear-col-lp",
-      sortValue: (row) => row.index,
-      render: (row) => row.index,
-    },
-    {
-      key: "employee",
-      header: "Pracownik",
-      className: "workwear-col-employee",
-      sortValue: (row) =>
-        `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {formatEmployeeDisplayName(row.employee, row.employee.name)}
-          </span>
-          <span className="data-table__secondary">
-            {row.employee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(row.employee.worker_code)}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "status",
-      header: "Status",
-      className: "workwear-col-status",
-      sortValue: (row) => `${row.employee.status} ${row.issuesCount}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span
-            className={
-              row.employee.status === "inactive"
-                ? "data-table__status-pill data-table__status-pill--muted"
-                : "data-table__status-pill"
-            }
-          >
-            {row.employee.status === "inactive" ? "Historia" : "Aktywny"}
-          </span>
-          <span className="data-table__secondary">
-            {row.issuesCount > 0 ? `${row.issuesCount} wydan` : "Brak wydan"}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "issues",
-      header: "Wydania",
-      className: "workwear-col-issues",
-      sortValue: (row) => row.totalQuantity,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{formatWorkwearQuantity(row.totalQuantity)} szt.</span>
-          <span className="data-table__secondary">
-            {row.lastItemName ? `Ostatnio: ${row.lastItemName}` : "Bez historii"}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "last_issue",
-      header: "Ostatnie wydanie",
-      className: "workwear-col-date",
-      sortValue: (row) => row.lastIssueDate,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {row.lastIssueDate ? formatWorkwearDate(row.lastIssueDate) : "Brak"}
-          </span>
-          <span className="data-table__secondary">
-            {row.lastIssueDate ? row.lastIssueDate : "Nie ma wpisow"}
-          </span>
-        </div>
-      ),
-    },
-  ];
-}
-
-function issueColumns(): Array<DataTableColumn<WorkwearIssueRow>> {
-  return [
-    {
-      key: "lp",
-      header: "Lp.",
-      className: "workwear-col-lp",
-      sortValue: (row) => row.index,
-      render: (row) => row.index,
-    },
-    {
-      key: "issue",
-      header: "Data i element",
-      className: "workwear-col-issue",
-      sortValue: (row) => `${row.entry.issue.issue_date} ${row.entry.issue.item_name || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {row.entry.issue.item_name || "Element spoza katalogu"}
-          </span>
-          <span className="data-table__secondary">
-            {formatWorkwearDate(row.entry.issue.issue_date)}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "spec",
-      header: "Rozmiar / ilosc",
-      className: "workwear-col-spec",
-      sortValue: (row) => `${row.entry.issue.size || ""} ${row.entry.issue.quantity}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {row.entry.issue.size || "UNI"} • {formatWorkwearQuantity(row.entry.issue.quantity)} szt.
-          </span>
-          <span className="data-table__secondary">
-            {row.entry.item?.category || "Bez kategorii"}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "state",
-      header: "Semantyka wpisu",
-      className: "workwear-col-state",
-      sortValue: (row) => `${row.entry.resolution} ${row.entry.issue.notes || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span
-            className={
-              row.entry.resolution === "ambiguous" || row.entry.resolution === "missing_employee"
-                ? "data-table__status-pill data-table__status-pill--warning"
-                : row.entry.isHistorical
-                  ? "data-table__status-pill data-table__status-pill--muted"
-                  : "data-table__status-pill"
-            }
-          >
-            {row.entry.resolutionLabel}
-          </span>
-          <span className="data-table__secondary">{row.entry.issue.notes || "Bez uwag"}</span>
-        </div>
-      ),
-    },
-  ];
-}
-
-function catalogColumns(): Array<DataTableColumn<WorkwearCatalogRow>> {
-  return [
-    {
-      key: "lp",
-      header: "Lp.",
-      className: "workwear-col-lp",
-      sortValue: (row) => row.index,
-      render: (row) => row.index,
-    },
-    {
-      key: "item",
-      header: "Element",
-      className: "workwear-col-item",
-      sortValue: (row) => `${row.item.name} ${row.item.category || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.item.name}</span>
-          <span className="data-table__secondary">{row.item.category || "Bez kategorii"}</span>
-        </div>
-      ),
-    },
-    {
-      key: "usage",
-      header: "Wydania",
-      className: "workwear-col-issues",
-      sortValue: (row) => row.issuesCount,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.issuesCount}</span>
-          <span className="data-table__secondary">
-            {row.activeAssignments} aktywnych pracownikow
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "notes",
-      header: "Standard",
-      className: "workwear-col-notes",
-      sortValue: (row) => `${row.item.notes || ""} ${row.lastIssueDate || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">{row.item.notes || "Bez opisu"}</span>
-          <span className="data-table__secondary">
-            {row.lastIssueDate ? `Ostatnie: ${formatWorkwearDate(row.lastIssueDate)}` : "Brak wydan"}
-          </span>
-        </div>
-      ),
-    },
-  ];
-}
-
-function attentionColumns(): Array<DataTableColumn<WorkwearAttentionRow>> {
-  return [
-    {
-      key: "lp",
-      header: "Lp.",
-      className: "workwear-col-lp",
-      sortValue: (row) => row.index,
-      render: (row) => row.index,
-    },
-    {
-      key: "entry",
-      header: "Wpis legacy",
-      className: "workwear-col-issue",
-      sortValue: (row) => `${row.entry.issue.issue_date} ${row.entry.issue.employee_name || ""} ${row.entry.issue.item_name || ""}`,
-      render: (row) => (
-        <div className="data-table__stack">
-          <span className="data-table__primary">
-            {row.entry.issue.employee_name || "Brak pracownika"} • {row.entry.issue.item_name}
-          </span>
-          <span className="data-table__secondary">
-            {formatWorkwearDate(row.entry.issue.issue_date)}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: "reason",
-      header: "Powod",
-      className: "workwear-col-notes",
-      sortValue: (row) => row.reason,
-      render: (row) => row.reason,
-    },
-  ];
-}
-
 function createInitialSelection(bootstrap: WorkwearBootstrapData) {
   const employees = buildWorkwearDirectory(bootstrap);
   const issueEntries = buildWorkwearIssueEntries({
@@ -334,54 +91,6 @@ function createInitialSelection(bootstrap: WorkwearBootstrapData) {
   return resolveInitialWorkwearEmployeeKey({
     employees,
     issueEntries,
-  });
-}
-
-function printWorkwearCard(employee: EmployeeDirectoryRecord, issueRows: WorkwearIssueRow[]) {
-  const totalQuantity = issueRows.reduce(
-    (sum, row) => sum + Number(row.entry.issue.quantity || 0),
-    0
-  );
-
-  printDocument({
-    title: "Wydanie odziezy roboczej",
-    subtitle: employee.name,
-    filename: `clode-wydanie-odziezy-${employee.worker_code || employee.id || "rekord"}`,
-    meta: [
-      `Status: ${employee.status === "inactive" ? "Nieaktywny" : "Aktywny"}`,
-      `Stanowisko: ${employee.position || "Brak danych"}`,
-    ],
-    sections: [
-      {
-        title: "Pracownik",
-        details: [
-          { label: "Imię i nazwisko", value: employee.name || "Brak danych" },
-          { label: "Kod pracownika", value: employee.worker_code || "Brak danych" },
-          { label: "Stanowisko", value: employee.position || "Brak danych" },
-          {
-            label: "Liczba wydan",
-            value: String(issueRows.length),
-          },
-          {
-            label: "Łączna ilość",
-            value: `${formatWorkwearQuantity(totalQuantity)} szt.`,
-          },
-        ],
-      },
-      {
-        title: "Pozycje wydania",
-        table: {
-          columns: ["Data", "Element", "Rozmiar", "Ilość", "Uwagi"],
-          rows: issueRows.map((row) => [
-            formatWorkwearDate(row.entry.issue.issue_date),
-            row.entry.issue.item_name || "-",
-            row.entry.issue.size || "-",
-            `${formatWorkwearQuantity(row.entry.issue.quantity)} szt.`,
-            row.entry.issue.notes || "-",
-          ]),
-        },
-      },
-    ],
   });
 }
 
@@ -494,44 +203,10 @@ export function WorkwearView({
   const workwearPdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
     if (!derived?.selectedEmployee) return [];
 
-    const totalQuantity = derived.selectedIssueRows.reduce(
-      (sum, row) => sum + Number(row.entry.issue.quantity || 0),
-      0
-    );
-
-    return [
-      {
-        id: "employee",
-        label: "Dane pracownika",
-        description: "Identyfikacja pracownika i kontekst wydania.",
-        preview: [
-          derived.selectedEmployee.name || "Bez nazwy",
-          derived.selectedEmployee.position || "Bez stanowiska",
-        ],
-      },
-      {
-        id: "summary",
-        label: "Podsumowanie wydania",
-        description: "Liczba wydań i suma wydanych sztuk.",
-        preview: [
-          `${derived.selectedIssueRows.length} pozycji`,
-          `${formatWorkwearQuantity(totalQuantity)} szt.`,
-        ],
-      },
-      {
-        id: "items",
-        label: "Pozycje wydania",
-        description: "Tabela pozycji możliwych do przekazania lub archiwizacji.",
-        preview: [`${derived.selectedIssueRows.length} wierszy`],
-        columns: [
-          { id: "date", label: "Data" },
-          { id: "item", label: "Element" },
-          { id: "size", label: "Rozmiar" },
-          { id: "quantity", label: "Ilość" },
-          { id: "notes", label: "Uwagi" },
-        ],
-      },
-    ];
+    return buildWorkwearPdfDefinitions({
+      selectedEmployee: derived.selectedEmployee,
+      selectedIssueRows: derived.selectedIssueRows,
+    });
   }, [derived]);
 
   const workwearPdfSections = useMemo(
@@ -539,17 +214,21 @@ export function WorkwearView({
     [workwearPdfConfig, workwearPdfDefinitions]
   );
 
+  const loadInitialWorkwear = useEffectEvent(() => {
+    void handleRefresh();
+  });
+
   useEffect(() => {
     if (!initialBootstrap) {
-      void handleRefresh();
+      loadInitialWorkwear();
     }
-  }, []);
+  }, [initialBootstrap]);
 
   useEffect(() => {
     if (derived && derived.selectedKey !== selectedEmployeeKey) {
       setSelectedEmployeeKey(derived.selectedKey);
     }
-  }, [derived?.selectedKey]);
+  }, [derived, selectedEmployeeKey]);
 
   async function handleRefresh() {
     try {
@@ -572,7 +251,7 @@ export function WorkwearView({
       setCatalogForm(buildWorkwearCatalogFormValues());
       setMessage({
         tone: "success",
-        text: "Dane odziezy roboczej zostaly odswiezone.",
+        text: "Dane odzieży roboczej zostały odświeżone.",
       });
     } catch (error) {
       setScreen({
@@ -580,7 +259,7 @@ export function WorkwearView({
         message:
           error instanceof Error
             ? error.message
-            : "Nie udalo sie odswiezyc modulu odziezy roboczej.",
+            : "Nie udało się odświeżyć modułu odzieży roboczej.",
       });
     } finally {
       setBusyAction(null);
@@ -645,12 +324,12 @@ export function WorkwearView({
       );
       setMessage({
         tone: "success",
-        text: "Wydanie odziezy zostalo zapisane.",
+        text: "Wydanie odzieży zostało zapisane.",
       });
     } catch (error) {
       setMessage({
         tone: "error",
-        text: error instanceof Error ? error.message : "Nie udalo sie zapisac wydania.",
+        text: error instanceof Error ? error.message : "Nie udało się zapisać wydania.",
       });
     } finally {
       setBusyAction(null);
@@ -686,12 +365,12 @@ export function WorkwearView({
       );
       setMessage({
         tone: "success",
-        text: "Katalog odziezy zostal zapisany.",
+        text: "Katalog odzieży został zapisany.",
       });
     } catch (error) {
       setMessage({
         tone: "error",
-        text: error instanceof Error ? error.message : "Nie udalo sie zapisac elementu katalogu.",
+        text: error instanceof Error ? error.message : "Nie udało się zapisać elementu katalogu.",
       });
     } finally {
       setBusyAction(null);
@@ -722,12 +401,12 @@ export function WorkwearView({
       );
       setMessage({
         tone: "success",
-        text: "Wydanie odziezy zostalo usuniete.",
+        text: "Wydanie odzieży zostało usunięte.",
       });
     } catch (error) {
       setMessage({
         tone: "error",
-        text: error instanceof Error ? error.message : "Nie udalo sie usunac wydania.",
+        text: error instanceof Error ? error.message : "Nie udało się usunąć wydania.",
       });
     } finally {
       setBusyAction(null);
@@ -753,12 +432,12 @@ export function WorkwearView({
       }
       setMessage({
         tone: "success",
-        text: "Element katalogu zostal usuniety.",
+        text: "Element katalogu został usunięty.",
       });
     } catch (error) {
       setMessage({
         tone: "error",
-        text: error instanceof Error ? error.message : "Nie udalo sie usunac elementu katalogu.",
+        text: error instanceof Error ? error.message : "Nie udało się usunąć elementu katalogu.",
       });
     } finally {
       setBusyAction(null);
@@ -779,7 +458,7 @@ export function WorkwearView({
     if (entry.resolution === "ambiguous" || entry.resolution === "missing_employee") {
       setMessage({
         tone: "warning",
-        text: "Wpis legacy nie ma jednoznacznego pracownika. Wskaz go recznie przed zapisem.",
+        text: "Wpis legacy nie ma jednoznacznego pracownika. Wskaż go ręcznie przed zapisem.",
       });
     } else {
       setMessage(null);
@@ -804,77 +483,12 @@ export function WorkwearView({
     const enabledSectionIds = new Set(
       workwearPdfSections.filter((section) => section.enabled).map((section) => section.id)
     );
-    const totalQuantity = derived.selectedIssueRows.reduce(
-      (sum, row) => sum + Number(row.entry.issue.quantity || 0),
-      0
-    );
 
-    const itemsTable: PrintTable = {
-      columns: [
-        { id: "date", label: "Data", width: "16%" },
-        { id: "item", label: "Element", width: "34%" },
-        { id: "size", label: "Rozmiar", width: "14%", align: "center" },
-        { id: "quantity", label: "Ilość", width: "12%", align: "right" },
-        { id: "notes", label: "Uwagi", width: "24%" },
-      ],
-      rows: derived.selectedIssueRows.map((row) => ({
-        date: formatWorkwearDate(row.entry.issue.issue_date),
-        item: row.entry.issue.item_name || "—",
-        size: row.entry.issue.size || "—",
-        quantity: `${formatWorkwearQuantity(row.entry.issue.quantity)} szt.`,
-        notes: row.entry.issue.notes || "—",
-      })),
-      emptyText: "Brak pozycji wydania do wydruku.",
-    };
-
-    printDocument({
-      title: "Wydanie odzieży roboczej",
-      subtitle: derived.selectedEmployee.name,
-      context: derived.selectedEmployee.worker_code
-        ? `Kod ${derived.selectedEmployee.worker_code}`
-        : "Kartoteka bez kodu",
-      filename: `clode-wydanie-odziezy-${derived.selectedEmployee.worker_code || derived.selectedEmployee.id || "rekord"}`,
-      meta: [
-        `Status: ${derived.selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny"}`,
-        `Stanowisko: ${derived.selectedEmployee.position || "Brak danych"}`,
-      ],
-      sections: compactPrintSections([
-        enabledSectionIds.has("employee")
-          ? {
-              title: "Dane pracownika",
-              details: [
-                { label: "Imię i nazwisko", value: derived.selectedEmployee.name || "Brak danych" },
-                { label: "Kod pracownika", value: derived.selectedEmployee.worker_code || "Brak danych" },
-                { label: "Stanowisko", value: derived.selectedEmployee.position || "Brak danych" },
-                {
-                  label: "Status",
-                  value: derived.selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny",
-                },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("summary")
-          ? {
-              title: "Podsumowanie wydania",
-              details: [
-                { label: "Liczba wydań", value: String(derived.selectedIssueRows.length) },
-                {
-                  label: "Łączna ilość",
-                  value: `${formatWorkwearQuantity(totalQuantity)} szt.`,
-                },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("items")
-          ? {
-              title: "Pozycje wydania",
-              table: pickPrintTableColumns(
-                itemsTable,
-                getEnabledPdfColumnIds(workwearPdfConfig, "items")
-              ),
-            }
-          : null,
-      ]),
+    printWorkwearPdf({
+      selectedEmployee: derived.selectedEmployee,
+      selectedIssueRows: derived.selectedIssueRows,
+      enabledSectionIds,
+      pdfConfig: workwearPdfConfig,
     });
 
     setIsPdfDialogOpen(false);
@@ -883,11 +497,8 @@ export function WorkwearView({
   if (screen.status === "loading") {
     return (
       <div className="module-page status-stack">
-        <SectionHeader
-          eyebrow="Kartoteka BHP"
-          title="Odziez robocza"
-        />
-        <p className="status-message">Trwa ladowanie modulu odziezy roboczej...</p>
+        <SectionHeader eyebrow="Kartoteka BHP" title="Odzież robocza" />
+        <p className="status-message">Trwa ładowanie modułu odzieży roboczej...</p>
       </div>
     );
   }
@@ -897,138 +508,39 @@ export function WorkwearView({
       <div className="module-page status-stack">
         <SectionHeader
           eyebrow="Kartoteka BHP"
-          title="Odziez robocza"
+          title="Odzież robocza"
           actions={
             <ActionButton type="button" variant="secondary" onClick={() => void handleRefresh()}>
-              Sprobuj ponownie
+              Spróbuj ponownie
             </ActionButton>
           }
         />
         <p className="status-message status-message--error">
           {screen.status === "error"
             ? screen.message
-            : "Nie udalo sie zaladowac modulu odziezy roboczej."}
+            : "Nie udało się załadować modułu odzieży roboczej."}
         </p>
       </div>
     );
   }
 
-  const activeRows = derived.activeRows.filter((row) => {
-    const query = employeeSearch.trim().toLowerCase();
-    if (!query) {
-      return true;
-    }
-
-    return [row.employee.name, row.employee.position, row.employee.worker_code, row.lastItemName]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(query));
-  });
-
-  const historicalRows = derived.historicalRows.filter((row) => {
-    const query = employeeSearch.trim().toLowerCase();
-    if (!query) {
-      return true;
-    }
-
-    return [row.employee.name, row.employee.position, row.employee.worker_code, row.lastItemName]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(query));
-  });
-
-  const catalogRows = derived.catalogRows.filter((row) => {
-    const query = catalogSearch.trim().toLowerCase();
-    if (!query) {
-      return true;
-    }
-
-    return [row.item.name, row.item.category, row.item.notes]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(query));
-  });
-
+  const activeRows = filterWorkwearEmployeeRows(derived.activeRows, employeeSearch);
+  const historicalRows = filterWorkwearEmployeeRows(derived.historicalRows, employeeSearch);
+  const catalogRows = filterWorkwearCatalogRows(derived.catalogRows, catalogSearch);
   const employeeOptions = buildWorkwearEmployeeOptions({
     employees: derived.employees,
     includeEmployeeKey: editingIssueId ? issueForm.employee_key : null,
   });
-  const editingHistoricalEmployee =
-    issueForm.employee_key &&
-    employeeOptions.find((option) => option.key === issueForm.employee_key)?.historical;
-
-  const issueTableColumns = [
-    ...issueColumns(),
-    {
-      key: "actions",
-      header: "Akcje",
-      className: "workwear-col-actions",
-      render: (row: WorkwearIssueRow) => (
-        <div className="workwear-row-actions">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            disabled={!canWrite}
-            onClick={(event) => {
-              event.stopPropagation();
-              handleEditIssue(row.entry);
-            }}
-          >
-            Edytuj
-          </ActionButton>
-          <ActionButton
-            type="button"
-            variant="ghost"
-            disabled={!canWrite}
-            onClick={(event) => {
-              event.stopPropagation();
-              void handleDeleteIssue(row.entry);
-            }}
-          >
-            Usun
-          </ActionButton>
-        </div>
-      ),
-    } satisfies DataTableColumn<WorkwearIssueRow>,
-  ];
-
-  const catalogTableColumns = [
-    ...catalogColumns(),
-    {
-      key: "actions",
-      header: "Akcje",
-      className: "workwear-col-actions",
-      render: (row: WorkwearCatalogRow) => (
-        <div className="workwear-row-actions">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            disabled={!canWrite}
-            onClick={(event) => {
-              event.stopPropagation();
-              handleEditCatalogItem(row);
-            }}
-          >
-            Edytuj
-          </ActionButton>
-          <ActionButton
-            type="button"
-            variant="ghost"
-            disabled={!canWrite}
-            onClick={(event) => {
-              event.stopPropagation();
-              void handleDeleteCatalogItem(row);
-            }}
-          >
-            Usun
-          </ActionButton>
-        </div>
-      ),
-    } satisfies DataTableColumn<WorkwearCatalogRow>,
-  ];
+  const selectedEmployeeInactive = derived.selectedEmployee?.status === "inactive";
+  const editingHistoricalEmployee = issueForm.employee_key
+    ? employeeOptions.find((option) => option.key === issueForm.employee_key)?.historical
+    : undefined;
 
   return (
     <div className="module-page">
       <SectionHeader
         eyebrow="Kartoteka BHP"
-        title="Odziez robocza"
+        title="Odzież robocza"
         actions={
           <div className="module-actions">
             <div className="module-actions__primary">
@@ -1054,7 +566,7 @@ export function WorkwearView({
                 onClick={() => void handleRefresh()}
                 disabled={busyAction === "refresh"}
               >
-                {busyAction === "refresh" ? "Odswiezanie..." : "Odswiez"}
+                {busyAction === "refresh" ? "Odświeżanie..." : "Odśwież"}
               </ActionButton>
             </div>
           </div>
@@ -1067,367 +579,70 @@ export function WorkwearView({
         ))}
       </div>
 
-      <div className="workwear-toolbar">
-        <SearchField
-          value={employeeSearch}
-          onChange={(event) => setEmployeeSearch(event.target.value)}
-          placeholder="Szukaj pracownika, kodu lub ostatniego wydania"
-        />
-        <SearchField
-          value={catalogSearch}
-          onChange={(event) => setCatalogSearch(event.target.value)}
-          placeholder="Szukaj elementu lub kategorii"
-        />
-      </div>
-
-      <FormFeedback
-        items={[
-          message ? { tone: message.tone, text: message.text } : null,
-        ]}
+      <WorkwearToolbar
+        employeeSearch={employeeSearch}
+        catalogSearch={catalogSearch}
+        onEmployeeSearchChange={setEmployeeSearch}
+        onCatalogSearchChange={setCatalogSearch}
       />
+
+      <FormFeedback items={[message ? { tone: message.tone, text: message.text } : null]} />
 
       <div className="workwear-layout">
         <div className="workwear-main-stack">
-            <Panel title="Aktywni pracownicy">
-            <DataTable
-              columns={employeeColumns()}
-              rows={activeRows}
-              rowKey={(row) => row.employee.key}
-              onRowClick={(row) => handleSelectEmployee(row.employee)}
-              getRowClassName={(row) =>
-                row.employee.key === derived.selectedKey ? "data-table__row--active" : undefined
-              }
-              tableClassName="workwear-table"
-              emptyMessage="Brak aktywnych pracownikow dla tego filtra."
-            />
-          </Panel>
-
-          {historicalRows.length > 0 ? (
-              <Panel title="Historia pracownikow nieaktywnych">
-              <div className="workwear-history-list">
-                {historicalRows.map((row) => (
-                  <button
-                    key={row.employee.key}
-                    type="button"
-                    className={`workwear-history-list__item${
-                      row.employee.key === derived.selectedKey ? " is-active" : ""
-                    }`}
-                    onClick={() => handleSelectEmployee(row.employee)}
-                  >
-                    <strong>{row.employee.name}</strong>
-                    <span>
-                      {row.issuesCount} wydan • ostatnio{" "}
-                      {row.lastIssueDate ? formatWorkwearDate(row.lastIssueDate) : "brak"}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </Panel>
-          ) : null}
-
-            <Panel
-              title={
-                derived.selectedEmployee
-                  ? `Karta wydan: ${formatEmployeeDisplayName(
-                      derived.selectedEmployee,
-                      derived.selectedEmployee.name
-                    )}`
-                  : "Karta wydan pracownika"
-              }
-            >
-            {derived.selectedEmployee ? (
-              <div className="workwear-spotlight">
-                <div className="workwear-detail-grid">
-                  <div className="workwear-detail-card">
-                    <small>Status</small>
-                    <strong>
-                      {derived.selectedEmployee.status === "inactive" ? "Nieaktywny" : "Aktywny"}
-                    </strong>
-                  </div>
-                  <div className="workwear-detail-card">
-                    <small>Kod i stanowisko</small>
-                    <strong>
-                      {formatEmployeeCodeLabel(derived.selectedEmployee.worker_code)} •{" "}
-                      {derived.selectedEmployee.position || "Bez stanowiska"}
-                    </strong>
-                  </div>
-                  <div className="workwear-detail-card">
-                    <small>Liczba wydan</small>
-                    <strong>{derived.selectedIssueRows.length}</strong>
-                  </div>
-                  <div className="workwear-detail-card">
-                    <small>Laczna ilosc</small>
-                    <strong>
-                      {formatWorkwearQuantity(
-                        derived.selectedIssueRows.reduce(
-                          (sum, row) => sum + Number(row.entry.issue.quantity || 0),
-                          0
-                        )
-                      )}{" "}
-                      szt.
-                    </strong>
-                  </div>
-                </div>
-                <DataTable
-                  columns={issueTableColumns}
-                  rows={derived.selectedIssueRows}
-                  rowKey={(row) => row.entry.issue.id}
-                  tableClassName="workwear-table"
-                  emptyMessage="Brak wydan dla tego pracownika."
-                />
-              </div>
-            ) : (
-              <p className="status-message">Wybierz pracownika z listy, aby zobaczyc jego karte.</p>
-            )}
-          </Panel>
-
-          {derived.attentionRows.length > 0 ? (
-              <Panel title="Wpisy wymagajace uwagi">
-              <DataTable
-                columns={attentionColumns()}
-                rows={derived.attentionRows}
-                rowKey={(row) => row.entry.issue.id}
-                tableClassName="workwear-table"
-              />
-            </Panel>
-          ) : null}
-
-            <Panel title="Katalog elementow">
-            <DataTable
-              columns={catalogTableColumns}
-              rows={catalogRows}
-              rowKey={(row) => row.item.id}
-              tableClassName="workwear-table"
-              emptyMessage="Katalog odziezy jest pusty."
-            />
-          </Panel>
+          <WorkwearDirectoryPanels
+            activeRows={activeRows}
+            historicalRows={historicalRows}
+            selectedEmployeeKey={derived.selectedKey}
+            selectedEmployee={derived.selectedEmployee}
+            selectedIssueRows={derived.selectedIssueRows}
+            canWrite={canWrite}
+            onSelectEmployee={handleSelectEmployee}
+            onEditIssue={handleEditIssue}
+            onDeleteIssue={(entry) => void handleDeleteIssue(entry)}
+          />
+          <WorkwearAttentionPanel attentionRows={derived.attentionRows} />
+          <WorkwearCatalogPanel
+            rows={catalogRows}
+            canWrite={canWrite}
+            onEditCatalogItem={handleEditCatalogItem}
+            onDeleteCatalogItem={(row) => void handleDeleteCatalogItem(row)}
+          />
         </div>
+
         <div className="workwear-side-stack">
-            <Panel title={editingIssueId ? "Edycja wydania" : "Nowe wydanie"}>
-            <form className="workwear-form" onSubmit={handleIssueSubmit}>
-              <FormGrid columns={2}>
-                <label className="form-field">
-                  <span>Pracownik</span>
-                  <select
-                    value={issueForm.employee_key}
-                    onChange={(event) =>
-                      setIssueForm((current) => ({
-                        ...current,
-                        employee_key: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  >
-                    <option value="">Wybierz pracownika</option>
-                    {employeeOptions.map((option) => (
-                      <option key={option.key} value={option.key}>
-                        {option.subtitle ? `${option.label} - ${option.subtitle}` : option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Data wydania</span>
-                  <input
-                    type="date"
-                    value={issueForm.issue_date}
-                    onChange={(event) =>
-                      setIssueForm((current) => ({
-                        ...current,
-                        issue_date: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Element</span>
-                  <select
-                    value={issueForm.item_id}
-                    onChange={(event) =>
-                      setIssueForm((current) => ({
-                        ...current,
-                        item_id: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite || screen.data.catalog.length === 0}
-                  >
-                    <option value="">Wybierz element</option>
-                    {screen.data.catalog.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} • {item.category}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Rozmiar</span>
-                  <select
-                    value={issueForm.size}
-                    onChange={(event) =>
-                      setIssueForm((current) => ({
-                        ...current,
-                        size: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  >
-                    {WORKWEAR_SIZE_OPTIONS.map((size) => (
-                      <option key={size} value={size}>
-                        {size}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Ilosc</span>
-                  <input
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={issueForm.quantity}
-                    onChange={(event) =>
-                      setIssueForm((current) => ({
-                        ...current,
-                        quantity: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  />
-                </label>
-              </FormGrid>
-
-              <label className="form-field">
-                <span>Uwagi</span>
-                <textarea
-                  value={issueForm.notes}
-                  onChange={(event) =>
-                    setIssueForm((current) => ({
-                      ...current,
-                      notes: event.target.value,
-                    }))
-                  }
-                  disabled={!canWrite}
-                />
-              </label>
-
-              <FormFeedback
-                items={[
-                  !canWrite
-                    ? {
-                        tone: "warning",
-                        text: "Twoja rola ma dostep tylko do odczytu tego modulu.",
-                      }
-                    : null,
-                  derived.selectedEmployee?.status === "inactive" && !editingIssueId
-                    ? {
-                        tone: "warning",
-                        text: "Wybrany pracownik jest nieaktywny. Historia pozostaje widoczna, ale nie dodasz nowego wydania.",
-                      }
-                    : null,
-                  editingHistoricalEmployee
-                    ? {
-                        tone: "warning",
-                        text: "Edytujesz historyczny wpis pracownika nieaktywnego. Zapis dotyczy korekty historii, nie nowego wydania.",
-                      }
-                    : null,
-                  screen.data.catalog.length === 0
-                    ? {
-                        tone: "warning",
-                        text: "Najpierw dodaj element do katalogu odziezy.",
-                      }
-                    : null,
-                ]}
-              />
-
-              <FormActions
-                leading={
-                  <ActionButton type="button" variant="secondary" onClick={handleNewIssue}>
-                    {editingIssueId ? "Nowe wydanie" : "Wyczysc formularz"}
-                  </ActionButton>
-                }
-                trailing={
-                  <ActionButton
-                    type="submit"
-                    disabled={!canWrite || busyAction === "save-issue" || screen.data.catalog.length === 0}
-                  >
-                    {busyAction === "save-issue"
-                      ? "Zapisywanie..."
-                      : editingIssueId
-                        ? "Zapisz zmiany"
-                        : "Zapisz wydanie"}
-                  </ActionButton>
-                }
-              />
-            </form>
-          </Panel>
-
-            <Panel title={editingCatalogId ? "Edycja elementu katalogu" : "Nowy element katalogu"}>
-            <form className="workwear-form" onSubmit={handleCatalogSubmit}>
-              <FormGrid columns={2}>
-                <label className="form-field">
-                  <span>Nazwa elementu</span>
-                  <input
-                    value={catalogForm.name}
-                    onChange={(event) =>
-                      setCatalogForm((current) => ({
-                        ...current,
-                        name: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Kategoria</span>
-                  <input
-                    value={catalogForm.category}
-                    onChange={(event) =>
-                      setCatalogForm((current) => ({
-                        ...current,
-                        category: event.target.value,
-                      }))
-                    }
-                    disabled={!canWrite}
-                  />
-                </label>
-              </FormGrid>
-
-              <label className="form-field">
-                <span>Opis standardu</span>
-                <textarea
-                  value={catalogForm.notes}
-                  onChange={(event) =>
-                    setCatalogForm((current) => ({
-                      ...current,
-                      notes: event.target.value,
-                    }))
-                  }
-                  disabled={!canWrite}
-                />
-              </label>
-
-              <FormActions
-                leading={
-                  <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
-                    {editingCatalogId ? "Nowy element" : "Wyczysc formularz"}
-                  </ActionButton>
-                }
-                trailing={
-                  <ActionButton
-                    type="submit"
-                    disabled={!canWrite || busyAction === "save-catalog"}
-                  >
-                    {busyAction === "save-catalog"
-                      ? "Zapisywanie..."
-                      : editingCatalogId
-                        ? "Zapisz zmiany"
-                        : "Dodaj do katalogu"}
-                  </ActionButton>
-                }
-              />
-            </form>
-          </Panel>
+          <WorkwearIssueFormPanel
+            canWrite={canWrite}
+            busyAction={busyAction}
+            catalog={screen.data.catalog}
+            employeeOptions={employeeOptions}
+            issueForm={issueForm}
+            editingIssueId={editingIssueId}
+            selectedEmployeeInactive={selectedEmployeeInactive}
+            editingHistoricalEmployee={editingHistoricalEmployee}
+            onChangeField={(field, value) =>
+              setIssueForm((current) => ({
+                ...current,
+                [field]: value,
+              }))
+            }
+            onReset={handleNewIssue}
+            onSubmit={handleIssueSubmit}
+          />
+          <WorkwearCatalogFormPanel
+            canWrite={canWrite}
+            busyAction={busyAction}
+            catalogForm={catalogForm}
+            editingCatalogId={editingCatalogId}
+            onChangeField={(field, value) =>
+              setCatalogForm((current) => ({
+                ...current,
+                [field]: value,
+              }))
+            }
+            onReset={handleNewCatalogItem}
+            onSubmit={handleCatalogSubmit}
+          />
         </div>
       </div>
 

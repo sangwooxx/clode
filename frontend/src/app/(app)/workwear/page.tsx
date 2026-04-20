@@ -1,19 +1,19 @@
 import { WorkwearView } from "@/features/workwear";
 import { fetchWorkwearBootstrapServer } from "@/features/workwear/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function WorkwearPage() {
+  await requireServerSession("/workwear");
+
+  let initialError: string | undefined;
+  let initialBootstrap;
+
   try {
-    const bootstrap = await fetchWorkwearBootstrapServer();
-    return <WorkwearView initialBootstrap={bootstrap} />;
+    initialBootstrap = await fetchWorkwearBootstrapServer();
   } catch (error) {
-    return (
-      <WorkwearView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udalo sie zaladowac modulu odziezy roboczej."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie zaladowac modulu odziezy roboczej.";
   }
+
+  return <WorkwearView initialBootstrap={initialBootstrap} initialError={initialError} />;
 }

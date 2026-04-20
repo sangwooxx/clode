@@ -183,7 +183,8 @@ class ContractMetricsTestCase(unittest.TestCase):
 
         self.assertTrue(usage["has_operational_data"])
         self.assertEqual(usage["usage"]["invoices"], 3)
-        self.assertEqual(usage["usage"]["hours"], 1)
+        self.assertEqual(usage["usage"]["hours_entries"], 1)
+        self.assertEqual(usage["usage"]["hours"], 10.0)
         self.assertEqual(usage["usage"]["planning"], 1)
         self.assertEqual(archived["status"], "archived")
 

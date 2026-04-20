@@ -1,8 +1,6 @@
 import type { ContractRecord } from "@/features/contracts/types";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
 
-export const WORK_CARDS_STORE_KEY = "work_cards";
-
 export type WorkCardEntryRecord = {
   id: string;
   contract_id: string;

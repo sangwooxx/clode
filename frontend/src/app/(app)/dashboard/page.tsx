@@ -1,19 +1,19 @@
 import { DashboardView } from "@/features/dashboard";
 import { fetchDashboardSnapshotServer } from "@/features/dashboard/server";
+import { requireServerSession } from "@/lib/auth/server-auth";
 
 export default async function DashboardPage() {
+  await requireServerSession("/dashboard");
+
+  let initialError: string | undefined;
+  let initialSnapshot;
+
   try {
-    const snapshot = await fetchDashboardSnapshotServer();
-    return <DashboardView initialSnapshot={snapshot} />;
+    initialSnapshot = await fetchDashboardSnapshotServer();
   } catch (error) {
-    return (
-      <DashboardView
-        initialError={
-          error instanceof Error
-            ? error.message
-            : "Nie udalo sie pobrac snapshotu dashboardu."
-        }
-      />
-    );
+    initialError =
+      error instanceof Error ? error.message : "Nie udalo sie pobrac snapshotu dashboardu.";
   }
+
+  return <DashboardView initialSnapshot={initialSnapshot} initialError={initialError} />;
 }

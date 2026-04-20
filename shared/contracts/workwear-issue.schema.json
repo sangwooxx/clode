@@ -5,6 +5,8 @@
   "required": ["id", "employee_name", "issue_date", "item_name"],
   "properties": {
     "id": { "type": "string" },
+    "employee_id": { "type": "string" },
+    "employee_key": { "type": "string" },
     "employee_name": { "type": "string" },
     "issue_date": { "type": "string" },
     "item_id": { "type": "string" },

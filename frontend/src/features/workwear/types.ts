@@ -1,8 +1,5 @@
 import type { EmployeeDirectoryRecord, EmployeesBootstrapData } from "@/features/employees/types";
 
-export const WORKWEAR_CATALOG_STORE_KEY = "workwear_catalog";
-export const WORKWEAR_ISSUES_STORE_KEY = "workwear_issues";
-
 export const WORKWEAR_SIZE_OPTIONS = [
   "UNI",
   "XS",

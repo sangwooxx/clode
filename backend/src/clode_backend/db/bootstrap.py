@@ -22,6 +22,66 @@ def _table_count(connection, table_name: str) -> int:
     return int((row or {}).get("count") or 0)
 
 
+def _sqlite_column_exists(connection, table_name: str, column_name: str) -> bool:
+    rows = connection.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return any(str(row["name"]) == column_name for row in rows)
+
+
+def _postgres_column_exists(connection, table_name: str, column_name: str) -> bool:
+    row = connection.execute(
+        """
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = ? AND column_name = ?
+        """,
+        (table_name, column_name),
+    ).fetchone()
+    return bool(row)
+
+
+def _ensure_employee_worker_code_schema(connection, *, is_sqlite: bool) -> None:
+    column_exists = (
+        _sqlite_column_exists(connection, "employees", "worker_code")
+        if is_sqlite
+        else _postgres_column_exists(connection, "employees", "worker_code")
+    )
+    if not column_exists:
+        connection.execute(
+            "ALTER TABLE employees ADD COLUMN worker_code TEXT NOT NULL DEFAULT ''"
+        )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS employees_worker_code_idx ON employees(worker_code)"
+    )
+
+
+def _ensure_workwear_issue_employee_key_schema(connection, *, is_sqlite: bool) -> None:
+    column_exists = (
+        _sqlite_column_exists(connection, "workwear_issues", "employee_key")
+        if is_sqlite
+        else _postgres_column_exists(connection, "workwear_issues", "employee_key")
+    )
+    if not column_exists:
+        connection.execute(
+            "ALTER TABLE workwear_issues ADD COLUMN employee_key TEXT NOT NULL DEFAULT ''"
+        )
+
+
+def _ensure_settings_workflow_schema(connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS settings_workflow (
+            id TEXT PRIMARY KEY,
+            vacation_approval_mode TEXT NOT NULL DEFAULT 'permission',
+            vacation_notifications TEXT NOT NULL DEFAULT 'on',
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS audit_logs_timestamp_idx ON audit_logs(timestamp)"
+    )
+
+
 def _ensure_sqlite_database(settings: Settings) -> None:
     if settings.allow_demo_seed_import and settings.database_seed_path and settings.database_seed_path.exists() and not settings.sqlite_path.exists():
         settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +109,9 @@ def _ensure_sqlite_database(settings: Settings) -> None:
                 "INSERT INTO schema_migrations (version, applied_at) VALUES (?, CURRENT_TIMESTAMP)",
                 (migration_path.name,),
             )
+        _ensure_employee_worker_code_schema(connection, is_sqlite=True)
+        _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=True)
+        _ensure_settings_workflow_schema(connection)
         connection.commit()
     finally:
         connection.close()
@@ -188,6 +251,9 @@ def _ensure_postgres_database(settings: Settings) -> None:
                 "INSERT INTO schema_migrations (version, applied_at) VALUES (?, CURRENT_TIMESTAMP::text)",
                 (schema_version,),
             )
+        _ensure_employee_worker_code_schema(connection, is_sqlite=False)
+        _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=False)
+        _ensure_settings_workflow_schema(connection)
         connection.commit()
     finally:
         connection.close()

@@ -1,4 +1,4 @@
-import { formatEmployeeStatus, normalizeEmployeeText } from "@/features/employees/formatters";
+import { normalizeEmployeeText } from "@/features/employees/formatters";
 import {
   buildEmployeeDirectory,
   findEmployeeByKey,
@@ -23,11 +23,7 @@ import type {
   PlanningHistoricalRow,
   PlanningSummaryCard,
 } from "@/features/planning/types";
-import {
-  getVacationRequestsForEmployee,
-  matchesVacationEmployeeReference,
-  vacationRangesOverlap,
-} from "@/features/vacations/mappers";
+import { getVacationRequestsForEmployee, vacationRangesOverlap } from "@/features/vacations/mappers";
 import { normalizeVacationStatus, normalizeVacationType } from "@/features/vacations/formatters";
 import type { ContractRecord } from "@/features/contracts/types";
 import type { PlanningAssignmentRecord, PlanningStore, VacationStore } from "@/features/vacations/types";

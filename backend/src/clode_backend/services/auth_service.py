@@ -22,6 +22,7 @@ from clode_backend.auth.sessions import (
 )
 from clode_backend.repositories.session_repository import SessionRepository
 from clode_backend.repositories.user_repository import UserRepository
+from clode_backend.services.public_users import build_public_user
 
 
 class AuthServiceError(RuntimeError):
@@ -31,10 +32,18 @@ class AuthServiceError(RuntimeError):
 
 
 class AuthService:
-    def __init__(self, user_repository: UserRepository, session_repository: SessionRepository, session_ttl_hours: int) -> None:
+    def __init__(
+        self,
+        user_repository: UserRepository,
+        session_repository: SessionRepository,
+        session_ttl_hours: int,
+        *,
+        secure_cookies: bool = False,
+    ) -> None:
         self.user_repository = user_repository
         self.session_repository = session_repository
         self.session_ttl_hours = session_ttl_hours
+        self.secure_cookies = secure_cookies
 
     def login(self, username: str, password: str) -> dict[str, Any]:
         normalized_login = str(username or "").strip().lower()
@@ -140,21 +149,5 @@ class AuthService:
 
     @staticmethod
     def to_public_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
-        if not user:
-            return None
-        return {
-            "id": user["id"],
-            "username": user["username"],
-            "email": user.get("email", ""),
-            "displayName": user["name"],
-            "name": user["name"],
-            "role": normalize_role(user.get("role")),
-            "is_active": bool(user.get("is_active")),
-            "status": "active" if bool(user.get("is_active")) else "inactive",
-            "permissions": effective_permissions(user.get("role"), user.get("permissions")),
-            "canApproveVacations": bool(user.get("can_approve_vacations")),
-            "created_at": user.get("created_at", ""),
-            "updated_at": user.get("updated_at", ""),
-            "last_login_at": user.get("last_login_at", ""),
-        }
+        return build_public_user(user)
 

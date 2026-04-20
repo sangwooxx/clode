@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsAuditLog",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "timestamp", "module", "action", "subject", "details", "user_id", "user_name"],
+    "additionalProperties": false,
+    "properties": {
+      "id": { "type": "string" },
+      "timestamp": { "type": "string" },
+      "module": { "type": "string" },
+      "action": { "type": "string" },
+      "subject": { "type": "string" },
+      "details": { "type": "string" },
+      "user_id": { "type": "string" },
+      "user_name": { "type": "string" }
+    }
+  }
+}

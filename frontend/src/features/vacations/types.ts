@@ -3,9 +3,6 @@ import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/type
 import type { SettingsWorkflowValues } from "@/features/settings/types";
 import type { WorkCardStore } from "@/features/work-cards/types";
 
-export const VACATIONS_STORE_KEY = "vacations";
-export const PLANNING_STORE_KEY = "planning";
-
 export type VacationType = "vacation" | "on_demand" | "sick_leave" | "other";
 export type VacationStatus = "pending" | "approved" | "rejected";
 

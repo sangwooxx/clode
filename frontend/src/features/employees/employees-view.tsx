@@ -275,7 +275,7 @@ export function EmployeesView({
     [detailEmployee?.medical_exam_valid_until]
   );
 
-  function handlePrintEmployee() {
+  function _handlePrintEmployee() {
     if (!detailEmployee) return;
 
     const relations = detailRelations;

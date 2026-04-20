@@ -1,14 +1,12 @@
 import type { AuthenticatedUser } from "@/lib/api/auth";
-import { ApiError } from "@/lib/api/http";
+import { http } from "@/lib/api/http";
 import {
   createUser,
   deleteUser,
-  listUsers,
   updateUser,
   type ManagedUserRecord,
   type SaveManagedUserPayload,
 } from "@/lib/api/users";
-import { getStore, saveStore } from "@/lib/api/stores";
 import {
   createAuditLogEntry,
   createDefaultWorkflowValues,
@@ -20,79 +18,11 @@ import {
   type SettingsWorkflowValues,
 } from "@/features/settings/types";
 
-type UnknownRecord = Record<string, unknown>;
-
 function normalizeUsername(value: string, fallback: string) {
   return String(value || fallback)
     .trim()
     .toLowerCase()
     .replace(/\s+/g, ".");
-}
-
-function isPlainObject(value: unknown): value is UnknownRecord {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-async function readOptionalStore<T>(storeKey: string, fallbackValue: T): Promise<T> {
-  try {
-    const response = await getStore<T>(storeKey);
-    return response.payload ?? fallbackValue;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      return fallbackValue;
-    }
-    throw error;
-  }
-}
-
-function normalizeWorkflowStore(payload: unknown): SettingsWorkflowValues {
-  if (isPlainObject(payload) && isPlainObject(payload.workflow)) {
-    return createDefaultWorkflowValues({
-      vacationApprovalMode: String(payload.workflow.vacationApprovalMode || "") as
-        | "permission"
-        | "admin",
-      vacationNotifications: String(payload.workflow.vacationNotifications || "") as
-        | "on"
-        | "off",
-    });
-  }
-
-  if (isPlainObject(payload)) {
-    return createDefaultWorkflowValues({
-      vacationApprovalMode: String(payload.vacationApprovalMode || "") as "permission" | "admin",
-      vacationNotifications: String(payload.vacationNotifications || "") as "on" | "off",
-    });
-  }
-
-  return createDefaultWorkflowValues();
-}
-
-function normalizeAuditLog(payload: unknown): SettingsAuditLogEntry[] {
-  const entries = Array.isArray(payload)
-    ? payload
-    : isPlainObject(payload) && Array.isArray(payload.entries)
-      ? payload.entries
-      : [];
-
-  return entries
-    .map((entry) => {
-      if (!isPlainObject(entry)) {
-        return null;
-      }
-
-      return {
-        id: String(entry.id || ""),
-        timestamp: String(entry.timestamp || ""),
-        module: String(entry.module || ""),
-        action: String(entry.action || ""),
-        subject: String(entry.subject || ""),
-        details: String(entry.details || ""),
-        user_id: String(entry.user_id || ""),
-        user_name: String(entry.user_name || ""),
-      } satisfies SettingsAuditLogEntry;
-    })
-    .filter((entry): entry is SettingsAuditLogEntry => Boolean(entry?.id))
-    .sort((left, right) => String(right.timestamp || "").localeCompare(String(left.timestamp || "")));
 }
 
 function sortUsers(users: ManagedUserRecord[]) {
@@ -109,17 +39,25 @@ function sortUsers(users: ManagedUserRecord[]) {
   });
 }
 
+function normalizeAuditLog(entries: SettingsAuditLogEntry[] | undefined) {
+  return [...(entries || [])].sort((left, right) =>
+    String(right.timestamp || "").localeCompare(String(left.timestamp || ""))
+  );
+}
+
 export async function fetchSettingsAdminBootstrap(): Promise<SettingsAdminBootstrap> {
-  const [usersResponse, settingsPayload, auditPayload] = await Promise.all([
-    listUsers(),
-    readOptionalStore<unknown>("settings", {}),
-    readOptionalStore<unknown>("audit_logs", []),
-  ]);
+  const response = await http<{
+    users?: ManagedUserRecord[];
+    workflow?: SettingsWorkflowValues;
+    audit_log?: SettingsAuditLogEntry[];
+  }>("/settings/bootstrap", {
+    method: "GET",
+  });
 
   return {
-    users: sortUsers(usersResponse.users || []),
-    workflow: normalizeWorkflowStore(settingsPayload),
-    auditLog: normalizeAuditLog(auditPayload),
+    users: sortUsers(response.users || []),
+    workflow: createDefaultWorkflowValues(response.workflow),
+    auditLog: normalizeAuditLog(response.audit_log),
   };
 }
 
@@ -130,18 +68,22 @@ export async function appendSettingsAuditLog(args: {
   subject: string;
   details?: string;
 }) {
-  const nextEntries = [
-    createAuditLogEntry({
-      actor: args.actor,
-      action: args.action,
-      subject: args.subject,
-      details: args.details,
-    }),
-    ...args.currentEntries,
-  ].slice(0, 1500);
+  const nextEntry = createAuditLogEntry({
+    actor: args.actor,
+    action: args.action,
+    subject: args.subject,
+    details: args.details,
+  });
 
-  await saveStore("audit_logs", nextEntries);
-  return nextEntries;
+  const response = await http<{
+    entry?: SettingsAuditLogEntry;
+    entries?: SettingsAuditLogEntry[];
+  }>("/settings/audit-log", {
+    method: "POST",
+    body: JSON.stringify({ entry: nextEntry }),
+  });
+
+  return normalizeAuditLog(response.entries || [response.entry || nextEntry, ...args.currentEntries]);
 }
 
 function buildUserPayload(values: SettingsUserFormValues): SaveManagedUserPayload {
@@ -220,23 +162,23 @@ export async function saveSettingsWorkflow(args: {
   values: SettingsWorkflowValues;
   currentAuditLog: SettingsAuditLogEntry[];
 }) {
-  const currentStore = await readOptionalStore<unknown>("settings", {});
   const nextWorkflow = createDefaultWorkflowValues(args.values);
-  const nextStore = isPlainObject(currentStore)
-    ? { ...currentStore, workflow: nextWorkflow }
-    : { workflow: nextWorkflow };
+  const response = await http<{ workflow?: SettingsWorkflowValues }>("/settings/workflow", {
+    method: "PUT",
+    body: JSON.stringify(nextWorkflow),
+  });
 
-  await saveStore("settings", nextStore);
+  const savedWorkflow = createDefaultWorkflowValues(response.workflow || nextWorkflow);
   await appendSettingsAuditLog({
     actor: args.actor,
     currentEntries: args.currentAuditLog,
     action: "Zaktualizowano workflow",
     subject: "Obieg urlopow",
     details:
-      nextWorkflow.vacationApprovalMode === "admin"
+      savedWorkflow.vacationApprovalMode === "admin"
         ? "Akceptacja tylko przez administratora."
         : "Akceptacja wg uprawnien uzytkownikow.",
   });
 
-  return nextWorkflow;
+  return savedWorkflow;
 }

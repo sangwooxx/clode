@@ -8,12 +8,16 @@ import {
   removeHoursEntry,
   saveHoursEntry,
 } from "@/features/hours/api";
-import { getStore, saveStore } from "@/lib/api/stores";
+import { ApiError, http } from "@/lib/api/http";
 import {
   buildWorkCardEmployeeOptions,
   buildWorkCardSyncPayloads,
 } from "@/features/work-cards/mappers";
-import { WORK_CARDS_STORE_KEY, type WorkCardBootstrapData, type WorkCardRecord, type WorkCardStore } from "@/features/work-cards/types";
+import {
+  type WorkCardBootstrapData,
+  type WorkCardRecord,
+  type WorkCardStore,
+} from "@/features/work-cards/types";
 
 function normalizeEmployeeMatch(
   entry: { employee_id?: string; employee_name?: string },
@@ -41,18 +45,15 @@ function getContractKey(entry: { contract_id?: string }) {
 
 export async function fetchWorkCardStore() {
   try {
-    const response = (await getStore<WorkCardStore>(WORK_CARDS_STORE_KEY)) as {
-      payload?: WorkCardStore;
-    };
+    const response = await http<{ store?: WorkCardStore }>("/work-cards/state", {
+      method: "GET",
+    });
 
-    if (response?.payload && Array.isArray(response.payload.cards)) {
-      return response.payload;
+    if (response.store && Array.isArray(response.store.cards)) {
+      return response.store;
     }
   } catch (error) {
-    if (
-      error instanceof Error &&
-      (/404/.test(error.message) || /not found/i.test(error.message))
-    ) {
+    if (error instanceof ApiError && error.status === 404) {
       return {
         version: 1,
         cards: [],
@@ -103,15 +104,16 @@ export async function saveWorkCardAndSync(args: {
   syncableContractIds: string[];
 }) {
   if (args.employee.status === "inactive") {
-    throw new Error("Nie można zapisać karty pracy dla nieaktywnego pracownika.");
+    throw new Error("Nie mozna zapisac karty pracy dla nieaktywnego pracownika.");
   }
 
-  const savedStoreResponse = (await saveStore(WORK_CARDS_STORE_KEY, args.store)) as {
-    payload?: WorkCardStore;
-  };
+  const savedStoreResponse = await http<{ store?: WorkCardStore }>("/work-cards/state", {
+    method: "PUT",
+    body: JSON.stringify({ store: args.store }),
+  });
   const savedStore =
-    savedStoreResponse.payload && Array.isArray(savedStoreResponse.payload.cards)
-      ? savedStoreResponse.payload
+    savedStoreResponse.store && Array.isArray(savedStoreResponse.store.cards)
+      ? savedStoreResponse.store
       : args.store;
 
   const syncPayloads = buildWorkCardSyncPayloads({
@@ -224,8 +226,8 @@ export async function saveWorkCardAndSync(args: {
       store: savedStore,
       syncError:
         error instanceof Error
-          ? `Karta pracy została zapisana, ale synchronizacja z ewidencją czasu pracy nie powiodła się: ${error.message}`
-          : "Karta pracy została zapisana, ale synchronizacja z ewidencją czasu pracy nie powiodła się.",
+          ? `Karta pracy zostala zapisana, ale synchronizacja z ewidencja czasu pracy nie powiodla sie: ${error.message}`
+          : "Karta pracy zostala zapisana, ale synchronizacja z ewidencja czasu pracy nie powiodla sie.",
     };
   }
 }

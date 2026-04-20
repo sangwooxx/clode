@@ -8,7 +8,9 @@ from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_metrics_repository import ALLOWED_COST_CATEGORIES, ContractMetricsRepository
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
+from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
 from clode_backend.validation.contracts import normalize_contract_status, normalize_time_scope, number, text
+from clode_backend.validation.invoices import validate_iso_date
 
 
 class ContractServiceError(RuntimeError):
@@ -244,8 +246,16 @@ class ContractService:
         if not name:
             raise ContractServiceError("Nazwa kontraktu jest wymagana.")
 
-        signed_date = text(payload.get("signed_date") if payload.get("signed_date") is not None else existing.get("signed_date") if existing else "")
-        end_date = text(payload.get("end_date") if payload.get("end_date") is not None else existing.get("end_date") if existing else "")
+        signed_date = validate_iso_date(
+            payload.get("signed_date") if payload.get("signed_date") is not None else existing.get("signed_date") if existing else "",
+            "Data podpisania",
+            required=False,
+        )
+        end_date = validate_iso_date(
+            payload.get("end_date") if payload.get("end_date") is not None else existing.get("end_date") if existing else "",
+            "Termin zakonczenia",
+            required=False,
+        )
         if signed_date and end_date and end_date < signed_date:
             raise ContractServiceError("Termin zakończenia nie może być wcześniejszy niż data podpisania.")
 
@@ -254,7 +264,7 @@ class ContractService:
             raise ContractServiceError("Kwota kontraktu nie może być ujemna.")
 
         timestamp = utc_now_iso()
-        return {
+        record = {
             "id": existing["id"] if existing else f"contract-{uuid4().hex}",
             "contract_number": text(payload.get("contract_number") if payload.get("contract_number") is not None else existing.get("contract_number") if existing else ""),
             "name": name,
@@ -266,6 +276,11 @@ class ContractService:
             "created_at": existing.get("created_at") if existing else timestamp,
             "updated_at": timestamp,
         }
+        try:
+            validate_shared_contract("contract", record)
+        except ContractValidationError as error:
+            raise ContractServiceError(str(error)) from error
+        return record
 
     def _sync_contract_visibility(self, contract_id: str, *, make_visible: bool) -> None:
         normalized_contract_id = text(contract_id)

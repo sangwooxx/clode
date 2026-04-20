@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "User",
   "type": "object",
-  "required": ["id", "name", "username", "role", "status", "is_active"],
+  "required": ["id", "name", "displayName", "username", "role", "status", "is_active"],
   "properties": {
     "id": { "type": "string" },
     "name": { "type": "string" },

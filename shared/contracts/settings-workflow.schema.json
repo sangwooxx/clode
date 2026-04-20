@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SettingsWorkflow",
+  "type": "object",
+  "required": ["vacationApprovalMode", "vacationNotifications"],
+  "additionalProperties": false,
+  "properties": {
+    "vacationApprovalMode": {
+      "type": "string",
+      "enum": ["permission", "admin"]
+    },
+    "vacationNotifications": {
+      "type": "string",
+      "enum": ["on", "off"]
+    }
+  }
+}

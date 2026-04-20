@@ -1,19 +1,7 @@
 import { http } from "@/lib/api/http";
+import type { ApiUserRecord } from "@/lib/api/user-record";
 
-export type ManagedUserRecord = {
-  id: string;
-  name: string;
-  username: string;
-  email: string;
-  role: string;
-  status: "active" | "inactive";
-  is_active: boolean;
-  permissions: Record<string, boolean>;
-  canApproveVacations: boolean;
-  created_at?: string;
-  updated_at?: string;
-  last_login_at?: string;
-};
+export type ManagedUserRecord = ApiUserRecord;
 
 export type SaveManagedUserPayload = {
   id?: string;

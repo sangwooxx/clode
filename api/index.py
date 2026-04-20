@@ -68,7 +68,12 @@ class handler(BaseHTTPRequestHandler):
         normalized_query = urlencode(forwarded_query, doseq=True)
         return f"{normalized_path}?{normalized_query}" if normalized_query else normalized_path
 
-    def _send(self, status: int, payload: dict | None = None, extra_headers: dict[str, str] | None = None) -> None:
+    def _send(
+        self,
+        status: int,
+        payload: dict | None = None,
+        extra_headers: dict[str, str | list[str] | tuple[str, ...]] | None = None,
+    ) -> None:
         self.send_response(status)
         self.send_header("Access-Control-Allow-Origin", self._cors_origin())
         self.send_header("Access-Control-Allow-Headers", f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}")
@@ -76,7 +81,13 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Vary", "Origin")
         for header_name, header_value in (extra_headers or {}).items():
-            self.send_header(header_name, header_value)
+            values = (
+                header_value
+                if isinstance(header_value, (list, tuple))
+                else [header_value]
+            )
+            for value in values:
+                self.send_header(header_name, value)
         if status != 204:
             body = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
             self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -93,13 +104,7 @@ class handler(BaseHTTPRequestHandler):
         try:
             status, payload, headers = route_request(
                 self,
-                runtime["store_service"],
-                runtime["auth_service"],
-                runtime["user_service"],
-                runtime["invoice_service"],
-                runtime["contract_service"],
-                runtime["employee_service"],
-                runtime["time_entry_service"],
+                runtime["services"],
             )
         finally:
             self.path = original_path

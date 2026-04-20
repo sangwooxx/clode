@@ -38,25 +38,40 @@ def hash_session_token(token: str) -> str:
     return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()
 
 
-def build_session_cookie(token: str, ttl_hours: int) -> str:
+def _apply_cookie_security(cookie, cookie_name: str, secure: bool) -> None:
+    cookie[cookie_name]["httponly"] = True
+    cookie[cookie_name]["path"] = "/"
+    cookie[cookie_name]["samesite"] = "Lax"
+    if secure:
+        cookie[cookie_name]["secure"] = True
+
+
+def build_session_cookie(token: str, ttl_hours: int, *, secure: bool = False) -> str:
     cookie = SimpleCookie()
     cookie[SESSION_COOKIE_NAME] = token
-    cookie[SESSION_COOKIE_NAME]["httponly"] = True
-    cookie[SESSION_COOKIE_NAME]["path"] = "/"
-    cookie[SESSION_COOKIE_NAME]["samesite"] = "Lax"
+    _apply_cookie_security(cookie, SESSION_COOKIE_NAME, secure)
     cookie[SESSION_COOKIE_NAME]["max-age"] = str(max(int(ttl_hours * 3600), 0))
     return cookie.output(header="").strip()
 
 
-def build_logout_cookie() -> str:
+def _build_logout_cookie(cookie_name: str, *, secure: bool = False) -> str:
     cookie = SimpleCookie()
-    cookie[SESSION_COOKIE_NAME] = ""
-    cookie[SESSION_COOKIE_NAME]["httponly"] = True
-    cookie[SESSION_COOKIE_NAME]["path"] = "/"
-    cookie[SESSION_COOKIE_NAME]["samesite"] = "Lax"
-    cookie[SESSION_COOKIE_NAME]["expires"] = "Thu, 01 Jan 1970 00:00:00 GMT"
-    cookie[SESSION_COOKIE_NAME]["max-age"] = "0"
+    cookie[cookie_name] = ""
+    _apply_cookie_security(cookie, cookie_name, secure)
+    cookie[cookie_name]["expires"] = "Thu, 01 Jan 1970 00:00:00 GMT"
+    cookie[cookie_name]["max-age"] = "0"
     return cookie.output(header="").strip()
+
+
+def build_logout_cookies(*, secure: bool = False) -> tuple[str, ...]:
+    return (
+        _build_logout_cookie(SESSION_COOKIE_NAME, secure=secure),
+        _build_logout_cookie(LEGACY_SESSION_COOKIE_NAME, secure=secure),
+    )
+
+
+def build_legacy_logout_cookie(*, secure: bool = False) -> str:
+    return _build_logout_cookie(LEGACY_SESSION_COOKIE_NAME, secure=secure)
 
 
 def read_session_token(cookie_header: str | None) -> str:

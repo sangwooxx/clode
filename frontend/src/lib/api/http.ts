@@ -1,4 +1,4 @@
-import { SESSION_STORAGE_KEYS } from "@/lib/auth/session-keys";
+import { redirectToLogin } from "@/lib/auth/login-redirect";
 
 const DEFAULT_TIMEOUT_MS = 20_000;
 
@@ -14,10 +14,6 @@ export class ApiError extends Error {
   }
 }
 
-function hasWindow() {
-  return typeof window !== "undefined";
-}
-
 export function resolveApiBaseUrl() {
   const configured = process.env.NEXT_PUBLIC_CLODE_API_BASE_URL?.trim();
   return configured && configured.length > 0
@@ -25,46 +21,9 @@ export function resolveApiBaseUrl() {
     : "/api/v1";
 }
 
-export function readStoredSessionToken() {
-  if (!hasWindow()) {
-    return "";
-  }
-
-  for (const key of SESSION_STORAGE_KEYS) {
-    const sessionValue = window.sessionStorage.getItem(key);
-    if (sessionValue) {
-      return sessionValue;
-    }
-  }
-
-  for (const key of SESSION_STORAGE_KEYS) {
-    const localValue = window.localStorage.getItem(key);
-    if (localValue) {
-      return localValue;
-    }
-  }
-
-  return "";
-}
-
-export function writeStoredSessionToken(token: string) {
-  if (!hasWindow()) {
-    return;
-  }
-
-  for (const key of SESSION_STORAGE_KEYS) {
-    if (token) {
-      window.sessionStorage.setItem(key, token);
-      window.localStorage.setItem(key, token);
-    } else {
-      window.sessionStorage.removeItem(key);
-      window.localStorage.removeItem(key);
-    }
-  }
-}
-
 type RequestOptions = Omit<RequestInit, "headers"> & {
   headers?: Record<string, string>;
+  onUnauthorized?: "redirect" | "ignore";
   timeoutMs?: number;
 };
 
@@ -90,18 +49,11 @@ export function createHttpClient(baseUrl = resolveApiBaseUrl()) {
     );
 
     try {
-      const sessionToken = readStoredSessionToken();
       const response = await fetch(`${baseUrl}${path}`, {
         ...options,
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
-          ...(sessionToken
-            ? {
-                "X-Clode-Session": sessionToken,
-                "X-Agent-Session": sessionToken
-              }
-            : {}),
           ...options.headers
         },
         credentials: "include",
@@ -111,6 +63,18 @@ export function createHttpClient(baseUrl = resolveApiBaseUrl()) {
       const payload = await parseResponseBody(response);
 
       if (!response.ok) {
+        if (
+          response.status === 401 &&
+          options.onUnauthorized !== "ignore" &&
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/login"
+        ) {
+          redirectToLogin(
+            `${window.location.pathname}${window.location.search}`,
+            "session-expired"
+          );
+        }
+
         const message =
           typeof payload === "object" &&
           payload !== null &&

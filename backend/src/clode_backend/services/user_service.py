@@ -9,6 +9,8 @@ from clode_backend.auth.rbac import effective_permissions, normalize_role
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.user_repository import UserRepository
+from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
+from clode_backend.services.public_users import build_public_user
 
 
 class UserServiceError(RuntimeError):
@@ -123,6 +125,25 @@ class UserService:
             "updated_at": timestamp,
             "last_login_at": existing["last_login_at"] if existing else "",
         }
+        contract_payload = {
+            "id": record["id"],
+            "name": record["name"],
+            "displayName": record["name"],
+            "username": record["username"],
+            "email": record["email"],
+            "role": record["role"],
+            "status": record["status"],
+            "is_active": record["is_active"],
+            "permissions": record["permissions"],
+            "canApproveVacations": record["can_approve_vacations"],
+            "created_at": record["created_at"],
+            "updated_at": record["updated_at"],
+            "last_login_at": record["last_login_at"],
+        }
+        try:
+            validate_shared_contract("user", contract_payload)
+        except ContractValidationError as error:
+            raise UserServiceError(str(error)) from error
 
         saved = self.repository.update(record["id"], record) if existing else self.repository.insert(record)
         return self.to_public_user(saved)
@@ -144,20 +165,5 @@ class UserService:
 
     @staticmethod
     def to_public_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
-        if not user:
-            return None
-        return {
-            "id": user["id"],
-            "name": user["name"],
-            "username": user["username"],
-            "email": user["email"],
-            "role": normalize_role(user["role"]),
-            "status": "active" if user.get("is_active", True) else "inactive",
-            "is_active": bool(user.get("is_active", True)),
-            "permissions": effective_permissions(user.get("role"), user.get("permissions")),
-            "canApproveVacations": bool(user.get("can_approve_vacations")),
-            "created_at": user.get("created_at", ""),
-            "updated_at": user.get("updated_at", ""),
-            "last_login_at": user.get("last_login_at", ""),
-        }
+        return build_public_user(user)
 

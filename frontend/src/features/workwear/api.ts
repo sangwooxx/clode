@@ -1,7 +1,6 @@
 "use client";
 
-import { ApiError } from "@/lib/api/http";
-import { getStore, saveStore } from "@/lib/api/stores";
+import { ApiError, http } from "@/lib/api/http";
 import { fetchEmployeesModuleData } from "@/features/employees/api";
 import { findEmployeeByKey } from "@/features/employees/mappers";
 import {
@@ -22,10 +21,6 @@ import type {
   WorkwearCatalogItem,
   WorkwearIssueFormValues,
   WorkwearIssueRecord,
-} from "@/features/workwear/types";
-import {
-  WORKWEAR_CATALOG_STORE_KEY,
-  WORKWEAR_ISSUES_STORE_KEY,
 } from "@/features/workwear/types";
 
 function generateWorkwearCatalogId() {
@@ -54,8 +49,10 @@ function parseWorkwearQuantity(value: string) {
 
 async function fetchWorkwearCatalogStore() {
   try {
-    const response = await getStore<WorkwearCatalogItem[]>(WORKWEAR_CATALOG_STORE_KEY);
-    return normalizeWorkwearCatalogStore(response.payload);
+    const response = await http<{ catalog?: WorkwearCatalogItem[] }>("/workwear/catalog", {
+      method: "GET",
+    });
+    return normalizeWorkwearCatalogStore(response.catalog);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return emptyWorkwearCatalogStore();
@@ -66,8 +63,10 @@ async function fetchWorkwearCatalogStore() {
 
 async function fetchWorkwearIssuesStore() {
   try {
-    const response = await getStore<WorkwearIssueRecord[]>(WORKWEAR_ISSUES_STORE_KEY);
-    return normalizeWorkwearIssuesStore(response.payload);
+    const response = await http<{ issues?: WorkwearIssueRecord[] }>("/workwear/issues", {
+      method: "GET",
+    });
+    return normalizeWorkwearIssuesStore(response.issues);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return emptyWorkwearIssuesStore();
@@ -148,7 +147,10 @@ export async function saveWorkwearCatalogItem(args: {
     ? catalog.map((item) => (item.id === existingItem.id ? nextItem : item))
     : [...catalog, nextItem];
 
-  await saveStore(WORKWEAR_CATALOG_STORE_KEY, nextCatalog);
+  await http<{ catalog?: WorkwearCatalogItem[] }>("/workwear/catalog", {
+    method: "PUT",
+    body: JSON.stringify({ catalog: nextCatalog }),
+  });
   return fetchWorkwearModuleData();
 }
 
@@ -176,10 +178,12 @@ export async function deleteWorkwearCatalogItem(args: {
     throw new Error("Nie mozna usunac elementu, ktory ma juz wydania w ewidencji.");
   }
 
-  await saveStore(
-    WORKWEAR_CATALOG_STORE_KEY,
-    catalog.filter((item) => item.id !== targetItem.id)
-  );
+  await http<{ catalog?: WorkwearCatalogItem[] }>("/workwear/catalog", {
+    method: "PUT",
+    body: JSON.stringify({
+      catalog: catalog.filter((item) => item.id !== targetItem.id),
+    }),
+  });
 
   return fetchWorkwearModuleData();
 }
@@ -233,7 +237,10 @@ export async function saveWorkwearIssueRecord(args: {
     ? issues.map((issue) => (issue.id === existingIssue.id ? nextIssue : issue))
     : [...issues, nextIssue];
 
-  await saveStore(WORKWEAR_ISSUES_STORE_KEY, nextIssues);
+  await http<{ issues?: WorkwearIssueRecord[] }>("/workwear/issues", {
+    method: "PUT",
+    body: JSON.stringify({ issues: nextIssues }),
+  });
   return fetchWorkwearModuleData();
 }
 
@@ -242,9 +249,11 @@ export async function deleteWorkwearIssueRecord(args: {
   bootstrap: WorkwearBootstrapData;
 }) {
   const issues = normalizeWorkwearIssuesStore(args.bootstrap.issues);
-  await saveStore(
-    WORKWEAR_ISSUES_STORE_KEY,
-    issues.filter((issue) => issue.id !== args.issueId)
-  );
+  await http<{ issues?: WorkwearIssueRecord[] }>("/workwear/issues", {
+    method: "PUT",
+    body: JSON.stringify({
+      issues: issues.filter((issue) => issue.id !== args.issueId),
+    }),
+  });
   return fetchWorkwearModuleData();
 }

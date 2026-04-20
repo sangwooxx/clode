@@ -1,8 +1,7 @@
 "use client";
 
 import { listContracts } from "@/lib/api/contracts";
-import { ApiError } from "@/lib/api/http";
-import { getStore, saveStore } from "@/lib/api/stores";
+import { ApiError, http } from "@/lib/api/http";
 import { fetchEmployeesModuleData } from "@/features/employees/api";
 import {
   buildPlanningDirectory,
@@ -11,13 +10,23 @@ import {
   upsertPlanningAssignmentForEmployee,
 } from "@/features/planning/mappers";
 import type { PlanningBootstrapData } from "@/features/planning/types";
-import { PLANNING_STORE_KEY, VACATIONS_STORE_KEY, type PlanningStore, type VacationStore } from "@/features/vacations/types";
-import { emptyPlanningStore, emptyVacationStore, normalizePlanningStore, normalizeVacationStore } from "@/features/vacations/mappers";
+import {
+  type PlanningStore,
+  type VacationStore,
+} from "@/features/vacations/types";
+import {
+  emptyPlanningStore,
+  emptyVacationStore,
+  normalizePlanningStore,
+  normalizeVacationStore,
+} from "@/features/vacations/mappers";
 
 async function fetchPlanningStore() {
   try {
-    const response = await getStore<PlanningStore>(PLANNING_STORE_KEY);
-    return normalizePlanningStore(response.payload);
+    const response = await http<{ planning_store?: PlanningStore }>("/planning/state", {
+      method: "GET",
+    });
+    return normalizePlanningStore(response.planning_store);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return emptyPlanningStore();
@@ -28,8 +37,10 @@ async function fetchPlanningStore() {
 
 async function fetchVacationStore() {
   try {
-    const response = await getStore<VacationStore>(VACATIONS_STORE_KEY);
-    return normalizeVacationStore(response.payload);
+    const response = await http<{ vacation_store?: VacationStore }>("/vacations/state", {
+      method: "GET",
+    });
+    return normalizeVacationStore(response.vacation_store);
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {
       return emptyVacationStore();
@@ -44,7 +55,10 @@ async function fetchPlanningContracts() {
 }
 
 async function savePlanningStoreRemote(store: PlanningStore) {
-  return saveStore(PLANNING_STORE_KEY, store);
+  return http<{ planning_store?: PlanningStore }>("/planning/state", {
+    method: "PUT",
+    body: JSON.stringify({ planning_store: store }),
+  });
 }
 
 export async function fetchPlanningModuleData(): Promise<PlanningBootstrapData> {
@@ -73,11 +87,11 @@ export async function savePlanningAssignmentRecord(args: {
   const employees = buildPlanningDirectory(args.bootstrap);
   const employee = employees.find((item) => item.key === args.employeeKey) ?? null;
   if (!employee) {
-    throw new Error("Nie udało się odnaleźć pracownika w kartotece.");
+    throw new Error("Nie udalo sie odnalezc pracownika w kartotece.");
   }
 
   if (employee.status === "inactive") {
-    throw new Error("Nie można planować nowego dnia dla nieaktywnego pracownika.");
+    throw new Error("Nie mozna planowac nowego dnia dla nieaktywnego pracownika.");
   }
 
   const absence = getPlanningAbsenceForDate({
@@ -88,7 +102,7 @@ export async function savePlanningAssignmentRecord(args: {
   });
 
   if (absence) {
-    throw new Error(`Pracownik ma na ten dzień nieobecność: ${absence.label}.`);
+    throw new Error(`Pracownik ma na ten dzien nieobecnosc: ${absence.label}.`);
   }
 
   const contracts = args.bootstrap.contracts || [];
@@ -132,7 +146,7 @@ export async function clearPlanningAssignmentRecord(args: {
   const employees = buildPlanningDirectory(args.bootstrap);
   const employee = employees.find((item) => item.key === args.employeeKey) ?? null;
   if (!employee) {
-    throw new Error("Nie udało się odnaleźć pracownika w kartotece.");
+    throw new Error("Nie udalo sie odnalezc pracownika w kartotece.");
   }
 
   const nextStore = removePlanningAssignmentsForEmployee({
@@ -152,7 +166,7 @@ export async function copyPlanningFromPreviousDay(args: {
 }) {
   const sourceDate = new Date(`${args.targetDateKey}T00:00:00`);
   if (Number.isNaN(sourceDate.getTime())) {
-    throw new Error("Nie udało się wyznaczyć dnia do skopiowania.");
+    throw new Error("Nie udalo sie wyznaczyc dnia do skopiowania.");
   }
 
   sourceDate.setDate(sourceDate.getDate() - 1);
@@ -174,12 +188,11 @@ export async function copyPlanningFromPreviousDay(args: {
     },
   } satisfies PlanningStore;
 
-  Object.entries(previousAssignments).forEach(([rawKey, assignment]) => {
+  Object.values(previousAssignments).forEach((assignment) => {
     const matchedEmployee =
       employees.find((employee) =>
         (assignment.employee_key && assignment.employee_key === employee.key) ||
-        (assignment.employee_id &&
-          assignment.employee_id === employee.id) ||
+        (assignment.employee_id && assignment.employee_id === employee.id) ||
         (!assignment.employee_key &&
           !assignment.employee_id &&
           assignment.employee_name &&
@@ -202,11 +215,12 @@ export async function copyPlanningFromPreviousDay(args: {
 
     const contractId = String(assignment.contract_id || "").trim();
     const contractName = String(assignment.contract_name || "").trim();
-    const activeContract = contracts.find((contract) => {
-      if (contract.status === "archived") return false;
-      if (contractId && contract.id === contractId) return true;
-      return contractName && contract.name === contractName;
-    }) ?? null;
+    const activeContract =
+      contracts.find((contract) => {
+        if (contract.status === "archived") return false;
+        if (contractId && contract.id === contractId) return true;
+        return Boolean(contractName) && contract.name === contractName;
+      }) ?? null;
 
     nextStore = upsertPlanningAssignmentForEmployee({
       dateKey: args.targetDateKey,

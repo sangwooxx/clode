@@ -3,9 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
-import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -26,6 +24,12 @@ import {
   formatVacationStatus,
   formatVacationType,
 } from "@/features/vacations/formatters";
+import { VacationsEmployeePanel } from "@/features/vacations/components/VacationsEmployeePanel";
+import {
+  type VacationEmployeeFilter,
+  VacationsToolbar,
+} from "@/features/vacations/components/VacationsToolbar";
+import { VacationsRequestPanel } from "@/features/vacations/components/VacationsRequestPanel";
 import {
   buildVacationBalanceFormValues,
   buildVacationApprovalMessage,
@@ -52,8 +56,6 @@ import type {
   VacationsBootstrapData,
 } from "@/features/vacations/types";
 import { buildVacationApprovalRows } from "@/features/vacations/mappers";
-
-type VacationEmployeeFilter = "all" | "active" | "inactive";
 
 type VacationsScreenState =
   | { status: "loading" }
@@ -572,12 +574,7 @@ export function VacationsView({
 
   useEffect(() => {
     setBalanceValues(buildVacationBalanceFormValues(selectedStats));
-  }, [
-    selectedEmployee?.key,
-    selectedStats?.balance.base_days,
-    selectedStats?.balance.carryover_days,
-    selectedStats?.balance.extra_days,
-  ]);
+  }, [selectedEmployee?.key, selectedStats]);
 
   useEffect(() => {
     if (editingRequest) {
@@ -609,6 +606,7 @@ export function VacationsView({
     editingRequest,
     editingEmployeeRecord,
     selectableEmployeeOptions,
+    selectedEmployee,
     selectedEmployee?.key,
     selectedEmployee?.status,
     user?.displayName,
@@ -624,6 +622,20 @@ export function VacationsView({
     setEditingRequestId(null);
     setFormError(null);
     setFormStatus(null);
+  }
+
+  function handleBalanceFieldChange(
+    field: keyof VacationBalanceFormValues,
+    value: string
+  ) {
+    setBalanceValues((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleRequestFieldChange(
+    field: keyof VacationRequestFormValues,
+    value: string
+  ) {
+    setRequestValues((current) => ({ ...current, [field]: value }));
   }
 
   function handleEditRequest(requestId: string) {
@@ -828,38 +840,12 @@ export function VacationsView({
         ))}
       </div>
 
-      <Panel className="panel--toolbar panel--toolbar--filters">
-        <div className="vacations-toolbar">
-          <div className="toolbar-tabs">
-            <ActionButton
-              type="button"
-              variant={filter === "all" ? "primary" : "secondary"}
-              onClick={() => setFilter("all")}
-            >
-              Wszyscy
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "active" ? "primary" : "secondary"}
-              onClick={() => setFilter("active")}
-            >
-              Aktywni
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "inactive" ? "primary" : "secondary"}
-              onClick={() => setFilter("inactive")}
-            >
-              Nieaktywni
-            </ActionButton>
-          </div>
-          <SearchField
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Szukaj po nazwisku, kodzie lub statusie"
-          />
-        </div>
-      </Panel>
+      <VacationsToolbar
+        filter={filter}
+        search={search}
+        onFilterChange={setFilter}
+        onSearchChange={setSearch}
+      />
 
       <div className="vacations-layout">
         <div className="vacations-main-stack">
@@ -908,270 +894,34 @@ export function VacationsView({
         </div>
 
         <div className="vacations-side-stack">
-          <Panel title="Pracownik i pula">
-            {selectedEmployee ? (
-              <div className="vacations-spotlight">
-                <div className="data-table__stack">
-                  <span className="data-table__primary">
-                    {formatEmployeeDisplayName(selectedEmployee, selectedEmployee.name)}
-                  </span>
-                  <span className="data-table__secondary">
-                    {selectedEmployee.position || "Bez stanowiska"} • Kod {formatEmployeeCodeLabel(selectedEmployee.worker_code)}
-                  </span>
-                </div>
+          <VacationsEmployeePanel
+            selectedEmployee={selectedEmployee}
+            selectedStats={selectedStats}
+            selectedEmployeeInactive={selectedEmployeeInactive}
+            selectedBalanceLookup={selectedBalanceLookup}
+            balanceValues={balanceValues}
+            isSavingBalance={isSavingBalance}
+            onBalanceFieldChange={handleBalanceFieldChange}
+            onSubmitBalance={handleSaveBalance}
+          />
 
-                {selectedStats ? (
-                  <div className="vacations-detail-grid">
-                    <div className="vacations-detail-card">
-                      <span className="field-card__label">Pula łączna</span>
-                      <strong>{formatVacationDays(selectedStats.total_pool)} dni</strong>
-                      <small>Roczna + zaległe + ekstra</small>
-                    </div>
-                    <div className="vacations-detail-card">
-                      <span className="field-card__label">Wykorzystane</span>
-                      <strong>{formatVacationDays(selectedStats.used_days)} dni</strong>
-                      <small>Zatwierdzone wpisy</small>
-                    </div>
-                    <div className="vacations-detail-card">
-                      <span className="field-card__label">Oczekujące</span>
-                      <strong>{formatVacationDays(selectedStats.pending_days)} dni</strong>
-                      <small>Wnioski w toku</small>
-                    </div>
-                    <div className="vacations-detail-card">
-                      <span className="field-card__label">Pozostało</span>
-                      <strong>{formatVacationDays(selectedStats.remaining_days)} dni</strong>
-                      <small>{selectedStats.requests_count} wpisów</small>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="status-message">Wybierz pracownika z tabeli, aby zobaczyć jego saldo.</p>
-            )}
-
-            <form className="vacations-form" onSubmit={handleSaveBalance}>
-              <FormGrid columns={1}>
-                <label className="form-field">
-                  <span>Limit roczny</span>
-                  <input
-                    value={balanceValues.base_days}
-                    onChange={(event) =>
-                      setBalanceValues((current) => ({ ...current, base_days: event.target.value }))
-                    }
-                    inputMode="decimal"
-                    disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Urlop zaległy</span>
-                  <input
-                    value={balanceValues.carryover_days}
-                    onChange={(event) =>
-                      setBalanceValues((current) => ({
-                        ...current,
-                        carryover_days: event.target.value,
-                      }))
-                    }
-                    inputMode="decimal"
-                    disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Dodatkowa pula</span>
-                  <input
-                    value={balanceValues.extra_days}
-                    onChange={(event) =>
-                      setBalanceValues((current) => ({ ...current, extra_days: event.target.value }))
-                    }
-                    inputMode="decimal"
-                    disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
-                  />
-                </label>
-              </FormGrid>
-
-              {selectedEmployeeInactive ? (
-                <p className="status-message">
-                  Nieaktywny pracownik pozostaje w historii, ale nie przyjmuje nowych operacji.
-                </p>
-              ) : null}
-
-              {selectedBalanceLookup?.status === "ambiguous" ? (
-                <p className="status-message status-message--warning">
-                  W legacy store istnieje niejednoznaczna pula urlopowa po samej nazwie. Ten
-                  rekord nie jest juÅ¼ automatycznie przypisywany do pracownika; zapis stworzy
-                  osobne saldo po stabilnym identyfikatorze.
-                </p>
-              ) : null}
-
-              <div className="vacations-form__actions">
-                <ActionButton
-                  type="submit"
-                  disabled={isSavingBalance || selectedEmployeeInactive || !selectedEmployee}
-                >
-                  {isSavingBalance ? "Zapisywanie..." : "Zapisz pulę"}
-                </ActionButton>
-              </div>
-            </form>
-          </Panel>
-
-          <Panel title={editingRequest ? "Edytuj wniosek" : "Nowy wniosek / nieobecność"}>
-            <form className="vacations-form" onSubmit={handleSubmitRequest}>
-              <FormGrid columns={1}>
-                <label className="form-field">
-                  <span>Pracownik</span>
-                  <select
-                    value={requestValues.employee_key}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({
-                        ...current,
-                        employee_key: event.target.value,
-                      }))
-                    }
-                    disabled={isSubmittingRequest || Boolean(editingInactiveRequest)}
-                  >
-                    <option value="">Wybierz pracownika</option>
-                    {selectableEmployeeOptions.map((option) => (
-                      <option key={option.key} value={option.key}>
-                        {option.description
-                          ? `${option.label} - ${option.description}`
-                          : option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {editingRequest && editingEmployee.status !== "resolved" ? (
-                  <p className="status-message status-message--warning">
-                    {editingEmployee.message}
-                  </p>
-                ) : null}
-                <label className="form-field">
-                  <span>Typ nieobecności</span>
-                  <select
-                    value={requestValues.type}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({
-                        ...current,
-                        type: event.target.value as VacationRequestFormValues["type"],
-                      }))
-                    }
-                    disabled={isSubmittingRequest}
-                  >
-                    <option value="vacation">Urlop wypoczynkowy</option>
-                    <option value="on_demand">Urlop na żądanie</option>
-                    <option value="sick_leave">L4</option>
-                    <option value="other">Inna nieobecność</option>
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Data od</span>
-                  <input
-                    type="date"
-                    value={requestValues.start_date}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({
-                        ...current,
-                        start_date: event.target.value,
-                        end_date: current.end_date || event.target.value,
-                      }))
-                    }
-                    disabled={isSubmittingRequest}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Data do</span>
-                  <input
-                    type="date"
-                    value={requestValues.end_date}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({ ...current, end_date: event.target.value }))
-                    }
-                    disabled={isSubmittingRequest}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Liczba dni</span>
-                  <input
-                    value={requestValues.days}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({ ...current, days: event.target.value }))
-                    }
-                    inputMode="decimal"
-                    placeholder="Automatycznie z zakresu dat"
-                    disabled={isSubmittingRequest}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Wprowadza</span>
-                  <input
-                    value={requestValues.requested_by}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({
-                        ...current,
-                        requested_by: event.target.value,
-                      }))
-                    }
-                    disabled={isSubmittingRequest}
-                  />
-                </label>
-                <label className="form-field">
-                  <span>Status</span>
-                  <select
-                    value={requestValues.status}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({
-                        ...current,
-                        status: event.target.value as VacationRequestFormValues["status"],
-                      }))
-                    }
-                    disabled={isSubmittingRequest || !canApprove}
-                  >
-                    <option value="pending">Oczekuje</option>
-                    <option value="approved">Zatwierdzony</option>
-                    <option value="rejected">Odrzucony</option>
-                  </select>
-                </label>
-                <label className="form-field">
-                  <span>Uwagi</span>
-                  <textarea
-                    value={requestValues.notes}
-                    onChange={(event) =>
-                      setRequestValues((current) => ({ ...current, notes: event.target.value }))
-                    }
-                    rows={4}
-                    placeholder="Opis, numer zwolnienia lub komentarz"
-                    disabled={isSubmittingRequest}
-                  />
-                </label>
-              </FormGrid>
-
-              {approvalMessage ? (
-                <p className="status-message">
-                  {approvalMessage}
-                </p>
-              ) : null}
-
-              {formError ? <p className="status-message status-message--error">{formError}</p> : null}
-              {formStatus ? <p className="status-message status-message--success">{formStatus}</p> : null}
-
-              <div className="vacations-form__actions">
-                {editingRequest ? (
-                  <ActionButton type="button" variant="ghost" onClick={handleCreateNewRequest}>
-                    Wyczyść formularz
-                  </ActionButton>
-                ) : null}
-                <ActionButton
-                  type="submit"
-                  disabled={isSubmittingRequest || editingEmployeeNeedsManualResolution}
-                >
-                  {isSubmittingRequest
-                    ? "Zapisywanie..."
-                    : editingRequest
-                      ? "Zapisz zmiany"
-                      : "Dodaj nieobecność"}
-                </ActionButton>
-              </div>
-            </form>
-          </Panel>
+          <VacationsRequestPanel
+            editingRequest={editingRequest}
+            editingEmployeeStatus={editingEmployee.status}
+            editingEmployeeMessage={editingEmployee.message}
+            editingInactiveRequest={editingInactiveRequest}
+            selectableEmployeeOptions={selectableEmployeeOptions}
+            requestValues={requestValues}
+            canApprove={canApprove}
+            approvalMessage={approvalMessage}
+            formError={formError}
+            formStatus={formStatus}
+            isSubmittingRequest={isSubmittingRequest}
+            editingEmployeeNeedsManualResolution={editingEmployeeNeedsManualResolution}
+            onCreateNewRequest={handleCreateNewRequest}
+            onSubmitRequest={handleSubmitRequest}
+            onRequestFieldChange={handleRequestFieldChange}
+          />
         </div>
       </div>
     </div>
