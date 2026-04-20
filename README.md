@@ -61,6 +61,19 @@ Current production-oriented model:
 
 Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
 
+## Canonical QA frontend
+
+- the canonical frontend for browser QA is `https://clode-web.vercel.app`
+- the Vercel project behind that frontend is `clode`
+- `clode-iota.vercel.app` is the backend/router project and is not the direct QA frontend target
+- `clode-next.vercel.app` is a historical alias and should not be used for QA
+
+Current PDF exports that are expected to be verified on the canonical QA frontend:
+- employees
+- workwear
+- work cards
+- hours
+
 ## Source Of Truth And Deploy Discipline
 
 - `origin/main` is the only source of truth for the product state
@@ -86,6 +99,7 @@ Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](
 - [Roadmap](docs/ROADMAP.md)
 - [Project Status](docs/PROJECT_STATUS.md)
 - [QA Process](docs/QA_PROCESS.md)
+- [PDF QA Frontend](docs/PDF_QA_FRONTEND.md)
 - [Demo Handoff](docs/DEMO_HANDOFF.md)
 - [Cutover Runbook](docs/FRONTEND_CUTOVER.md)
 - [Contributing](CONTRIBUTING.md)
