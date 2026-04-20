@@ -8,6 +8,7 @@ import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { printDocument } from "@/lib/print/print-document";
 import { saveHoursMonth } from "@/features/hours/api";
 import { buildMonthOptions, getSelectedMonth } from "@/features/hours/mappers";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
@@ -583,6 +584,78 @@ export function WorkCardView({
     selectedMonth?.month_label ||
     (selectedMonthKey ? formatMonthLabel(selectedMonthKey) : "Wybierz miesiąc");
   const currentModeLabel = isHistoricalPreview ? "Historia" : "Aktywna karta";
+  function handlePrintWorkCard() {
+    if (!selectedMonthKey || !displayedEmployeeLabel) return;
+
+    const contractSummaryRows = Array.from(contractTotals.entries())
+      .filter(([, hours]) => hours > 0)
+      .map(([contractId, hours]) => {
+        const option = contractOptions.find((candidate) => candidate.id === contractId);
+        return [
+          option?.label || "Nieprzypisane",
+          option?.code || "—",
+          formatHours(hours),
+        ];
+      });
+
+    const dailyRows = draftRows.map((row) => {
+      const assignments = contractOptions
+        .map((option) => {
+          const value = parseDecimalInput(row.hoursByContract[option.id] || "");
+          if (!value) return "";
+          return `${option.label}: ${formatHours(value)}`;
+        })
+        .filter(Boolean)
+        .join(" | ");
+
+      return [
+        `${row.dayNumber} ${row.weekdayLabel}`,
+        assignments || "—",
+        formatHours(row.totalHours),
+        row.note || "—",
+      ];
+    });
+
+    printDocument({
+      title: "Karta pracy",
+      subtitle: displayedEmployeeLabel,
+      meta: [
+        currentMonthLabel,
+        currentModeLabel,
+        `Liczba dni z wpisami: ${formatNumber(filledDaysCount)}`,
+        `Suma godzin: ${formatHours(monthTotalHours)}`,
+      ],
+      filename: `clode-karta-pracy-${displayedEmployeeLabel}-${selectedMonthKey}`,
+      landscape: true,
+      sections: [
+        {
+          title: "Dane karty",
+          details: [
+            { label: "Pracownik", value: displayedEmployeeLabel },
+            { label: "Miesiąc", value: currentMonthLabel },
+            { label: "Tryb", value: currentModeLabel },
+            { label: "Kontekst", value: displayedEmployeeMeta || "Aktywny pracownik" },
+            { label: "Dni z wpisami", value: formatNumber(filledDaysCount) },
+            { label: "Suma godzin", value: formatHours(monthTotalHours) },
+          ],
+        },
+        {
+          title: "Rozpiska dzienna",
+          table: {
+            columns: ["Dzień", "Kontrakty i godziny", "Razem", "Opis pracy"],
+            rows: dailyRows,
+          },
+        },
+        {
+          title: "Podsumowanie kontraktów",
+          table: {
+            columns: ["Kontrakt", "Kod", "Suma godzin"],
+            rows: contractSummaryRows,
+          },
+        },
+      ],
+    });
+  }
   const currentContextLabel = displayedEmployeeLabel || "Wybierz pracownika";
   const currentContextMeta = [currentMonthLabel, displayedEmployeeMeta]
     .filter(Boolean)
@@ -614,6 +687,14 @@ export function WorkCardView({
                 {isSaving ? "Zapisywanie..." : "Zapisz kartę pracy"}
               </ActionButton>
             ) : null}
+            <ActionButton
+              type="button"
+              variant="secondary"
+              onClick={handlePrintWorkCard}
+              disabled={!selectedMonthKey || !displayedEmployeeLabel}
+            >
+              PDF karty
+            </ActionButton>
             <ActionButton
               type="button"
               variant="secondary"

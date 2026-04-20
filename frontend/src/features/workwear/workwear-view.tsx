@@ -48,6 +48,7 @@ import type {
 } from "@/features/workwear/types";
 import { WORKWEAR_SIZE_OPTIONS } from "@/features/workwear/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { printDocument } from "@/lib/print/print-document";
 
 type WorkwearScreenState =
   | { status: "loading" }
@@ -316,35 +317,51 @@ function createInitialSelection(bootstrap: WorkwearBootstrapData) {
 }
 
 function printWorkwearCard(employee: EmployeeDirectoryRecord, issueRows: WorkwearIssueRow[]) {
-  const popup = window.open("", "_blank", "width=1100,height=900");
-  if (!popup) {
-    return;
-  }
+  const totalQuantity = issueRows.reduce(
+    (sum, row) => sum + Number(row.entry.issue.quantity || 0),
+    0
+  );
 
-  const rowsHtml = issueRows.length
-    ? issueRows
-        .map(
-          (row) => `
-            <tr>
-              <td>${formatWorkwearDate(row.entry.issue.issue_date)}</td>
-              <td>${row.entry.issue.item_name || "-"}</td>
-              <td>${row.entry.issue.size || "-"}</td>
-              <td>${formatWorkwearQuantity(row.entry.issue.quantity)}</td>
-              <td>${row.entry.issue.notes || "-"}</td>
-            </tr>
-          `
-        )
-        .join("")
-    : `<tr><td colspan="5">Brak wydan dla tego pracownika.</td></tr>`;
-
-  popup.document.write(`<!DOCTYPE html>
-<html lang="pl">
-<head><meta charset="utf-8"><title>Karta odziezy roboczej</title></head>
-<body>${rowsHtml}</body>
-</html>`);
-  popup.document.close();
-  popup.focus();
-  window.setTimeout(() => popup.print(), 200);
+  printDocument({
+    title: "Wydanie odziezy roboczej",
+    subtitle: employee.name,
+    filename: `clode-wydanie-odziezy-${employee.worker_code || employee.id || "rekord"}`,
+    meta: [
+      `Status: ${employee.status === "inactive" ? "Nieaktywny" : "Aktywny"}`,
+      `Stanowisko: ${employee.position || "Brak danych"}`,
+    ],
+    sections: [
+      {
+        title: "Pracownik",
+        details: [
+          { label: "Imię i nazwisko", value: employee.name || "Brak danych" },
+          { label: "Kod pracownika", value: employee.worker_code || "Brak danych" },
+          { label: "Stanowisko", value: employee.position || "Brak danych" },
+          {
+            label: "Liczba wydan",
+            value: String(issueRows.length),
+          },
+          {
+            label: "Łączna ilość",
+            value: `${formatWorkwearQuantity(totalQuantity)} szt.`,
+          },
+        ],
+      },
+      {
+        title: "Pozycje wydania",
+        table: {
+          columns: ["Data", "Element", "Rozmiar", "Ilość", "Uwagi"],
+          rows: issueRows.map((row) => [
+            formatWorkwearDate(row.entry.issue.issue_date),
+            row.entry.issue.item_name || "-",
+            row.entry.issue.size || "-",
+            `${formatWorkwearQuantity(row.entry.issue.quantity)} szt.`,
+            row.entry.issue.notes || "-",
+          ]),
+        },
+      },
+    ],
+  });
 }
 
 export function WorkwearView({
@@ -867,6 +884,17 @@ export function WorkwearView({
               <ActionButton
                 type="button"
                 variant="secondary"
+                onClick={() =>
+                  derived.selectedEmployee &&
+                  printWorkwearCard(derived.selectedEmployee, derived.selectedIssueRows)
+                }
+                disabled={!derived.selectedEmployee}
+              >
+                PDF wydania
+              </ActionButton>
+              <ActionButton
+                type="button"
+                variant="secondary"
                 onClick={() => void handleRefresh()}
                 disabled={busyAction === "refresh"}
               >
@@ -978,20 +1006,6 @@ export function WorkwearView({
                     </strong>
                   </div>
                 </div>
-
-                <div className="workwear-card-actions">
-                  <ActionButton
-                    type="button"
-                    variant="secondary"
-                    onClick={() =>
-                      derived.selectedEmployee &&
-                      printWorkwearCard(derived.selectedEmployee, derived.selectedIssueRows)
-                    }
-                  >
-                    Drukuj karte
-                  </ActionButton>
-                </div>
-
                 <DataTable
                   columns={issueTableColumns}
                   rows={derived.selectedIssueRows}

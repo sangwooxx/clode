@@ -10,6 +10,7 @@ import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { printDocument } from "@/lib/print/print-document";
 import {
   deleteEmployeeRecord,
   fetchEmployeesModuleData,
@@ -259,6 +260,79 @@ export function EmployeesView({
     [detailEmployee?.medical_exam_valid_until]
   );
 
+  function handlePrintEmployee() {
+    if (!detailEmployee) return;
+
+    const relations = detailRelations;
+    const contactValue = [detailEmployee.phone, detailEmployee.city, detailEmployee.street]
+      .filter(Boolean)
+      .join(" • ") || "Brak danych";
+
+    printDocument({
+      title: "Kartoteka pracownika",
+      subtitle: detailEmployee.name,
+      filename: `clode-pracownik-${detailEmployee.worker_code || detailEmployee.id || "rekord"}`,
+      meta: [
+        `Status: ${formatEmployeeStatus(detailEmployee.status)}`,
+        `Stanowisko: ${detailEmployee.position || "Brak danych"}`,
+      ],
+      sections: [
+        {
+          title: "Dane podstawowe",
+          details: [
+            { label: "Imię i nazwisko", value: detailEmployee.name || "Brak danych" },
+            { label: "Kod pracownika", value: detailEmployee.worker_code || "Brak danych" },
+            { label: "Status", value: formatEmployeeStatus(detailEmployee.status) },
+            { label: "Stanowisko", value: detailEmployee.position || "Brak danych" },
+            { label: "Data zatrudnienia", value: formatEmployeeDate(detailEmployee.employment_date) },
+            {
+              label: "Data zakończenia",
+              value: formatEmployeeDate(detailEmployee.employment_end_date),
+            },
+          ],
+        },
+        {
+          title: "Kontakt i adres",
+          details: [
+            { label: "Telefon", value: detailEmployee.phone || "Brak danych" },
+            { label: "Miasto", value: detailEmployee.city || "Brak danych" },
+            { label: "Ulica", value: detailEmployee.street || "Brak danych" },
+            { label: "Kontakt zbiorczy", value: contactValue },
+          ],
+        },
+        {
+          title: "Powiązania operacyjne",
+          details: [
+            {
+              label: "Wpisy czasu",
+              value: relations ? String(relations.hoursEntries) : "0",
+            },
+            {
+              label: "Godziny łącznie",
+              value: relations ? formatHours(relations.totalHours) : "0 h",
+            },
+            {
+              label: "Karty pracy",
+              value: relations ? String(relations.workCards) : "0",
+            },
+            {
+              label: "Miesiące aktywności",
+              value: relations ? String(relations.monthsCount) : "0",
+            },
+            {
+              label: "Koszt godzin",
+              value: relations ? formatMoney(relations.totalCost) : formatMoney(0),
+            },
+            {
+              label: "Badania",
+              value: `${selectedMedical.dateText} • ${selectedMedical.label}`,
+            },
+          ],
+        },
+      ],
+    });
+  }
+
   useEffect(() => {
     if (editingEmployee) {
       setFormValues(buildEmployeeFormValues(editingEmployee));
@@ -397,6 +471,14 @@ export function EmployeesView({
               </ActionButton>
             </div>
             <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={handlePrintEmployee}
+                disabled={!detailEmployee}
+              >
+                PDF pracownika
+              </ActionButton>
               <ActionButton
                 type="button"
                 variant="secondary"

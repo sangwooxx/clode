@@ -9,6 +9,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { printDocument } from "@/lib/print/print-document";
 import type { ContractRecord } from "@/features/contracts/types";
 import {
   fetchHoursContracts,
@@ -608,6 +609,105 @@ export function HoursView({
     [contractOptions, monthEntries]
   );
 
+  function handlePrintHoursReport() {
+    if (!selectedMonth) return;
+
+    const isEmployeeContext = Boolean(selectedEmployeeRow);
+    const reportTitle = "Ewidencja czasu pracy";
+    const reportSubtitle = isEmployeeContext
+      ? selectedEmployeeRow?.employeeName || selectedMonth.month_label
+      : selectedMonth.month_label;
+
+    const currentEntries = isEmployeeContext ? employeeEntries : monthEntries;
+    const totalHours = isEmployeeContext
+      ? employeeHoursTotal
+      : monthEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0);
+    const totalCost = isEmployeeContext
+      ? employeeEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0)
+      : monthEntries.reduce((sum, entry) => sum + Number(entry.cost_amount || 0), 0);
+
+    const mainTableRows = isEmployeeContext
+      ? employeeEntries.map((entry) => {
+          const option =
+            contractOptions.find(
+              (candidate) =>
+                candidate.id === (String(entry.contract_id || "").trim() || UNASSIGNED_TIME_CONTRACT_ID)
+            ) ?? null;
+
+          return [
+            entry.contract_name || "Nieprzypisane",
+            option ? formatContractStatusLabel(option.status) : "Brak powiązania",
+            formatHours(entry.hours || 0),
+            formatMoney(entry.cost_amount || 0),
+          ];
+        })
+      : hoursRows.map((row) => [
+          row.employeeName,
+          row.contracts.map((contract) => contract.label).join(" | ") || "—",
+          formatHours(row.totalHours),
+          formatMoney(row.totalCost),
+          formatNumber(row.entriesCount),
+        ]);
+
+    printDocument({
+      title: reportTitle,
+      subtitle: reportSubtitle,
+      meta: [
+        selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+        isEmployeeContext ? "Raport pracownika" : "Raport miesiąca",
+        `Wpisy: ${formatNumber(currentEntries.length)}`,
+        `Suma godzin: ${formatHours(totalHours)}`,
+      ],
+      filename: `clode-ewidencja-czasu-${selectedMonth.month_key}${isEmployeeContext ? `-${selectedEmployeeRow?.employeeName || "pracownik"}` : ""}`,
+      landscape: true,
+      sections: [
+        {
+          title: "Zakres raportu",
+          details: [
+            {
+              label: "Miesiąc",
+              value: selectedMonth.month_label || formatMonthLabel(selectedMonth.month_key),
+            },
+            {
+              label: "Kontekst",
+              value: isEmployeeContext ? "Wybrany pracownik" : "Cały miesiąc",
+            },
+            {
+              label: "Pracownik",
+              value: selectedEmployeeRow?.employeeName || "Wszyscy pracownicy",
+            },
+            { label: "Wpisy", value: formatNumber(currentEntries.length) },
+            { label: "Suma godzin", value: formatHours(totalHours) },
+            { label: "Suma kosztów", value: formatMoney(totalCost) },
+          ],
+        },
+        {
+          title: isEmployeeContext ? "Wpisy pracownika" : "Zestawienie pracowników",
+          table: {
+            columns: isEmployeeContext
+              ? ["Kontrakt", "Status", "Godziny", "Koszt"]
+              : ["Pracownik", "Kontrakty", "Godziny", "Koszt", "Wpisy"],
+            rows: mainTableRows,
+          },
+        },
+        {
+          title: "Podsumowanie kontraktów miesiąca",
+          table: {
+            columns: ["Kontrakt", "Kod", "Status", "Godziny", "Koszt", "Wpisy"],
+            rows: contractSummaryRows.map((row) => [
+              row.option.label,
+              row.option.code || "—",
+              formatContractStatusLabel(row.option.status),
+              formatHours(row.aggregate.hours_total),
+              formatMoney(row.aggregate.cost_total),
+              formatNumber(row.aggregate.entries_count),
+            ]),
+          },
+        },
+      ],
+    });
+  }
+
   useEffect(() => {
     if (!selectedMonth) {
       setMonthContractIds([]);
@@ -1007,6 +1107,14 @@ export function HoursView({
               ) : null}
             </div>
             <div className="module-actions__secondary">
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={handlePrintHoursReport}
+                disabled={!selectedMonth}
+              >
+                PDF raportu
+              </ActionButton>
               <ActionButton
                 type="button"
                 variant="secondary"
