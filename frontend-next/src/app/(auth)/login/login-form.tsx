@@ -29,7 +29,7 @@ export function LoginForm({
     try {
       const user = await login(username, password);
       if (!user) {
-        setError("Backend nie zwrocil uzytkownika dla tej sesji.");
+        setError("Backend nie zwrócił użytkownika dla tej sesji.");
         return;
       }
       router.replace(resolvedNextUrl as Route);
@@ -38,7 +38,7 @@ export function LoginForm({
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Logowanie nie powiodlo sie."
+          : "Logowanie nie powiodło się."
       );
     }
   }
@@ -74,7 +74,7 @@ export function LoginForm({
       ) : null}
 
       <ActionButton type="submit" disabled={isLoading} fullWidth>
-        {isLoading ? "Logowanie..." : "Zaloguj"}
+        {isLoading ? "Logowanie..." : "Zaloguj się"}
       </ActionButton>
     </form>
   );

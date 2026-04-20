@@ -75,11 +75,13 @@ select {
   max-width: none;
   min-height: 0;
   padding: 0;
+  justify-content: center;
 }
 
 .auth-page__intro {
   display: grid;
-  gap: 6px;
+  gap: 4px;
+  text-align: center;
 }
 
 .auth-page__eyebrow,
@@ -94,8 +96,8 @@ select {
 
 .auth-page__title {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.6rem);
-  line-height: 1.02;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  line-height: 1.12;
 }
 
 .section-header__title,
@@ -641,7 +643,14 @@ select {
 .dashboard-toolbar__tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .contracts-layout {
@@ -1042,7 +1051,60 @@ select {
 .toolbar-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.toolbar-tabs .action-button,
+.dashboard-toolbar__tabs .action-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transform: none;
+  box-shadow: none;
+}
+
+.toolbar-tabs .action-button:hover,
+.dashboard-toolbar__tabs .action-button:hover {
+  transform: none;
+}
+
+.toolbar-tabs .action-button--secondary,
+.dashboard-toolbar__tabs .action-button--secondary {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.toolbar-tabs .action-button--secondary:hover,
+.dashboard-toolbar__tabs .action-button--secondary:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+.toolbar-tabs .action-button--primary,
+.dashboard-toolbar__tabs .action-button--primary {
+  background: rgba(45, 161, 129, 0.18);
+  border-color: rgba(45, 161, 129, 0.42);
+  color: var(--text);
+}
+
+.toolbar-tabs .action-button--primary:hover,
+.dashboard-toolbar__tabs .action-button--primary:hover {
+  background: rgba(45, 161, 129, 0.24);
+}
+
+.auth-page__brand .app-shell__brand-mark {
+  font-size: clamp(2.4rem, 4vw, 2.9rem);
+  font-weight: 700;
 }
 
 .toolbar-strip__meta {
