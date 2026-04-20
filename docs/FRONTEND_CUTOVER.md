@@ -10,14 +10,14 @@ Cutover jest wykonany.
 ## Aktualny model deployu
 
 ### Frontend glowny
-- osobny projekt Vercel `clode-next` dla glownego frontendu
+- osobny projekt Vercel `clode` dla glownego frontendu
 - `rootDirectory=frontend`
 - framework: Next.js
 - backend origin ustawiony przez `CLODE_BACKEND_ORIGIN`
 
 ### Backend i routing
-- repo-root deploy nadal utrzymuje backend API
-- ten sam deploy sluzy jako backend/router dla glownego frontendu
+- osobny projekt Vercel `backend` utrzymuje backend API
+- backend jest zrodlem routingu do glownego frontendu
 
 ## Stan repo po cutoverze
 
@@ -56,7 +56,7 @@ Po kazdej zmianie deployowej powinny przejsc co najmniej:
 
 ## Rollback
 
-1. Odpinac glowna domene od projektu `clode-next`.
+1. Odpinac glowna domene od projektu `clode`.
 2. Przepiac domene z powrotem na repo-root deploy.
 3. Sprawdzic:
    - `/login`

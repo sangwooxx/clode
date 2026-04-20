@@ -14,11 +14,11 @@
     },
     {
       "src": "^/$",
-      "dest": "https://clode-next.vercel.app/"
+      "dest": "https://clode-web.vercel.app/"
     },
     {
       "src": "^/(.*)$",
-      "dest": "https://clode-next.vercel.app/$1"
+      "dest": "https://clode-web.vercel.app/$1"
     }
   ]
 }

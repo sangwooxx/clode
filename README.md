@@ -54,10 +54,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 ## Deployment model
 
 Current production-oriented model:
-- dedicated Vercel project `clode-next` deploys the main frontend
+- dedicated Vercel project `clode` deploys the main frontend
 - `rootDirectory=frontend`
 - `CLODE_BACKEND_ORIGIN` points to the backend service
-- repo-root deploy stays available as backend plus router for the main frontend
+- dedicated Vercel project `backend` serves the backend API and router for the main frontend
 
 Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
 
