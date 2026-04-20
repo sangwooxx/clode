@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 type DataTableSortDirection = "asc" | "desc" | null;
 type DataTableSortValue = string | number | boolean | Date | null | undefined;
@@ -83,6 +83,7 @@ export function DataTable<T>({
   getRowClassName?: (row: T) => string | undefined;
   tableClassName?: string;
 }) {
+  const tableRef = useRef<HTMLDivElement | null>(null);
   const [sortState, setSortState] = useState<{
     key: string | null;
     direction: DataTableSortDirection;
@@ -137,8 +138,75 @@ export function DataTable<T>({
     });
   }
 
+  useEffect(() => {
+    const root = tableRef.current;
+    if (!root) {
+      return;
+    }
+
+    const selector = [
+      ".data-table__text",
+      ".data-table__primary",
+      ".data-table__secondary",
+      ".hours-contract-pill__name",
+      ".hours-contract-pill__meta",
+      ".employees-relation-pill"
+    ].join(", ");
+
+    const syncOverflowTitles = () => {
+      root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+        const explicitTitle = element.getAttribute("title");
+        if (explicitTitle && element.dataset.overflowTitle !== "true") {
+          return;
+        }
+
+        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+        if (!text) {
+          if (element.dataset.overflowTitle === "true") {
+            element.removeAttribute("title");
+            delete element.dataset.overflowTitle;
+          }
+          return;
+        }
+
+        const hasOverflow =
+          Math.ceil(element.scrollWidth) > Math.ceil(element.clientWidth + 1) ||
+          Math.ceil(element.scrollHeight) > Math.ceil(element.clientHeight + 1);
+
+        if (hasOverflow) {
+          element.title = text;
+          element.dataset.overflowTitle = "true";
+        } else if (element.dataset.overflowTitle === "true") {
+          element.removeAttribute("title");
+          delete element.dataset.overflowTitle;
+        }
+      });
+    };
+
+    const frameId = window.requestAnimationFrame(syncOverflowTitles);
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" ? new ResizeObserver(syncOverflowTitles) : null;
+
+    resizeObserver?.observe(root);
+    window.addEventListener("resize", syncOverflowTitles);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", syncOverflowTitles);
+    };
+  }, [columns, sortedRows]);
+
+  function renderCellContent(content: ReactNode) {
+    if (typeof content === "string" || typeof content === "number") {
+      return <span className="data-table__text">{content}</span>;
+    }
+
+    return content;
+  }
+
   return (
-    <div className="data-table">
+    <div ref={tableRef} className="data-table">
       <table className={tableClassName}>
         <thead>
           <tr>
@@ -193,7 +261,7 @@ export function DataTable<T>({
               >
                 {columns.map((column) => (
                   <td key={column.key} className={column.className}>
-                    {column.render(row, index)}
+                    {renderCellContent(column.render(row, index))}
                   </td>
                 ))}
               </tr>
