@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+import unicodedata
 
 
 VIEW_IDS = (
@@ -115,8 +116,13 @@ ROLE_DEFAULT_PERMISSIONS = {
 }
 
 
+def _canonicalize_role_key(role: str | None) -> str:
+    normalized = unicodedata.normalize("NFKD", str(role or "").strip().lower())
+    return "".join(character for character in normalized if not unicodedata.combining(character))
+
+
 def normalize_role(role: str | None) -> str:
-    normalized = str(role or "").strip().lower()
+    normalized = _canonicalize_role_key(role)
     return ROLE_ALIASES.get(normalized, "read-only")
 
 

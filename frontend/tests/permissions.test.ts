@@ -3,6 +3,7 @@ import { getModuleNavigation } from "../src/features/navigation/module-nav";
 import {
   canAccessView,
   canManageView,
+  normalizeRole,
   normalizePermissions,
 } from "../src/lib/auth/permissions";
 
@@ -41,5 +42,23 @@ describe("frontend permission model", () => {
     expect(canAccessView(user as never, "employeesView")).toBe(true);
     expect(canManageView(user as never, "employeesView")).toBe(false);
     expect(canManageView(user as never, "vacationsView")).toBe(true);
+  });
+
+  it("normalizes Polish role names with diacritics before applying defaults", () => {
+    expect(normalizeRole("księgowość")).toBe("ksiegowosc");
+    expect(normalizeRole("użytkownik")).toBe("read-only");
+
+    const accountingNavigation = getModuleNavigation({
+      role: "księgowość",
+      permissions: normalizePermissions("księgowość", {}),
+    } as never).map((item) => item.href);
+
+    expect(accountingNavigation).toEqual([
+      "/dashboard",
+      "/contracts",
+      "/invoices",
+      "/work-cards",
+      "/hours",
+    ]);
   });
 });

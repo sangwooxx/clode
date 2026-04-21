@@ -33,6 +33,14 @@ export type ManagePermissionId = (typeof managePermissionDefinitions)[number]["i
 export type PermissionId = (typeof permissionDefinitions)[number]["id"];
 export type PermissionMap = Record<PermissionId, boolean>;
 
+function canonicalizeRoleKey(role: string | null | undefined) {
+  return String(role || "")
+    .trim()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 const managePermissionByView = new Map<ViewPermissionId, ManagePermissionId>(
   managePermissionDefinitions.map((definition) => [definition.viewId, definition.id])
 );
@@ -69,11 +77,11 @@ const defaultPermissionsByRole: Record<string, Partial<PermissionMap>> = {
 };
 
 export function normalizeRole(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
+  const normalized = canonicalizeRoleKey(role);
   if (normalized === "administrator") return "admin";
-  if (normalized === "księgowość" || normalized === "ksiegowosc") return "ksiegowosc";
+  if (normalized === "ksiegowosc") return "ksiegowosc";
   if (normalized === "kadry") return "kierownik";
-  if (normalized === "readonly" || normalized === "uzytkownik" || normalized === "użytkownik") {
+  if (normalized === "readonly" || normalized === "uzytkownik") {
     return "read-only";
   }
   return normalized || "read-only";
