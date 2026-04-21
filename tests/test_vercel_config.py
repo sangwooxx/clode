@@ -63,15 +63,16 @@ class VercelConfigTestCase(unittest.TestCase):
             if previous_node_env is not None:
                 os.environ["NODE_ENV"] = previous_node_env
 
-    def test_production_settings_require_explicit_session_secret(self) -> None:
+    def test_production_settings_without_session_secret_fall_back_to_stateful_sessions(self) -> None:
         previous_session_secret = os.environ.pop("CLODE_SESSION_SECRET", None)
         previous_vercel = os.environ.get("VERCEL")
         previous_node_env = os.environ.get("NODE_ENV")
         os.environ["VERCEL"] = "1"
         os.environ["NODE_ENV"] = "production"
         try:
-            with self.assertRaises(RuntimeError):
-                load_settings()
+            settings = load_settings()
+            self.assertEqual(settings.session_secret, "")
+            self.assertFalse(settings.use_stateless_sessions)
         finally:
             if previous_vercel is None:
                 os.environ.pop("VERCEL", None)

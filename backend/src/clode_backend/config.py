@@ -117,9 +117,6 @@ def load_settings() -> Settings:
             "http://localhost:8080",
         )
 
-    if is_production and not configured_session_secret:
-        raise RuntimeError("CLODE_SESSION_SECRET must be configured in production.")
-
     return Settings(
         host=read_env("CLODE_BACKEND_HOST", "AGENT_BACKEND_HOST", "127.0.0.1"),
         port=int(read_env("CLODE_BACKEND_PORT", "AGENT_BACKEND_PORT", "8787")),
@@ -129,8 +126,8 @@ def load_settings() -> Settings:
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
-        session_secret=configured_session_secret or "clode-session-dev",
-        use_stateless_sessions=is_vercel and not force_stateful_sessions,
+        session_secret=configured_session_secret or ("clode-session-dev" if not is_production else ""),
+        use_stateless_sessions=bool(configured_session_secret) and is_vercel and not force_stateful_sessions,
         secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_production),
         is_vercel=is_vercel,
         is_production=is_production,
