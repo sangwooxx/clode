@@ -9,7 +9,10 @@ type ServerFetchOptions = {
   nextPath?: string;
   allowStatuses?: number[];
   cache?: RequestCache;
+  timeoutMs?: number;
 };
+
+const DEFAULT_SERVER_FETCH_TIMEOUT_MS = 10_000;
 
 export function resolveServerApiOrigin(headerStore: Awaited<ReturnType<typeof headers>>) {
   const forwardedHost = headerStore.get("x-forwarded-host");
@@ -41,14 +44,35 @@ export async function fetchBackendJsonServer<T>(
   const cookieStore = await cookies();
   const headerStore = await headers();
   const cookieHeader = buildBackendCookieHeader(cookieStore);
-  const response = await fetch(`${resolveServerApiOrigin(headerStore)}/api/v1${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      Accept: "application/json",
-      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    },
-    cache: options.cache ?? "no-store",
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    options.timeoutMs ?? DEFAULT_SERVER_FETCH_TIMEOUT_MS
+  );
+
+  let response: Response;
+
+  try {
+    response = await fetch(`${resolveServerApiOrigin(headerStore)}/api/v1${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        Accept: "application/json",
+        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+      },
+      cache: options.cache ?? "no-store",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`Backend timed out while fetching ${path}.`);
+    }
+
+    throw error instanceof Error
+      ? error
+      : new Error(`Backend request failed for ${path}.`);
+  } finally {
+    clearTimeout(timeout);
+  }
 
   const payload =
     response.status === 204

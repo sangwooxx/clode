@@ -25,6 +25,40 @@ export function LoginForm({
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function probeExistingSession() {
+      try {
+        const response = await fetch("/api/v1/auth/me", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+          credentials: "include",
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json().catch(() => null)) as { user?: unknown } | null;
+        if (payload?.user) {
+          router.replace(resolvedNextUrl as Route);
+          router.refresh();
+        }
+      } catch {
+        // Login should stay interactive even if the background session probe fails.
+      }
+    }
+
+    void probeExistingSession();
+
+    return () => controller.abort();
+  }, [resolvedNextUrl, router]);
+
+  useEffect(() => {
     if (initialized && isAuthenticated) {
       router.replace(resolvedNextUrl as Route);
       router.refresh();

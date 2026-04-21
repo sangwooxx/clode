@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
+import { AppProviders } from "@/components/providers/app-providers";
 import { AppShell } from "@/components/ui/app-shell";
 import { ProtectedApp } from "@/lib/auth/protected-app";
+import { readOptionalServerSession } from "@/lib/auth/server-auth";
 
-export default function ProtectedLayout({ children }: { children: ReactNode }) {
+export default async function ProtectedLayout({ children }: { children: ReactNode }) {
+  const initialUser = await readOptionalServerSession();
+
   return (
-    <ProtectedApp>
-      <AppShell>{children}</AppShell>
-    </ProtectedApp>
+    <AppProviders initialUser={initialUser}>
+      <ProtectedApp>
+        <AppShell>{children}</AppShell>
+      </ProtectedApp>
+    </AppProviders>
   );
 }

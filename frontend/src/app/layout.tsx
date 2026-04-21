@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { AppProviders } from "@/components/providers/app-providers";
-import { readOptionalServerSession } from "@/lib/auth/server-auth";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,12 +12,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const initialUser = await readOptionalServerSession();
-
   return (
     <html lang="pl">
       <body>
-        <AppProviders initialUser={initialUser}>{children}</AppProviders>
+        {children}
       </body>
     </html>
   );
