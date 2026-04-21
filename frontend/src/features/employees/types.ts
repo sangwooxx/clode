@@ -1,5 +1,4 @@
-import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/types";
-import type { WorkCardStore } from "@/features/work-cards/types";
+import type { HoursEmployeeRecord } from "@/features/hours/types";
 
 export type EmployeeDirectoryRecord = HoursEmployeeRecord & {
   key: string;
@@ -23,9 +22,8 @@ export type EmployeeFormValues = {
 
 export type EmployeesBootstrapData = {
   directoryEmployees: HoursEmployeeRecord[];
-  storeEmployees: HoursEmployeeRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+  operationalEmployees: HoursEmployeeRecord[];
+  relationSummaries: EmployeeRelationSummary[];
 };
 
 export type EmployeeRelationSnapshot = {
@@ -34,6 +32,16 @@ export type EmployeeRelationSnapshot = {
   monthsCount: number;
   totalHours: number;
   totalCost: number;
+};
+
+export type EmployeeRelationSummary = {
+  employee_id?: string;
+  employee_name?: string;
+  hours_entries: number;
+  work_cards: number;
+  months_count: number;
+  total_hours: number;
+  total_cost: number;
 };
 
 export type EmployeeMedicalState = {

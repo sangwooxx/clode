@@ -37,6 +37,10 @@ def handle_resource_route(context: RequestContext):
             created = employee_service.create_employee(body, current_user)
             return json_response(201, {"ok": True, "employee": created})
 
+    if method == "GET" and path == "/api/v1/employees/summary":
+        payload = employee_service.list_employee_summary(current_user)
+        return json_response(200, {"ok": True, **payload})
+
     if path.startswith("/api/v1/employees/"):
         employee_id = path.split("/api/v1/employees/", 1)[1]
         if not employee_id:
@@ -197,6 +201,10 @@ def handle_resource_route(context: RequestContext):
             body = parse_json_body(context.handler)
             created = time_entry_service.create_time_entry(body, current_user)
             return json_response(201, {"ok": True, "time_entry": created})
+
+    if method == "GET" and path == "/api/v1/time-entries/bootstrap":
+        payload = time_entry_service.get_time_entries_bootstrap(current_user)
+        return json_response(200, {"ok": True, **payload})
 
     if path == "/api/v1/time-months" and method == "POST":
         body = parse_json_body(context.handler)

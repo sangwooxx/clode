@@ -54,6 +54,27 @@ class EmployeeService:
         self.ensure_read_access(current_user)
         return self.repository.list_all()
 
+    def list_employee_summary(self, current_user: dict[str, Any] | None) -> dict[str, Any]:
+        self.ensure_read_access(current_user)
+        directory_employees = self.repository.list_all()
+        relation_summaries = self._build_relation_summaries()
+
+        operational_employees = [
+            {
+                "id": summary["employee_id"] or None,
+                "name": summary["employee_name"],
+                "status": "active",
+            }
+            for summary in relation_summaries
+            if _normalize_text(summary.get("employee_id")) or _normalize_text(summary.get("employee_name"))
+        ]
+
+        return {
+            "employees": directory_employees,
+            "operational_employees": operational_employees,
+            "relation_summaries": relation_summaries,
+        }
+
     def create_employee(
         self, payload: dict[str, Any], current_user: dict[str, Any] | None
     ) -> dict[str, Any]:
@@ -107,6 +128,7 @@ class EmployeeService:
         next_payload["id"] = normalized_id
         employees[index] = next_payload
         saved = self.repository.save_all(employees)
+        self._synchronize_operational_references(current, next_payload, employees)
         return next(
             (employee for employee in saved if _normalize_text(employee.get("id")) == normalized_id),
             next_payload,
@@ -142,6 +164,204 @@ class EmployeeService:
 
     def _has_history(self, employee: dict[str, Any]) -> bool:
         return self._has_time_entry_history(employee) or self._has_work_card_history(employee)
+
+    def _build_relation_summaries(self) -> list[dict[str, Any]]:
+        combined: dict[str, dict[str, Any]] = {}
+
+        for summary in self.time_entry_repository.list_employee_relation_summaries():
+            employee_id = _normalize_text(summary.get("employee_id"))
+            employee_name = _normalize_text(summary.get("employee_name"))
+            bucket = combined.setdefault(
+                self._relation_key(employee_id, employee_name),
+                {
+                    "employee_id": employee_id,
+                    "employee_name": employee_name,
+                    "hours_entries": 0,
+                    "work_cards": 0,
+                    "months_count": 0,
+                    "total_hours": 0.0,
+                    "total_cost": 0.0,
+                    "_month_keys": set(),
+                },
+            )
+            bucket["hours_entries"] += int(summary.get("hours_entries") or 0)
+            bucket["total_hours"] += float(summary.get("total_hours") or 0)
+            bucket["total_cost"] += float(summary.get("total_cost") or 0)
+            bucket["_month_keys_count"] = int(summary.get("months_count") or 0)
+            if bucket["_month_keys_count"] > bucket["months_count"]:
+                bucket["months_count"] = bucket["_month_keys_count"]
+
+        payload = self.store_repository.get("work_cards")
+        cards = payload.get("cards") if isinstance(payload, dict) else None
+        if isinstance(cards, list):
+            for card in cards:
+                if not isinstance(card, dict):
+                    continue
+                employee_id = _normalize_text(card.get("employee_id"))
+                employee_name = _normalize_text(card.get("employee_name"))
+                if not employee_id and not employee_name:
+                    continue
+
+                bucket = combined.setdefault(
+                    self._relation_key(employee_id, employee_name),
+                    {
+                        "employee_id": employee_id,
+                        "employee_name": employee_name,
+                        "hours_entries": 0,
+                        "work_cards": 0,
+                        "months_count": 0,
+                        "total_hours": 0.0,
+                        "total_cost": 0.0,
+                        "_month_keys": set(),
+                    },
+                )
+                bucket["work_cards"] += 1
+                month_key = _normalize_text(card.get("month_key"))
+                if month_key:
+                    bucket["_month_keys"].add(month_key)
+
+        relation_summaries: list[dict[str, Any]] = []
+        for summary in combined.values():
+            month_keys = summary.pop("_month_keys", set())
+            summary["months_count"] = max(summary["months_count"], len(month_keys))
+            summary["total_hours"] = round(float(summary["total_hours"] or 0), 2)
+            summary["total_cost"] = round(float(summary["total_cost"] or 0), 2)
+            summary.pop("_month_keys_count", None)
+            relation_summaries.append(summary)
+
+        relation_summaries.sort(
+            key=lambda item: (
+                _normalize_text(item.get("employee_name")).casefold(),
+                _normalize_text(item.get("employee_id")),
+            )
+        )
+        return relation_summaries
+
+    @staticmethod
+    def _relation_key(employee_id: str, employee_name: str) -> str:
+        return f"id:{employee_id}" if employee_id else f"name:{employee_name.casefold()}"
+
+    def _synchronize_operational_references(
+        self,
+        previous_employee: dict[str, Any],
+        next_employee: dict[str, Any],
+        employees: list[dict[str, Any]],
+    ) -> None:
+        previous_id = _normalize_text(previous_employee.get("id"))
+        previous_name = _normalize_text(previous_employee.get("name"))
+        next_id = _normalize_text(next_employee.get("id"))
+        next_name = _normalize_text(next_employee.get("name"))
+
+        if previous_id == next_id and previous_name == next_name:
+            return
+
+        same_name_count = sum(
+            1
+            for employee in employees
+            if _normalize_text(employee.get("name")).casefold() == previous_name.casefold()
+        )
+        allow_name_fallback = bool(previous_name) and same_name_count <= 1
+        self._replace_time_entry_references(
+            previous_id=previous_id,
+            previous_name=previous_name,
+            next_id=next_id,
+            next_name=next_name,
+            allow_name_fallback=allow_name_fallback,
+        )
+        self._replace_work_card_references(
+            previous_id=previous_id,
+            previous_name=previous_name,
+            next_id=next_id,
+            next_name=next_name,
+            allow_name_fallback=allow_name_fallback,
+        )
+
+    def _replace_time_entry_references(
+        self,
+        *,
+        previous_id: str,
+        previous_name: str,
+        next_id: str,
+        next_name: str,
+        allow_name_fallback: bool,
+    ) -> None:
+        if not previous_id and not (previous_name and allow_name_fallback):
+            return
+
+        with self.time_entry_repository.connect() as connection:
+            if previous_id:
+                connection.execute(
+                    """
+                    UPDATE time_entries
+                    SET employee_id = ?, employee_name = ?
+                    WHERE trim(COALESCE(employee_id, '')) = ?
+                    """,
+                    (next_id or None, next_name, previous_id),
+                )
+            if previous_name and allow_name_fallback:
+                connection.execute(
+                    """
+                    UPDATE time_entries
+                    SET employee_id = ?, employee_name = ?
+                    WHERE trim(COALESCE(employee_id, '')) = ''
+                      AND lower(trim(employee_name)) = lower(trim(?))
+                    """,
+                    (next_id or None, next_name, previous_name),
+                )
+            connection.commit()
+
+    def _replace_work_card_references(
+        self,
+        *,
+        previous_id: str,
+        previous_name: str,
+        next_id: str,
+        next_name: str,
+        allow_name_fallback: bool,
+    ) -> None:
+        payload = self.store_repository.get("work_cards")
+        if not isinstance(payload, dict):
+            return
+
+        cards = payload.get("cards")
+        if not isinstance(cards, list):
+            return
+
+        changed = False
+        next_cards: list[dict[str, Any]] = []
+        for card in cards:
+            if not isinstance(card, dict):
+                next_cards.append(card)
+                continue
+
+            card_employee_id = _normalize_text(card.get("employee_id"))
+            card_employee_name = _normalize_text(card.get("employee_name"))
+            matches = False
+            if previous_id and card_employee_id == previous_id:
+                matches = True
+            elif allow_name_fallback and previous_name and not card_employee_id:
+                matches = card_employee_name.casefold() == previous_name.casefold()
+
+            if not matches:
+                next_cards.append(card)
+                continue
+
+            changed = True
+            next_cards.append(
+                {
+                    **card,
+                    "employee_id": next_id,
+                    "employee_name": next_name,
+                }
+            )
+
+        if changed:
+            next_payload = {
+                **payload,
+                "version": int(payload.get("version") or 1) if isinstance(payload.get("version"), int) else 1,
+                "cards": next_cards,
+            }
+            self.store_repository.save("work_cards", next_payload)
 
     def _has_time_entry_history(self, employee: dict[str, Any]) -> bool:
         employee_id = _normalize_text(employee.get("id"))

@@ -142,6 +142,39 @@ class TimeEntryRepository(RepositoryBase):
     def list_entries_for_month(self, month_key: str) -> list[dict[str, Any]]:
         return self.list_entries({"month": month_key})
 
+    def list_employee_relation_summaries(self) -> list[dict[str, Any]]:
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    COALESCE(NULLIF(trim(te.employee_id), ''), '') AS employee_id,
+                    MAX(trim(te.employee_name)) AS employee_name,
+                    COUNT(*) AS hours_entries,
+                    COUNT(DISTINCT hm.month_key) AS months_count,
+                    COALESCE(SUM(te.hours), 0) AS total_hours,
+                    COALESCE(SUM(te.cost_amount), 0) AS total_cost
+                FROM time_entries te
+                JOIN hours_months hm ON hm.id = te.month_id
+                GROUP BY
+                    COALESCE(NULLIF(trim(te.employee_id), ''), ''),
+                    lower(trim(te.employee_name))
+                ORDER BY lower(MAX(trim(te.employee_name))) ASC, employee_id ASC
+                """
+            ).fetchall()
+
+        return [
+            {
+                "employee_id": str(row["employee_id"] or "").strip(),
+                "employee_name": str(row["employee_name"] or "").strip(),
+                "hours_entries": int(row["hours_entries"] or 0),
+                "months_count": int(row["months_count"] or 0),
+                "total_hours": round(float(row["total_hours"] or 0), 2),
+                "total_cost": round(float(row["total_cost"] or 0), 2),
+            }
+            for row in rows
+            if str(row["employee_id"] or "").strip() or str(row["employee_name"] or "").strip()
+        ]
+
     def get_entry(self, entry_id: str) -> dict[str, Any] | None:
         with self.connect() as connection:
             row = connection.execute(

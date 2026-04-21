@@ -5,6 +5,7 @@ import {
   createTimeMonth,
   deleteTimeEntry,
   deleteTimeMonth,
+  listTimeEntriesBootstrap,
   listTimeEntries,
   type TimeEntriesQuery,
   type TimeEntryPayload,
@@ -28,6 +29,14 @@ function filterActiveEmployees(employees: HoursEmployeeRecord[]) {
 
 export async function fetchHoursData(filters: TimeEntriesQuery = {}) {
   return (await listTimeEntries(filters)) as HoursListResponse;
+}
+
+export async function fetchHoursBootstrapSummary() {
+  const response = await listTimeEntriesBootstrap();
+  return {
+    months: Array.isArray(response.months) ? response.months : [],
+    selectedMonthKey: String(response.selected_month_key || "").trim(),
+  };
 }
 
 export async function fetchHoursContracts() {

@@ -221,9 +221,7 @@ export function EmployeesView({
     if (state.status !== "success") return [];
     return buildEmployeeDirectory({
       directoryEmployees: state.data.directoryEmployees,
-      storeEmployees: state.data.storeEmployees,
-      timeEntries: state.data.timeEntries,
-      workCardStore: state.data.workCardStore,
+      operationalEmployees: state.data.operationalEmployees,
     });
   }, [state]);
 
@@ -231,8 +229,7 @@ export function EmployeesView({
     if (state.status !== "success") return [];
     return buildEmployeeSummaryCards({
       employees: employeeDirectory,
-      timeEntries: state.data.timeEntries,
-      workCardStore: state.data.workCardStore,
+      relationSummaries: state.data.relationSummaries,
     });
   }, [employeeDirectory, state]);
 
@@ -240,8 +237,7 @@ export function EmployeesView({
     if (state.status !== "success") return [];
     return buildEmployeeTableRows({
       employees: employeeDirectory,
-      timeEntries: state.data.timeEntries,
-      workCardStore: state.data.workCardStore,
+      relationSummaries: state.data.relationSummaries,
       search,
       filter,
     });
@@ -265,8 +261,7 @@ export function EmployeesView({
     return buildEmployeeRelations({
       employee: detailEmployee,
       employees: employeeDirectory,
-      timeEntries: state.data.timeEntries,
-      workCardStore: state.data.workCardStore,
+      relationSummaries: state.data.relationSummaries,
     });
   }, [detailEmployee, employeeDirectory, state]);
 

@@ -4,6 +4,7 @@ import {
   createEmployee,
   deleteEmployee,
   listEmployees,
+  listEmployeesSummary,
   updateEmployee,
 } from "@/lib/api/employees";
 import { http } from "@/lib/api/http";
@@ -12,7 +13,6 @@ import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/type
 import { normalizeEmployeeText } from "@/features/employees/formatters";
 import {
   buildEmployeeDirectory,
-  buildEmployeeRelations,
   matchesEmployeeReference,
   toEmployeeStoreRecord,
 } from "@/features/employees/mappers";
@@ -22,7 +22,7 @@ import type {
   EmployeesBootstrapData,
 } from "@/features/employees/types";
 import { fetchWorkCardStore } from "@/features/work-cards/api";
-import { type WorkCardRecord, type WorkCardStore } from "@/features/work-cards/types";
+import type { WorkCardRecord, WorkCardStore } from "@/features/work-cards/types";
 
 function emptyWorkCardStore(): WorkCardStore {
   return {
@@ -36,13 +36,42 @@ async function fetchEmployeesDirectory() {
   return Array.isArray(response.employees) ? response.employees : [];
 }
 
+async function fetchEmployeesSummaryData(): Promise<EmployeesBootstrapData> {
+  const response = await listEmployeesSummary();
+  return {
+    directoryEmployees: Array.isArray(response.employees) ? response.employees : [],
+    operationalEmployees: Array.isArray(response.operational_employees)
+      ? response.operational_employees
+      : [],
+    relationSummaries: Array.isArray(response.relation_summaries)
+      ? response.relation_summaries
+      : [],
+  };
+}
+
 function buildCurrentDirectory(args: EmployeesBootstrapData) {
   return buildEmployeeDirectory({
     directoryEmployees: args.directoryEmployees,
-    storeEmployees: args.storeEmployees,
-    timeEntries: args.timeEntries,
-    workCardStore: args.workCardStore,
+    operationalEmployees: args.operationalEmployees,
   });
+}
+
+function buildOperationalEmployeesFromHistory(args: {
+  timeEntries: TimeEntryRecord[];
+  workCardStore: WorkCardStore;
+}) {
+  return [
+    ...args.timeEntries.map((entry) => ({
+      id: String(entry.employee_id || "").trim() || undefined,
+      name: String(entry.employee_name || "").trim(),
+      status: "active" as const,
+    })),
+    ...args.workCardStore.cards.map((card) => ({
+      id: String(card.employee_id || "").trim() || undefined,
+      name: String(card.employee_name || "").trim(),
+      status: "active" as const,
+    })),
+  ];
 }
 
 function generateEmployeeId() {
@@ -65,17 +94,17 @@ function updateWorkCardRecord(card: WorkCardRecord, nextEmployee: HoursEmployeeR
 function buildUpdatedWorkCardStore(args: {
   employee: EmployeeDirectoryRecord | null;
   nextEmployee: HoursEmployeeRecord;
-  bootstrap: EmployeesBootstrapData;
+  workCardStore: WorkCardStore;
   employeeDirectory: EmployeeDirectoryRecord[];
 }) {
   const target = args.employee ?? {
     ...args.nextEmployee,
     key: "",
-    source: "store" as const,
+    source: "operational" as const,
     isPersisted: true,
   };
 
-  const nextCards = args.bootstrap.workCardStore.cards.map((card) => {
+  const nextCards = args.workCardStore.cards.map((card) => {
     if (
       !matchesEmployeeReference(
         {
@@ -107,7 +136,7 @@ async function syncEmployeeTimeEntries(args: {
   const target = args.employee ?? {
     ...args.nextEmployee,
     key: "",
-    source: "store" as const,
+    source: "operational" as const,
     isPersisted: true,
   };
 
@@ -134,7 +163,11 @@ async function syncEmployeeTimeEntries(args: {
   }
 }
 
-export async function fetchEmployeesModuleData(): Promise<EmployeesBootstrapData> {
+async function fetchEmployeesFullBootstrap(): Promise<{
+  directoryEmployees: HoursEmployeeRecord[];
+  timeEntries: TimeEntryRecord[];
+  workCardStore: WorkCardStore;
+}> {
   const [directoryEmployees, hoursPayload, workCardStore] = await Promise.all([
     fetchEmployeesDirectory(),
     fetchHoursData(),
@@ -143,10 +176,13 @@ export async function fetchEmployeesModuleData(): Promise<EmployeesBootstrapData
 
   return {
     directoryEmployees,
-    storeEmployees: [],
     timeEntries: hoursPayload.entries,
     workCardStore,
   };
+}
+
+export async function fetchEmployeesModuleData(): Promise<EmployeesBootstrapData> {
+  return fetchEmployeesSummaryData();
 }
 
 export async function saveEmployeeRecord(args: {
@@ -158,7 +194,7 @@ export async function saveEmployeeRecord(args: {
   const lastName = normalizeEmployeeText(args.values.last_name);
 
   if (!firstName || !lastName) {
-    throw new Error("Podaj imię i nazwisko pracownika.");
+    throw new Error("Podaj imie i nazwisko pracownika.");
   }
 
   const employeeId = String(args.employee?.id || "").trim() || generateEmployeeId();
@@ -166,6 +202,7 @@ export async function saveEmployeeRecord(args: {
     employeeId,
     values: args.values,
   });
+
   let persistedEmployee;
   try {
     persistedEmployee = args.employee
@@ -173,16 +210,23 @@ export async function saveEmployeeRecord(args: {
       : await createEmployee(employeePayload);
   } catch (error) {
     throw new Error(
-      `Nie udało się zapisać rekordu pracownika: ${error instanceof Error ? error.message : "nieznany błąd"}`
+      `Nie udalo sie zapisac rekordu pracownika: ${error instanceof Error ? error.message : "nieznany blad"}`
     );
   }
-  const canonicalEmployee = persistedEmployee.employee || employeePayload;
 
-  const currentDirectory = buildCurrentDirectory(args.bootstrap);
+  const canonicalEmployee = persistedEmployee.employee || employeePayload;
+  const fullBootstrap = await fetchEmployeesFullBootstrap();
+  const currentDirectory = buildEmployeeDirectory({
+    directoryEmployees: fullBootstrap.directoryEmployees,
+    operationalEmployees: buildOperationalEmployeesFromHistory({
+      timeEntries: fullBootstrap.timeEntries,
+      workCardStore: fullBootstrap.workCardStore,
+    }),
+  });
   const nextWorkCardStore = buildUpdatedWorkCardStore({
     employee: args.employee,
     nextEmployee: canonicalEmployee,
-    bootstrap: args.bootstrap,
+    workCardStore: fullBootstrap.workCardStore,
     employeeDirectory: currentDirectory,
   });
 
@@ -196,18 +240,18 @@ export async function saveEmployeeRecord(args: {
       await syncEmployeeTimeEntries({
         employee: args.employee,
         nextEmployee: canonicalEmployee,
-        timeEntries: args.bootstrap.timeEntries,
+        timeEntries: fullBootstrap.timeEntries,
         employeeDirectory: currentDirectory,
       });
     } catch (error) {
       throw new Error(
-        `Nie udało się zsynchronizować ewidencji czasu pracy pracownika: ${error instanceof Error ? error.message : "nieznany błąd"}`
+        `Nie udalo sie zsynchronizowac ewidencji czasu pracy pracownika: ${error instanceof Error ? error.message : "nieznany blad"}`
       );
     }
   }
 
   if (
-    JSON.stringify(args.bootstrap.workCardStore.cards) !== JSON.stringify(nextWorkCardStore.cards)
+    JSON.stringify(fullBootstrap.workCardStore.cards) !== JSON.stringify(nextWorkCardStore.cards)
   ) {
     try {
       await http("/work-cards/state", {
@@ -216,7 +260,7 @@ export async function saveEmployeeRecord(args: {
       });
     } catch (error) {
       throw new Error(
-        `Nie udało się zsynchronizować kart pracy pracownika: ${error instanceof Error ? error.message : "nieznany błąd"}`
+        `Nie udalo sie zsynchronizowac kart pracy pracownika: ${error instanceof Error ? error.message : "nieznany blad"}`
       );
     }
   }
@@ -226,9 +270,10 @@ export async function saveEmployeeRecord(args: {
     bootstrap = await fetchEmployeesModuleData();
   } catch (error) {
     throw new Error(
-      `Nie udało się odświeżyć kartoteki po zapisie pracownika: ${error instanceof Error ? error.message : "nieznany błąd"}`
+      `Nie udalo sie odswiezyc kartoteki po zapisie pracownika: ${error instanceof Error ? error.message : "nieznany blad"}`
     );
   }
+
   const employeeDirectory = buildCurrentDirectory(bootstrap);
   const selectedEmployee =
     employeeDirectory.find(
@@ -251,28 +296,20 @@ export async function deleteEmployeeRecord(args: {
   employee: EmployeeDirectoryRecord;
   bootstrap: EmployeesBootstrapData;
 }) {
-  const employeeDirectory = buildCurrentDirectory(args.bootstrap);
-  const relations = buildEmployeeRelations({
-    employee: args.employee,
-    employees: employeeDirectory,
-    timeEntries: args.bootstrap.timeEntries,
-    workCardStore: args.bootstrap.workCardStore,
-  });
-
-  if (relations.hoursEntries > 0 || relations.workCards > 0) {
-    throw new Error(
-      "Pracownik ma powiązane wpisy czasu lub karty pracy. Zmień status na nieaktywny zamiast usuwać rekord."
-    );
-  }
-
   const employeeId = String(args.employee.id || "").trim();
   if (!employeeId) {
     throw new Error(
-      "Nie można usunąć pracownika bez stabilnego identyfikatora. Uzupełnij rekord i spróbuj ponownie."
+      "Nie mozna usunac pracownika bez stabilnego identyfikatora. Uzupelnij rekord i sprobuj ponownie."
     );
   }
 
-  await deleteEmployee(employeeId);
+  try {
+    await deleteEmployee(employeeId);
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "Nie udalo sie usunac pracownika."
+    );
+  }
 
   return fetchEmployeesModuleData();
 }

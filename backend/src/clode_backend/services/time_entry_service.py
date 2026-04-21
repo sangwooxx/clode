@@ -61,6 +61,18 @@ class TimeEntryService:
             "filters": normalized_filters,
         }
 
+    def get_time_entries_bootstrap(self, current_user: dict[str, Any] | None) -> dict[str, Any]:
+        self.ensure_read_access(current_user)
+        months = self.repository.list_months()
+        selected_month_key = (
+            next((month["month_key"] for month in months if month.get("selected")), "")
+            or (months[0]["month_key"] if months else "")
+        )
+        return {
+            "months": months,
+            "selected_month_key": selected_month_key,
+        }
+
     def list_employees(self, current_user: dict[str, Any] | None) -> list[dict[str, Any]]:
         self.ensure_read_access(current_user)
         if not self.employee_repository:

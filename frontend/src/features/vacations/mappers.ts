@@ -187,9 +187,7 @@ export function normalizePlanningStore(
 export function buildVacationDirectory(bootstrap: VacationsBootstrapData) {
   return buildEmployeeDirectory({
     directoryEmployees: bootstrap.directoryEmployees,
-    storeEmployees: bootstrap.storeEmployees,
-    timeEntries: bootstrap.timeEntries,
-    workCardStore: bootstrap.workCardStore,
+    operationalEmployees: bootstrap.operationalEmployees,
   });
 }
 

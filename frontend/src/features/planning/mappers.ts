@@ -191,9 +191,7 @@ function resolvePlanningAssignmentEntry(args: {
 export function buildPlanningDirectory(bootstrap: PlanningBootstrapData) {
   return buildEmployeeDirectory({
     directoryEmployees: bootstrap.directoryEmployees,
-    storeEmployees: bootstrap.storeEmployees,
-    timeEntries: bootstrap.timeEntries,
-    workCardStore: bootstrap.workCardStore,
+    operationalEmployees: bootstrap.operationalEmployees,
   });
 }
 

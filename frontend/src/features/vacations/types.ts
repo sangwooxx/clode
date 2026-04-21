@@ -1,7 +1,5 @@
-import type { EmployeeDirectoryRecord } from "@/features/employees/types";
-import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/types";
+import type { EmployeeDirectoryRecord, EmployeesBootstrapData } from "@/features/employees/types";
 import type { SettingsWorkflowValues } from "@/features/settings/types";
-import type { WorkCardStore } from "@/features/work-cards/types";
 
 export type VacationType = "vacation" | "on_demand" | "sick_leave" | "other";
 export type VacationStatus = "pending" | "approved" | "rejected";
@@ -49,11 +47,7 @@ export type PlanningStore = {
   assignments: Record<string, Record<string, PlanningAssignmentRecord>>;
 };
 
-export type VacationsBootstrapData = {
-  directoryEmployees: HoursEmployeeRecord[];
-  storeEmployees: HoursEmployeeRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+export type VacationsBootstrapData = EmployeesBootstrapData & {
   vacationStore: VacationStore;
   planningStore: PlanningStore;
   workflow: SettingsWorkflowValues;

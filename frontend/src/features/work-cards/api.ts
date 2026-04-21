@@ -1,6 +1,7 @@
 import type { HoursEmployeeRecord, HoursListResponse } from "@/features/hours/types";
 import { UNASSIGNED_TIME_CONTRACT_ID } from "@/features/hours/types";
 import {
+  fetchHoursBootstrapSummary,
   fetchHoursContracts,
   fetchHoursData,
   fetchHoursEmployeeDirectory,
@@ -69,25 +70,28 @@ export async function fetchWorkCardStore() {
 }
 
 export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapData> {
-  const [contracts, employees, historicalEmployees, payload, store] = await Promise.all([
+  const [contracts, employees, historicalEmployees, bootstrapSummary, store] = await Promise.all([
     fetchHoursContracts(),
     fetchHoursEmployees(),
     fetchHoursEmployeeDirectory(),
-    fetchHoursData(),
+    fetchHoursBootstrapSummary(),
     fetchWorkCardStore(),
   ]);
 
   const employeeOptions = buildWorkCardEmployeeOptions(employees);
+  const months = bootstrapSummary.months;
+  const selectedMonthKey =
+    bootstrapSummary.selectedMonthKey ||
+    months.find((month) => month.selected)?.month_key ||
+    months[0]?.month_key ||
+    "";
 
   return {
     contracts,
     employees,
     historicalEmployees,
-    months: payload.months,
-    selectedMonthKey:
-      payload.months.find((month) => month.selected)?.month_key ||
-      payload.months[0]?.month_key ||
-      "",
+    months,
+    selectedMonthKey,
     selectedEmployeeKey:
       employeeOptions.find((option) => option.status !== "inactive")?.key ||
       employeeOptions[0]?.key ||

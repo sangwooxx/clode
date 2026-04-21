@@ -8,6 +8,19 @@ export type TimeEntriesQuery = {
   user?: string;
 };
 
+export type TimeEntriesBootstrapResponse = {
+  ok?: boolean;
+  months?: Array<{
+    id: string;
+    month_key: string;
+    month_label: string;
+    selected: boolean;
+    visible_investments: string[];
+    finance: TimeMonthFinancePayload;
+  }>;
+  selected_month_key?: string;
+};
+
 export type TimeEntryPayload = {
   month_key: string;
   employee_id?: string;
@@ -50,6 +63,12 @@ function buildQueryString(filters: TimeEntriesQuery = {}) {
 
 export function listTimeEntries(filters: TimeEntriesQuery = {}) {
   return http(`/time-entries${buildQueryString(filters)}`, {
+    method: "GET",
+  });
+}
+
+export function listTimeEntriesBootstrap() {
+  return http<TimeEntriesBootstrapResponse>("/time-entries/bootstrap", {
     method: "GET",
   });
 }

@@ -4,10 +4,38 @@ import type {
   HoursBootstrapData,
   HoursEmployeeRecord,
   HoursListResponse,
+  HoursMonthRecord,
 } from "@/features/hours/types";
 
-async function fetchHoursPayloadServer() {
-  const { payload } = await fetchBackendJsonServer<HoursListResponse>("/time-entries", {
+type TimeEntriesBootstrapResponse = {
+  months?: HoursMonthRecord[];
+  selected_month_key?: string;
+};
+
+async function fetchHoursBootstrapPayloadServer() {
+  const { payload } = await fetchBackendJsonServer<TimeEntriesBootstrapResponse>(
+    "/time-entries/bootstrap",
+    {
+      nextPath: "/hours",
+    }
+  );
+
+  const months = Array.isArray(payload?.months) ? payload.months : [];
+  const selectedMonthKey =
+    String(payload?.selected_month_key || "").trim() ||
+    months.find((month) => month.selected)?.month_key ||
+    months[0]?.month_key ||
+    "";
+
+  return {
+    months,
+    selectedMonthKey,
+  };
+}
+
+async function fetchHoursPayloadServer(monthKey: string) {
+  const query = monthKey ? `?month=${encodeURIComponent(monthKey)}` : "";
+  const { payload } = await fetchBackendJsonServer<HoursListResponse>(`/time-entries${query}`, {
     nextPath: "/hours",
   });
 
@@ -35,23 +63,19 @@ async function fetchEmployeesDirectoryServer() {
 }
 
 export async function fetchHoursBootstrapServer(): Promise<HoursBootstrapData> {
-  const [contracts, canonicalEmployees, payload] = await Promise.all([
+  const [contracts, canonicalEmployees, bootstrapPayload] = await Promise.all([
     fetchContractsServer(true),
     fetchEmployeesDirectoryServer(),
-    fetchHoursPayloadServer(),
+    fetchHoursBootstrapPayloadServer(),
   ]);
-
+  const payload = await fetchHoursPayloadServer(bootstrapPayload.selectedMonthKey);
   const activeEmployees = canonicalEmployees.filter((employee) => employee.status !== "inactive");
-  const selectedMonthKey =
-    payload.months.find((month) => month.selected)?.month_key ||
-    payload.months[0]?.month_key ||
-    "";
 
   return {
     contracts,
     employees: activeEmployees,
     historicalEmployees: canonicalEmployees,
     payload,
-    selectedMonthKey,
+    selectedMonthKey: bootstrapPayload.selectedMonthKey,
   };
 }

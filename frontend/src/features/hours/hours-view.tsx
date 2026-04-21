@@ -12,6 +12,7 @@ import { togglePdfColumn, togglePdfSection, type PdfConfigState } from "@/lib/pr
 import type { ContractRecord } from "@/features/contracts/types";
 import { formatEmployeeCodeLabel, formatEmployeeDisplayName } from "@/features/employees/formatters";
 import {
+  fetchHoursBootstrapSummary,
   fetchHoursContracts,
   fetchHoursData,
   fetchHoursEmployeeDirectory,
@@ -252,31 +253,36 @@ export function HoursView({
     }
 
     try {
-      const [payload, nextContracts, nextHistoricalEmployees] = await Promise.all([
-        fetchHoursData(),
+      const [bootstrapSummary, nextContracts, nextHistoricalEmployees] = await Promise.all([
+        fetchHoursBootstrapSummary(),
         options?.refreshRelations ? fetchHoursContracts() : Promise.resolve(contracts),
         options?.refreshRelations
           ? fetchHoursEmployeeDirectory()
-          : Promise.resolve(historicalEmployees),
+            : Promise.resolve(historicalEmployees),
       ]);
+
+      const fallbackMonthKey =
+        bootstrapSummary.selectedMonthKey ||
+        bootstrapSummary.months[0]?.month_key ||
+        "";
+      const requestedMonthKey =
+        options?.preferredMonthKey && options.preferredMonthKey.trim().length > 0
+          ? options.preferredMonthKey
+          : selectedMonthKey;
+      const nextMonthKey =
+        requestedMonthKey &&
+        bootstrapSummary.months.some((month) => month.month_key === requestedMonthKey)
+          ? requestedMonthKey
+          : fallbackMonthKey;
+      const payload = await fetchHoursData(
+        nextMonthKey ? { month: nextMonthKey } : {}
+      );
 
       if (options?.refreshRelations) {
         setContracts(nextContracts);
         setHistoricalEmployees(nextHistoricalEmployees);
         setEmployees(nextHistoricalEmployees.filter((employee) => employee.status !== "inactive"));
       }
-
-      const fallbackMonthKey =
-        payload.months.find((month) => month.selected)?.month_key ||
-        payload.months[0]?.month_key ||
-        "";
-      const nextMonthKey =
-        options?.preferredMonthKey &&
-        payload.months.some((month) => month.month_key === options.preferredMonthKey)
-          ? options.preferredMonthKey
-          : payload.months.some((month) => month.month_key === selectedMonthKey)
-            ? selectedMonthKey
-            : fallbackMonthKey;
 
       setState({ status: "success", data: payload });
       setSelectedMonthKey(nextMonthKey);
@@ -724,6 +730,8 @@ export function HoursView({
     setMonthStatus(null);
     setFormError(null);
     setFormStatus(null);
+
+    await reloadHours({ preserveState: true, preferredMonthKey: nextMonthKey });
 
     if (!canWrite || state.status !== "success") {
       return;

@@ -7,12 +7,12 @@ import {
 import type {
   EmployeeDirectoryRecord,
   EmployeeFormValues,
+  EmployeeRelationSummary,
   EmployeeRelationSnapshot,
   EmployeeSummaryCard,
   EmployeeTableRow,
 } from "@/features/employees/types";
-import type { HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/types";
-import type { WorkCardStore } from "@/features/work-cards/types";
+import type { HoursEmployeeRecord } from "@/features/hours/types";
 
 function normalizeEmployeeStatus(status: HoursEmployeeRecord["status"]) {
   return status === "inactive" ? "inactive" : "active";
@@ -166,36 +166,9 @@ function findExistingEmployeeKey(
   return null;
 }
 
-function buildOperationalEmployees(
-  timeEntries: TimeEntryRecord[],
-  workCardStore: WorkCardStore
-) {
-  const operational: HoursEmployeeRecord[] = [];
-
-  timeEntries.forEach((entry) => {
-    operational.push({
-      id: String(entry.employee_id || "").trim() || undefined,
-      name: String(entry.employee_name || "").trim(),
-      status: "active",
-    });
-  });
-
-  workCardStore.cards.forEach((card) => {
-    operational.push({
-      id: String(card.employee_id || "").trim() || undefined,
-      name: String(card.employee_name || "").trim(),
-      status: "active",
-    });
-  });
-
-  return operational;
-}
-
 export function buildEmployeeDirectory(args: {
   directoryEmployees: HoursEmployeeRecord[];
-  storeEmployees: HoursEmployeeRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+  operationalEmployees: HoursEmployeeRecord[];
 }) {
   const employees = new Map<string, EmployeeDirectoryRecord>();
 
@@ -216,18 +189,11 @@ export function buildEmployeeDirectory(args: {
     employees.set(existingKey, merged);
   };
 
-  args.storeEmployees.forEach((employee, index) => upsert(employee, "store", index));
   args.directoryEmployees.forEach((employee, index) =>
-    upsert(employee, "directory", index + args.storeEmployees.length)
+    upsert(employee, "directory", index)
   );
-
-  const operationalEmployees = buildOperationalEmployees(args.timeEntries, args.workCardStore);
-  operationalEmployees.forEach((employee, index) =>
-    upsert(
-      employee,
-      "operational",
-      index + args.storeEmployees.length + args.directoryEmployees.length
-    )
+  args.operationalEmployees.forEach((employee, index) =>
+    upsert(employee, "operational", index + args.directoryEmployees.length)
   );
 
   return [...employees.values()].sort((left, right) =>
@@ -279,50 +245,38 @@ export function matchesEmployeeReference(
 export function buildEmployeeRelations(args: {
   employee: EmployeeDirectoryRecord;
   employees: EmployeeDirectoryRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+  relationSummaries: EmployeeRelationSummary[];
 }): EmployeeRelationSnapshot {
-  const matchedEntries = args.timeEntries.filter((entry) =>
+  const matchedRelations = args.relationSummaries.filter((summary) =>
     matchesEmployeeReference(
       {
-        employee_id: entry.employee_id,
-        employee_name: entry.employee_name,
+        employee_id: summary.employee_id,
+        employee_name: summary.employee_name,
       },
       args.employee,
       args.employees
     )
   );
-  const matchedCards = args.workCardStore.cards.filter((card) =>
-    matchesEmployeeReference(
-      {
-        employee_id: card.employee_id,
-        employee_name: card.employee_name,
-      },
-      args.employee,
-      args.employees
-    )
-  );
-
-  const monthKeys = new Set<string>();
-
-  matchedEntries.forEach((entry) => {
-    if (entry.month_key) {
-      monthKeys.add(entry.month_key);
-    }
-  });
-  matchedCards.forEach((card) => {
-    if (card.month_key) {
-      monthKeys.add(card.month_key);
-    }
-  });
 
   return {
-    hoursEntries: matchedEntries.length,
-    workCards: matchedCards.length,
-    monthsCount: monthKeys.size,
-    totalHours: matchedEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0),
-    totalCost: matchedEntries.reduce(
-      (sum, entry) => sum + Number(entry.cost_amount || 0),
+    hoursEntries: matchedRelations.reduce(
+      (sum, summary) => sum + Number(summary.hours_entries || 0),
+      0
+    ),
+    workCards: matchedRelations.reduce(
+      (sum, summary) => sum + Number(summary.work_cards || 0),
+      0
+    ),
+    monthsCount: matchedRelations.reduce(
+      (maxCount, summary) => Math.max(maxCount, Number(summary.months_count || 0)),
+      0
+    ),
+    totalHours: matchedRelations.reduce(
+      (sum, summary) => sum + Number(summary.total_hours || 0),
+      0
+    ),
+    totalCost: matchedRelations.reduce(
+      (sum, summary) => sum + Number(summary.total_cost || 0),
       0
     ),
   };
@@ -330,8 +284,7 @@ export function buildEmployeeRelations(args: {
 
 export function buildEmployeeSummaryCards(args: {
   employees: EmployeeDirectoryRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+  relationSummaries: EmployeeRelationSummary[];
 }): EmployeeSummaryCard[] {
   const relationMap = new Map<string, EmployeeRelationSnapshot>();
 
@@ -341,8 +294,7 @@ export function buildEmployeeSummaryCards(args: {
       buildEmployeeRelations({
         employee,
         employees: args.employees,
-        timeEntries: args.timeEntries,
-        workCardStore: args.workCardStore,
+        relationSummaries: args.relationSummaries,
       })
     );
   });
@@ -397,8 +349,7 @@ export function buildEmployeeSummaryCards(args: {
 
 export function buildEmployeeTableRows(args: {
   employees: EmployeeDirectoryRecord[];
-  timeEntries: TimeEntryRecord[];
-  workCardStore: WorkCardStore;
+  relationSummaries: EmployeeRelationSummary[];
   search: string;
   filter: "all" | "active" | "inactive";
 }) {
@@ -427,8 +378,7 @@ export function buildEmployeeTableRows(args: {
       const relations = buildEmployeeRelations({
         employee,
         employees: args.employees,
-        timeEntries: args.timeEntries,
-        workCardStore: args.workCardStore,
+        relationSummaries: args.relationSummaries,
       });
 
       return {

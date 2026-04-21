@@ -1,4 +1,5 @@
 import type { HoursEmployeeRecord } from "@/features/hours/types";
+import type { EmployeeRelationSummary } from "@/features/employees/types";
 import { http } from "@/lib/api/http";
 
 export type EmployeesDirectoryResponse = {
@@ -11,8 +12,19 @@ export type EmployeeRecordResponse = {
   employee?: HoursEmployeeRecord;
 };
 
+export type EmployeesSummaryResponse = {
+  ok?: boolean;
+  employees?: HoursEmployeeRecord[];
+  operational_employees?: HoursEmployeeRecord[];
+  relation_summaries?: EmployeeRelationSummary[];
+};
+
 export function listEmployees() {
   return http<EmployeesDirectoryResponse>("/employees", { method: "GET" });
+}
+
+export function listEmployeesSummary() {
+  return http<EmployeesSummaryResponse>("/employees/summary", { method: "GET" });
 }
 
 export function createEmployee(payload: HoursEmployeeRecord) {
