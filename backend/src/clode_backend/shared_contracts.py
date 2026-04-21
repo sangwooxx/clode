@@ -24,7 +24,24 @@ CONTRACT_FILES = {
     "workwear_issue": "workwear-issue.schema.json",
 }
 
-CONTRACTS_DIR = Path(__file__).resolve().parents[3] / "shared" / "contracts"
+
+def _resolve_contracts_dir() -> Path:
+    expected_marker = CONTRACT_FILES["user"]
+    current_file = Path(__file__).resolve()
+    search_roots = [
+        current_file.parent,
+        *current_file.parents,
+        Path.cwd(),
+        *Path.cwd().parents,
+    ]
+    for root in search_roots:
+        candidate = root / "shared" / "contracts"
+        if (candidate / expected_marker).exists():
+            return candidate
+    return current_file.parents[3] / "shared" / "contracts"
+
+
+CONTRACTS_DIR = _resolve_contracts_dir()
 
 
 class ContractValidationError(ValueError):
