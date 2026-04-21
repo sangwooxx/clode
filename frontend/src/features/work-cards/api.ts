@@ -16,6 +16,7 @@ import {
 } from "@/features/work-cards/mappers";
 import {
   type WorkCardBootstrapData,
+  type WorkCardHistorySummary,
   type WorkCardRecord,
   type WorkCardStore,
 } from "@/features/work-cards/types";
@@ -69,13 +70,42 @@ export async function fetchWorkCardStore() {
   } satisfies WorkCardStore;
 }
 
+export async function fetchWorkCardHistorySummaries() {
+  const response = await http<{ cards?: WorkCardHistorySummary[] }>("/work-cards/history", {
+    method: "GET",
+  });
+  return Array.isArray(response.cards) ? response.cards : [];
+}
+
+export async function fetchWorkCardCard(args: {
+  monthKey: string;
+  employee: Pick<HoursEmployeeRecord, "id" | "name">;
+}) {
+  const params = new URLSearchParams();
+  params.set("month", args.monthKey);
+  if (String(args.employee.id || "").trim()) {
+    params.set("employee_id", String(args.employee.id || "").trim());
+  }
+  if (String(args.employee.name || "").trim()) {
+    params.set("employee_name", String(args.employee.name || "").trim());
+  }
+
+  const response = await http<{ card?: WorkCardRecord | null }>(
+    `/work-cards/card?${params.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+  return response.card ?? null;
+}
+
 export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapData> {
-  const [contracts, employees, historicalEmployees, bootstrapSummary, store] = await Promise.all([
+  const [contracts, employees, historicalEmployees, bootstrapSummary, historicalCards] = await Promise.all([
     fetchHoursContracts(),
     fetchHoursEmployees(),
     fetchHoursEmployeeDirectory(),
     fetchHoursBootstrapSummary(),
-    fetchWorkCardStore(),
+    fetchWorkCardHistorySummaries(),
   ]);
 
   const employeeOptions = buildWorkCardEmployeeOptions(employees);
@@ -96,12 +126,11 @@ export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapD
       employeeOptions.find((option) => option.status !== "inactive")?.key ||
       employeeOptions[0]?.key ||
       "",
-    store,
+    historicalCards,
   };
 }
 
 export async function saveWorkCardAndSync(args: {
-  store: WorkCardStore;
   card: WorkCardRecord;
   employee: HoursEmployeeRecord;
   employees: HoursEmployeeRecord[];
@@ -111,17 +140,14 @@ export async function saveWorkCardAndSync(args: {
     throw new Error("Nie mozna zapisac karty pracy dla nieaktywnego pracownika.");
   }
 
-  const savedStoreResponse = await http<{ store?: WorkCardStore }>("/work-cards/state", {
+  const savedCardResponse = await http<{ card?: WorkCardRecord | null }>("/work-cards/card", {
     method: "PUT",
-    body: JSON.stringify({ store: args.store }),
+    body: JSON.stringify({ card: args.card }),
   });
-  const savedStore =
-    savedStoreResponse.store && Array.isArray(savedStoreResponse.store.cards)
-      ? savedStoreResponse.store
-      : args.store;
+  const savedCard = savedCardResponse.card ?? args.card;
 
   const syncPayloads = buildWorkCardSyncPayloads({
-    card: args.card,
+    card: savedCard,
     employee: args.employee,
   }).filter((payload) => {
     const contractKey = payload.contract_id || UNASSIGNED_TIME_CONTRACT_ID;
@@ -139,7 +165,7 @@ export async function saveWorkCardAndSync(args: {
     const allowNameFallback = !String(args.employee.id || "").trim() || matchingNameCount <= 1;
 
     const existingPayload = (await fetchHoursData({
-      month: args.card.month_key,
+      month: savedCard.month_key,
       ...(String(args.employee.id || "").trim()
         ? { employee_id: String(args.employee.id || "").trim() }
         : { employee_name: args.employee.name }),
@@ -223,11 +249,11 @@ export async function saveWorkCardAndSync(args: {
     );
 
     return {
-      store: savedStore,
+      card: savedCard,
     };
   } catch (error) {
     return {
-      store: savedStore,
+      card: savedCard,
       syncError:
         error instanceof Error
           ? `Karta pracy zostala zapisana, ale synchronizacja z ewidencja czasu pracy nie powiodla sie: ${error.message}`

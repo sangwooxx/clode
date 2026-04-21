@@ -29,6 +29,17 @@ export type WorkCardStore = {
   cards: WorkCardRecord[];
 };
 
+export type WorkCardHistorySummary = {
+  card_id: string;
+  employee_id: string;
+  employee_name: string;
+  month_key: string;
+  month_label: string;
+  updated_at: string;
+  total_hours: number;
+  filled_days: number;
+};
+
 export type WorkCardBootstrapData = {
   contracts: ContractRecord[];
   employees: HoursEmployeeRecord[];
@@ -36,7 +47,7 @@ export type WorkCardBootstrapData = {
   months: HoursMonthRecord[];
   selectedMonthKey: string;
   selectedEmployeeKey: string;
-  store: WorkCardStore;
+  historicalCards: WorkCardHistorySummary[];
 };
 
 export type WorkCardEmployeeOption = {

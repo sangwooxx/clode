@@ -204,6 +204,52 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         self.assertEqual(read_status, 200)
         self.assertEqual(read_payload["store"]["cards"][0]["employee_name"], "Jan Nowak")
 
+    def test_work_card_card_and_history_routes_use_lightweight_domain_contract(self) -> None:
+        self._route(
+            method="PUT",
+            path="/api/v1/work-cards/state",
+            body=(
+                b'{"store":{"version":1,"cards":[{"id":"card-1","employee_id":"emp-1","employee_name":"Jan Nowak",'
+                b'"month_key":"2026-04","month_label":"kwiecien 2026","updated_at":"2026-04-20T10:00:00Z",'
+                b'"rows":[{"date":"2026-04-20","note":"","entries":[{"id":"entry-1","contract_id":"c-1","contract_name":"Kontrakt 1","hours":8}]}]},'
+                b'{"id":"card-2","employee_id":"emp-2","employee_name":"Adam Lis","month_key":"2026-03",'
+                b'"month_label":"marzec 2026","updated_at":"2026-03-18T10:00:00Z","rows":[]}]}}'
+            ),
+        )
+
+        history_status, history_payload, _ = self._route(
+            method="GET",
+            path="/api/v1/work-cards/history",
+        )
+        self.assertEqual(history_status, 200)
+        self.assertEqual(history_payload["cards"][0]["card_id"], "card-1")
+        self.assertEqual(history_payload["cards"][0]["filled_days"], 1)
+        self.assertEqual(history_payload["cards"][0]["total_hours"], 8.0)
+
+        card_status, card_payload, _ = self._route(
+            method="GET",
+            path="/api/v1/work-cards/card?month=2026-04&employee_id=emp-1",
+        )
+        self.assertEqual(card_status, 200)
+        self.assertEqual(card_payload["card"]["id"], "card-1")
+
+        save_status, save_payload, _ = self._route(
+            method="PUT",
+            path="/api/v1/work-cards/card",
+            body=(
+                b'{"card":{"id":"card-1","employee_id":"emp-1","employee_name":"Jan Nowak",'
+                b'"month_key":"2026-04","month_label":"kwiecien 2026","updated_at":"2026-04-21T10:00:00Z",'
+                b'"rows":[{"date":"2026-04-20","note":"Dzien testowy","entries":[{"id":"entry-1","contract_id":"c-1","contract_name":"Kontrakt 1","hours":6}]}]}}'
+            ),
+        )
+        self.assertEqual(save_status, 200)
+        self.assertEqual(save_payload["card"]["rows"][0]["entries"][0]["hours"], 6)
+
+        state_status, state_payload, _ = self._route(method="GET", path="/api/v1/work-cards/state")
+        self.assertEqual(state_status, 200)
+        self.assertEqual(len(state_payload["store"]["cards"]), 2)
+        self.assertEqual(state_payload["store"]["cards"][0]["id"], "card-1")
+
     def test_auth_and_user_service_share_same_public_user_shape(self) -> None:
         login_user = self.auth_service.login("admin", "admin")["user"]
         listed_user = self.user_service.list_users()[0]

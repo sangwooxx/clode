@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
@@ -31,7 +31,11 @@ import {
 import { saveHoursMonth } from "@/features/hours/api";
 import { buildMonthOptions, getSelectedMonth } from "@/features/hours/mappers";
 import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
-import { fetchWorkCardBootstrapClient, saveWorkCardAndSync } from "@/features/work-cards/api";
+import {
+  fetchWorkCardBootstrapClient,
+  fetchWorkCardCard,
+  saveWorkCardAndSync,
+} from "@/features/work-cards/api";
 import {
   formatHours,
   formatMonthLabel,
@@ -45,14 +49,13 @@ import {
   buildWorkCardDraftRows,
   buildWorkCardEmployeeOptions,
   buildWorkCardSummaryCards,
-  findWorkCard,
   serializeWorkCard,
-  upsertWorkCard,
 } from "@/features/work-cards/mappers";
 import type {
   WorkCardBootstrapData,
   WorkCardDayViewModel,
-  WorkCardStore,
+  WorkCardHistorySummary,
+  WorkCardRecord,
 } from "@/features/work-cards/types";
 
 type LoadState =
@@ -62,7 +65,7 @@ type LoadState =
 
 type WorkCardHistoryPreview = {
   cardId: string;
-  card: WorkCardBootstrapData["store"]["cards"][number];
+  summary: WorkCardHistorySummary;
   employee: HoursEmployeeRecord | null;
   employeeLabel: string;
   employeeMeta: string;
@@ -118,13 +121,11 @@ export function WorkCardView({
   const [historicalEmployees, setHistoricalEmployees] = useState(
     initialBootstrap?.historicalEmployees ?? initialBootstrap?.employees ?? []
   );
-  const [months, setMonths] = useState<HoursMonthRecord[]>(initialBootstrap?.months ?? []);
-  const [store, setStore] = useState<WorkCardStore>(
-    initialBootstrap?.store ?? {
-      version: 1,
-      cards: [],
-    }
+  const [historicalCards, setHistoricalCards] = useState<WorkCardHistorySummary[]>(
+    initialBootstrap?.historicalCards ?? []
   );
+  const [months, setMonths] = useState<HoursMonthRecord[]>(initialBootstrap?.months ?? []);
+  const [loadedCard, setLoadedCard] = useState<WorkCardRecord | null>(null);
   const [loadState, setLoadState] = useState<LoadState>(() => {
     if (initialBootstrap) return { status: "success" };
     if (initialError) return { status: "error", message: initialError };
@@ -137,8 +138,10 @@ export function WorkCardView({
   const [draftRows, setDraftRows] = useState<WorkCardDayViewModel[]>([]);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [cardError, setCardError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCardLoading, setIsCardLoading] = useState(false);
   const [isCreatingMonth, setIsCreatingMonth] = useState(false);
   const [monthStatus, setMonthStatus] = useState<string | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
@@ -160,23 +163,34 @@ export function WorkCardView({
     try {
       const bootstrap = await fetchWorkCardBootstrapClient();
       const defaults = buildWorkCardBootstrapSelection(bootstrap);
+      const nextEmployeeOptions = buildWorkCardEmployeeOptions(bootstrap.employees);
+      const nextSelectedMonthKey =
+        options?.preserveSelection &&
+        bootstrap.months.some((month) => month.month_key === selectedMonthKey)
+          ? selectedMonthKey
+          : defaults.monthKey;
+      const nextSelectedEmployeeKey =
+        options?.preserveSelection &&
+        nextEmployeeOptions.some((option) => option.key === selectedEmployeeKey)
+          ? selectedEmployeeKey
+          : defaults.employeeKey;
+      const nextHistoricalCardId =
+        options?.preserveSelection &&
+        selectedHistoricalCardId &&
+        bootstrap.historicalCards.some((item) => item.card_id === selectedHistoricalCardId)
+          ? selectedHistoricalCardId
+          : null;
 
       setContracts(bootstrap.contracts);
       setEmployees(bootstrap.employees);
       setHistoricalEmployees(bootstrap.historicalEmployees);
+      setHistoricalCards(bootstrap.historicalCards);
       setMonths(bootstrap.months);
-      setStore(bootstrap.store);
-      setSelectedMonthKey((current) =>
-        bootstrap.months.some((month) => month.month_key === current)
-          ? current
-          : defaults.monthKey
-      );
-      const employeeOptions = buildWorkCardEmployeeOptions(bootstrap.employees);
-      setSelectedEmployeeKey((current) =>
-        employeeOptions.some((option) => option.key === current)
-          ? current
-          : defaults.employeeKey
-      );
+      setLoadedCard(null);
+      setCardError(null);
+      setSelectedMonthKey(nextSelectedMonthKey);
+      setSelectedEmployeeKey(nextSelectedEmployeeKey);
+      setSelectedHistoricalCardId(nextHistoricalCardId);
       setLoadState({ status: "success" });
     } catch (error) {
       setLoadState({
@@ -191,12 +205,16 @@ export function WorkCardView({
     }
   }
 
+  const loadInitialWorkCards = useEffectEvent(() => {
+    void reloadWorkCards();
+  });
+
   useEffect(() => {
     if (initialBootstrap) {
       return;
     }
 
-    void reloadWorkCards();
+    loadInitialWorkCards();
   }, [initialBootstrap, initialError]);
 
   const employeeOptions = useMemo(
@@ -204,9 +222,9 @@ export function WorkCardView({
     [employees]
   );
   const historicalWorkCards = useMemo<WorkCardHistoryPreview[]>(() => {
-    return store.cards
-      .map((card) => {
-        const normalizedEmployeeId = String(card.employee_id || "").trim();
+    return historicalCards
+      .map((summary) => {
+        const normalizedEmployeeId = String(summary.employee_id || "").trim();
         const employee =
           historicalEmployees.find((candidate) => {
             const candidateId = String(candidate.id || "").trim();
@@ -216,47 +234,33 @@ export function WorkCardView({
 
             return (
               normalizeEmployeeLookupKey(candidate.name) ===
-              normalizeEmployeeLookupKey(card.employee_name)
+              normalizeEmployeeLookupKey(summary.employee_name)
             );
           }) ?? null;
 
         if ((employee?.status ?? "active") !== "inactive") {
           return null;
         }
-
-        const totals = card.rows.reduce(
-          (result, row) => {
-            const rowHours = row.entries.reduce(
-              (sum, entry) => sum + Number(entry.hours || 0),
-              0
-            );
-            return {
-              totalHours: result.totalHours + rowHours,
-              filledDays: result.filledDays + (rowHours > 0 ? 1 : 0),
-            };
-          },
-          { totalHours: 0, filledDays: 0 }
-        );
         const employeeOption = employee
           ? buildWorkCardEmployeeOptions([employee])[0] ?? null
           : null;
 
         return {
-          cardId: card.id,
-          card,
+          cardId: summary.card_id,
+          summary,
           employee,
           employeeLabel:
             formatEmployeeDisplayName(
               employee,
-              String(card.employee_name || "Nieznany pracownik").trim()
+              String(summary.employee_name || "Nieznany pracownik").trim()
             ) || "Nieznany pracownik",
           employeeMeta:
             employeeOption?.description ||
             "Pracownik nieaktywny",
-          monthKey: card.month_key,
-          monthLabel: card.month_label || formatMonthLabel(card.month_key),
-          totalHours: totals.totalHours,
-          filledDays: totals.filledDays,
+          monthKey: summary.month_key,
+          monthLabel: summary.month_label || formatMonthLabel(summary.month_key),
+          totalHours: Number(summary.total_hours || 0),
+          filledDays: Number(summary.filled_days || 0),
         } satisfies WorkCardHistoryPreview;
       })
       .filter((item): item is WorkCardHistoryPreview => Boolean(item))
@@ -270,7 +274,7 @@ export function WorkCardView({
           numeric: true,
         });
       });
-  }, [historicalEmployees, store.cards]);
+  }, [historicalCards, historicalEmployees]);
   const inactiveHistoricalEmployeesCount = useMemo(() => {
     return new Set(
       historicalWorkCards.map((item) =>
@@ -328,15 +332,72 @@ export function WorkCardView({
     () => getSelectedMonth(months, selectedMonthKey),
     [months, selectedMonthKey]
   );
+  const selectedCardRequest = useMemo(() => {
+    if (selectedHistoricalCard) {
+      return {
+        monthKey: selectedHistoricalCard.monthKey,
+        employee: {
+          id:
+            String(selectedHistoricalCard.employee?.id || "").trim() ||
+            String(selectedHistoricalCard.summary.employee_id || "").trim(),
+          name:
+            String(selectedHistoricalCard.employee?.name || "").trim() ||
+            String(selectedHistoricalCard.summary.employee_name || "").trim(),
+        },
+      };
+    }
 
-  const activeCard = useMemo(
-    () =>
-      selectedEmployee
-        ? findWorkCard(store, selectedMonthKey, selectedEmployee.name, selectedEmployee.id)
-        : null,
-    [selectedEmployee, selectedMonthKey, store]
-  );
-  const previewCard = selectedHistoricalCard?.card ?? activeCard;
+    if (!selectedEmployee || !selectedMonthKey) {
+      return null;
+    }
+
+    return {
+      monthKey: selectedMonthKey,
+      employee: {
+        id: String(selectedEmployee.id || "").trim(),
+        name: String(selectedEmployee.name || "").trim(),
+      },
+    };
+  }, [selectedEmployee, selectedHistoricalCard, selectedMonthKey]);
+  const previewCard = loadedCard;
+  const activeCard = selectedHistoricalCard ? null : loadedCard;
+
+  useEffect(() => {
+    if (!selectedCardRequest) {
+      setLoadedCard(null);
+      setCardError(null);
+      setIsCardLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsCardLoading(true);
+    setCardError(null);
+    setLoadedCard(null);
+
+    void fetchWorkCardCard(selectedCardRequest)
+      .then((card) => {
+        if (cancelled) return;
+        setLoadedCard(card);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setLoadedCard(null);
+        setCardError(
+          error instanceof Error
+            ? error.message
+            : "Nie udało się odczytać karty pracy."
+        );
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setIsCardLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCardRequest]);
 
   const contractOptions = useMemo(
     () =>
@@ -490,10 +551,8 @@ export function WorkCardView({
         contractOptions,
         existingCard: activeCard,
       });
-      const nextStore = upsertWorkCard(store, nextCard);
 
       const result = await saveWorkCardAndSync({
-        store: nextStore,
         card: nextCard,
         employee: selectedEmployee,
         employees,
@@ -502,7 +561,7 @@ export function WorkCardView({
           .map((option) => option.id),
       });
 
-      setStore(result.store);
+      setLoadedCard(result.card);
       if (result.syncError) {
         setSaveError(result.syncError);
         setSaveStatus("Karta pracy została zapisana.");
@@ -863,6 +922,8 @@ export function WorkCardView({
 
         {monthError ? <p className="status-message status-message--error">{monthError}</p> : null}
         {monthStatus ? <p className="status-message status-message--success">{monthStatus}</p> : null}
+        {cardError ? <p className="status-message status-message--error">{cardError}</p> : null}
+        {isCardLoading ? <p className="status-message">Ładuję wybraną kartę pracy.</p> : null}
         {saveError ? <p className="status-message status-message--error">{saveError}</p> : null}
         {saveStatus ? <p className="status-message status-message--success">{saveStatus}</p> : null}
       </Panel>
@@ -882,6 +943,16 @@ export function WorkCardView({
         <Panel title="Wybierz pracownika">
           <p className="status-message">
             Wybierz pracownika i miesiąc, aby otworzyć kartę pracy.
+          </p>
+        </Panel>
+      ) : isHistoricalPreview && isCardLoading && !previewCard ? (
+        <Panel title="Historyczna karta pracy">
+          <p className="status-message">Ładuję historyczną kartę pracy.</p>
+        </Panel>
+      ) : isHistoricalPreview && !previewCard ? (
+        <Panel title="Historyczna karta pracy">
+          <p className="status-message">
+            Nie udało się odnaleźć zapisanej karty dla wybranego pracownika.
           </p>
         </Panel>
       ) : (

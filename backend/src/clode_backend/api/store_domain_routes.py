@@ -7,6 +7,7 @@ from clode_backend.api.http import json_response, parse_json_body
 def handle_store_domain_route(context: RequestContext):
     method = context.method
     path = context.path
+    query = context.query
     current_user = context.current_user
     auth_service = context.services.auth_service
     store_service = context.services.store_service
@@ -86,6 +87,32 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(
                 200,
                 {"ok": True, "store": store_service.save_work_card_store(body.get("store"))},
+            )
+
+    if path == "/api/v1/work-cards/history" and method == "GET":
+        auth_service.ensure_store_access(current_user, "work_cards")
+        return json_response(
+            200,
+            {"ok": True, "cards": store_service.list_work_card_history_summaries()},
+        )
+
+    if path == "/api/v1/work-cards/card":
+        auth_service.ensure_store_access(current_user, "work_cards")
+        if method == "GET":
+            month_key = (query.get("month") or [""])[0]
+            employee_id = (query.get("employee_id") or [""])[0]
+            employee_name = (query.get("employee_name") or [""])[0]
+            card = store_service.get_work_card(
+                month_key,
+                employee_id=employee_id,
+                employee_name=employee_name,
+            )
+            return json_response(200, {"ok": True, "card": card})
+        if method == "PUT":
+            body = parse_json_body(context.handler)
+            return json_response(
+                200,
+                {"ok": True, "card": store_service.save_work_card(body.get("card"))},
             )
 
     if path == "/api/v1/workwear/catalog":
