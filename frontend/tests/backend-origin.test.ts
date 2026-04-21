@@ -19,12 +19,11 @@ describe("resolveBackendOrigin", () => {
     expect(resolveBackendOrigin()).toBe("https://api.example.com");
   });
 
-  it("falls back to the current request origin when the backend is served from the same host", () => {
+  it("uses the canonical production backend when Vercel production has no explicit override", () => {
     vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("VERCEL_ENV", "production");
 
-    expect(
-      resolveBackendOrigin({ requestOrigin: "https://clode-web-preview.vercel.app/app" })
-    ).toBe("https://clode-web-preview.vercel.app");
+    expect(resolveBackendOrigin()).toBe("https://clode-iota.vercel.app");
   });
 
   it("rejects malformed configured origins instead of silently accepting them", () => {
@@ -32,15 +31,15 @@ describe("resolveBackendOrigin", () => {
     vi.stubEnv("CLODE_BACKEND_ORIGIN", "://bad host");
 
     expect(() => resolveBackendOrigin()).toThrow(
-      "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN or a same-origin request context."
+      "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN outside local development."
     );
   });
 
-  it("throws in production when no safe backend origin can be resolved", () => {
+  it("throws outside local development when there is no configured backend origin", () => {
     vi.stubEnv("NODE_ENV", "production");
 
     expect(() => resolveBackendOrigin()).toThrow(
-      "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN or a same-origin request context."
+      "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN outside local development."
     );
   });
 });

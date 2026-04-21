@@ -10,7 +10,7 @@ async function proxyRequest(
 ) {
   const { path } = await context.params;
   try {
-    const backendOrigin = resolveBackendOrigin({ requestOrigin: request.nextUrl.origin });
+    const backendOrigin = resolveBackendOrigin();
     const search = request.nextUrl.search ?? "";
     const upstreamUrl = `${backendOrigin}/api/v1/${path.join("/")}${search}`;
     const headers = new Headers();

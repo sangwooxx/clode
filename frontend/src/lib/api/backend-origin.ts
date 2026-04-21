@@ -1,8 +1,5 @@
 const DEFAULT_LOCAL_BACKEND_ORIGIN = "http://127.0.0.1:8787";
-
-type ResolveBackendOriginOptions = {
-  requestOrigin?: string | null;
-};
+const DEFAULT_PRODUCTION_BACKEND_ORIGIN = "https://clode-iota.vercel.app";
 
 function normalizeOrigin(value: string | null | undefined) {
   const trimmed = String(value || "").trim().replace(/\/+$/, "");
@@ -28,22 +25,21 @@ function readConfiguredOrigin() {
   );
 }
 
-export function resolveBackendOrigin(options: ResolveBackendOriginOptions = {}) {
+export function resolveBackendOrigin() {
   const configuredOrigin = readConfiguredOrigin();
   if (configuredOrigin) {
     return configuredOrigin;
-  }
-
-  const requestOrigin = normalizeOrigin(options.requestOrigin);
-  if (requestOrigin) {
-    return requestOrigin;
   }
 
   if (process.env.NODE_ENV === "development") {
     return DEFAULT_LOCAL_BACKEND_ORIGIN;
   }
 
+  if (process.env.VERCEL_ENV === "production") {
+    return DEFAULT_PRODUCTION_BACKEND_ORIGIN;
+  }
+
   throw new Error(
-    "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN or a same-origin request context."
+    "Cannot resolve backend origin without CLODE_BACKEND_ORIGIN outside local development."
   );
 }
