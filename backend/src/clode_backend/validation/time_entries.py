@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import json
-import re
 from typing import Any
 
+from clode_backend.validation.common import parse_number, text, validate_month_key as validate_month_key_value
 
-MONTH_KEY_RE = re.compile(r"^\d{4}-\d{2}$")
 
 FINANCE_KEYS = (
     "zus_company_1",
@@ -18,28 +17,18 @@ FINANCE_KEYS = (
 )
 
 
-def text(value: Any) -> str:
-    return str(value or "").strip()
-
-
 def number(value: Any) -> float:
-    try:
-        return float(value or 0)
-    except Exception:
-        return 0.0
+    return parse_number(value)
 
 
 def validate_month_key(value: Any) -> str:
-    normalized = text(value)
-    if not MONTH_KEY_RE.match(normalized):
-        raise ValueError("Miesiąc musi mieć format RRRR-MM.")
-    return normalized
+    return validate_month_key_value(value, field_name="Miesiac")
 
 
 def normalize_hours(value: Any) -> float:
     normalized = round(number(value), 2)
     if normalized < 0:
-        raise ValueError("Liczba godzin nie może być ujemna.")
+        raise ValueError("Liczba godzin nie moze byc ujemna.")
     return normalized
 
 
@@ -87,6 +76,6 @@ def normalize_finance(value: Any) -> dict[str, float]:
     if not isinstance(raw, dict):
         raw = {}
     return {
-        key: round(number(raw.get(key)), 2)
+        key: round(parse_number(raw.get(key), field_name=f"Finance field {key}"), 2)
         for key in FINANCE_KEYS
     }

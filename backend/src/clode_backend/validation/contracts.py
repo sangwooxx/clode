@@ -2,21 +2,16 @@ from __future__ import annotations
 
 from typing import Any
 
+from clode_backend.validation.common import parse_number, text
+
 
 ALLOWED_CONTRACT_STATUSES = {"active", "archived"}
 ALLOWED_COST_CATEGORIES = {"materials", "labor", "equipment", "transport", "services", "other"}
 ALLOWED_TIME_SCOPES = {"all", "year", "month"}
 
 
-def text(value: Any) -> str:
-    return str(value or "").strip()
-
-
 def number(value: Any) -> float:
-    try:
-        return float(value or 0)
-    except Exception:
-        return 0.0
+    return parse_number(value)
 
 
 def normalize_contract_status(value: Any) -> str:

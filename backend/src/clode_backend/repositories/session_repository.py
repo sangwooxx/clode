@@ -111,3 +111,17 @@ class SessionRepository(RepositoryBase):
             )
             connection.commit()
 
+    def revoke_all_for_user(self, user_id: str, timestamp_iso: str) -> int:
+        with self.connect() as connection:
+            cursor = connection.execute(
+                """
+                UPDATE auth_sessions
+                SET revoked_at = COALESCE(revoked_at, ?)
+                WHERE user_id = ?
+                  AND revoked_at IS NULL
+                """,
+                (timestamp_iso, user_id),
+            )
+            connection.commit()
+        return int(cursor.rowcount or 0)
+

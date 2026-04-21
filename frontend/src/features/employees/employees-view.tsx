@@ -11,6 +11,8 @@ import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   buildPdfDialogSections,
   createPdfConfigState,
@@ -115,7 +117,7 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
         </span>
         <span className="data-table__secondary">
           {row.employee.city || row.employee.phone
-            ? [row.employee.city, row.employee.phone].filter(Boolean).join(" • ")
+            ? [row.employee.city, row.employee.phone].filter(Boolean).join(" | ")
             : "Brak danych kontaktowych"}
         </span>
       </div>
@@ -130,14 +132,14 @@ const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
       <div className="data-table__stack">
         <span className="data-table__primary">{row.medical.dateText}</span>
         <span className="data-table__secondary">
-          {row.medical.label} • {row.medical.daysText}
+          {row.medical.label} | {row.medical.daysText}
         </span>
       </div>
     ),
   },
   {
     key: "relations",
-    header: "Powiązania",
+    header: "Powiazania",
     className: "employees-col-relations",
     sortValue: (row) => row.relations.hoursEntries,
     render: (row) => (
@@ -163,6 +165,8 @@ export function EmployeesView({
   initialBootstrap?: EmployeesBootstrapData | null;
   initialError?: string | null;
 }) {
+  const { user } = useAuth();
+  const canWrite = canManageView(user, "employeesView");
   const [state, setState] = useState<EmployeesScreenState>(() => {
     if (initialBootstrap) {
       return { status: "success", data: initialBootstrap };
@@ -202,7 +206,7 @@ export function EmployeesView({
         message:
           error instanceof Error
             ? error.message
-            : "Nie udało się pobrać kartoteki pracowników.",
+            : "Nie udalo sie pobrac kartoteki pracownikow.",
       });
     } finally {
       setIsRefreshing(false);
@@ -270,79 +274,6 @@ export function EmployeesView({
     [detailEmployee?.medical_exam_valid_until]
   );
 
-  function _handlePrintEmployee() {
-    if (!detailEmployee) return;
-
-    const relations = detailRelations;
-    const contactValue = [detailEmployee.phone, detailEmployee.city, detailEmployee.street]
-      .filter(Boolean)
-      .join(" • ") || "Brak danych";
-
-    printDocument({
-      title: "Kartoteka pracownika",
-      subtitle: detailEmployee.name,
-      filename: `clode-pracownik-${detailEmployee.worker_code || detailEmployee.id || "rekord"}`,
-      meta: [
-        `Status: ${formatEmployeeStatus(detailEmployee.status)}`,
-        `Stanowisko: ${detailEmployee.position || "Brak danych"}`,
-      ],
-      sections: [
-        {
-          title: "Dane podstawowe",
-          details: [
-            { label: "Imię i nazwisko", value: detailEmployee.name || "Brak danych" },
-            { label: "Kod pracownika", value: detailEmployee.worker_code || "Brak danych" },
-            { label: "Status", value: formatEmployeeStatus(detailEmployee.status) },
-            { label: "Stanowisko", value: detailEmployee.position || "Brak danych" },
-            { label: "Data zatrudnienia", value: formatEmployeeDate(detailEmployee.employment_date) },
-            {
-              label: "Data zakończenia",
-              value: formatEmployeeDate(detailEmployee.employment_end_date),
-            },
-          ],
-        },
-        {
-          title: "Kontakt i adres",
-          details: [
-            { label: "Telefon", value: detailEmployee.phone || "Brak danych" },
-            { label: "Miasto", value: detailEmployee.city || "Brak danych" },
-            { label: "Ulica", value: detailEmployee.street || "Brak danych" },
-            { label: "Kontakt zbiorczy", value: contactValue },
-          ],
-        },
-        {
-          title: "Powiązania operacyjne",
-          details: [
-            {
-              label: "Wpisy czasu",
-              value: relations ? String(relations.hoursEntries) : "0",
-            },
-            {
-              label: "Godziny łącznie",
-              value: relations ? formatHours(relations.totalHours) : "0 h",
-            },
-            {
-              label: "Karty pracy",
-              value: relations ? String(relations.workCards) : "0",
-            },
-            {
-              label: "Miesiące aktywności",
-              value: relations ? String(relations.monthsCount) : "0",
-            },
-            {
-              label: "Koszt godzin",
-              value: relations ? formatMoney(relations.totalCost) : formatMoney(0),
-            },
-            {
-              label: "Badania",
-              value: `${selectedMedical.dateText} • ${selectedMedical.label}`,
-            },
-          ],
-        },
-      ],
-    });
-  }
-
   const employeePdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
     if (!detailEmployee) return [];
 
@@ -350,7 +281,7 @@ export function EmployeesView({
       {
         id: "basic",
         label: "Dane podstawowe",
-        description: "Tożsamość pracownika i identyfikatory rekordu.",
+        description: "Tozsamosc pracownika i identyfikatory rekordu.",
         preview: [
           detailEmployee.name || "Bez nazwy",
           detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Bez kodu",
@@ -359,13 +290,13 @@ export function EmployeesView({
       {
         id: "contact",
         label: "Kontakt i adres",
-        description: "Telefon, miejscowość i adres pracownika.",
+        description: "Telefon, miejscowosc i adres pracownika.",
         preview: [detailEmployee.phone || "Brak telefonu", detailEmployee.city || "Brak miasta"],
       },
       {
         id: "hr",
         label: "Status i dane kadrowe",
-        description: "Status aktywności, zatrudnienie i badania.",
+        description: "Status aktywnosci, zatrudnienie i badania.",
         preview: [
           formatEmployeeStatus(detailEmployee.status),
           detailEmployee.position || "Bez stanowiska",
@@ -374,10 +305,10 @@ export function EmployeesView({
       },
       {
         id: "relations",
-        label: "Powiązania operacyjne",
-        description: "Godziny, karty pracy i koszt pracy powiązany z pracownikiem.",
+        label: "Powiazania operacyjne",
+        description: "Godziny, karty pracy i koszt pracy powiazany z pracownikiem.",
         preview: [
-          detailRelations ? `${detailRelations.hoursEntries} wpisów` : "0 wpisów",
+          detailRelations ? `${detailRelations.hoursEntries} wpisow` : "0 wpisow",
           detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
           detailRelations ? formatMoney(detailRelations.totalCost) : formatMoney(0),
         ],
@@ -403,7 +334,7 @@ export function EmployeesView({
       employeePdfSections.filter((section) => section.enabled).map((section) => section.id)
     );
     const contactValue =
-      [detailEmployee.phone, detailEmployee.city, detailEmployee.street].filter(Boolean).join(" • ") ||
+      [detailEmployee.phone, detailEmployee.city, detailEmployee.street].filter(Boolean).join(" | ") ||
       "Brak danych";
 
     printDocument({
@@ -420,7 +351,7 @@ export function EmployeesView({
           ? {
               title: "Dane podstawowe",
               details: [
-                { label: "Imię i nazwisko", value: detailEmployee.name || "Brak danych" },
+                { label: "Imie i nazwisko", value: detailEmployee.name || "Brak danych" },
                 { label: "Kod pracownika", value: detailEmployee.worker_code || "Brak danych" },
                 { label: "Identyfikator", value: detailEmployee.id || "Brak danych" },
               ],
@@ -444,24 +375,24 @@ export function EmployeesView({
                 { label: "Status", value: formatEmployeeStatus(detailEmployee.status) },
                 { label: "Stanowisko", value: detailEmployee.position || "Brak danych" },
                 { label: "Data zatrudnienia", value: formatEmployeeDate(detailEmployee.employment_date) },
-                { label: "Data zakończenia", value: formatEmployeeDate(detailEmployee.employment_end_date) },
-                { label: "Badania ważne do", value: selectedMedical.dateText },
-                { label: "Stan badań", value: selectedMedical.label },
+                { label: "Data zakonczenia", value: formatEmployeeDate(detailEmployee.employment_end_date) },
+                { label: "Badania wazne do", value: selectedMedical.dateText },
+                { label: "Stan badan", value: selectedMedical.label },
               ],
             }
           : null,
         enabledSectionIds.has("relations")
           ? {
-              title: "Powiązania operacyjne",
+              title: "Powiazania operacyjne",
               details: [
                 { label: "Wpisy czasu", value: detailRelations ? String(detailRelations.hoursEntries) : "0" },
                 {
-                  label: "Godziny łącznie",
+                  label: "Godziny lacznie",
                   value: detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
                 },
                 { label: "Karty pracy", value: detailRelations ? String(detailRelations.workCards) : "0" },
                 {
-                  label: "Miesiące aktywności",
+                  label: "Miesiace aktywnosci",
                   value: detailRelations ? String(detailRelations.monthsCount) : "0",
                 },
                 {
@@ -500,6 +431,10 @@ export function EmployeesView({
   }
 
   function handleCreateNew() {
+    if (!canWrite) {
+      return;
+    }
+
     setEditingEmployeeKey(null);
     setFormValues(emptyFormValues);
     setFormError(null);
@@ -509,6 +444,11 @@ export function EmployeesView({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state.status !== "success") return;
+
+    if (!canWrite) {
+      setFormError("Masz dostep tylko do podgladu kartoteki pracownikow.");
+      return;
+    }
 
     setIsSubmitting(true);
     setFormError(null);
@@ -524,24 +464,20 @@ export function EmployeesView({
       setSelectedEmployeeKey(result.selectedEmployeeKey);
       setEditingEmployeeKey(result.selectedEmployeeKey);
       setFormStatus(
-        editingEmployee ? "Dane pracownika zostały zaktualizowane." : "Pracownik został dodany."
+        editingEmployee ? "Dane pracownika zostaly zaktualizowane." : "Pracownik zostal dodany."
       );
     } catch (error) {
-      setFormError(
-        error instanceof Error
-          ? error.message
-          : "Nie udało się zapisać danych pracownika."
-      );
+      setFormError(error instanceof Error ? error.message : "Nie udalo sie zapisac danych pracownika.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function handleDeleteEmployee() {
-    if (state.status !== "success" || !editingEmployee) return;
+    if (state.status !== "success" || !editingEmployee || !canWrite) return;
 
     const confirmed = window.confirm(
-      `Czy na pewno chcesz usunąć pracownika ${editingEmployee.name}?`
+      `Czy na pewno chcesz usunac pracownika ${editingEmployee.name}?`
     );
     if (!confirmed) return;
 
@@ -558,13 +494,9 @@ export function EmployeesView({
       setSelectedEmployeeKey(null);
       setEditingEmployeeKey(null);
       setFormValues(emptyFormValues);
-      setFormStatus("Pracownik został usunięty z kartoteki.");
+      setFormStatus("Pracownik zostal usuniety z kartoteki.");
     } catch (error) {
-      setFormError(
-        error instanceof Error
-          ? error.message
-          : "Nie udało się usunąć pracownika."
-      );
+      setFormError(error instanceof Error ? error.message : "Nie udalo sie usunac pracownika.");
     } finally {
       setIsSubmitting(false);
     }
@@ -573,10 +505,10 @@ export function EmployeesView({
   if (state.status === "loading") {
     return (
       <div className="module-page">
-        <SectionHeader eyebrow="Pracownicy" title="Kartoteka pracowników" />
+        <SectionHeader eyebrow="Pracownicy" title="Kartoteka pracownikow" />
         <Panel>
           <div className="status-stack">
-            <p className="status-message">Ładowanie kartoteki pracowników...</p>
+            <p className="status-message">Ladowanie kartoteki pracownikow...</p>
           </div>
         </Panel>
       </div>
@@ -586,12 +518,12 @@ export function EmployeesView({
   if (state.status === "error") {
     return (
       <div className="module-page">
-        <SectionHeader eyebrow="Pracownicy" title="Kartoteka pracowników" />
+        <SectionHeader eyebrow="Pracownicy" title="Kartoteka pracownikow" />
         <Panel>
           <div className="status-stack">
             <p className="status-message status-message--error">{state.message}</p>
             <ActionButton type="button" onClick={() => void reloadEmployees()}>
-              Spróbuj ponownie
+              Sprobuj ponownie
             </ActionButton>
           </div>
         </Panel>
@@ -601,18 +533,21 @@ export function EmployeesView({
 
   const deleteBlocked =
     (detailRelations?.hoursEntries || 0) > 0 || (detailRelations?.workCards || 0) > 0;
+  const formDisabled = !canWrite || isSubmitting;
 
   return (
     <div className="module-page">
       <SectionHeader
         eyebrow="Pracownicy"
-        title="Kartoteka pracowników"
+        title="Kartoteka pracownikow"
         actions={
           <div className="module-actions">
             <div className="module-actions__primary">
-              <ActionButton type="button" onClick={handleCreateNew}>
-                Dodaj pracownika
-              </ActionButton>
+              {canWrite ? (
+                <ActionButton type="button" onClick={handleCreateNew}>
+                  Dodaj pracownika
+                </ActionButton>
+              ) : null}
             </div>
             <div className="module-actions__secondary">
               <ActionButton
@@ -629,7 +564,7 @@ export function EmployeesView({
                 onClick={() => void reloadEmployees({ preserveState: true })}
                 disabled={isRefreshing}
               >
-                {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+                {isRefreshing ? "Odswiezanie..." : "Odswiez dane"}
               </ActionButton>
             </div>
           </div>
@@ -637,13 +572,8 @@ export function EmployeesView({
       />
 
       <div className="module-page__stats module-page__stats--compact">
-          {summaryCards.slice(0, 4).map((card) => (
-            <StatCard
-              key={card.id}
-              label={card.label}
-            value={card.value}
-            accent={card.accent}
-          />
+        {summaryCards.slice(0, 4).map((card) => (
+          <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
 
@@ -681,11 +611,11 @@ export function EmployeesView({
       </Panel>
 
       <div className="employees-layout">
-        <Panel title="Lista pracowników">
+        <Panel title="Lista pracownikow">
           <DataTable
             columns={employeesTableColumns()}
             rows={tableRows}
-            emptyMessage="Brak pracowników dla bieżących filtrów."
+            emptyMessage="Brak pracownikow dla biezacych filtrow."
             rowKey={(row) => row.employee.key}
             onRowClick={(row) => handleSelectEmployee(row.employee)}
             getRowClassName={(row) =>
@@ -702,7 +632,7 @@ export function EmployeesView({
                 <div className="data-table__stack">
                   <span className="data-table__primary">{detailEmployee.name}</span>
                   <span className="data-table__secondary">
-                    {detailEmployee.position || "Bez stanowiska"} •{" "}
+                    {detailEmployee.position || "Bez stanowiska"} |{" "}
                     {formatEmployeeStatus(detailEmployee.status)}
                   </span>
                 </div>
@@ -739,16 +669,17 @@ export function EmployeesView({
             <form className="employees-form" onSubmit={handleSubmit}>
               <FormGrid columns={2}>
                 <label className="form-field">
-                  <span>Imię</span>
+                  <span>Imie</span>
                   <input
                     value={formValues.first_name}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
                         first_name: event.target.value,
                       }))
                     }
-                    placeholder="Paweł"
+                    placeholder="Pawel"
                   />
                 </label>
 
@@ -756,13 +687,14 @@ export function EmployeesView({
                   <span>Nazwisko</span>
                   <input
                     value={formValues.last_name}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
                         last_name: event.target.value,
                       }))
                     }
-                    placeholder="Dąbrowski"
+                    placeholder="Dabrowski"
                   />
                 </label>
 
@@ -770,6 +702,7 @@ export function EmployeesView({
                   <span>Kod pracownika</span>
                   <input
                     value={formValues.worker_code}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -784,6 +717,7 @@ export function EmployeesView({
                   <span>Stanowisko</span>
                   <input
                     value={formValues.position}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -798,6 +732,7 @@ export function EmployeesView({
                   <span>Status</span>
                   <select
                     value={formValues.status}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -815,6 +750,7 @@ export function EmployeesView({
                   <input
                     type="date"
                     value={formValues.employment_date}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -825,10 +761,11 @@ export function EmployeesView({
                 </label>
 
                 <label className="form-field">
-                  <span>Data zakończenia</span>
+                  <span>Data zakonczenia</span>
                   <input
                     type="date"
                     value={formValues.employment_end_date}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -842,6 +779,7 @@ export function EmployeesView({
                   <span>Telefon</span>
                   <input
                     value={formValues.phone}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -856,20 +794,22 @@ export function EmployeesView({
                   <span>Ulica</span>
                   <input
                     value={formValues.street}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
                         street: event.target.value,
                       }))
                     }
-                    placeholder="ul. Przykładowa 1"
+                    placeholder="ul. Przykladowa 1"
                   />
                 </label>
 
                 <label className="form-field">
-                  <span>Kod i miejscowość</span>
+                  <span>Kod i miejscowosc</span>
                   <input
                     value={formValues.city}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -881,10 +821,11 @@ export function EmployeesView({
                 </label>
 
                 <label className="form-field">
-                  <span>Badania ważne do</span>
+                  <span>Badania wazne do</span>
                   <input
                     type="date"
                     value={formValues.medical_exam_valid_until}
+                    disabled={formDisabled}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
@@ -897,13 +838,19 @@ export function EmployeesView({
 
               <FormFeedback
                 items={[
+                  !canWrite
+                    ? {
+                        tone: "warning",
+                        text: "Masz dostep tylko do odczytu kartoteki pracownikow.",
+                      }
+                    : null,
                   formError ? { tone: "error", text: formError } : null,
                   formStatus ? { tone: "success", text: formStatus } : null,
                   editingEmployee && deleteBlocked
                     ? {
                         tone: "warning",
                         text:
-                          "Rekord ma powiązane wpisy czasu lub karty pracy. Zmień status na nieaktywny zamiast usuwać pracownika.",
+                          "Rekord ma powiazane wpisy czasu lub karty pracy. Zmien status na nieaktywny zamiast usuwac pracownika.",
                       }
                     : null,
                 ]}
@@ -912,34 +859,38 @@ export function EmployeesView({
               <FormActions
                 leading={
                   <>
-                    <ActionButton
-                      type="button"
-                      variant="secondary"
-                      onClick={handleCreateNew}
-                      disabled={isSubmitting}
-                    >
-                      {editingEmployee ? "Nowy rekord" : "Wyczyść formularz"}
-                    </ActionButton>
-                    {editingEmployee ? (
+                    {canWrite ? (
+                      <ActionButton
+                        type="button"
+                        variant="secondary"
+                        onClick={handleCreateNew}
+                        disabled={isSubmitting}
+                      >
+                        {editingEmployee ? "Nowy rekord" : "Wyczysc formularz"}
+                      </ActionButton>
+                    ) : null}
+                    {editingEmployee && canWrite ? (
                       <ActionButton
                         type="button"
                         variant="ghost"
                         onClick={handleDeleteEmployee}
                         disabled={isSubmitting || deleteBlocked}
                       >
-                        Usuń
+                        Usun
                       </ActionButton>
                     ) : null}
                   </>
                 }
                 trailing={
-                  <ActionButton type="submit" disabled={isSubmitting}>
-                    {isSubmitting
-                      ? "Zapisywanie..."
-                      : editingEmployee
-                        ? "Zapisz zmiany"
-                        : "Dodaj pracownika"}
-                  </ActionButton>
+                  canWrite ? (
+                    <ActionButton type="submit" disabled={isSubmitting}>
+                      {isSubmitting
+                        ? "Zapisywanie..."
+                        : editingEmployee
+                          ? "Zapisz zmiany"
+                          : "Dodaj pracownika"}
+                    </ActionButton>
+                  ) : null
                 }
               />
             </form>
@@ -950,7 +901,7 @@ export function EmployeesView({
       <PdfExportDialog
         open={isPdfDialogOpen}
         title="PDF pracownika"
-        description="Wybierz sekcje kartoteki, które mają wejść do dokumentu."
+        description="Wybierz sekcje kartoteki, ktore maja wejsc do dokumentu."
         context={
           detailEmployee
             ? [

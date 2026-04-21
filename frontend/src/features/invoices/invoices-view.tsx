@@ -6,6 +6,7 @@ import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   bulkDeleteInvoiceRecords,
   deleteInvoiceRecord,
@@ -56,11 +57,6 @@ type InvoicesState =
 
 const emptyFormValues = toInvoiceFormValues();
 
-function hasWriteAccess(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "ksiegowosc";
-}
-
 export function InvoicesView({
   initialBootstrap,
   initialError
@@ -69,7 +65,7 @@ export function InvoicesView({
   initialError?: string | null;
 }) {
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = canManageView(user, "invoicesView");
   const [contracts, setContracts] = useState<ContractRecord[]>(initialBootstrap?.contracts ?? []);
   const [state, setState] = useState<InvoicesState>(() => {
     if (initialBootstrap?.payload) {

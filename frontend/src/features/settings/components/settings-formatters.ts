@@ -1,12 +1,12 @@
-import { settingsPermissionDefinitions } from "@/features/settings/types";
+import { buildPermissionLabels } from "@/lib/auth/permissions";
 
 export function formatRoleLabel(role: string | null | undefined) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "admin" || normalized === "administrator") return "Administrator";
   if (normalized === "kierownik") return "Kierownik";
-  if (normalized === "księgowość" || normalized === "ksiegowosc") return "Księgowość";
+  if (normalized === "księgowość" || normalized === "ksiegowosc") return "Ksiegowosc";
   if (normalized === "read-only" || normalized === "readonly") return "Tylko odczyt";
-  if (!normalized) return "Użytkownik";
+  if (!normalized) return "Uzytkownik";
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 
@@ -28,8 +28,4 @@ export function formatTimestamp(value: string | null | undefined) {
   });
 }
 
-export function buildPermissionLabels(permissions: Record<string, boolean> | null | undefined) {
-  return settingsPermissionDefinitions
-    .filter((definition) => Boolean(permissions?.[definition.viewId]))
-    .map((definition) => definition.label);
-}
+export { buildPermissionLabels };

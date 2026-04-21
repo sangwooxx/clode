@@ -55,6 +55,7 @@ import {
   type HoursPdfContext,
 } from "@/features/hours/hours-pdf";
 import type { HoursContractSummaryRow, HoursEmployeeRow } from "@/features/hours/view-types";
+import { canManageView } from "@/lib/auth/permissions";
 
 type HoursState =
   | { status: "loading" }
@@ -66,11 +67,6 @@ const emptyEntryFormValues: HoursEntryFormValues = {
   contract_id: UNASSIGNED_TIME_CONTRACT_ID,
   hours: "",
 };
-
-function hasWriteAccess(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "kierownik";
-}
 
 function buildMonthKey(year: string, month: string) {
   const normalizedYear = String(year || "").trim();
@@ -204,7 +200,7 @@ export function HoursView({
   initialError?: string | null;
 }) {
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = canManageView(user, "hoursView");
   const [contracts, setContracts] = useState<ContractRecord[]>(initialBootstrap?.contracts ?? []);
   const [employees, setEmployees] = useState<HoursEmployeeRecord[]>(initialBootstrap?.employees ?? []);
   const [historicalEmployees, setHistoricalEmployees] = useState<HoursEmployeeRecord[]>(

@@ -16,7 +16,7 @@ The operational MVP is live on `frontend/` and covers:
 - settings
 - workwear
 
-The main remaining engineering debt is not screen coverage. It is backend-first hardening of store-backed domains and compatibility hardening across the API surface.
+The main remaining engineering debt is no longer basic screen coverage. The current focus is stricter production hardening, deeper integration coverage, and continued reduction of transitional legacy paths.
 
 ## Repository layout
 
@@ -56,7 +56,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 Current production-oriented model:
 - dedicated Vercel project `clode` deploys the main frontend
 - `rootDirectory=frontend`
-- `CLODE_BACKEND_ORIGIN` points to the backend service
+- `CLODE_BACKEND_ORIGIN` points to the backend service when frontend and backend are not served from the same origin
 - dedicated Vercel project `backend` serves the backend API and router for the main frontend
 
 Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
@@ -84,13 +84,9 @@ Current PDF exports that are expected to be verified on the canonical QA fronten
 
 ## Current priorities
 
-- backend-first hardening of store-backed domains:
-  - vacations
-  - planning
-  - work cards
-  - workwear
-  - settings
-- security hardening of auth/session and deployment secrets
+- backend / frontend permission consistency and regression coverage
+- production-safe deploy discipline and explicit environment configuration
+- further reduction of remaining transitional legacy adapters
 - product expansion toward tender workflow integration
 
 ## Repository guide

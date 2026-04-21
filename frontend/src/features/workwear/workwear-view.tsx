@@ -51,6 +51,7 @@ import type {
   WorkwearIssueFormValues,
 } from "@/features/workwear/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   buildPdfDialogSections,
   createPdfConfigState,
@@ -69,11 +70,6 @@ type FlashMessage = {
   tone: "success" | "error" | "warning";
   text: string;
 } | null;
-
-function hasWriteAccess(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "administrator" || normalized === "kierownik";
-}
 
 function normalizeIssueSelection(value: string | null | undefined) {
   const normalized = String(value || "").trim();
@@ -102,7 +98,7 @@ export function WorkwearView({
   initialError?: string;
 }) {
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = canManageView(user, "workwearView");
 
   const [screen, setScreen] = useState<WorkwearScreenState>(() => {
     if (initialBootstrap) {
@@ -544,12 +540,16 @@ export function WorkwearView({
         actions={
           <div className="module-actions">
             <div className="module-actions__primary">
-              <ActionButton type="button" onClick={handleNewIssue}>
-                Dodaj wydanie
-              </ActionButton>
-              <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
-                Dodaj element katalogu
-              </ActionButton>
+              {canWrite ? (
+                <>
+                  <ActionButton type="button" onClick={handleNewIssue}>
+                    Dodaj wydanie
+                  </ActionButton>
+                  <ActionButton type="button" variant="secondary" onClick={handleNewCatalogItem}>
+                    Dodaj element katalogu
+                  </ActionButton>
+                </>
+              ) : null}
             </div>
             <div className="module-actions__secondary">
               <ActionButton

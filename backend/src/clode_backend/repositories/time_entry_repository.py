@@ -487,17 +487,17 @@ class TimeEntryRepository(RepositoryBase):
                 )
         return True
 
-    def normalize_month_visible_investments(self, rows: list[dict[str, Any]]) -> None:
+    def normalize_month_visible_investments(self, rows: list[dict[str, Any]], *, connection=None) -> None:
         for row in rows:
-            self.upsert_month(row)
+            self.upsert_month(row, connection=connection)
 
-    def sync_contract_visibility(self, contract_id: str, *, visible: bool) -> int:
+    def sync_contract_visibility(self, contract_id: str, *, visible: bool, connection=None) -> int:
         normalized_contract_id = str(contract_id or "").strip()
         if not normalized_contract_id:
             return 0
 
         changed_rows: list[dict[str, Any]] = []
-        for month in self.list_months():
+        for month in self.list_months(connection=connection):
             current_values = [
                 str(value or "").strip()
                 for value in (month.get("visible_investments") or [])
@@ -526,7 +526,7 @@ class TimeEntryRepository(RepositoryBase):
                 )
 
         if changed_rows:
-            self.normalize_month_visible_investments(changed_rows)
+            self.normalize_month_visible_investments(changed_rows, connection=connection)
 
         return len(changed_rows)
 

@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { moduleNavigation } from "@/features/navigation/module-nav";
+import { getModuleNavigation } from "@/features/navigation/module-nav";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canAccessView } from "@/lib/auth/permissions";
 import { cn } from "@/lib/utils/cn";
 
 export function AppShell({
@@ -20,6 +21,8 @@ export function AppShell({
   const router = useRouter();
   const { user, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigationItems = getModuleNavigation(user);
+  const canAccessSettings = canAccessView(user, "settingsView");
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -38,7 +41,7 @@ export function AppShell({
         <BrandMark className="app-shell__brand" labelClassName="app-shell__brand-mark" />
 
         <nav className="app-shell__nav">
-          {moduleNavigation.map((item) => (
+          {navigationItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -53,22 +56,24 @@ export function AppShell({
         </nav>
 
         <div className="app-shell__sidebar-footer">
-          <Link
-            href="/settings"
-            className={cn(
-              "app-shell__option-link",
-              pathname === "/settings" && "app-shell__option-link--active"
-            )}
-          >
-            <div className="app-shell__option-copy">
-              <strong className="app-shell__option-title">
-                {user?.displayName ?? "Konto"}
-              </strong>
-            </div>
-            <span className="app-shell__option-icon" aria-hidden="true">
-              &#9881;
-            </span>
-          </Link>
+          {canAccessSettings ? (
+            <Link
+              href="/settings"
+              className={cn(
+                "app-shell__option-link",
+                pathname === "/settings" && "app-shell__option-link--active"
+              )}
+            >
+              <div className="app-shell__option-copy">
+                <strong className="app-shell__option-title">
+                  {user?.displayName ?? "Konto"}
+                </strong>
+              </div>
+              <span className="app-shell__option-icon" aria-hidden="true">
+                &#9881;
+              </span>
+            </Link>
+          ) : null}
 
           <ActionButton
             variant="secondary"

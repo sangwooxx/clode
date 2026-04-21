@@ -66,6 +66,85 @@ def _ensure_workwear_issue_employee_key_schema(connection, *, is_sqlite: bool) -
         )
 
 
+def _ensure_column(connection, table_name: str, column_name: str, column_sql: str, *, is_sqlite: bool) -> None:
+    column_exists = (
+        _sqlite_column_exists(connection, table_name, column_name)
+        if is_sqlite
+        else _postgres_column_exists(connection, table_name, column_name)
+    )
+    if not column_exists:
+        connection.execute(
+            f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_sql}"
+        )
+
+
+def _ensure_runtime_domain_schema(connection, *, is_sqlite: bool) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS vacation_balances (
+            employee_id TEXT PRIMARY KEY,
+            employee_name TEXT NOT NULL,
+            base_days REAL NOT NULL DEFAULT 0,
+            carryover_days REAL NOT NULL DEFAULT 0,
+            extra_days REAL NOT NULL DEFAULT 0
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS vacation_requests (
+            id TEXT PRIMARY KEY,
+            employee_id TEXT,
+            employee_name TEXT NOT NULL,
+            request_type TEXT NOT NULL,
+            start_date TEXT NOT NULL,
+            end_date TEXT NOT NULL,
+            days REAL NOT NULL DEFAULT 0,
+            status TEXT NOT NULL,
+            requested_by TEXT NOT NULL DEFAULT '',
+            notes TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS planning_assignments (
+            id TEXT PRIMARY KEY,
+            assignment_date TEXT NOT NULL,
+            employee_id TEXT,
+            employee_name TEXT NOT NULL,
+            contract_id TEXT,
+            contract_name TEXT NOT NULL DEFAULT '',
+            note TEXT NOT NULL DEFAULT ''
+        )
+        """
+    )
+    _ensure_column(connection, "vacation_balances", "employee_key", "TEXT NOT NULL DEFAULT ''", is_sqlite=is_sqlite)
+    _ensure_column(connection, "vacation_requests", "employee_key", "TEXT NOT NULL DEFAULT ''", is_sqlite=is_sqlite)
+    _ensure_column(connection, "planning_assignments", "employee_key", "TEXT NOT NULL DEFAULT ''", is_sqlite=is_sqlite)
+    _ensure_column(connection, "planning_assignments", "assignment_key", "TEXT NOT NULL DEFAULT ''", is_sqlite=is_sqlite)
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS planning_assignments_date_key_idx ON planning_assignments(assignment_date, assignment_key)"
+    )
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS work_cards (
+            id TEXT PRIMARY KEY,
+            employee_id TEXT NOT NULL DEFAULT '',
+            employee_name TEXT NOT NULL,
+            month_key TEXT NOT NULL,
+            month_label TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL,
+            rows_json TEXT NOT NULL DEFAULT '[]'
+        )
+        """
+    )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS work_cards_month_employee_idx ON work_cards(month_key, employee_id, employee_name)"
+    )
+
+
 def _ensure_settings_workflow_schema(connection) -> None:
     connection.execute(
         """
@@ -111,6 +190,7 @@ def _ensure_sqlite_database(settings: Settings) -> None:
             )
         _ensure_employee_worker_code_schema(connection, is_sqlite=True)
         _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=True)
+        _ensure_runtime_domain_schema(connection, is_sqlite=True)
         _ensure_settings_workflow_schema(connection)
         connection.commit()
     finally:
@@ -253,6 +333,7 @@ def _ensure_postgres_database(settings: Settings) -> None:
             )
         _ensure_employee_worker_code_schema(connection, is_sqlite=False)
         _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=False)
+        _ensure_runtime_domain_schema(connection, is_sqlite=False)
         _ensure_settings_workflow_schema(connection)
         connection.commit()
     finally:

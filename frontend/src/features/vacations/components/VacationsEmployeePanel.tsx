@@ -1,5 +1,6 @@
 "use client";
 
+import type { FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
@@ -11,9 +12,9 @@ import type {
   VacationBalanceLookup,
   VacationEmployeeStats,
 } from "@/features/vacations/types";
-import type { FormEvent } from "react";
 
 type VacationsEmployeePanelProps = {
+  canWrite: boolean;
   selectedEmployee: EmployeeDirectoryRecord | null;
   selectedStats: VacationEmployeeStats | null;
   selectedEmployeeInactive: boolean;
@@ -25,6 +26,7 @@ type VacationsEmployeePanelProps = {
 };
 
 export function VacationsEmployeePanel({
+  canWrite,
   selectedEmployee,
   selectedStats,
   selectedEmployeeInactive,
@@ -34,6 +36,9 @@ export function VacationsEmployeePanel({
   onBalanceFieldChange,
   onSubmitBalance,
 }: VacationsEmployeePanelProps) {
+  const inputsDisabled =
+    !canWrite || selectedEmployeeInactive || isSavingBalance || !selectedEmployee;
+
   return (
     <Panel title="Pracownik i pula">
       {selectedEmployee ? (
@@ -43,7 +48,7 @@ export function VacationsEmployeePanel({
               {formatEmployeeDisplayName(selectedEmployee, selectedEmployee.name)}
             </span>
             <span className="data-table__secondary">
-              {selectedEmployee.position || "Bez stanowiska"} • Kod{" "}
+              {selectedEmployee.position || "Bez stanowiska"} | Kod{" "}
               {formatEmployeeCodeLabel(selectedEmployee.worker_code)}
             </span>
           </div>
@@ -51,9 +56,9 @@ export function VacationsEmployeePanel({
           {selectedStats ? (
             <div className="vacations-detail-grid">
               <div className="vacations-detail-card">
-                <span className="field-card__label">Pula łączna</span>
+                <span className="field-card__label">Pula laczna</span>
                 <strong>{formatVacationDays(selectedStats.total_pool)} dni</strong>
-                <small>Roczna + zaległe + ekstra</small>
+                <small>Roczna + zalegle + ekstra</small>
               </div>
               <div className="vacations-detail-card">
                 <span className="field-card__label">Wykorzystane</span>
@@ -61,20 +66,20 @@ export function VacationsEmployeePanel({
                 <small>Zatwierdzone wpisy</small>
               </div>
               <div className="vacations-detail-card">
-                <span className="field-card__label">Oczekujące</span>
+                <span className="field-card__label">Oczekujace</span>
                 <strong>{formatVacationDays(selectedStats.pending_days)} dni</strong>
                 <small>Wnioski w toku</small>
               </div>
               <div className="vacations-detail-card">
-                <span className="field-card__label">Pozostało</span>
+                <span className="field-card__label">Pozostalo</span>
                 <strong>{formatVacationDays(selectedStats.remaining_days)} dni</strong>
-                <small>{selectedStats.requests_count} wpisów</small>
+                <small>{selectedStats.requests_count} wpisow</small>
               </div>
             </div>
           ) : null}
         </div>
       ) : (
-        <p className="status-message">Wybierz pracownika z tabeli, aby zobaczyć jego saldo.</p>
+        <p className="status-message">Wybierz pracownika z tabeli, aby zobaczyc jego saldo.</p>
       )}
 
       <form className="vacations-form" onSubmit={onSubmitBalance}>
@@ -85,16 +90,16 @@ export function VacationsEmployeePanel({
               value={balanceValues.base_days}
               onChange={(event) => onBalanceFieldChange("base_days", event.target.value)}
               inputMode="decimal"
-              disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
+              disabled={inputsDisabled}
             />
           </label>
           <label className="form-field">
-            <span>Urlop zaległy</span>
+            <span>Urlop zalegly</span>
             <input
               value={balanceValues.carryover_days}
               onChange={(event) => onBalanceFieldChange("carryover_days", event.target.value)}
               inputMode="decimal"
-              disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
+              disabled={inputsDisabled}
             />
           </label>
           <label className="form-field">
@@ -103,10 +108,14 @@ export function VacationsEmployeePanel({
               value={balanceValues.extra_days}
               onChange={(event) => onBalanceFieldChange("extra_days", event.target.value)}
               inputMode="decimal"
-              disabled={selectedEmployeeInactive || isSavingBalance || !selectedEmployee}
+              disabled={inputsDisabled}
             />
           </label>
         </FormGrid>
+
+        {!canWrite ? (
+          <p className="status-message">Masz dostep tylko do podgladu sald urlopowych.</p>
+        ) : null}
 
         {selectedEmployeeInactive ? (
           <p className="status-message">
@@ -117,18 +126,17 @@ export function VacationsEmployeePanel({
         {selectedBalanceLookup?.status === "ambiguous" ? (
           <p className="status-message status-message--warning">
             W legacy store istnieje niejednoznaczna pula urlopowa po samej nazwie. Ten rekord nie
-            jest już automatycznie przypisywany do pracownika; zapis stworzy osobne saldo po
+            jest juz automatycznie przypisywany do pracownika; zapis stworzy osobne saldo po
             stabilnym identyfikatorze.
           </p>
         ) : null}
 
         <div className="vacations-form__actions">
-          <ActionButton
-            type="submit"
-            disabled={isSavingBalance || selectedEmployeeInactive || !selectedEmployee}
-          >
-            {isSavingBalance ? "Zapisywanie..." : "Zapisz pulę"}
-          </ActionButton>
+          {canWrite ? (
+            <ActionButton type="submit" disabled={inputsDisabled}>
+              {isSavingBalance ? "Zapisywanie..." : "Zapisz pule"}
+            </ActionButton>
+          ) : null}
         </div>
       </form>
     </Panel>

@@ -7,6 +7,7 @@ from uuid import uuid4
 from clode_backend.auth.passwords import hash_password, looks_like_password_hash
 from clode_backend.auth.rbac import effective_permissions, normalize_role
 from clode_backend.auth.sessions import utc_now_iso
+from clode_backend.repositories.session_repository import SessionRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.user_repository import UserRepository
 from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
@@ -18,9 +19,15 @@ class UserServiceError(RuntimeError):
 
 
 class UserService:
-    def __init__(self, repository: UserRepository, store_repository: StoreRepository) -> None:
+    def __init__(
+        self,
+        repository: UserRepository,
+        store_repository: StoreRepository,
+        session_repository: SessionRepository | None = None,
+    ) -> None:
         self.repository = repository
         self.store_repository = store_repository
+        self.session_repository = session_repository
 
     def ensure_bootstrap_users(self) -> None:
         if self.repository.count() > 0:
@@ -110,6 +117,7 @@ class UserService:
                 raise UserServiceError("Password is required for a new user.")
 
         timestamp = utc_now_iso()
+        password_changed = bool(existing and password_hash_value != existing["password_hash"])
         record = {
             "id": existing["id"] if existing else (user_id or f"user-{uuid4().hex}"),
             "name": name,
@@ -146,6 +154,8 @@ class UserService:
             raise UserServiceError(str(error)) from error
 
         saved = self.repository.update(record["id"], record) if existing else self.repository.insert(record)
+        if password_changed and self.session_repository:
+            self.session_repository.revoke_all_for_user(record["id"], timestamp)
         return self.to_public_user(saved)
 
     def delete_user(self, user_id: str, *, actor_user_id: str | None = None) -> None:

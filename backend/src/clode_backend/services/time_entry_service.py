@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import uuid4
 
-from clode_backend.auth.rbac import can_access_view, normalize_role
+from clode_backend.auth.rbac import can_access_view, can_manage_view
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
@@ -43,13 +43,11 @@ class TimeEntryService:
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise TimeEntryServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", "kierownik"}:
+        if not can_manage_view(current_user.get("role"), current_user.get("permissions"), "hoursView"):
             raise TimeEntryServiceError("Brak uprawnień do edycji ewidencji czasu pracy.", status_code=403)
 
     def list_time_entries(self, filters: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_read_access(current_user)
-        self._normalize_legacy_employee_duplicates()
-        self._normalize_legacy_month_contract_links()
         normalized_filters = self._normalize_filters(filters)
         entries = self.repository.list_entries(normalized_filters)
         months = self.repository.list_months()
@@ -155,7 +153,6 @@ class TimeEntryService:
 
     def create_time_entry(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
-        self._normalize_legacy_employee_duplicates()
         normalized = self._normalize_entry_payload(payload)
         existing = self.repository.find_entry(
             month_key=normalized["month_key"],
@@ -179,7 +176,6 @@ class TimeEntryService:
 
     def update_time_entry(self, entry_id: str, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
-        self._normalize_legacy_employee_duplicates()
         existing = self.repository.get_entry(entry_id)
         if not existing:
             raise TimeEntryServiceError("Nie znaleziono wpisu czasu pracy.", status_code=404)
@@ -219,6 +215,16 @@ class TimeEntryService:
     def delete_month(self, month_key: str, current_user: dict[str, Any] | None) -> None:
         self.ensure_write_access(current_user)
         self.repository.delete_month(validate_month_key(month_key))
+
+    def repair_legacy_state(self) -> dict[str, int]:
+        normalized_duplicate_months = self.repository.normalize_legacy_employee_duplicates()
+        for month_key in normalized_duplicate_months:
+            self._recalculate_month_costs(month_key)
+        normalized_month_rows = self._normalize_legacy_month_contract_links()
+        return {
+            "employee_duplicate_months": len(normalized_duplicate_months),
+            "month_visibility_rows": normalized_month_rows,
+        }
 
     def _normalize_filters(self, filters: dict[str, Any]) -> dict[str, Any]:
         month_key = text(filters.get("month"))
@@ -309,10 +315,6 @@ class TimeEntryService:
     def _recalculate_month_costs(self, month_key: str, *, connection=None) -> None:
         self.repository.recalculate_month_costs(month_key, connection=connection)
 
-    def _normalize_legacy_employee_duplicates(self) -> None:
-        for month_key in self.repository.normalize_legacy_employee_duplicates():
-            self._recalculate_month_costs(month_key)
-
     def _build_aggregates(self, entries: list[dict[str, Any]]) -> dict[str, Any]:
         per_contract: dict[str, dict[str, Any]] = {}
         per_month: dict[str, dict[str, Any]] = {}
@@ -366,7 +368,7 @@ class TimeEntryService:
             ],
         }
 
-    def _normalize_legacy_month_contract_links(self) -> None:
+    def _normalize_legacy_month_contract_links(self) -> int:
         contracts = self.contract_repository.list_all(include_archived=True)
         valid_ids = {text(contract.get("id")) for contract in contracts if text(contract.get("id"))}
         name_to_ids: dict[str, set[str]] = {}
@@ -410,6 +412,8 @@ class TimeEntryService:
 
         if changed:
             self.repository.normalize_month_visible_investments(normalized_rows)
+            return len(normalized_rows)
+        return 0
 
     def _list_active_contract_ids(self) -> list[str]:
         return [

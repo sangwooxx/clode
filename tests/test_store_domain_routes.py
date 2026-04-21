@@ -164,7 +164,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             "admin",
         )
 
-    def test_settings_workflow_backfills_from_legacy_store_and_clears_store_workflow(self) -> None:
+    def test_settings_workflow_bootstrap_imports_legacy_store_and_clears_store_workflow(self) -> None:
         legacy_users = [{"id": "legacy-user", "name": "Legacy User"}]
         self.store_service.save_store(
             "settings",
@@ -176,6 +176,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
                 "users": legacy_users,
             },
         )
+        self.settings_service.bootstrap_legacy_settings()
 
         status, payload, _ = self._route(method="GET", path="/api/v1/settings/workflow")
 
@@ -313,7 +314,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         self.assertIn("displayName", login_user)
         self.assertEqual(login_user["displayName"], login_user["name"])
 
-    def test_settings_audit_log_backfills_legacy_store_and_uses_sql_rows(self) -> None:
+    def test_settings_audit_log_bootstrap_imports_legacy_store_and_uses_sql_rows(self) -> None:
         legacy_entry = {
             "id": "audit-legacy-1",
             "timestamp": "2026-04-20T10:00:00Z",
@@ -325,6 +326,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             "user_name": "Admin ERP",
         }
         self.store_service.save_store("audit_logs", [legacy_entry])
+        self.settings_service.bootstrap_legacy_settings()
 
         status, payload, _ = self._route(method="GET", path="/api/v1/settings/audit-log")
         self.assertEqual(status, 200)
@@ -383,7 +385,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         self.assertFalse(payload["ok"])
         self.assertIn("dedicated domain endpoint", payload["error"])
 
-    def test_workwear_routes_backfill_store_documents_into_sql_tables(self) -> None:
+    def test_workwear_bootstrap_imports_store_documents_into_sql_tables(self) -> None:
         self.store_service.save_store(
             "workwear_catalog",
             [
@@ -412,6 +414,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
                 }
             ],
         )
+        self.workwear_service.bootstrap_legacy_store()
 
         catalog_status, catalog_payload, _ = self._route(
             method="GET",

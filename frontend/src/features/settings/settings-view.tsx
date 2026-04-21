@@ -31,7 +31,6 @@ import {
   buildSettingsUserFormValues,
   createDefaultWorkflowValues,
   createEmptySettingsUserForm,
-  isAdminRole,
   normalizeSettingsPermissions,
   type SettingsAdminBootstrap,
   type SettingsAuditLogEntry,
@@ -40,6 +39,7 @@ import {
   type SettingsWorkflowValues,
 } from "@/features/settings/types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView, isAdminRole } from "@/lib/auth/permissions";
 import type { ManagedUserRecord } from "@/lib/api/users";
 
 type AdminState =
@@ -74,7 +74,7 @@ export function SettingsView() {
   const [workflowStatus, setWorkflowStatus] = useState<string | null>(null);
 
   const currentUser = user;
-  const hasAdminAccess = isAdminRole(currentUser?.role);
+  const hasAdminAccess = canManageView(currentUser, "settingsView");
   const adminData = adminState.status === "success" ? adminState.data : null;
 
   async function reloadAdminData(options?: { preserveState?: boolean; message?: string }) {

@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 import os
 from pathlib import Path
-import tempfile
 
 
 @dataclass(frozen=True)
@@ -78,10 +77,14 @@ def load_settings() -> Settings:
     ).strip()
     local_seed_bootstrap = False
 
+    if is_production and not configured_database_url:
+        raise RuntimeError("Production runtime requires DATABASE_URL or CLODE_DATABASE_URL.")
+
+    if is_production and not configured_session_secret:
+        raise RuntimeError("Production runtime requires CLODE_SESSION_SECRET.")
+
     if configured_database_url:
         database_url = configured_database_url
-    elif is_vercel:
-        database_url = f"sqlite:///{(Path(tempfile.gettempdir()) / 'clode.db').as_posix()}"
     else:
         database_url = f"sqlite:///{default_db.as_posix()}"
         local_seed_bootstrap = default_seed_db.exists() and not default_db.exists()
@@ -126,7 +129,7 @@ def load_settings() -> Settings:
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
-        session_secret=configured_session_secret or ("clode-session-dev" if not is_production else ""),
+        session_secret=configured_session_secret or "clode-session-dev",
         use_stateless_sessions=bool(configured_session_secret) and is_vercel and not force_stateful_sessions,
         secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_production),
         is_vercel=is_vercel,

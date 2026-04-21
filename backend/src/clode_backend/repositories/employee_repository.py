@@ -10,7 +10,7 @@ from clode_backend.validation.employees import split_legacy_employee_name
 
 def _repair_mojibake(value: Any) -> str:
     text = str(value or "")
-    if not any(marker in text for marker in ("ÃƒÆ’", "Ãƒâ€¦", "Ãƒâ€ž", "ÃƒÂ¢")):
+    if not any(marker in text for marker in ("Ã", "â", "Å", "Ä")):
         return text
     try:
         return text.encode("latin-1").decode("utf-8")
@@ -20,20 +20,6 @@ def _repair_mojibake(value: Any) -> str:
 
 def _normalize_text(value: Any) -> str:
     return _repair_mojibake(value).strip()
-
-
-def _employee_merge_key(employee: dict[str, Any], index: int) -> str:
-    employee_id = _normalize_text(employee.get("id"))
-    if employee_id:
-        return f"id:{employee_id}"
-
-    worker_code = _normalize_text(employee.get("worker_code"))
-    if worker_code:
-        return f"worker:{worker_code.casefold()}"
-
-    name = _normalize_text(employee.get("name")).casefold()
-    position = _normalize_text(employee.get("position")).casefold()
-    return f"fallback:{name}|{position}|{index}"
 
 
 def _complete_name_parts(
@@ -68,38 +54,56 @@ def _row_value(row, key: str) -> Any:
 
 class EmployeeRepository(RepositoryBase):
     def list_all(self) -> list[dict[str, Any]]:
-        table_rows = self._list_from_table()
-        store_rows = self._list_from_store()
-
-        if not table_rows:
-            return store_rows
-        if not store_rows:
-            return table_rows
-
-        merged: dict[str, dict[str, Any]] = {}
-        for index, employee in enumerate(table_rows):
-            merged[_employee_merge_key(employee, index)] = employee
-        for index, employee in enumerate(store_rows):
-            merged.setdefault(_employee_merge_key(employee, index), employee)
-
-        return sorted(
-            merged.values(),
-            key=lambda employee: (
-                str(employee.get("name") or "").casefold(),
-                str(employee.get("worker_code") or "").casefold(),
-                str(employee.get("id") or ""),
-            ),
-        )
+        with self.connect() as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    id,
+                    name,
+                    first_name,
+                    last_name,
+                    worker_code,
+                    position,
+                    status,
+                    employment_date,
+                    employment_end_date,
+                    street,
+                    city,
+                    phone,
+                    medical_exam_valid_until
+                FROM employees
+                ORDER BY LOWER(name) ASC, id ASC
+                """
+            ).fetchall()
+        return [self._serialize_row(row) for row in rows]
 
     def get_by_id(self, employee_id: str) -> dict[str, Any] | None:
         normalized_id = _normalize_text(employee_id)
         if not normalized_id:
             return None
-
-        for employee in self.list_all():
-            if _normalize_text(employee.get("id")) == normalized_id:
-                return employee
-        return None
+        with self.connect() as connection:
+            row = connection.execute(
+                """
+                SELECT
+                    id,
+                    name,
+                    first_name,
+                    last_name,
+                    worker_code,
+                    position,
+                    status,
+                    employment_date,
+                    employment_end_date,
+                    street,
+                    city,
+                    phone,
+                    medical_exam_valid_until
+                FROM employees
+                WHERE id = ?
+                """,
+                (normalized_id,),
+            ).fetchone()
+        return self._serialize_row(row) if row else None
 
     def save_all(self, employees: list[dict[str, Any]]) -> list[dict[str, Any]]:
         payload = [
@@ -107,23 +111,12 @@ class EmployeeRepository(RepositoryBase):
             for index, item in enumerate(employees)
             if isinstance(item, dict)
         ]
-        payload_json = json.dumps(payload, ensure_ascii=False)
+        payload_ids = {
+            _normalize_text(employee.get("id"))
+            for employee in payload
+            if _normalize_text(employee.get("id"))
+        }
         with self.connect() as connection:
-            connection.execute(
-                """
-                INSERT INTO store_documents (store_name, payload_json, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(store_name) DO UPDATE SET
-                    payload_json = excluded.payload_json,
-                    updated_at = CURRENT_TIMESTAMP
-                """,
-                ("employees", payload_json),
-            )
-            payload_ids = {
-                _normalize_text(employee.get("id"))
-                for employee in payload
-                if _normalize_text(employee.get("id"))
-            }
             existing_table_ids = {
                 _normalize_text(row["id"])
                 for row in connection.execute("SELECT id FROM employees").fetchall()
@@ -182,12 +175,24 @@ class EmployeeRepository(RepositoryBase):
 
             stale_table_ids = existing_table_ids - payload_ids
             for employee_id in stale_table_ids:
-                connection.execute(
-                    "DELETE FROM employees WHERE id = ?",
-                    (employee_id,),
-                )
+                connection.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
             connection.commit()
         return self.list_all()
+
+    def import_legacy_store(self) -> int:
+        legacy_rows = self._list_from_store()
+        if not legacy_rows:
+            return 0
+        if self.list_all():
+            with self.connect() as connection:
+                connection.execute("DELETE FROM store_documents WHERE store_name = ?", ("employees",))
+                connection.commit()
+            return 0
+        self.save_all(legacy_rows)
+        with self.connect() as connection:
+            connection.execute("DELETE FROM store_documents WHERE store_name = ?", ("employees",))
+            connection.commit()
+        return len(legacy_rows)
 
     def _list_from_store(self) -> list[dict[str, Any]]:
         with self.connect() as connection:
@@ -207,44 +212,11 @@ class EmployeeRepository(RepositoryBase):
         if not isinstance(payload, list):
             return []
 
-        employees: list[dict[str, Any]] = []
-        for index, item in enumerate(payload):
-            if not isinstance(item, dict):
-                continue
-            employees.append(self._serialize_payload(item, index))
-
-        return sorted(
-            employees,
-            key=lambda employee: (
-                str(employee.get("name") or "").casefold(),
-                str(employee.get("worker_code") or "").casefold(),
-                str(employee.get("id") or ""),
-            ),
-        )
-
-    def _list_from_table(self) -> list[dict[str, Any]]:
-        with self.connect() as connection:
-            rows = connection.execute(
-                """
-                SELECT
-                    id,
-                    name,
-                    first_name,
-                    last_name,
-                    worker_code,
-                    position,
-                    status,
-                    employment_date,
-                    employment_end_date,
-                    street,
-                    city,
-                    phone,
-                    medical_exam_valid_until
-                FROM employees
-                ORDER BY LOWER(name) ASC, id ASC
-                """
-            ).fetchall()
-        return [self._serialize_row(row) for row in rows]
+        return [
+            self._serialize_payload(item, index)
+            for index, item in enumerate(payload)
+            if isinstance(item, dict)
+        ]
 
     @staticmethod
     def _serialize_payload(item: dict[str, Any], index: int) -> dict[str, Any]:

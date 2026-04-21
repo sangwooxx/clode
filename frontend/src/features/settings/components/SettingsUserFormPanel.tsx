@@ -48,13 +48,13 @@ export function SettingsUserFormPanel({
   const editingUserPermissions = buildPermissionLabels(editingUser?.permissions);
 
   return (
-    <Panel title={editingUser ? `Edycja konta: ${editingUser.name}` : "Nowe konto użytkownika"}>
+    <Panel title={editingUser ? `Edycja konta: ${editingUser.name}` : "Nowe konto uzytkownika"}>
       {editingUser ? (
         <div className="settings-user-spotlight">
           <div className="data-table__stack">
             <span className="data-table__primary">{editingUser.name}</span>
             <span className="data-table__secondary">
-              {editingUser.username} • {formatRoleLabel(editingUser.role)}
+              {editingUser.username} | {formatRoleLabel(editingUser.role)}
             </span>
           </div>
           <div className="settings-module-pills">
@@ -65,18 +65,18 @@ export function SettingsUserFormPanel({
                 </span>
               ))
             ) : (
-              <p className="status-message">To konto nie ma aktywnych modułów.</p>
+              <p className="status-message">To konto nie ma aktywnych uprawnien.</p>
             )}
           </div>
         </div>
       ) : (
-        <p className="status-message">Nowe konto użytkownika.</p>
+        <p className="status-message">Nowe konto uzytkownika.</p>
       )}
 
       <form className="settings-user-form" onSubmit={onSubmit}>
         <FormGrid columns={2}>
           <label className="form-field">
-            <span>Imię i nazwisko</span>
+            <span>Imie i nazwisko</span>
             <input
               value={formValues.name}
               onChange={(event) => setFormValues((current) => ({ ...current, name: event.target.value }))}
@@ -100,7 +100,7 @@ export function SettingsUserFormPanel({
             />
           </label>
           <label className="form-field">
-            <span>{editingUser ? "Nowe hasło (opcjonalnie)" : "Hasło startowe"}</span>
+            <span>{editingUser ? "Nowe haslo (opcjonalnie)" : "Haslo startowe"}</span>
             <input
               type="password"
               value={formValues.password}
@@ -113,7 +113,7 @@ export function SettingsUserFormPanel({
             <select value={formValues.role} onChange={(event) => onRoleChange(event.target.value)}>
               <option value="admin">Administrator</option>
               <option value="kierownik">Kierownik</option>
-              <option value="księgowość">Księgowość</option>
+              <option value="ksiegowosc">Ksiegowosc</option>
               <option value="read-only">Tylko odczyt</option>
             </select>
           </label>
@@ -145,11 +145,11 @@ export function SettingsUserFormPanel({
               }
             />
             <div>
-              <strong>Akceptacja urlopów</strong>
+              <strong>Akceptacja urlopow</strong>
               <small>
                 {isAdminRole(formValues.role)
                   ? "Administrator akceptuje urlopy zawsze."
-                  : "Włącz, jeśli konto ma zatwierdzać wnioski urlopowe."}
+                  : "Wlacz, jesli konto ma zatwierdzac wnioski urlopowe."}
               </small>
             </div>
           </label>
@@ -157,34 +157,33 @@ export function SettingsUserFormPanel({
 
         <div className="settings-permissions">
           <div className="panel__heading">
-            <h3 className="panel__title">Uprawnienia modułowe</h3>
+            <h3 className="panel__title">Uprawnienia modulowe</h3>
           </div>
           <div className="settings-permissions-grid">
             {settingsPermissionDefinitions.map((definition) => {
-              const locked = isAdminRole(formValues.role) || definition.viewId === "settingsView";
+              const locked = isAdminRole(formValues.role);
               return (
                 <label
-                  key={definition.viewId}
+                  key={definition.id}
                   className={["settings-permission-card", locked ? "settings-permission-card--locked" : ""].join(" ")}
                 >
                   <input
                     type="checkbox"
-                    checked={Boolean(formValues.permissions[definition.viewId])}
+                    checked={Boolean(formValues.permissions[definition.id])}
                     disabled={locked}
                     onChange={(event) =>
                       setFormValues((current) => ({
                         ...current,
                         permissions: {
                           ...current.permissions,
-                          [definition.viewId]:
-                            definition.viewId === "settingsView" ? false : event.target.checked,
+                          [definition.id]: event.target.checked,
                         },
                       }))
                     }
                   />
                   <div>
                     <strong>{definition.label}</strong>
-                    <small>{definition.viewId}</small>
+                    <small>{definition.id}</small>
                   </div>
                 </label>
               );
@@ -208,7 +207,7 @@ export function SettingsUserFormPanel({
                 onClick={onCreateNewUser}
                 disabled={isSubmittingUser || isDeletingUser}
               >
-                {editingUser ? "Nowe konto" : "Wyczyść formularz"}
+                {editingUser ? "Nowe konto" : "Wyczysc formularz"}
               </ActionButton>
               {editingUser ? (
                 <ActionButton
@@ -217,7 +216,7 @@ export function SettingsUserFormPanel({
                   disabled={resetTargetUsername === editingUser.username}
                   onClick={() => void onPasswordReset()}
                 >
-                  {resetTargetUsername === editingUser.username ? "Wysyłanie..." : "Reset hasła użytkownika"}
+                  {resetTargetUsername === editingUser.username ? "Wysylanie..." : "Reset hasla uzytkownika"}
                 </ActionButton>
               ) : null}
               {editingUser ? (
@@ -227,7 +226,7 @@ export function SettingsUserFormPanel({
                   disabled={isDeletingUser || editingUser.id === currentUserId}
                   onClick={() => void onDeleteUser()}
                 >
-                  {isDeletingUser ? "Usuwanie..." : "Usuń konto"}
+                  {isDeletingUser ? "Usuwanie..." : "Usun konto"}
                 </ActionButton>
               ) : null}
             </>

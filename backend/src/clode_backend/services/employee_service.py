@@ -3,10 +3,11 @@ from __future__ import annotations
 from typing import Any
 from uuid import uuid4
 
-from clode_backend.auth.rbac import normalize_role
+from clode_backend.auth.rbac import can_access_view, can_manage_view
 from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
+from clode_backend.repositories.work_card_repository import WorkCardRepository
 from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
 from clode_backend.validation.employees import (
     normalize_employee_status,
@@ -36,19 +37,24 @@ class EmployeeService:
         repository: EmployeeRepository,
         time_entry_repository: TimeEntryRepository,
         store_repository: StoreRepository,
+        work_card_repository: WorkCardRepository | None = None,
     ) -> None:
         self.repository = repository
         self.time_entry_repository = time_entry_repository
         self.store_repository = store_repository
+        self.work_card_repository = work_card_repository
 
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise EmployeeServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", "kierownik"}:
+        if not can_access_view(current_user.get("role"), current_user.get("permissions"), "employeesView"):
             raise EmployeeServiceError("Brak uprawnien do kartoteki pracownikow.", status_code=403)
 
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
-        self.ensure_read_access(current_user)
+        if not current_user:
+            raise EmployeeServiceError("Brak aktywnej sesji.", status_code=401)
+        if not can_manage_view(current_user.get("role"), current_user.get("permissions"), "employeesView"):
+            raise EmployeeServiceError("Brak uprawnien do edycji kartoteki pracownikow.", status_code=403)
 
     def list_employees(self, current_user: dict[str, Any] | None) -> list[dict[str, Any]]:
         self.ensure_read_access(current_user)
@@ -198,8 +204,7 @@ class EmployeeService:
             if bucket["_month_keys_count"] > bucket["months_count"]:
                 bucket["months_count"] = bucket["_month_keys_count"]
 
-        payload = self.store_repository.get("work_cards")
-        cards = payload.get("cards") if isinstance(payload, dict) else None
+        cards = self._list_work_cards()
         if isinstance(cards, list):
             for card in cards:
                 if not isinstance(card, dict):
@@ -361,11 +366,7 @@ class EmployeeService:
         next_name: str,
         allow_name_fallback: bool,
     ) -> None:
-        payload = self.store_repository.get("work_cards")
-        if not isinstance(payload, dict):
-            return
-
-        cards = payload.get("cards")
+        cards = self._list_work_cards()
         if not isinstance(cards, list):
             return
 
@@ -398,12 +399,7 @@ class EmployeeService:
             )
 
         if changed:
-            next_payload = {
-                **payload,
-                "version": int(payload.get("version") or 1) if isinstance(payload.get("version"), int) else 1,
-                "cards": next_cards,
-            }
-            self.store_repository.save("work_cards", next_payload)
+            self._save_work_cards(next_cards)
 
     def _has_time_entry_history(self, employee: dict[str, Any]) -> bool:
         employee_id = _normalize_text(employee.get("id"))
@@ -433,12 +429,7 @@ class EmployeeService:
     def _has_work_card_history(self, employee: dict[str, Any]) -> bool:
         employee_id = _normalize_text(employee.get("id"))
         employee_name = _normalize_text(employee.get("name"))
-        payload = self.store_repository.get("work_cards")
-
-        if not isinstance(payload, dict):
-            return False
-
-        cards = payload.get("cards")
+        cards = self._list_work_cards()
         if not isinstance(cards, list):
             return False
 
@@ -467,6 +458,21 @@ class EmployeeService:
             or _normalize_text(card.get("employee_id")) == employee_id
             for card in matching_cards
         )
+
+    def _list_work_cards(self) -> list[dict[str, Any]]:
+        if self.work_card_repository:
+            return self.work_card_repository.list_cards()
+        payload = self.store_repository.get("work_cards")
+        if not isinstance(payload, dict):
+            return []
+        cards = payload.get("cards")
+        return cards if isinstance(cards, list) else []
+
+    def _save_work_cards(self, cards: list[dict[str, Any]]) -> None:
+        if self.work_card_repository:
+            self.work_card_repository.replace_store({"version": 1, "cards": cards})
+            return
+        self.store_repository.save("work_cards", {"version": 1, "cards": cards})
 
     def _normalize_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
         provided_name = employee_text(payload.get("name"))

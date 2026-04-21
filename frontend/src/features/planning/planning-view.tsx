@@ -9,6 +9,7 @@ import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   formatEmployeeCodeLabel,
   formatEmployeeDisplayName,
@@ -49,11 +50,6 @@ type PlanningScreenState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "success"; data: PlanningBootstrapData };
-
-function hasWriteAccess(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "administrator" || normalized === "kierownik";
-}
 
 function buildDrafts(rows: PlanningEmployeeRow[]): Record<string, PlanningDraftRecord> {
   return Object.fromEntries(
@@ -327,7 +323,7 @@ export function PlanningView({
     text: string;
   } | null>(null);
 
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = canManageView(user, "planningView");
   const bootstrap = state.status === "success" ? state.data : null;
 
   const employeeDirectory = useMemo(

@@ -2,13 +2,26 @@ from __future__ import annotations
 
 from typing import Any
 
+from clode_backend.repositories.planning_repository import PlanningRepository
 from clode_backend.repositories.store_repository import StoreRepository
+from clode_backend.repositories.vacation_repository import VacationRepository
+from clode_backend.repositories.work_card_repository import WorkCardRepository
 from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
 
 
 class StoreService:
-    def __init__(self, repository: StoreRepository) -> None:
+    def __init__(
+        self,
+        repository: StoreRepository,
+        *,
+        vacation_repository: VacationRepository | None = None,
+        planning_repository: PlanningRepository | None = None,
+        work_card_repository: WorkCardRepository | None = None,
+    ) -> None:
         self.repository = repository
+        self.vacation_repository = vacation_repository
+        self.planning_repository = planning_repository
+        self.work_card_repository = work_card_repository
 
     def list_stores(self) -> list[str]:
         return self.repository.list_names()
@@ -22,8 +35,17 @@ class StoreService:
     def delete_store(self, store_name: str, *, connection=None) -> None:
         self.repository.delete(store_name, connection=connection)
 
+    def bootstrap_legacy_domain_stores(self) -> None:
+        self._bootstrap_legacy_store("vacations", reader=self.get_vacation_store, writer=self.save_vacation_store)
+        self._bootstrap_legacy_store("planning", reader=self.get_planning_store, writer=self.save_planning_store)
+        self._bootstrap_legacy_store("work_cards", reader=self.get_work_card_store, writer=self.save_work_card_store)
+
     def get_vacation_store(self, *, connection=None) -> dict[str, Any]:
-        payload = self.repository.get("vacations", connection=connection)
+        payload = (
+            self.vacation_repository.get_store(connection=connection)
+            if self.vacation_repository
+            else self.repository.get("vacations", connection=connection)
+        )
         if not isinstance(payload, dict):
             payload = {"version": 1, "balances": {}, "requests": []}
         payload.setdefault("version", 1)
@@ -38,10 +60,16 @@ class StoreService:
         normalized.setdefault("balances", {})
         normalized.setdefault("requests", [])
         self._validate("vacation_store", normalized)
+        if self.vacation_repository:
+            return self.vacation_repository.replace_store(normalized, connection=connection)
         return self.repository.save("vacations", normalized, connection=connection)
 
     def get_planning_store(self, *, connection=None) -> dict[str, Any]:
-        payload = self.repository.get("planning", connection=connection)
+        payload = (
+            self.planning_repository.get_store(connection=connection)
+            if self.planning_repository
+            else self.repository.get("planning", connection=connection)
+        )
         if not isinstance(payload, dict):
             payload = {"assignments": {}}
         payload.setdefault("assignments", {})
@@ -52,10 +80,16 @@ class StoreService:
         normalized = dict(payload or {})
         normalized.setdefault("assignments", {})
         self._validate("planning_store", normalized)
+        if self.planning_repository:
+            return self.planning_repository.replace_store(normalized, connection=connection)
         return self.repository.save("planning", normalized, connection=connection)
 
     def get_work_card_store(self, *, connection=None) -> dict[str, Any]:
-        payload = self.repository.get("work_cards", connection=connection)
+        payload = (
+            self.work_card_repository.get_store(connection=connection)
+            if self.work_card_repository
+            else self.repository.get("work_cards", connection=connection)
+        )
         if not isinstance(payload, dict):
             payload = {"version": 1, "cards": []}
         payload.setdefault("version", 1)
@@ -68,6 +102,8 @@ class StoreService:
         normalized.setdefault("version", 1)
         normalized.setdefault("cards", [])
         self._validate("work_card_store", normalized)
+        if self.work_card_repository:
+            return self.work_card_repository.replace_store(normalized, connection=connection)
         return self.repository.save("work_cards", normalized, connection=connection)
 
     def get_work_card(
@@ -77,6 +113,13 @@ class StoreService:
         employee_id: str = "",
         employee_name: str = "",
     ) -> dict[str, Any] | None:
+        if self.work_card_repository:
+            return self.work_card_repository.get_card(
+                month_key,
+                employee_id=employee_id,
+                employee_name=employee_name,
+            )
+
         normalized_month_key = str(month_key or "").strip()
         normalized_employee_id = str(employee_id or "").strip()
         normalized_employee_name = str(employee_name or "").strip().lower()
@@ -104,6 +147,9 @@ class StoreService:
 
     def save_work_card(self, payload: Any, *, connection=None) -> dict[str, Any]:
         normalized_card, next_store = self._build_work_card_store(payload, connection=connection)
+        if self.work_card_repository:
+            self.work_card_repository.replace_store(next_store, connection=connection)
+            return self.work_card_repository.get_by_id(str(normalized_card.get("id") or "").strip(), connection=connection) or normalized_card
         self.repository.save("work_cards", next_store, connection=connection)
         return normalized_card
 
@@ -180,3 +226,25 @@ class StoreService:
             validate_shared_contract(contract_name, payload)
         except ContractValidationError as error:
             raise ValueError(str(error)) from error
+
+    def _bootstrap_legacy_store(self, store_name: str, *, reader, writer) -> None:
+        legacy_payload = self.repository.get(store_name)
+        if legacy_payload is None:
+            return
+
+        current_payload = reader()
+        has_runtime_data = False
+        if isinstance(current_payload, dict):
+            if store_name == "vacations":
+                has_runtime_data = bool(current_payload.get("balances")) or bool(current_payload.get("requests"))
+            elif store_name == "planning":
+                has_runtime_data = bool(current_payload.get("assignments"))
+            elif store_name == "work_cards":
+                has_runtime_data = bool(current_payload.get("cards"))
+
+        if has_runtime_data:
+            self.repository.delete(store_name)
+            return
+
+        writer(legacy_payload)
+        self.repository.delete(store_name)

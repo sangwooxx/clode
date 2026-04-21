@@ -1,21 +1,17 @@
-import type { AuthenticatedUser } from "@/lib/api/auth";
 import type { ManagedUserRecord } from "@/lib/api/users";
+import {
+  createDefaultPermissions,
+  isAdminRole,
+  normalizePermissions,
+  permissionDefinitions,
+  type PermissionId,
+  type PermissionMap,
+} from "@/lib/auth/permissions";
 
-export const settingsPermissionDefinitions = [
-  { viewId: "dashboardView", label: "Dashboard" },
-  { viewId: "contractsView", label: "Rejestr kontraktow" },
-  { viewId: "hoursView", label: "Ewidencja czasu pracy" },
-  { viewId: "invoicesView", label: "Rejestr faktur" },
-  { viewId: "employeesView", label: "Kartoteka pracownikow" },
-  { viewId: "planningView", label: "Planowanie zasobow" },
-  { viewId: "workwearView", label: "Odziez robocza" },
-  { viewId: "vacationsView", label: "Urlopy i nieobecnosci" },
-  { viewId: "settingsView", label: "Ustawienia konta" },
-] as const;
+export const settingsPermissionDefinitions = permissionDefinitions;
 
-export type SettingsPermissionId = (typeof settingsPermissionDefinitions)[number]["viewId"];
-
-export type SettingsPermissionMap = Record<SettingsPermissionId, boolean>;
+export type SettingsPermissionId = PermissionId;
+export type SettingsPermissionMap = PermissionMap;
 
 export type SettingsWorkflowValues = {
   vacationApprovalMode: "permission" | "admin";
@@ -52,41 +48,15 @@ export type SettingsAdminBootstrap = {
 
 export type SettingsUsersFilter = "all" | "active" | "inactive";
 
-export function isAdminRole(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "administrator";
-}
-
 export function createDefaultSettingsPermissions(role: string | null | undefined): SettingsPermissionMap {
-  const admin = isAdminRole(role);
-  return settingsPermissionDefinitions.reduce<SettingsPermissionMap>((accumulator, definition) => {
-    accumulator[definition.viewId] = admin ? true : definition.viewId !== "settingsView";
-    return accumulator;
-  }, {} as SettingsPermissionMap);
+  return createDefaultPermissions(role);
 }
 
 export function normalizeSettingsPermissions(
   role: string | null | undefined,
   permissions: Record<string, boolean> | null | undefined
 ): SettingsPermissionMap {
-  const defaults = createDefaultSettingsPermissions(role);
-  const normalized = { ...defaults };
-
-  for (const definition of settingsPermissionDefinitions) {
-    if (definition.viewId in (permissions || {})) {
-      normalized[definition.viewId] = Boolean(permissions?.[definition.viewId]);
-    }
-  }
-
-  if (isAdminRole(role)) {
-    for (const definition of settingsPermissionDefinitions) {
-      normalized[definition.viewId] = true;
-    }
-    return normalized;
-  }
-
-  normalized.settingsView = false;
-  return normalized;
+  return normalizePermissions(role, permissions);
 }
 
 export function createEmptySettingsUserForm(): SettingsUserFormValues {
@@ -126,21 +96,4 @@ export function createDefaultWorkflowValues(values?: Partial<SettingsWorkflowVal
   };
 }
 
-export function createAuditLogEntry(args: {
-  actor: AuthenticatedUser;
-  action: string;
-  subject: string;
-  details?: string;
-  module?: string;
-}): SettingsAuditLogEntry {
-  return {
-    id: `audit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    timestamp: new Date().toISOString(),
-    module: args.module || "Administracja",
-    action: args.action,
-    subject: args.subject,
-    details: args.details || "",
-    user_id: args.actor.id || "unknown-user",
-    user_name: args.actor.displayName || args.actor.username,
-  };
-}
+export { isAdminRole };

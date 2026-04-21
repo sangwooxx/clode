@@ -1,5 +1,5 @@
-import type { AuthenticatedUser } from "@/lib/api/auth";
 import { http } from "@/lib/api/http";
+import type { AuthenticatedUser } from "@/lib/api/auth";
 import {
   createUser,
   deleteUser,
@@ -8,7 +8,6 @@ import {
   type SaveManagedUserPayload,
 } from "@/lib/api/users";
 import {
-  createAuditLogEntry,
   createDefaultWorkflowValues,
   isAdminRole,
   normalizeSettingsPermissions,
@@ -68,22 +67,21 @@ export async function appendSettingsAuditLog(args: {
   subject: string;
   details?: string;
 }) {
-  const nextEntry = createAuditLogEntry({
-    actor: args.actor,
-    action: args.action,
-    subject: args.subject,
-    details: args.details,
-  });
-
-  const response = await http<{
-    entry?: SettingsAuditLogEntry;
-    entries?: SettingsAuditLogEntry[];
-  }>("/settings/audit-log", {
+  const response = await http<{ entry?: SettingsAuditLogEntry }>("/settings/audit-log", {
     method: "POST",
-    body: JSON.stringify({ entry: nextEntry }),
+    body: JSON.stringify({
+      entry: {
+        module: "Administracja",
+        action: args.action,
+        subject: args.subject,
+        details: args.details || "",
+      },
+    }),
   });
 
-  return normalizeAuditLog(response.entries || [response.entry || nextEntry, ...args.currentEntries]);
+  return normalizeAuditLog(
+    response.entry ? [response.entry, ...args.currentEntries] : args.currentEntries
+  );
 }
 
 function buildUserPayload(values: SettingsUserFormValues): SaveManagedUserPayload {

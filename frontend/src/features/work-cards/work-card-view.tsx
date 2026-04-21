@@ -9,6 +9,7 @@ import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   formatEmployeeCodeLabel,
   formatEmployeeDisplayName,
@@ -75,11 +76,6 @@ type WorkCardHistoryPreview = {
   filledDays: number;
 };
 
-function hasWriteAccess(role: string | null | undefined) {
-  const normalized = String(role || "").trim().toLowerCase();
-  return normalized === "admin" || normalized === "kierownik";
-}
-
 function recalculateRow(row: WorkCardDayViewModel) {
   const totalHours = Object.values(row.hoursByContract).reduce(
     (sum, value) => sum + parseDecimalInput(value),
@@ -116,7 +112,7 @@ export function WorkCardView({
   initialError?: string | null;
 }) {
   const { user } = useAuth();
-  const canWrite = hasWriteAccess(user?.role);
+  const canWrite = canManageView(user, "hoursView");
 
   const [contracts, setContracts] = useState(initialBootstrap?.contracts ?? []);
   const [employees, setEmployees] = useState(initialBootstrap?.employees ?? []);

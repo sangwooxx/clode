@@ -46,10 +46,18 @@ function generateVacationRequestId() {
   return `vac-next-${randomPart}`;
 }
 
-function parseFormNumber(value: string) {
+function parseFormNumber(value: string, fieldLabel: string) {
   const normalized = String(value || "").trim().replace(",", ".");
+  if (!normalized) {
+    return 0;
+  }
+
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${fieldLabel} musi byc poprawna liczba.`);
+  }
+
+  return parsed;
 }
 
 async function fetchVacationStore() {
@@ -139,7 +147,7 @@ function resolveEditableEmployee(args: {
     );
 
   if (employee.status === "inactive" && !editingSameInactiveEmployee) {
-    throw new Error("Nie można dodać nowej nieobecności dla nieaktywnego pracownika.");
+    throw new Error("Nie mozna dodac nowej nieobecnosci dla nieaktywnego pracownika.");
   }
 
   return { employee, employees };
@@ -158,7 +166,7 @@ export async function saveVacationBalanceRecord(args: {
   bootstrap: VacationsBootstrapData;
 }) {
   if (args.employee.status === "inactive") {
-    throw new Error("Pula urlopowa nie może być zmieniana dla nieaktywnego pracownika.");
+    throw new Error("Pula urlopowa nie moze byc zmieniana dla nieaktywnego pracownika.");
   }
 
   const store = normalizeVacationStore(args.bootstrap.vacationStore);
@@ -178,9 +186,9 @@ export async function saveVacationBalanceRecord(args: {
     employee_id: args.employee.id,
     employee_key: args.employee.key,
     employee_name: args.employee.name,
-    base_days: parseFormNumber(args.values.base_days),
-    carryover_days: parseFormNumber(args.values.carryover_days),
-    extra_days: parseFormNumber(args.values.extra_days),
+    base_days: parseFormNumber(args.values.base_days, "Limit roczny"),
+    carryover_days: parseFormNumber(args.values.carryover_days, "Urlop zalegly"),
+    extra_days: parseFormNumber(args.values.extra_days, "Dodatkowa pula"),
   };
 
   await saveVacationStoreRemote(store);
@@ -205,14 +213,17 @@ export async function saveVacationRequestRecord(args: {
 
   const startDate = normalizeVacationText(args.values.start_date);
   const endDate = normalizeVacationText(args.values.end_date || args.values.start_date);
-  const explicitDays = Number(String(args.values.days || "").replace(",", "."));
-  const days = Number.isFinite(explicitDays) && explicitDays > 0 ? explicitDays : calculateVacationDays(startDate, endDate);
+  const rawDaysValue = String(args.values.days || "").trim();
+  const explicitDays =
+    rawDaysValue.length > 0 ? parseFormNumber(rawDaysValue, "Liczba dni") : null;
+  const days =
+    explicitDays && explicitDays > 0 ? explicitDays : calculateVacationDays(startDate, endDate);
   const type = normalizeVacationType(args.values.type);
   const requestedBy =
     normalizeVacationText(args.values.requested_by) ||
     normalizeVacationText(existingRequest?.requested_by) ||
     normalizeVacationText(args.currentUserDisplayName) ||
-    "Użytkownik";
+    "Uzytkownik";
   const canApprove = canApproveVacationWorkflow({
     role: args.currentUserRole,
     canApproveVacations: args.currentUserCanApproveVacations,
@@ -223,15 +234,15 @@ export async function saveVacationRequestRecord(args: {
     : normalizeVacationStatus(existingRequest?.status);
 
   if (!startDate) {
-    throw new Error("Podaj datę rozpoczęcia nieobecności.");
+    throw new Error("Podaj date rozpoczecia nieobecnosci.");
   }
 
   if (new Date(endDate).getTime() < new Date(startDate).getTime()) {
-    throw new Error("Data końcowa nie może być wcześniejsza niż data początkowa.");
+    throw new Error("Data koncowa nie moze byc wczesniejsza niz data poczatkowa.");
   }
 
   if (days <= 0) {
-    throw new Error("Liczba dni musi być większa od zera.");
+    throw new Error("Liczba dni musi byc wieksza od zera.");
   }
 
   const conflicts = findVacationConflicts({
@@ -264,13 +275,13 @@ export async function saveVacationRequestRecord(args: {
     });
 
     if (days > stats.total_pool) {
-      throw new Error("Wniosek przekracza łączną pulę urlopową pracownika.");
+      throw new Error("Wniosek przekracza laczna pule urlopowa pracownika.");
     }
   }
 
   if (nextStatus === "approved") {
     if (!canApprove) {
-      throw new Error("To konto nie ma uprawnień do zatwierdzania urlopów.");
+      throw new Error("To konto nie ma uprawnien do zatwierdzania urlopow.");
     }
 
     if (isVacationPoolType(type)) {
@@ -287,7 +298,9 @@ export async function saveVacationRequestRecord(args: {
       });
 
       if (approvedDays + days > stats.total_pool) {
-        throw new Error("Nie można zatwierdzić wniosku, bo przekroczy dostępną pulę urlopową.");
+        throw new Error(
+          "Nie mozna zatwierdzic wniosku, bo przekroczy dostepna pule urlopowa."
+        );
       }
     }
 
@@ -303,7 +316,7 @@ export async function saveVacationRequestRecord(args: {
       const hasAmbiguousConflicts = planningConflicts.some((item) => item.kind === "ambiguous");
       if (hasAmbiguousConflicts) {
         throw new Error(
-          "Planowanie dla pracownika o zduplikowanej nazwie jest niejednoznaczne. Uzupełnij identyfikator pracownika w planowaniu albo usuń konflikt przed zatwierdzeniem."
+          "Planowanie dla pracownika o zduplikowanej nazwie jest niejednoznaczne. Uzupelnij identyfikator pracownika w planowaniu albo usun konflikt przed zatwierdzeniem."
         );
       }
 
@@ -312,7 +325,7 @@ export async function saveVacationRequestRecord(args: {
         .map((item) => `${item.date} (${item.contract_name})`)
         .join(", ");
       throw new Error(
-        `Usuń najpierw przypisania z planowania dla tego pracownika: ${planningLabel}.`
+        `Usun najpierw przypisania z planowania dla tego pracownika: ${planningLabel}.`
       );
     }
   }
@@ -356,13 +369,13 @@ export async function updateVacationRequestStatus(args: {
   });
 
   if (!canApprove) {
-    throw new Error("To konto nie ma uprawnień do zatwierdzania urlopów.");
+    throw new Error("To konto nie ma uprawnien do zatwierdzania urlopow.");
   }
 
   const store = normalizeVacationStore(args.bootstrap.vacationStore);
   const request = findVacationRequestById(store, args.requestId);
   if (!request) {
-    throw new Error("Nie udało się odnaleźć wskazanego wniosku.");
+    throw new Error("Nie udalo sie odnalezc wskazanego wniosku.");
   }
 
   const employees = buildVacationDirectory(args.bootstrap);
@@ -380,9 +393,9 @@ export async function updateVacationRequestStatus(args: {
 
   return saveVacationRequestRecord({
     requestId: request.id,
-      values: {
-        employee_key: employee?.key || "",
-        type: normalizeVacationType(request.type),
+    values: {
+      employee_key: employee?.key || "",
+      type: normalizeVacationType(request.type),
       start_date: request.start_date,
       end_date: request.end_date,
       days: String(request.days),

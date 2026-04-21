@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import uuid4
 
-from clode_backend.auth.rbac import normalize_role
+from clode_backend.auth.rbac import can_access_view, can_manage_view
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_metrics_repository import ALLOWED_COST_CATEGORIES, ContractMetricsRepository
 from clode_backend.repositories.contract_repository import ContractRepository
@@ -33,13 +33,13 @@ class ContractService:
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise ContractServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", normalize_role("ksiegowosc"), "kierownik", "read-only"}:
+        if not can_access_view(current_user.get("role"), current_user.get("permissions"), "contractsView"):
             raise ContractServiceError("Brak uprawnień do podglądu kontraktów.", status_code=403)
 
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise ContractServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) != "admin":
+        if not can_manage_view(current_user.get("role"), current_user.get("permissions"), "contractsView"):
             raise ContractServiceError("Brak uprawnień do zarządzania kontraktami.", status_code=403)
 
     def list_contracts(self, current_user: dict[str, Any] | None, *, include_archived: bool = True) -> list[dict[str, Any]]:
@@ -49,11 +49,14 @@ class ContractService:
     def create_contract(self, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_write_access(current_user)
         normalized = self._normalize_payload(payload)
-        created = self.repository.insert(normalized)
-        self._sync_contract_visibility(
-            created["id"],
-            make_visible=normalize_contract_status(created.get("status")) == "active",
-        )
+        with self.repository.connect() as connection:
+            created = self.repository.insert(normalized, connection=connection)
+            self._sync_contract_visibility(
+                created["id"],
+                make_visible=normalize_contract_status(created.get("status")) == "active",
+                connection=connection,
+            )
+            connection.commit()
         return created
 
     def update_contract(self, contract_id: str, payload: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
@@ -62,13 +65,16 @@ class ContractService:
         if not existing:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
         normalized = self._normalize_payload(payload, existing=existing)
-        updated = self.repository.update(contract_id, normalized)
-        if not updated:
-            raise ContractServiceError("Nie udało się zapisać kontraktu.", status_code=500)
-        self._sync_contract_visibility(
-            updated["id"],
-            make_visible=normalize_contract_status(updated.get("status")) == "active",
-        )
+        with self.repository.connect() as connection:
+            updated = self.repository.update(contract_id, normalized, connection=connection)
+            if not updated:
+                raise ContractServiceError("Nie udało się zapisać kontraktu.", status_code=500)
+            self._sync_contract_visibility(
+                updated["id"],
+                make_visible=normalize_contract_status(updated.get("status")) == "active",
+                connection=connection,
+            )
+            connection.commit()
         return updated
 
     def get_contract(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
@@ -83,10 +89,12 @@ class ContractService:
         contract = self.repository.get_by_id(contract_id)
         if not contract:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
-        archived = self.repository.archive(contract_id, updated_at=utc_now_iso())
-        if not archived:
-            raise ContractServiceError("Nie udało się zarchiwizować kontraktu.", status_code=500)
-        self._sync_contract_visibility(contract_id, make_visible=False)
+        with self.repository.connect() as connection:
+            archived = self.repository.archive(contract_id, updated_at=utc_now_iso(), connection=connection)
+            if not archived:
+                raise ContractServiceError("Nie udało się zarchiwizować kontraktu.", status_code=500)
+            self._sync_contract_visibility(contract_id, make_visible=False, connection=connection)
+            connection.commit()
         return archived
 
     def delete_contract(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
@@ -102,10 +110,12 @@ class ContractService:
                 "Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuń najpierw powiązane dane.",
                 status_code=409,
             )
-        deleted = self.repository.delete(contract_id, deleted_at=utc_now_iso())
-        if not deleted:
-            raise ContractServiceError("Nie udało się usunąć kontraktu.", status_code=500)
-        self._sync_contract_visibility(contract_id, make_visible=False)
+        with self.repository.connect() as connection:
+            deleted = self.repository.delete(contract_id, deleted_at=utc_now_iso(), connection=connection)
+            if not deleted:
+                raise ContractServiceError("Nie udało się usunąć kontraktu.", status_code=500)
+            self._sync_contract_visibility(contract_id, make_visible=False, connection=connection)
+            connection.commit()
         return {
             "id": contract_id,
             "deleted": True,
@@ -117,10 +127,12 @@ class ContractService:
         if not normalized_ids:
             return {"archived_count": 0, "contracts": []}
 
-        archived_count = self.repository.bulk_archive(normalized_ids, updated_at=utc_now_iso())
-        for contract_id in normalized_ids:
-            self._sync_contract_visibility(contract_id, make_visible=False)
-        refreshed = self.repository.list_all(include_archived=True)
+        with self.repository.connect() as connection:
+            archived_count = self.repository.bulk_archive(normalized_ids, updated_at=utc_now_iso(), connection=connection)
+            for contract_id in normalized_ids:
+                self._sync_contract_visibility(contract_id, make_visible=False, connection=connection)
+            refreshed = self.repository.list_all(include_archived=True, connection=connection)
+            connection.commit()
         archived = [contract for contract in refreshed if contract["id"] in set(normalized_ids)]
         return {
             "archived_count": archived_count,
@@ -129,7 +141,6 @@ class ContractService:
 
     def get_contract_usage(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
         self.ensure_read_access(current_user)
-        self._normalize_legacy_time_entries()
         contract = self.repository.get_by_id(contract_id)
         if not contract:
             raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
@@ -163,7 +174,6 @@ class ContractService:
         current_user: dict[str, Any] | None,
     ) -> dict[str, Any]:
         self.ensure_read_access(current_user)
-        self._normalize_legacy_time_entries()
         normalized_range = normalize_time_scope(
             time_range.get("scope"),
             time_range.get("year"),
@@ -194,7 +204,6 @@ class ContractService:
         include_archived: bool = False,
     ) -> dict[str, Any]:
         self.ensure_read_access(current_user)
-        self._normalize_legacy_time_entries()
         normalized_range = normalize_time_scope(
             time_range.get("scope"),
             time_range.get("year"),
@@ -282,7 +291,7 @@ class ContractService:
             raise ContractServiceError(str(error)) from error
         return record
 
-    def _sync_contract_visibility(self, contract_id: str, *, make_visible: bool) -> None:
+    def _sync_contract_visibility(self, contract_id: str, *, make_visible: bool, connection=None) -> None:
         normalized_contract_id = text(contract_id)
         if not normalized_contract_id or not self.time_entry_repository:
             return
@@ -290,11 +299,6 @@ class ContractService:
         self.time_entry_repository.sync_contract_visibility(
             normalized_contract_id,
             visible=make_visible,
+            connection=connection,
         )
-
-    def _normalize_legacy_time_entries(self) -> None:
-        if not self.time_entry_repository:
-            return
-        for month_key in self.time_entry_repository.normalize_legacy_employee_duplicates():
-            self.time_entry_repository.recalculate_month_costs(month_key)
 

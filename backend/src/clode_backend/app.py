@@ -14,10 +14,13 @@ from clode_backend.repositories.session_repository import SessionRepository
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.invoice_repository import InvoiceRepository
+from clode_backend.repositories.planning_repository import PlanningRepository
 from clode_backend.repositories.settings_repository import SettingsRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.repositories.user_repository import UserRepository
+from clode_backend.repositories.vacation_repository import VacationRepository
+from clode_backend.repositories.work_card_repository import WorkCardRepository
 from clode_backend.repositories.workwear_repository import WorkwearRepository
 from clode_backend.services.auth_service import AuthService
 from clode_backend.services.contract_service import ContractService
@@ -37,14 +40,27 @@ def create_runtime_context():
     employee_repository = EmployeeRepository(settings)
     time_entry_repository = TimeEntryRepository(settings)
     user_repository = UserRepository(settings)
-    store_service = StoreService(store_repository)
+    session_repository = SessionRepository(settings)
+    vacation_repository = VacationRepository(settings)
+    planning_repository = PlanningRepository(settings)
+    work_card_repository = WorkCardRepository(settings)
+    store_service = StoreService(
+        store_repository,
+        vacation_repository=vacation_repository,
+        planning_repository=planning_repository,
+        work_card_repository=work_card_repository,
+    )
     settings_service = SettingsService(SettingsRepository(settings), store_repository)
     workwear_service = WorkwearService(WorkwearRepository(settings), store_repository)
-    user_service = UserService(user_repository, store_repository)
+    user_service = UserService(user_repository, store_repository, session_repository)
     user_service.ensure_bootstrap_users()
+    employee_repository.import_legacy_store()
+    store_service.bootstrap_legacy_domain_stores()
+    settings_service.bootstrap_legacy_settings()
+    workwear_service.bootstrap_legacy_store()
     auth_service = AuthService(
         user_repository,
-        SessionRepository(settings),
+        session_repository,
         settings.session_ttl_hours,
         secure_cookies=settings.secure_cookies,
         session_secret=settings.session_secret,
@@ -61,12 +77,14 @@ def create_runtime_context():
         employee_repository,
         time_entry_repository,
         store_repository,
+        work_card_repository,
     )
     time_entry_service = TimeEntryService(
         time_entry_repository,
         contract_repository,
         employee_repository,
     )
+    time_entry_service.repair_legacy_state()
     services = ApiServices(
         store_service=store_service,
         auth_service=auth_service,

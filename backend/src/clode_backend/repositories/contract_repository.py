@@ -7,7 +7,7 @@ from clode_backend.validation.contracts import normalize_contract_status
 
 
 class ContractRepository(RepositoryBase):
-    def list_all(self, *, include_archived: bool = True) -> list[dict[str, Any]]:
+    def list_all(self, *, include_archived: bool = True, connection=None) -> list[dict[str, Any]]:
         query = """
             SELECT id, contract_number, name, investor, signed_date, end_date, contract_value,
                    status, created_at, updated_at, deleted_at
@@ -19,12 +19,27 @@ class ContractRepository(RepositoryBase):
             query += " AND status = ?"
             params = ("active",)
         query += " ORDER BY status ASC, signed_date ASC, LOWER(name) ASC"
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                rows = local_connection.execute(query, params).fetchall()
+        else:
             rows = connection.execute(query, params).fetchall()
         return [self._serialize(row) for row in rows]
 
-    def get_by_id(self, contract_id: str) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def get_by_id(self, contract_id: str, *, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                row = local_connection.execute(
+                    """
+                    SELECT id, contract_number, name, investor, signed_date, end_date, contract_value,
+                           status, created_at, updated_at, deleted_at
+                    FROM contracts
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    """,
+                    (contract_id,),
+                ).fetchone()
+        else:
             row = connection.execute(
                 """
                 SELECT id, contract_number, name, investor, signed_date, end_date, contract_value,
@@ -52,8 +67,31 @@ class ContractRepository(RepositoryBase):
             ).fetchone()
         return self._serialize(row) if row else None
 
-    def insert(self, payload: dict[str, Any]) -> dict[str, Any]:
-        with self.connect() as connection:
+    def insert(self, payload: dict[str, Any], *, connection=None) -> dict[str, Any]:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    INSERT INTO contracts (
+                        id, contract_number, name, investor, signed_date, end_date,
+                        contract_value, status, created_at, updated_at, deleted_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+                    """,
+                    (
+                        payload["id"],
+                        payload.get("contract_number", ""),
+                        payload["name"],
+                        payload.get("investor", ""),
+                        payload.get("signed_date", ""),
+                        payload.get("end_date", ""),
+                        payload.get("contract_value", 0),
+                        normalize_contract_status(payload.get("status")),
+                        payload.get("created_at", ""),
+                        payload.get("updated_at", ""),
+                    ),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 INSERT INTO contracts (
@@ -74,11 +112,39 @@ class ContractRepository(RepositoryBase):
                     payload.get("updated_at", ""),
                 ),
             )
-            connection.commit()
-        return self.get_by_id(payload["id"]) or payload
+        return self.get_by_id(payload["id"], connection=connection) or payload
 
-    def update(self, contract_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def update(self, contract_id: str, payload: dict[str, Any], *, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    UPDATE contracts
+                    SET contract_number = ?,
+                        name = ?,
+                        investor = ?,
+                        signed_date = ?,
+                        end_date = ?,
+                        contract_value = ?,
+                        status = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    """,
+                    (
+                        payload.get("contract_number", ""),
+                        payload["name"],
+                        payload.get("investor", ""),
+                        payload.get("signed_date", ""),
+                        payload.get("end_date", ""),
+                        payload.get("contract_value", 0),
+                        normalize_contract_status(payload.get("status")),
+                        payload.get("updated_at", ""),
+                        contract_id,
+                    ),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 UPDATE contracts
@@ -105,11 +171,23 @@ class ContractRepository(RepositoryBase):
                     contract_id,
                 ),
             )
-            connection.commit()
-        return self.get_by_id(contract_id)
+        return self.get_by_id(contract_id, connection=connection)
 
-    def archive(self, contract_id: str, *, updated_at: str) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def archive(self, contract_id: str, *, updated_at: str, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    UPDATE contracts
+                    SET status = 'archived',
+                        updated_at = ?
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    """,
+                    (updated_at, contract_id),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 UPDATE contracts
@@ -120,16 +198,28 @@ class ContractRepository(RepositoryBase):
                 """,
                 (updated_at, contract_id),
             )
-            connection.commit()
-        return self.get_by_id(contract_id)
+        return self.get_by_id(contract_id, connection=connection)
 
-    def bulk_archive(self, contract_ids: list[str], *, updated_at: str) -> int:
+    def bulk_archive(self, contract_ids: list[str], *, updated_at: str, connection=None) -> int:
         clean_ids = [str(contract_id or "").strip() for contract_id in contract_ids if str(contract_id or "").strip()]
         if not clean_ids:
             return 0
         placeholders = ", ".join("?" for _ in clean_ids)
         params = [updated_at, *clean_ids]
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                cursor = local_connection.execute(
+                    f"""
+                    UPDATE contracts
+                    SET status = 'archived',
+                        updated_at = ?
+                    WHERE deleted_at IS NULL
+                      AND id IN ({placeholders})
+                    """,
+                    params,
+                )
+                local_connection.commit()
+        else:
             cursor = connection.execute(
                 f"""
                 UPDATE contracts
@@ -140,11 +230,23 @@ class ContractRepository(RepositoryBase):
                 """,
                 params,
             )
-            connection.commit()
         return int(cursor.rowcount or 0)
 
-    def delete(self, contract_id: str, *, deleted_at: str) -> bool:
-        with self.connect() as connection:
+    def delete(self, contract_id: str, *, deleted_at: str, connection=None) -> bool:
+        if connection is None:
+            with self.connect() as local_connection:
+                cursor = local_connection.execute(
+                    """
+                    UPDATE contracts
+                    SET deleted_at = ?,
+                        updated_at = ?
+                    WHERE id = ?
+                      AND deleted_at IS NULL
+                    """,
+                    (deleted_at, deleted_at, contract_id),
+                )
+                local_connection.commit()
+        else:
             cursor = connection.execute(
                 """
                 UPDATE contracts
@@ -155,11 +257,37 @@ class ContractRepository(RepositoryBase):
                 """,
                 (deleted_at, deleted_at, contract_id),
             )
-            connection.commit()
         return bool(cursor.rowcount)
 
-    def get_usage_counts(self, contract_id: str) -> dict[str, int]:
-        with self.connect() as connection:
+    def get_usage_counts(self, contract_id: str, *, connection=None) -> dict[str, int]:
+        if connection is None:
+            with self.connect() as local_connection:
+                invoices = local_connection.execute(
+                    """
+                    SELECT COUNT(*) AS total
+                    FROM invoices
+                    WHERE contract_id = ?
+                      AND is_deleted = 0
+                    """,
+                    (contract_id,),
+                ).fetchone()
+                hours_entries = local_connection.execute(
+                    """
+                    SELECT COUNT(*) AS total
+                    FROM time_entries
+                    WHERE contract_id = ?
+                    """,
+                    (contract_id,),
+                ).fetchone()
+                planning = local_connection.execute(
+                    """
+                    SELECT COUNT(*) AS total
+                    FROM planning_assignments
+                    WHERE contract_id = ?
+                    """,
+                    (contract_id,),
+                ).fetchone()
+        else:
             invoices = connection.execute(
                 """
                 SELECT COUNT(*) AS total

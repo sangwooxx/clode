@@ -1,41 +1,23 @@
 from __future__ import annotations
 
-import re
 from datetime import date
 from typing import Any
 
+from clode_backend.validation.common import parse_number, text, validate_iso_date
 
-DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
 INVOICE_TYPES = {"cost", "sales"}
 PAYMENT_STATUSES = {"unpaid", "paid", "overdue"}
 
 
-def text(value: Any) -> str:
-    return str(value or "").strip()
-
-
 def number(value: Any) -> float:
-    try:
-        return float(value or 0)
-    except Exception:
-        return 0.0
-
-
-def validate_iso_date(value: Any, field_name: str, *, required: bool = False) -> str:
-    normalized = text(value)
-    if not normalized:
-        if required:
-            raise ValueError(f"Pole {field_name} jest wymagane.")
-        return ""
-    if not DATE_RE.match(normalized):
-        raise ValueError(f"Pole {field_name} musi mieć format RRRR-MM-DD.")
-    return normalized
+    return parse_number(value)
 
 
 def normalize_invoice_type(value: Any) -> str:
     normalized = text(value).lower()
     if normalized not in INVOICE_TYPES:
-        raise ValueError("Typ faktury musi być ustawiony na cost lub sales.")
+        raise ValueError("Typ faktury musi byc ustawiony na cost lub sales.")
     return normalized
 
 

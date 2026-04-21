@@ -7,6 +7,7 @@ import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
 import {
   formatEmployeeCodeLabel,
   formatEmployeeDisplayName,
@@ -149,6 +150,7 @@ function employeeTableColumns(): Array<DataTableColumn<VacationEmployeeRow>> {
 }
 
 function historyTableColumns(args: {
+  canWrite: boolean;
   onEdit: (requestId: string) => void;
   onDelete: (requestId: string) => void;
 }): Array<DataTableColumn<VacationHistoryRow>> {
@@ -220,6 +222,7 @@ function historyTableColumns(args: {
           <ActionButton
             type="button"
             variant="secondary"
+            disabled={!args.canWrite}
             onClick={(event) => {
               event.stopPropagation();
               args.onEdit(row.request.id);
@@ -230,6 +233,7 @@ function historyTableColumns(args: {
           <ActionButton
             type="button"
             variant="ghost"
+            disabled={!args.canWrite}
             onClick={(event) => {
               event.stopPropagation();
               args.onDelete(row.request.id);
@@ -244,6 +248,7 @@ function historyTableColumns(args: {
 }
 
 function approvalsTableColumns(args: {
+  canWrite: boolean;
   canApprove: boolean;
   onEdit: (requestId: string) => void;
   onDelete: (requestId: string) => void;
@@ -319,6 +324,7 @@ function approvalsTableColumns(args: {
             <ActionButton
               type="button"
               variant="secondary"
+              disabled={!args.canWrite}
               onClick={(event) => {
                 event.stopPropagation();
                 args.onEdit(row.request.id);
@@ -329,6 +335,7 @@ function approvalsTableColumns(args: {
             <ActionButton
               type="button"
               variant="ghost"
+              disabled={!args.canWrite}
               onClick={(event) => {
                 event.stopPropagation();
                 args.onDelete(row.request.id);
@@ -378,6 +385,7 @@ export function VacationsView({
   initialError?: string | null;
 }) {
   const { user } = useAuth();
+  const canWrite = canManageView(user, "vacationsView");
   const [state, setState] = useState<VacationsScreenState>(() => {
     if (initialBootstrap) {
       return { status: "success", data: initialBootstrap };
@@ -622,6 +630,10 @@ export function VacationsView({
   }
 
   function handleCreateNewRequest() {
+    if (!canWrite) {
+      return;
+    }
+
     setEditingRequestId(null);
     setFormError(null);
     setFormStatus(null);
@@ -663,6 +675,10 @@ export function VacationsView({
   async function handleSaveBalance(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state.status !== "success" || !selectedEmployee) return;
+    if (!canWrite) {
+      setFormError("Masz dostep tylko do podgladu urlopow i nieobecnosci.");
+      return;
+    }
 
     setIsSavingBalance(true);
     setFormError(null);
@@ -688,6 +704,10 @@ export function VacationsView({
   async function handleSubmitRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (state.status !== "success") return;
+    if (!canWrite) {
+      setFormError("Masz dostep tylko do podgladu urlopow i nieobecnosci.");
+      return;
+    }
 
     setIsSubmittingRequest(true);
     setFormError(null);
@@ -717,7 +737,7 @@ export function VacationsView({
   }
 
   async function handleDeleteRequest(requestId: string) {
-    if (state.status !== "success") return;
+    if (state.status !== "success" || !canWrite) return;
 
     const confirmed = window.confirm("Czy na pewno chcesz usunąć wskazany wpis?");
     if (!confirmed) return;
@@ -825,9 +845,11 @@ export function VacationsView({
             >
               {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
             </ActionButton>
-            <ActionButton type="button" onClick={handleCreateNewRequest}>
-              Dodaj nieobecnosc
-            </ActionButton>
+            {canWrite ? (
+              <ActionButton type="button" onClick={handleCreateNewRequest}>
+                Dodaj nieobecnosc
+              </ActionButton>
+            ) : null}
           </div>
         }
       />
@@ -869,6 +891,7 @@ export function VacationsView({
           <Panel title={selectedEmployee ? `Historia: ${selectedEmployee.name}` : "Historia pracownika"}>
             <DataTable
               columns={historyTableColumns({
+                canWrite,
                 onEdit: handleEditRequest,
                 onDelete: handleDeleteRequest,
               })}
@@ -882,6 +905,7 @@ export function VacationsView({
           <Panel title="Wnioski i akceptacja">
             <DataTable
               columns={approvalsTableColumns({
+                canWrite,
                 canApprove,
                 onEdit: handleEditRequest,
                 onDelete: handleDeleteRequest,
@@ -898,6 +922,7 @@ export function VacationsView({
 
         <div className="vacations-side-stack">
           <VacationsEmployeePanel
+            canWrite={canWrite}
             selectedEmployee={selectedEmployee}
             selectedStats={selectedStats}
             selectedEmployeeInactive={selectedEmployeeInactive}
@@ -909,6 +934,7 @@ export function VacationsView({
           />
 
           <VacationsRequestPanel
+            canWrite={canWrite}
             editingRequest={editingRequest}
             editingEmployeeStatus={editingEmployee.status}
             editingEmployeeMessage={editingEmployee.message}

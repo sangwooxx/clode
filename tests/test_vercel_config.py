@@ -63,16 +63,18 @@ class VercelConfigTestCase(unittest.TestCase):
             if previous_node_env is not None:
                 os.environ["NODE_ENV"] = previous_node_env
 
-    def test_production_settings_without_session_secret_fall_back_to_stateful_sessions(self) -> None:
-        previous_session_secret = os.environ.pop("CLODE_SESSION_SECRET", None)
+    def test_production_settings_require_database_url(self) -> None:
+        previous_database_url = os.environ.pop("CLODE_DATABASE_URL", None)
+        previous_database_url_legacy = os.environ.pop("DATABASE_URL", None)
+        previous_session_secret = os.environ.get("CLODE_SESSION_SECRET")
         previous_vercel = os.environ.get("VERCEL")
         previous_node_env = os.environ.get("NODE_ENV")
         os.environ["VERCEL"] = "1"
         os.environ["NODE_ENV"] = "production"
+        os.environ["CLODE_SESSION_SECRET"] = "test-secret"
         try:
-            settings = load_settings()
-            self.assertEqual(settings.session_secret, "")
-            self.assertFalse(settings.use_stateless_sessions)
+            with self.assertRaises(RuntimeError):
+                load_settings()
         finally:
             if previous_vercel is None:
                 os.environ.pop("VERCEL", None)
@@ -82,6 +84,39 @@ class VercelConfigTestCase(unittest.TestCase):
                 os.environ.pop("NODE_ENV", None)
             else:
                 os.environ["NODE_ENV"] = previous_node_env
+            if previous_database_url is not None:
+                os.environ["CLODE_DATABASE_URL"] = previous_database_url
+            if previous_database_url_legacy is not None:
+                os.environ["DATABASE_URL"] = previous_database_url_legacy
+            if previous_session_secret is None:
+                os.environ.pop("CLODE_SESSION_SECRET", None)
+            else:
+                os.environ["CLODE_SESSION_SECRET"] = previous_session_secret
+
+    def test_production_settings_require_session_secret(self) -> None:
+        previous_database_url = os.environ.get("CLODE_DATABASE_URL")
+        previous_session_secret = os.environ.pop("CLODE_SESSION_SECRET", None)
+        previous_vercel = os.environ.get("VERCEL")
+        previous_node_env = os.environ.get("NODE_ENV")
+        os.environ["VERCEL"] = "1"
+        os.environ["NODE_ENV"] = "production"
+        os.environ["CLODE_DATABASE_URL"] = "postgresql://user:pass@example.com:5432/clode"
+        try:
+            with self.assertRaises(RuntimeError):
+                load_settings()
+        finally:
+            if previous_vercel is None:
+                os.environ.pop("VERCEL", None)
+            else:
+                os.environ["VERCEL"] = previous_vercel
+            if previous_node_env is None:
+                os.environ.pop("NODE_ENV", None)
+            else:
+                os.environ["NODE_ENV"] = previous_node_env
+            if previous_database_url is None:
+                os.environ.pop("CLODE_DATABASE_URL", None)
+            else:
+                os.environ["CLODE_DATABASE_URL"] = previous_database_url
             if previous_session_secret is not None:
                 os.environ["CLODE_SESSION_SECRET"] = previous_session_secret
 

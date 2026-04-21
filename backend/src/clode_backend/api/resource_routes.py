@@ -16,14 +16,18 @@ def handle_resource_route(context: RequestContext):
     invoice_service = context.services.invoice_service
     time_entry_service = context.services.time_entry_service
 
-    def require_admin():
-        auth_service.ensure_admin(current_user)
+    def require_settings_view():
+        auth_service.ensure_view_access(current_user, "settingsView")
+
+    def require_settings_manage():
+        auth_service.ensure_manage_access(current_user, "settingsView")
 
     if path == "/api/v1/users":
-        require_admin()
         if method == "GET":
+            require_settings_view()
             return json_response(200, {"ok": True, "users": user_service.list_users()})
         if method == "POST":
+            require_settings_manage()
             body = parse_json_body(context.handler)
             created = user_service.create_or_update_user(body)
             return json_response(201, {"ok": True, "user": created})
@@ -54,16 +58,17 @@ def handle_resource_route(context: RequestContext):
             return json_response(204, {})
 
     if path.startswith("/api/v1/users/"):
-        require_admin()
         user_id = path.split("/api/v1/users/", 1)[1]
         if not user_id:
             return json_response(400, {"ok": False, "error": "Missing user id."})
         if method == "PUT":
+            require_settings_manage()
             body = parse_json_body(context.handler)
             body["id"] = user_id
             updated = user_service.create_or_update_user(body)
             return json_response(200, {"ok": True, "user": updated})
         if method == "DELETE":
+            require_settings_manage()
             user_service.delete_user(
                 user_id,
                 actor_user_id=current_user["id"] if current_user else None,

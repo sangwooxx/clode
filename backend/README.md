@@ -1,16 +1,14 @@
 # Clode backend
 
-To jest etap przejsciowy miedzy frontendem opartym o `localStorage` a architektura:
+Backend odpowiada za model `frontend -> API -> SQL` z warstwa:
 
-`frontend -> API -> SQL`
+- `api routes`
+- `services`
+- `repositories`
 
-Zalozenia:
-- serwer jest uruchamialny bez zewnetrznych zaleznosci,
-- warstwa API obsluguje przejsciowe `store_documents`,
-- baza lokalna dziala na SQLite,
-- docelowy model danych jest przygotowany pod relacyjna baze SQL i dalsze przejscie na PostgreSQL.
+Aktualny stan nie opiera juz krytycznych domen runtime na generycznym `store_documents` jako source of truth. `employees`, `settings`, `workwear`, `planning`, `vacations` i `work_cards` sa bootstrapowane z legacy store tylko jawnie przy starcie albo migracji, a biezacy runtime czyta i zapisuje do docelowych tabel / repozytoriow domenowych.
 
-## Uruchomienie
+## Uruchomienie lokalne
 
 Z katalogu repozytorium:
 
@@ -18,22 +16,52 @@ Z katalogu repozytorium:
 python .\backend\run_server.py
 ```
 
-albo przez skrypt:
+albo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 ```
 
-Serwer domyslnie startuje na:
+Domyslne adresy:
 
 - `http://127.0.0.1:8787`
-- health: `http://127.0.0.1:8787/api/health`
+- `http://127.0.0.1:8787/api/health`
 
-## Co jest gotowe
+## Konfiguracja
 
-- konfiguracja srodowiska,
-- bootstrap bazy,
-- migracje SQL,
-- przejsciowe endpointy `/api/v1/stores/*`,
-- modele domenowe,
-- import snapshotu wyeksportowanego z `localStorage`.
+Lokalny development:
+
+- `CLODE_DATABASE_URL` moze wskazywac na lokalne SQLite
+- brak `CLODE_SESSION_SECRET` przechodzi na jawny dev-secret
+
+Production / preview runtime:
+
+- `DATABASE_URL` albo `CLODE_DATABASE_URL` jest wymagane
+- `CLODE_SESSION_SECRET` jest wymagane
+- brak tych zmiennych konczy start bledem zamiast fallbacku do slabszego trybu
+
+Przykladowe zmienne sa w [backend/.env.example](/C:/Users/kubaz/Documents/Codex/clode/backend/.env.example).
+
+## Legacy bootstrap
+
+Legacy snapshoty moga byc dalej wykorzystane do pierwszego bootstrapu demo lub naprawy danych:
+
+- `backend/seed/clode-demo.db` - opcjonalny seed demo dla swiezego runtime
+- `store_documents` - tylko jako zrodlo importu / migracji, nie jako glowny runtime persistence dla krytycznych domen
+
+## Testy
+
+Backendowe quality gates:
+
+```powershell
+python -m pytest -q -rs
+```
+
+Najwazniejsze pokryte obszary:
+
+- auth / RBAC / permissions
+- session lifecycle i uniewaznianie po zmianie hasla
+- fail-fast config dla production
+- brak write side effects w read pathach
+- atomowosc lifecycle kontraktow
+- walidacja krytycznych payloadow

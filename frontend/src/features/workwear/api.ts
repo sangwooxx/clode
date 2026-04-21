@@ -43,8 +43,16 @@ function generateWorkwearIssueId() {
 
 function parseWorkwearQuantity(value: string) {
   const normalized = String(value || "").trim().replace(",", ".");
+  if (!normalized) {
+    return 0;
+  }
+
   const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : 0;
+  if (!Number.isFinite(parsed)) {
+    throw new Error("Ilosc musi byc poprawna liczba.");
+  }
+
+  return parsed;
 }
 
 async function fetchWorkwearCatalogStore() {

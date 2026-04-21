@@ -203,7 +203,8 @@ class TimeEntriesBackendFirstTestCase(unittest.TestCase):
         self.assertEqual(len(by_user_name["entries"]), 1)
         self.assertEqual(by_user_name["entries"][0]["contract_id"], "")
 
-    def test_legacy_month_visibility_is_materialized_only_to_ids(self) -> None:
+    def test_legacy_month_visibility_can_be_repaired_explicitly(self) -> None:
+        self.service.repair_legacy_state()
         listing = self.service.list_time_entries({"month": "2026-03"}, self.current_user)
         month = next(item for item in listing["months"] if item["month_key"] == "2026-03")
         self.assertEqual(month["visible_investments"], ["c-active", "c-archived"])

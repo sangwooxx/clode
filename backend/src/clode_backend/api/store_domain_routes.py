@@ -6,6 +6,11 @@ from clode_backend.api.http import json_response, parse_json_body
 
 BLOCKED_LEGACY_STORE_ROUTES = {
     "audit_logs",
+    "contracts",
+    "contracts_deleted",
+    "employees",
+    "hours",
+    "invoices",
     "planning",
     "settings",
     "vacations",
@@ -52,10 +57,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/settings/audit-log":
-        auth_service.ensure_store_access(current_user, "audit_logs")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "audit_logs")
             return json_response(200, {"ok": True, "entries": settings_service.list_audit_logs()})
         if method == "POST":
+            auth_service.ensure_store_write_access(current_user, "audit_logs")
             body = parse_json_body(context.handler)
             return json_response(
                 201,
@@ -69,10 +75,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/vacations/state":
-        auth_service.ensure_store_access(current_user, "vacations")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "vacations")
             return json_response(200, {"ok": True, "vacation_store": store_service.get_vacation_store()})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "vacations")
             body = parse_json_body(context.handler)
             return json_response(
                 200,
@@ -80,10 +87,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/planning/state":
-        auth_service.ensure_store_access(current_user, "planning")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "planning")
             return json_response(200, {"ok": True, "planning_store": store_service.get_planning_store()})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "planning")
             body = parse_json_body(context.handler)
             return json_response(
                 200,
@@ -91,10 +99,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/work-cards/state":
-        auth_service.ensure_store_access(current_user, "work_cards")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "work_cards")
             return json_response(200, {"ok": True, "store": store_service.get_work_card_store()})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "work_cards")
             body = parse_json_body(context.handler)
             return json_response(
                 200,
@@ -102,15 +111,15 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/work-cards/history" and method == "GET":
-        auth_service.ensure_store_access(current_user, "work_cards")
+        auth_service.ensure_store_read_access(current_user, "work_cards")
         return json_response(
             200,
             {"ok": True, "cards": store_service.list_work_card_history_summaries()},
         )
 
     if path == "/api/v1/work-cards/card":
-        auth_service.ensure_store_access(current_user, "work_cards")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "work_cards")
             month_key = (query.get("month") or [""])[0]
             employee_id = (query.get("employee_id") or [""])[0]
             employee_name = (query.get("employee_name") or [""])[0]
@@ -121,6 +130,7 @@ def handle_store_domain_route(context: RequestContext):
             )
             return json_response(200, {"ok": True, "card": card})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "work_cards")
             body = parse_json_body(context.handler)
             with store_service.repository.connect() as connection:
                 saved_card = store_service.save_work_card(body.get("card"), connection=connection)
@@ -135,10 +145,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/workwear/catalog":
-        auth_service.ensure_store_access(current_user, "workwear_catalog")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "workwear_catalog")
             return json_response(200, {"ok": True, "catalog": workwear_service.get_catalog()})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "workwear_catalog")
             body = parse_json_body(context.handler)
             return json_response(
                 200,
@@ -146,10 +157,11 @@ def handle_store_domain_route(context: RequestContext):
             )
 
     if path == "/api/v1/workwear/issues":
-        auth_service.ensure_store_access(current_user, "workwear_issues")
         if method == "GET":
+            auth_service.ensure_store_read_access(current_user, "workwear_issues")
             return json_response(200, {"ok": True, "issues": workwear_service.get_issues()})
         if method == "PUT":
+            auth_service.ensure_store_write_access(current_user, "workwear_issues")
             body = parse_json_body(context.handler)
             return json_response(
                 200,

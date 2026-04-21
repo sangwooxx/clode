@@ -9,26 +9,26 @@ async function proxyRequest(
   context: { params: Promise<{ path: string[] }> }
 ) {
   const { path } = await context.params;
-  const backendOrigin = resolveBackendOrigin();
-  const search = request.nextUrl.search ?? "";
-  const upstreamUrl = `${backendOrigin}/api/v1/${path.join("/")}${search}`;
-  const headers = new Headers();
-
-  const contentType = request.headers.get("content-type");
-  const accept = request.headers.get("accept");
-  const cookie = request.headers.get("cookie");
-  const secureCookies = request.nextUrl.protocol === "https:";
-
-  if (contentType) headers.set("content-type", contentType);
-  if (accept) headers.set("accept", accept);
-  if (cookie) headers.set("cookie", cookie);
-
-  const body =
-    request.method === "GET" || request.method === "HEAD"
-      ? undefined
-      : await request.text();
-
   try {
+    const backendOrigin = resolveBackendOrigin({ requestOrigin: request.nextUrl.origin });
+    const search = request.nextUrl.search ?? "";
+    const upstreamUrl = `${backendOrigin}/api/v1/${path.join("/")}${search}`;
+    const headers = new Headers();
+
+    const contentType = request.headers.get("content-type");
+    const accept = request.headers.get("accept");
+    const cookie = request.headers.get("cookie");
+    const secureCookies = request.nextUrl.protocol === "https:";
+
+    if (contentType) headers.set("content-type", contentType);
+    if (accept) headers.set("accept", accept);
+    if (cookie) headers.set("cookie", cookie);
+
+    const body =
+      request.method === "GET" || request.method === "HEAD"
+        ? undefined
+        : await request.text();
+
     const upstream = await fetch(upstreamUrl, {
       method: request.method,
       headers,

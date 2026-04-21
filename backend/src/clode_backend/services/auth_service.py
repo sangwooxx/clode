@@ -7,9 +7,9 @@ from clode_backend.auth.passwords import verify_password
 from clode_backend.auth.rbac import (
     can_access_store,
     can_access_view,
+    can_manage_view,
     can_read_store,
     can_write_store,
-    effective_permissions,
     normalize_role,
 )
 from clode_backend.auth.sessions import (
@@ -156,6 +156,12 @@ class AuthService:
             raise AuthServiceError("Brak aktywnej sesji.", status_code=401)
         if not can_access_view(current_user.get("role"), current_user.get("permissions"), view_id):
             raise AuthServiceError("Brak uprawnien do tego modulu.", status_code=403)
+
+    def ensure_manage_access(self, current_user: dict[str, Any] | None, view_id: str) -> None:
+        if not current_user:
+            raise AuthServiceError("Brak aktywnej sesji.", status_code=401)
+        if not can_manage_view(current_user.get("role"), current_user.get("permissions"), view_id):
+            raise AuthServiceError("Brak uprawnien do zarzadzania tym modulem.", status_code=403)
 
     def ensure_store_access(self, current_user: dict[str, Any] | None, store_name: str) -> None:
         if not current_user:

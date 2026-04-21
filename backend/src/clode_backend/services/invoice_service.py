@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import uuid4
 
-from clode_backend.auth.rbac import normalize_role
+from clode_backend.auth.rbac import can_access_view, can_manage_view
 from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.invoice_repository import InvoiceRepository
@@ -32,13 +32,13 @@ class InvoiceService:
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise InvoiceServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", normalize_role("ksiegowosc"), "kierownik", "read-only"}:
+        if not can_access_view(current_user.get("role"), current_user.get("permissions"), "invoicesView"):
             raise InvoiceServiceError("Brak uprawnień do podglądu faktur.", status_code=403)
 
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise InvoiceServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", normalize_role("ksiegowosc")}:
+        if not can_manage_view(current_user.get("role"), current_user.get("permissions"), "invoicesView"):
             raise InvoiceServiceError("Brak uprawnień do edycji faktur.", status_code=403)
 
     def list_invoices(self, filters: dict[str, Any], current_user: dict[str, Any] | None) -> dict[str, Any]:
