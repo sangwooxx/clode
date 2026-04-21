@@ -50,7 +50,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "workflow": settings_service.get_workflow()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "settings")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 200,
                 {"ok": True, "workflow": settings_service.save_workflow(body, current_user=current_user)},
@@ -62,7 +62,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "entries": settings_service.list_audit_logs()})
         if method == "POST":
             auth_service.ensure_store_write_access(current_user, "audit_logs")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 201,
                 {
@@ -80,7 +80,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "vacation_store": store_service.get_vacation_store()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "vacations")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 200,
                 {"ok": True, "vacation_store": store_service.save_vacation_store(body.get("vacation_store"))},
@@ -92,7 +92,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "planning_store": store_service.get_planning_store()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "planning")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 200,
                 {"ok": True, "planning_store": store_service.save_planning_store(body.get("planning_store"))},
@@ -103,11 +103,12 @@ def handle_store_domain_route(context: RequestContext):
             auth_service.ensure_store_read_access(current_user, "work_cards")
             return json_response(200, {"ok": True, "store": store_service.get_work_card_store()})
         if method == "PUT":
-            auth_service.ensure_store_write_access(current_user, "work_cards")
-            body = parse_json_body(context.handler)
             return json_response(
-                200,
-                {"ok": True, "store": store_service.save_work_card_store(body.get("store"))},
+                410,
+                {
+                    "ok": False,
+                    "error": "Bulk work-card store replacement is no longer supported. Use /api/v1/work-cards/card.",
+                },
             )
 
     if path == "/api/v1/work-cards/history" and method == "GET":
@@ -131,7 +132,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "card": card})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "work_cards")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             with store_service.repository.connect() as connection:
                 saved_card = store_service.save_work_card(body.get("card"), connection=connection)
                 time_entry_service.sync_work_card_entries(saved_card, current_user, connection=connection)
@@ -150,7 +151,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "catalog": workwear_service.get_catalog()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "workwear_catalog")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 200,
                 {"ok": True, "catalog": workwear_service.save_catalog(body.get("catalog"))},
@@ -162,7 +163,7 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "issues": workwear_service.get_issues()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "workwear_issues")
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             return json_response(
                 200,
                 {"ok": True, "issues": workwear_service.save_issues(body.get("issues"))},
@@ -187,7 +188,7 @@ def handle_store_domain_route(context: RequestContext):
 
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, store_name)
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             payload = body.get("payload")
             saved = store_service.save_store(store_name, payload)
             return json_response(200, {"ok": True, "store": store_name, "payload": saved})

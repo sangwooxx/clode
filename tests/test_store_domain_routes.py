@@ -24,11 +24,14 @@ from clode_backend.repositories.contract_metrics_repository import ContractMetri
 from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
 from clode_backend.repositories.employee_repository import EmployeeRepository  # noqa: E402
 from clode_backend.repositories.invoice_repository import InvoiceRepository  # noqa: E402
+from clode_backend.repositories.planning_repository import PlanningRepository  # noqa: E402
 from clode_backend.repositories.settings_repository import SettingsRepository  # noqa: E402
 from clode_backend.repositories.session_repository import SessionRepository  # noqa: E402
 from clode_backend.repositories.store_repository import StoreRepository  # noqa: E402
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository  # noqa: E402
 from clode_backend.repositories.user_repository import UserRepository  # noqa: E402
+from clode_backend.repositories.vacation_repository import VacationRepository  # noqa: E402
+from clode_backend.repositories.work_card_repository import WorkCardRepository  # noqa: E402
 from clode_backend.repositories.workwear_repository import WorkwearRepository  # noqa: E402
 from clode_backend.services.auth_service import AuthService  # noqa: E402
 from clode_backend.services.contract_service import ContractService  # noqa: E402
@@ -70,9 +73,17 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         session_repository = SessionRepository(self.settings)
         contract_repository = ContractRepository(self.settings)
         time_entry_repository = TimeEntryRepository(self.settings)
+        vacation_repository = VacationRepository(self.settings)
+        planning_repository = PlanningRepository(self.settings)
+        work_card_repository = WorkCardRepository(self.settings)
 
         self.store_repository = store_repository
-        self.store_service = StoreService(store_repository)
+        self.store_service = StoreService(
+            store_repository,
+            vacation_repository=vacation_repository,
+            planning_repository=planning_repository,
+            work_card_repository=work_card_repository,
+        )
         self.user_service = UserService(user_repository, store_repository)
         self.auth_service = AuthService(
             user_repository,
@@ -90,6 +101,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             EmployeeRepository(self.settings),
             time_entry_repository,
             store_repository,
+            work_card_repository,
         )
         self.time_entry_service = TimeEntryService(
             time_entry_repository,
@@ -176,7 +188,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
                 "users": legacy_users,
             },
         )
-        self.settings_service.bootstrap_legacy_settings()
+        self.settings_service.bootstrap_legacy_settings(purge_legacy=True)
 
         status, payload, _ = self._route(method="GET", path="/api/v1/settings/workflow")
 
@@ -189,7 +201,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         )
         self.assertEqual(self.store_service.get_store("settings"), {"users": legacy_users})
 
-    def test_work_card_state_route_uses_domain_contract(self) -> None:
+    def test_work_card_state_put_is_blocked_in_favor_of_granular_card_routes(self) -> None:
         save_status, save_payload, _ = self._route(
             method="PUT",
             path="/api/v1/work-cards/state",
@@ -199,8 +211,37 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
                 b'"rows":[{"date":"2026-04-20","note":"","entries":[{"id":"entry-1","contract_id":"c-1","contract_name":"Kontrakt 1","hours":8}]}]}]}}'
             ),
         )
-        self.assertEqual(save_status, 200)
-        self.assertEqual(save_payload["store"]["cards"][0]["id"], "card-1")
+        self.assertEqual(save_status, 410)
+        self.assertIn("Bulk work-card store replacement", save_payload["error"])
+
+    def test_work_card_state_route_uses_domain_contract(self) -> None:
+        with connect(self.settings) as connection:
+            self.store_service.save_work_card(
+                {
+                    "id": "card-1",
+                    "employee_id": "emp-1",
+                    "employee_name": "Jan Nowak",
+                    "month_key": "2026-04",
+                    "month_label": "kwiecien 2026",
+                    "updated_at": "2026-04-20T10:00:00Z",
+                    "rows": [
+                        {
+                            "date": "2026-04-20",
+                            "note": "",
+                            "entries": [
+                                {
+                                    "id": "entry-1",
+                                    "contract_id": "c-1",
+                                    "contract_name": "Kontrakt 1",
+                                    "hours": 8,
+                                }
+                            ],
+                        }
+                    ],
+                },
+                connection=connection,
+            )
+            connection.commit()
 
         read_status, read_payload, _ = self._route(method="GET", path="/api/v1/work-cards/state")
         self.assertEqual(read_status, 200)
@@ -251,17 +292,45 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             )
             connection.commit()
 
-        self._route(
-            method="PUT",
-            path="/api/v1/work-cards/state",
-            body=(
-                b'{"store":{"version":1,"cards":[{"id":"card-1","employee_id":"emp-1","employee_name":"Jan Nowak",'
-                b'"month_key":"2026-04","month_label":"kwiecien 2026","updated_at":"2026-04-20T10:00:00Z",'
-                b'"rows":[{"date":"2026-04-20","note":"","entries":[{"id":"entry-1","contract_id":"c-1","contract_name":"Kontrakt 1","hours":8}]}]},'
-                b'{"id":"card-2","employee_id":"emp-2","employee_name":"Adam Lis","month_key":"2026-03",'
-                b'"month_label":"marzec 2026","updated_at":"2026-03-18T10:00:00Z","rows":[]}]}}'
-            ),
-        )
+        with connect(self.settings) as connection:
+            self.store_service.save_work_card(
+                {
+                    "id": "card-1",
+                    "employee_id": "emp-1",
+                    "employee_name": "Jan Nowak",
+                    "month_key": "2026-04",
+                    "month_label": "kwiecien 2026",
+                    "updated_at": "2026-04-20T10:00:00Z",
+                    "rows": [
+                        {
+                            "date": "2026-04-20",
+                            "note": "",
+                            "entries": [
+                                {
+                                    "id": "entry-1",
+                                    "contract_id": "c-1",
+                                    "contract_name": "Kontrakt 1",
+                                    "hours": 8,
+                                }
+                            ],
+                        }
+                    ],
+                },
+                connection=connection,
+            )
+            self.store_service.save_work_card(
+                {
+                    "id": "card-2",
+                    "employee_id": "emp-2",
+                    "employee_name": "Adam Lis",
+                    "month_key": "2026-03",
+                    "month_label": "marzec 2026",
+                    "updated_at": "2026-03-18T10:00:00Z",
+                    "rows": [],
+                },
+                connection=connection,
+            )
+            connection.commit()
 
         history_status, history_payload, _ = self._route(
             method="GET",
@@ -326,7 +395,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             "user_name": "Admin ERP",
         }
         self.store_service.save_store("audit_logs", [legacy_entry])
-        self.settings_service.bootstrap_legacy_settings()
+        self.settings_service.bootstrap_legacy_settings(purge_legacy=True)
 
         status, payload, _ = self._route(method="GET", path="/api/v1/settings/audit-log")
         self.assertEqual(status, 200)
@@ -414,7 +483,7 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
                 }
             ],
         )
-        self.workwear_service.bootstrap_legacy_store()
+        self.workwear_service.bootstrap_legacy_store(purge_legacy=True)
 
         catalog_status, catalog_payload, _ = self._route(
             method="GET",

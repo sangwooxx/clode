@@ -89,7 +89,8 @@ class SettingsService:
 
         self.legacy_store_repository.delete("settings")
 
-    def bootstrap_legacy_settings(self) -> None:
+    def bootstrap_legacy_settings(self, *, purge_legacy: bool = False) -> dict[str, int]:
+        workflow_imported = 0
         if not self.repository.get_workflow():
             legacy_store = self.legacy_store_repository.get("settings")
             workflow_source = legacy_store if isinstance(legacy_store, dict) else None
@@ -102,19 +103,32 @@ class SettingsService:
                 normalized_workflow = self._normalize_workflow(workflow_payload)
                 self._validate_workflow(normalized_workflow)
                 self.repository.save_workflow(normalized_workflow)
-                self._drop_legacy_workflow()
+                workflow_imported = 1
+                if purge_legacy:
+                    self._drop_legacy_workflow()
 
         if self.repository.list_audit_logs(limit=1):
-            return
+            return {
+                "workflow_imported": workflow_imported,
+                "audit_logs_imported": 0,
+            }
 
         legacy_payload = self.legacy_store_repository.get("audit_logs")
         legacy_entries = legacy_payload if isinstance(legacy_payload, list) else []
         normalized_entries = self._normalize_audit_entries(legacy_entries)
         if not normalized_entries:
-            return
+            return {
+                "workflow_imported": workflow_imported,
+                "audit_logs_imported": 0,
+            }
         self.repository.import_audit_logs(normalized_entries)
         self.repository.prune_audit_logs(limit=self.AUDIT_LOG_LIMIT)
-        self.legacy_store_repository.delete("audit_logs")
+        if purge_legacy:
+            self.legacy_store_repository.delete("audit_logs")
+        return {
+            "workflow_imported": workflow_imported,
+            "audit_logs_imported": len(normalized_entries),
+        }
 
     @staticmethod
     def _normalize_workflow(payload: Any) -> dict[str, Any]:

@@ -83,13 +83,16 @@ def load_settings() -> Settings:
     if is_production and not configured_session_secret:
         raise RuntimeError("Production runtime requires CLODE_SESSION_SECRET.")
 
+    if is_production and configured_demo_seed_import:
+        raise RuntimeError("Production runtime cannot enable demo seed import.")
+
     if configured_database_url:
         database_url = configured_database_url
     else:
         database_url = f"sqlite:///{default_db.as_posix()}"
         local_seed_bootstrap = default_seed_db.exists() and not default_db.exists()
 
-    allow_demo_seed_import = configured_demo_seed_import or local_seed_bootstrap
+    allow_demo_seed_import = (configured_demo_seed_import or local_seed_bootstrap) and not is_production
 
     database_seed_path = None
     if configured_seed_path:

@@ -220,13 +220,40 @@ export function buildVacationEmployeeOptions(
         status: employee.status === "inactive" ? "inactive" : "active",
       } satisfies VacationEmployeeOption;
     })
-    .sort((left, right) =>
-      `${left.label} ${left.employee.id || ""}`.localeCompare(
-        `${right.label} ${right.employee.id || ""}`,
-        "pl",
-        { sensitivity: "base", numeric: true }
-      )
-    );
+    .sort(compareVacationEmployeeOptions);
+}
+
+function compareVacationEmployeeOptions(
+  left: VacationEmployeeOption,
+  right: VacationEmployeeOption
+) {
+  return `${left.label} ${left.employee.id || ""}`.localeCompare(
+    `${right.label} ${right.employee.id || ""}`,
+    "pl",
+    { sensitivity: "base", numeric: true }
+  );
+}
+
+export function buildSelectableVacationEmployeeOptions(args: {
+  activeEmployees: EmployeeDirectoryRecord[];
+  editingEmployee: EmployeeDirectoryRecord | null;
+}): VacationEmployeeOption[] {
+  const options = buildVacationEmployeeOptions(args.activeEmployees);
+
+  if (
+    args.editingEmployee &&
+    !options.some((option) => option.key === args.editingEmployee?.key)
+  ) {
+    options.push({
+      key: args.editingEmployee.key,
+      label: args.editingEmployee.name,
+      description: "Historyczny wpis pracownika nieaktywnego",
+      employee: args.editingEmployee,
+      status: "inactive",
+    });
+  }
+
+  return options.sort(compareVacationEmployeeOptions);
 }
 
 function findEmployeesByNormalizedName(

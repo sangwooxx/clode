@@ -1,5 +1,4 @@
 const DEFAULT_LOCAL_BACKEND_ORIGIN = "http://127.0.0.1:8787";
-const DEFAULT_PRODUCTION_BACKEND_ORIGIN = "https://clode-iota.vercel.app";
 
 function normalizeOrigin(value: string | null | undefined) {
   const trimmed = String(value || "").trim().replace(/\/+$/, "");
@@ -33,10 +32,6 @@ export function resolveBackendOrigin() {
 
   if (process.env.NODE_ENV === "development") {
     return DEFAULT_LOCAL_BACKEND_ORIGIN;
-  }
-
-  if (process.env.VERCEL_ENV === "production") {
-    return DEFAULT_PRODUCTION_BACKEND_ORIGIN;
   }
 
   throw new Error(

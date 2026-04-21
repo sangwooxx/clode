@@ -36,7 +36,7 @@ from clode_backend.services.employee_service import EmployeeService  # noqa: E40
 from clode_backend.services.invoice_service import InvoiceService  # noqa: E402
 from clode_backend.services.settings_service import SettingsService  # noqa: E402
 from clode_backend.services.store_service import StoreService  # noqa: E402
-from clode_backend.services.auth_service import AuthServiceError  # noqa: E402
+from clode_backend.services.auth_service import AuthServiceError, LoginRateLimiter  # noqa: E402
 from clode_backend.services.time_entry_service import TimeEntryService  # noqa: E402
 from clode_backend.services.user_service import UserService  # noqa: E402
 from clode_backend.services.workwear_service import WorkwearService  # noqa: E402
@@ -58,6 +58,17 @@ class _FakeHandler:
         self.rfile = io.BytesIO(body)
 
 
+class _MutableClock:
+    def __init__(self) -> None:
+        self.current = 0.0
+
+    def now(self) -> float:
+        return self.current
+
+    def advance(self, seconds: float) -> None:
+        self.current += seconds
+
+
 class AuthSessionHygieneTestCase(unittest.TestCase):
     def setUp(self) -> None:
         self.previous_database_url = os.environ.get("CLODE_DATABASE_URL")
@@ -75,11 +86,13 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
         self.store_repository = store_repository
         self.store_service = StoreService(store_repository)
         self.user_service = UserService(user_repository, store_repository)
+        self.login_clock = _MutableClock()
         self.auth_service = AuthService(
             user_repository,
             session_repository,
             self.settings.session_ttl_hours,
             secure_cookies=self.settings.secure_cookies,
+            login_rate_limit=LoginRateLimiter(clock=self.login_clock.now),
         )
         self.invoice_service = InvoiceService(InvoiceRepository(self.settings), contract_repository)
         self.contract_service = ContractService(
@@ -245,6 +258,88 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
     def test_login_does_not_accept_display_name_alias(self) -> None:
         with self.assertRaises(AuthServiceError):
             self.auth_service.login("jan nowak", "reader-secret")
+
+    def test_login_route_rate_limits_repeated_failures_for_same_login(self) -> None:
+        for _ in range(5):
+            failed_handler = _FakeHandler(
+                method="POST",
+                path="/api/v1/auth/login",
+                body=b'{"username":"admin","password":"wrong-secret"}',
+                headers={"Content-Type": "application/json"},
+            )
+            status, payload, _ = route_request(failed_handler, self.services)
+            self.assertEqual(status, 401)
+            self.assertFalse(payload["ok"])
+
+        blocked_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/login",
+            body=b'{"username":"admin","password":"admin"}',
+            headers={"Content-Type": "application/json"},
+        )
+        blocked_status, blocked_payload, _ = route_request(blocked_handler, self.services)
+        self.assertEqual(blocked_status, 429)
+        self.assertFalse(blocked_payload["ok"])
+        self.assertIn("Zbyt wiele", blocked_payload["error"])
+
+        self.login_clock.advance(301)
+
+        recovered_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/login",
+            body=b'{"username":"admin","password":"admin"}',
+            headers={"Content-Type": "application/json"},
+        )
+        recovered_status, recovered_payload, _ = route_request(recovered_handler, self.services)
+        self.assertEqual(recovered_status, 200)
+        self.assertTrue(recovered_payload["ok"])
+
+    def test_login_rate_limit_resets_after_successful_login(self) -> None:
+        for _ in range(4):
+            with self.assertRaises(AuthServiceError) as error:
+                self.auth_service.login("admin", "wrong-secret")
+            self.assertEqual(error.exception.status_code, 401)
+
+        success_payload = self.auth_service.login("admin", "admin")
+        self.assertEqual(success_payload["user"]["username"], "admin")
+
+        for _ in range(4):
+            with self.assertRaises(AuthServiceError) as error:
+                self.auth_service.login("admin", "wrong-secret")
+            self.assertEqual(error.exception.status_code, 401)
+
+        followup_payload = self.auth_service.login("admin", "admin")
+        self.assertEqual(followup_payload["user"]["username"], "admin")
+
+    def test_login_route_rate_limits_by_forwarded_ip_across_usernames(self) -> None:
+        for attempt in range(5):
+            failed_handler = _FakeHandler(
+                method="POST",
+                path="/api/v1/auth/login",
+                body=(
+                    f'{{"username":"missing-user-{attempt}","password":"wrong-secret"}}'.encode("utf-8")
+                ),
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Forwarded-For": "203.0.113.10",
+                },
+            )
+            status, payload, _ = route_request(failed_handler, self.services)
+            self.assertEqual(status, 401)
+            self.assertFalse(payload["ok"])
+
+        blocked_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/login",
+            body=b'{"username":"admin","password":"admin"}',
+            headers={
+                "Content-Type": "application/json",
+                "X-Forwarded-For": "203.0.113.10",
+            },
+        )
+        blocked_status, blocked_payload, _ = route_request(blocked_handler, self.services)
+        self.assertEqual(blocked_status, 429)
+        self.assertFalse(blocked_payload["ok"])
 
     def test_read_only_without_hours_permission_cannot_read_time_entries(self) -> None:
         reader_token = self.auth_service.login("jan.nowak", "reader-secret")["token"]

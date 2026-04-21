@@ -46,5 +46,7 @@ def route_request(handler, services: ApiServices):
         return json_response(error.status_code, {"ok": False, "error": str(error)})
     except ValueError as error:
         return json_response(400, {"ok": False, "error": str(error)})
+    except Exception:
+        return json_response(500, {"ok": False, "error": "Internal server error."})
 
     return json_response(404, {"ok": False, "error": "Route not found."})

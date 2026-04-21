@@ -56,10 +56,30 @@ powershell -ExecutionPolicy Bypass -File .\scripts\start-backend.ps1
 Current production-oriented model:
 - dedicated Vercel project `clode` deploys the main frontend
 - `rootDirectory=frontend`
-- `CLODE_BACKEND_ORIGIN` points to the backend service when frontend and backend are not served from the same origin
+- `CLODE_BACKEND_ORIGIN` must be set explicitly whenever frontend and backend are not served from the same origin
 - dedicated Vercel project `backend` serves the backend API and router for the main frontend
+- production and preview no longer fall back to a hardcoded backend host
 
 Operational details and rollback procedure live in [`docs/FRONTEND_CUTOVER.md`](docs/FRONTEND_CUTOVER.md).
+
+## Explicit bootstrap and repair
+
+Normal backend startup is now read-clean: it does not import legacy store payloads, repair time-entry visibility, or mutate runtime data on boot.
+
+If you need a controlled bootstrap or repair pass, run it explicitly:
+
+```powershell
+python .\backend\scripts\runtime_maintenance.py --help
+```
+
+Typical one-off operations:
+- `--bootstrap-admin`
+- `--legacy-employees`
+- `--legacy-domains`
+- `--legacy-settings`
+- `--legacy-workwear`
+- `--repair-time-entries`
+- `--purge-imported-legacy`
 
 ## Canonical QA frontend
 

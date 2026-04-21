@@ -2,38 +2,26 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
-import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
-import { FormActions } from "@/components/ui/form-actions";
-import { FormFeedback } from "@/components/ui/form-feedback";
-import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
-import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
-import { useAuth } from "@/lib/auth/auth-context";
-import { canManageView } from "@/lib/auth/permissions";
 import {
-  buildPdfDialogSections,
-  createPdfConfigState,
-  togglePdfSection,
-  type PdfConfigState,
-  type PdfSectionDefinition,
-} from "@/lib/print/pdf-config";
-import { compactPrintSections, printDocument } from "@/lib/print/print-document";
+  EmployeesDirectoryTable,
+} from "@/features/employees/components/EmployeesDirectoryTable";
+import { EmployeesEditorPanel } from "@/features/employees/components/EmployeesEditorPanel";
+import {
+  EmployeesToolbar,
+  type EmployeesFilter,
+} from "@/features/employees/components/EmployeesToolbar";
 import {
   deleteEmployeeRecord,
   fetchEmployeesModuleData,
   saveEmployeeRecord,
 } from "@/features/employees/api";
 import {
-  formatEmployeeCodeLabel,
-  formatEmployeeDate,
-  formatEmployeeDisplayName,
   formatEmployeeMedicalState,
   formatEmployeeStatus,
-  formatHours,
-  formatMoney,
 } from "@/features/employees/formatters";
 import {
   buildEmployeeDirectory,
@@ -43,118 +31,29 @@ import {
   buildEmployeeTableRows,
   findEmployeeByKey,
 } from "@/features/employees/mappers";
+import {
+  buildEmployeePdfDefinitions,
+  buildEmployeePrintDocument,
+} from "@/features/employees/pdf";
 import type {
   EmployeeDirectoryRecord,
   EmployeeFormValues,
-  EmployeeTableRow,
   EmployeesBootstrapData,
 } from "@/features/employees/types";
-
-type EmployeesFilter = "all" | "active" | "inactive";
+import { useAuth } from "@/lib/auth/auth-context";
+import { canManageView } from "@/lib/auth/permissions";
+import {
+  buildPdfDialogSections,
+  createPdfConfigState,
+  togglePdfSection,
+  type PdfConfigState,
+} from "@/lib/print/pdf-config";
+import { printDocument } from "@/lib/print/print-document";
 
 type EmployeesScreenState =
   | { status: "loading" }
   | { status: "error"; message: string }
   | { status: "success"; data: EmployeesBootstrapData };
-
-const employeesTableColumns = (): Array<DataTableColumn<EmployeeTableRow>> => [
-  {
-    key: "lp",
-    header: "Lp.",
-    className: "employees-col-lp",
-    sortValue: (row) => row.index,
-    render: (row) => row.index,
-  },
-  {
-    key: "employee",
-    header: "Pracownik",
-    className: "employees-col-employee",
-    sortValue: (row) =>
-      `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">
-          {formatEmployeeDisplayName(row.employee, row.employee.name)}
-        </span>
-        <span className="data-table__secondary">
-          {(row.employee.position || "Bez stanowiska")} | Kod{" "}
-          {formatEmployeeCodeLabel(row.employee.worker_code)}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: "hr",
-    header: "Kadry",
-    className: "employees-col-hr",
-    sortValue: (row) => `${row.employee.status} ${row.employee.position}`,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">{row.employee.position || "Bez stanowiska"}</span>
-        <span className="data-table__secondary">
-          <span
-            className={
-              row.employee.status === "inactive"
-                ? "data-table__status-pill data-table__status-pill--muted"
-                : "data-table__status-pill"
-            }
-          >
-            {formatEmployeeStatus(row.employee.status)}
-          </span>
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: "employment",
-    header: "Zatrudnienie i kontakt",
-    className: "employees-col-employment",
-    sortValue: (row) => row.employee.employment_date || row.employee.city || row.employee.phone,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">
-          {formatEmployeeDate(row.employee.employment_date)}
-        </span>
-        <span className="data-table__secondary">
-          {row.employee.city || row.employee.phone
-            ? [row.employee.city, row.employee.phone].filter(Boolean).join(" | ")
-            : "Brak danych kontaktowych"}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: "medical",
-    header: "Badania",
-    className: "employees-col-medical",
-    sortValue: (row) => row.employee.medical_exam_valid_until,
-    render: (row) => (
-      <div className="data-table__stack">
-        <span className="data-table__primary">{row.medical.dateText}</span>
-        <span className="data-table__secondary">
-          {row.medical.label} | {row.medical.daysText}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: "relations",
-    header: "Powiazania",
-    className: "employees-col-relations",
-    sortValue: (row) => row.relations.hoursEntries,
-    render: (row) => (
-      <div className="employees-relation-list">
-        <span className="employees-relation-pill">Czas: {row.relations.hoursEntries}</span>
-        <span className="employees-relation-pill employees-relation-pill--muted">
-          Karty: {row.relations.workCards}
-        </span>
-        <span className="employees-relation-pill employees-relation-pill--muted">
-          Mies.: {row.relations.monthsCount}
-        </span>
-      </div>
-    ),
-  },
-];
 
 const emptyFormValues = buildEmployeeFormValues();
 
@@ -274,139 +173,22 @@ export function EmployeesView({
     [detailEmployee?.medical_exam_valid_until]
   );
 
-  const employeePdfDefinitions = useMemo<PdfSectionDefinition[]>(() => {
-    if (!detailEmployee) return [];
-
-    return [
-      {
-        id: "basic",
-        label: "Dane podstawowe",
-        description: "Tozsamosc pracownika i identyfikatory rekordu.",
-        preview: [
-          detailEmployee.name || "Bez nazwy",
-          detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Bez kodu",
-        ],
-      },
-      {
-        id: "contact",
-        label: "Kontakt i adres",
-        description: "Telefon, miejscowosc i adres pracownika.",
-        preview: [detailEmployee.phone || "Brak telefonu", detailEmployee.city || "Brak miasta"],
-      },
-      {
-        id: "hr",
-        label: "Status i dane kadrowe",
-        description: "Status aktywnosci, zatrudnienie i badania.",
-        preview: [
-          formatEmployeeStatus(detailEmployee.status),
-          detailEmployee.position || "Bez stanowiska",
-          selectedMedical.label,
-        ],
-      },
-      {
-        id: "relations",
-        label: "Powiazania operacyjne",
-        description: "Godziny, karty pracy i koszt pracy powiazany z pracownikiem.",
-        preview: [
-          detailRelations ? `${detailRelations.hoursEntries} wpisow` : "0 wpisow",
-          detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
-          detailRelations ? formatMoney(detailRelations.totalCost) : formatMoney(0),
-        ],
-      },
-    ];
-  }, [detailEmployee, detailRelations, selectedMedical.label]);
+  const employeePdfDefinitions = useMemo(
+    () =>
+      detailEmployee
+        ? buildEmployeePdfDefinitions({
+            employee: detailEmployee,
+            relations: detailRelations,
+            medical: selectedMedical,
+          })
+        : [],
+    [detailEmployee, detailRelations, selectedMedical]
+  );
 
   const employeePdfSections = useMemo(
     () => buildPdfDialogSections(employeePdfDefinitions, employeePdfConfig),
     [employeePdfConfig, employeePdfDefinitions]
   );
-
-  function handleOpenEmployeePdf() {
-    if (!detailEmployee) return;
-    setEmployeePdfConfig(createPdfConfigState(employeePdfDefinitions));
-    setIsPdfDialogOpen(true);
-  }
-
-  function handleConfirmEmployeePdf() {
-    if (!detailEmployee) return;
-
-    const enabledSectionIds = new Set(
-      employeePdfSections.filter((section) => section.enabled).map((section) => section.id)
-    );
-    const contactValue =
-      [detailEmployee.phone, detailEmployee.city, detailEmployee.street].filter(Boolean).join(" | ") ||
-      "Brak danych";
-
-    printDocument({
-      title: "Kartoteka pracownika",
-      subtitle: detailEmployee.name,
-      context: detailEmployee.worker_code ? `Kod ${detailEmployee.worker_code}` : "Kartoteka bez kodu",
-      filename: `clode-pracownik-${detailEmployee.worker_code || detailEmployee.id || "rekord"}`,
-      meta: [
-        `Status: ${formatEmployeeStatus(detailEmployee.status)}`,
-        `Stanowisko: ${detailEmployee.position || "Brak danych"}`,
-      ],
-      sections: compactPrintSections([
-        enabledSectionIds.has("basic")
-          ? {
-              title: "Dane podstawowe",
-              details: [
-                { label: "Imie i nazwisko", value: detailEmployee.name || "Brak danych" },
-                { label: "Kod pracownika", value: detailEmployee.worker_code || "Brak danych" },
-                { label: "Identyfikator", value: detailEmployee.id || "Brak danych" },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("contact")
-          ? {
-              title: "Kontakt i adres",
-              details: [
-                { label: "Telefon", value: detailEmployee.phone || "Brak danych" },
-                { label: "Miasto", value: detailEmployee.city || "Brak danych" },
-                { label: "Ulica", value: detailEmployee.street || "Brak danych" },
-                { label: "Kontakt zbiorczy", value: contactValue },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("hr")
-          ? {
-              title: "Status i dane kadrowe",
-              details: [
-                { label: "Status", value: formatEmployeeStatus(detailEmployee.status) },
-                { label: "Stanowisko", value: detailEmployee.position || "Brak danych" },
-                { label: "Data zatrudnienia", value: formatEmployeeDate(detailEmployee.employment_date) },
-                { label: "Data zakonczenia", value: formatEmployeeDate(detailEmployee.employment_end_date) },
-                { label: "Badania wazne do", value: selectedMedical.dateText },
-                { label: "Stan badan", value: selectedMedical.label },
-              ],
-            }
-          : null,
-        enabledSectionIds.has("relations")
-          ? {
-              title: "Powiazania operacyjne",
-              details: [
-                { label: "Wpisy czasu", value: detailRelations ? String(detailRelations.hoursEntries) : "0" },
-                {
-                  label: "Godziny lacznie",
-                  value: detailRelations ? formatHours(detailRelations.totalHours) : "0 h",
-                },
-                { label: "Karty pracy", value: detailRelations ? String(detailRelations.workCards) : "0" },
-                {
-                  label: "Miesiace aktywnosci",
-                  value: detailRelations ? String(detailRelations.monthsCount) : "0",
-                },
-                {
-                  label: "Koszt godzin",
-                  value: detailRelations ? formatMoney(detailRelations.totalCost) : formatMoney(0),
-                },
-              ],
-            }
-          : null,
-      ]),
-    });
-
-    setIsPdfDialogOpen(false);
-  }
 
   useEffect(() => {
     if (editingEmployee) {
@@ -439,6 +221,38 @@ export function EmployeesView({
     setFormValues(emptyFormValues);
     setFormError(null);
     setFormStatus(null);
+  }
+
+  function handleFormFieldChange(field: keyof EmployeeFormValues, value: string) {
+    setFormValues((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function handleOpenEmployeePdf() {
+    if (!detailEmployee) return;
+    setEmployeePdfConfig(createPdfConfigState(employeePdfDefinitions));
+    setIsPdfDialogOpen(true);
+  }
+
+  function handleConfirmEmployeePdf() {
+    if (!detailEmployee) return;
+
+    const enabledSectionIds = new Set(
+      employeePdfSections.filter((section) => section.enabled).map((section) => section.id)
+    );
+
+    printDocument(
+      buildEmployeePrintDocument({
+        employee: detailEmployee,
+        relations: detailRelations,
+        medical: selectedMedical,
+        enabledSectionIds,
+      })
+    );
+
+    setIsPdfDialogOpen(false);
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -533,7 +347,6 @@ export function EmployeesView({
 
   const deleteBlocked =
     (detailRelations?.hoursEntries || 0) > 0 || (detailRelations?.workCards || 0) > 0;
-  const formDisabled = !canWrite || isSubmitting;
 
   return (
     <div className="module-page">
@@ -577,324 +390,37 @@ export function EmployeesView({
         ))}
       </div>
 
-      <Panel className="panel--toolbar panel--toolbar--filters">
-        <div className="employees-toolbar">
-          <div className="toolbar-tabs">
-            <ActionButton
-              type="button"
-              variant={filter === "all" ? "primary" : "secondary"}
-              onClick={() => setFilter("all")}
-            >
-              Wszyscy
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "active" ? "primary" : "secondary"}
-              onClick={() => setFilter("active")}
-            >
-              Aktywni
-            </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "inactive" ? "primary" : "secondary"}
-              onClick={() => setFilter("inactive")}
-            >
-              Nieaktywni
-            </ActionButton>
-          </div>
-          <SearchField
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Szukaj po nazwisku, kodzie, stanowisku lub kontakcie"
-          />
-        </div>
-      </Panel>
+      <EmployeesToolbar
+        filter={filter}
+        search={search}
+        onFilterChange={setFilter}
+        onSearchChange={setSearch}
+      />
 
       <div className="employees-layout">
-        <Panel title="Lista pracownikow">
-          <DataTable
-            columns={employeesTableColumns()}
-            rows={tableRows}
-            emptyMessage="Brak pracownikow dla biezacych filtrow."
-            rowKey={(row) => row.employee.key}
-            onRowClick={(row) => handleSelectEmployee(row.employee)}
-            getRowClassName={(row) =>
-              row.employee.key === selectedEmployee?.key ? "data-table__row--active" : undefined
-            }
-            tableClassName="employees-table"
-          />
-        </Panel>
+        <EmployeesDirectoryTable
+          rows={tableRows}
+          selectedEmployeeKey={selectedEmployee?.key}
+          onSelectEmployee={handleSelectEmployee}
+        />
 
         <div className="employees-side-stack">
-          <Panel title={editingEmployee ? "Edycja pracownika" : "Nowy pracownik"}>
-            {detailEmployee ? (
-              <div className="employees-spotlight">
-                <div className="data-table__stack">
-                  <span className="data-table__primary">{detailEmployee.name}</span>
-                  <span className="data-table__secondary">
-                    {detailEmployee.position || "Bez stanowiska"} |{" "}
-                    {formatEmployeeStatus(detailEmployee.status)}
-                  </span>
-                </div>
-
-                {detailRelations ? (
-                  <div className="employees-detail-grid">
-                    <div className="employees-detail-card">
-                      <span className="field-card__label">Wpisy czasu</span>
-                      <strong>{detailRelations.hoursEntries}</strong>
-                      <small>{formatHours(detailRelations.totalHours)}</small>
-                    </div>
-                    <div className="employees-detail-card">
-                      <span className="field-card__label">Karty pracy</span>
-                      <strong>{detailRelations.workCards}</strong>
-                      <small>{detailRelations.monthsCount} mies.</small>
-                    </div>
-                    <div className="employees-detail-card">
-                      <span className="field-card__label">Koszt godzin</span>
-                      <strong>{formatMoney(detailRelations.totalCost)}</strong>
-                      <small>{detailEmployee.worker_code || "Bez kodu"}</small>
-                    </div>
-                    <div className="employees-detail-card">
-                      <span className="field-card__label">Badania</span>
-                      <strong>{selectedMedical.dateText}</strong>
-                      <small>{selectedMedical.label}</small>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : (
-              <p className="status-message">Wybierz pracownika z tabeli lub dodaj nowy rekord.</p>
-            )}
-
-            <form className="employees-form" onSubmit={handleSubmit}>
-              <FormGrid columns={2}>
-                <label className="form-field">
-                  <span>Imie</span>
-                  <input
-                    value={formValues.first_name}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        first_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Pawel"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Nazwisko</span>
-                  <input
-                    value={formValues.last_name}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        last_name: event.target.value,
-                      }))
-                    }
-                    placeholder="Dabrowski"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Kod pracownika</span>
-                  <input
-                    value={formValues.worker_code}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        worker_code: event.target.value,
-                      }))
-                    }
-                    placeholder="PD-01"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Stanowisko</span>
-                  <input
-                    value={formValues.position}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        position: event.target.value,
-                      }))
-                    }
-                    placeholder="Monter"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Status</span>
-                  <select
-                    value={formValues.status}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        status: event.target.value === "inactive" ? "inactive" : "active",
-                      }))
-                    }
-                  >
-                    <option value="active">Aktywny</option>
-                    <option value="inactive">Nieaktywny</option>
-                  </select>
-                </label>
-
-                <label className="form-field">
-                  <span>Data zatrudnienia</span>
-                  <input
-                    type="date"
-                    value={formValues.employment_date}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        employment_date: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Data zakonczenia</span>
-                  <input
-                    type="date"
-                    value={formValues.employment_end_date}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        employment_end_date: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Telefon</span>
-                  <input
-                    value={formValues.phone}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        phone: event.target.value,
-                      }))
-                    }
-                    placeholder="+48 500 000 000"
-                  />
-                </label>
-
-                <label className="form-field form-grid__span-2">
-                  <span>Ulica</span>
-                  <input
-                    value={formValues.street}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        street: event.target.value,
-                      }))
-                    }
-                    placeholder="ul. Przykladowa 1"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Kod i miejscowosc</span>
-                  <input
-                    value={formValues.city}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        city: event.target.value,
-                      }))
-                    }
-                    placeholder="00-000 Warszawa"
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Badania wazne do</span>
-                  <input
-                    type="date"
-                    value={formValues.medical_exam_valid_until}
-                    disabled={formDisabled}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        medical_exam_valid_until: event.target.value,
-                      }))
-                    }
-                  />
-                </label>
-              </FormGrid>
-
-              <FormFeedback
-                items={[
-                  !canWrite
-                    ? {
-                        tone: "warning",
-                        text: "Masz dostep tylko do odczytu kartoteki pracownikow.",
-                      }
-                    : null,
-                  formError ? { tone: "error", text: formError } : null,
-                  formStatus ? { tone: "success", text: formStatus } : null,
-                  editingEmployee && deleteBlocked
-                    ? {
-                        tone: "warning",
-                        text:
-                          "Rekord ma powiazane wpisy czasu lub karty pracy. Zmien status na nieaktywny zamiast usuwac pracownika.",
-                      }
-                    : null,
-                ]}
-              />
-
-              <FormActions
-                leading={
-                  <>
-                    {canWrite ? (
-                      <ActionButton
-                        type="button"
-                        variant="secondary"
-                        onClick={handleCreateNew}
-                        disabled={isSubmitting}
-                      >
-                        {editingEmployee ? "Nowy rekord" : "Wyczysc formularz"}
-                      </ActionButton>
-                    ) : null}
-                    {editingEmployee && canWrite ? (
-                      <ActionButton
-                        type="button"
-                        variant="ghost"
-                        onClick={handleDeleteEmployee}
-                        disabled={isSubmitting || deleteBlocked}
-                      >
-                        Usun
-                      </ActionButton>
-                    ) : null}
-                  </>
-                }
-                trailing={
-                  canWrite ? (
-                    <ActionButton type="submit" disabled={isSubmitting}>
-                      {isSubmitting
-                        ? "Zapisywanie..."
-                        : editingEmployee
-                          ? "Zapisz zmiany"
-                          : "Dodaj pracownika"}
-                    </ActionButton>
-                  ) : null
-                }
-              />
-            </form>
-          </Panel>
+          <EmployeesEditorPanel
+            canWrite={canWrite}
+            isSubmitting={isSubmitting}
+            editingEmployee={editingEmployee}
+            detailEmployee={detailEmployee}
+            detailRelations={detailRelations}
+            selectedMedical={selectedMedical}
+            formValues={formValues}
+            formError={formError}
+            formStatus={formStatus}
+            deleteBlocked={deleteBlocked}
+            onCreateNew={handleCreateNew}
+            onDeleteEmployee={handleDeleteEmployee}
+            onSubmit={handleSubmit}
+            onFieldChange={handleFormFieldChange}
+          />
         </div>
       </div>
 

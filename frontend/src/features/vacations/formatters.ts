@@ -1,4 +1,4 @@
-import type { VacationStatus, VacationType } from "@/features/vacations/types";
+﻿import type { VacationStatus, VacationType } from "@/features/vacations/types";
 
 export function normalizeVacationText(value: unknown) {
   return String(value ?? "").trim().replace(/\s+/g, " ");

@@ -35,10 +35,27 @@ class StoreService:
     def delete_store(self, store_name: str, *, connection=None) -> None:
         self.repository.delete(store_name, connection=connection)
 
-    def bootstrap_legacy_domain_stores(self) -> None:
-        self._bootstrap_legacy_store("vacations", reader=self.get_vacation_store, writer=self.save_vacation_store)
-        self._bootstrap_legacy_store("planning", reader=self.get_planning_store, writer=self.save_planning_store)
-        self._bootstrap_legacy_store("work_cards", reader=self.get_work_card_store, writer=self.save_work_card_store)
+    def bootstrap_legacy_domain_stores(self, *, purge_legacy: bool = False) -> dict[str, int]:
+        return {
+            "vacations": self._bootstrap_legacy_store(
+                "vacations",
+                reader=self.get_vacation_store,
+                writer=self.save_vacation_store,
+                purge_legacy=purge_legacy,
+            ),
+            "planning": self._bootstrap_legacy_store(
+                "planning",
+                reader=self.get_planning_store,
+                writer=self.save_planning_store,
+                purge_legacy=purge_legacy,
+            ),
+            "work_cards": self._bootstrap_legacy_store(
+                "work_cards",
+                reader=self.get_work_card_store,
+                writer=self.save_work_card_store,
+                purge_legacy=purge_legacy,
+            ),
+        }
 
     def get_vacation_store(self, *, connection=None) -> dict[str, Any]:
         payload = (
@@ -146,10 +163,11 @@ class StoreService:
         return None
 
     def save_work_card(self, payload: Any, *, connection=None) -> dict[str, Any]:
-        normalized_card, next_store = self._build_work_card_store(payload, connection=connection)
+        normalized_card = dict(payload or {})
+        self._validate("work_card_store", {"version": 1, "cards": [normalized_card]})
         if self.work_card_repository:
-            self.work_card_repository.replace_store(next_store, connection=connection)
-            return self.work_card_repository.get_by_id(str(normalized_card.get("id") or "").strip(), connection=connection) or normalized_card
+            return self.work_card_repository.save_card(normalized_card, connection=connection)
+        _, next_store = self._build_work_card_store(payload, connection=connection)
         self.repository.save("work_cards", next_store, connection=connection)
         return normalized_card
 
@@ -188,8 +206,12 @@ class StoreService:
 
     def list_work_card_history_summaries(self) -> list[dict[str, Any]]:
         summaries: list[dict[str, Any]] = []
-
-        for card in self.get_work_card_store().get("cards", []):
+        cards = (
+            self.work_card_repository.list_cards()
+            if self.work_card_repository
+            else self.get_work_card_store().get("cards", [])
+        )
+        for card in cards:
             total_hours = 0.0
             filled_days = 0
             for row in card.get("rows") or []:
@@ -227,10 +249,10 @@ class StoreService:
         except ContractValidationError as error:
             raise ValueError(str(error)) from error
 
-    def _bootstrap_legacy_store(self, store_name: str, *, reader, writer) -> None:
+    def _bootstrap_legacy_store(self, store_name: str, *, reader, writer, purge_legacy: bool) -> int:
         legacy_payload = self.repository.get(store_name)
         if legacy_payload is None:
-            return
+            return 0
 
         current_payload = reader()
         has_runtime_data = False
@@ -243,8 +265,25 @@ class StoreService:
                 has_runtime_data = bool(current_payload.get("cards"))
 
         if has_runtime_data:
-            self.repository.delete(store_name)
-            return
+            return 0
 
         writer(legacy_payload)
-        self.repository.delete(store_name)
+        if purge_legacy:
+            self.repository.delete(store_name)
+
+        if store_name == "vacations":
+            payload = legacy_payload if isinstance(legacy_payload, dict) else {}
+            return len(payload.get("requests") or []) + len(payload.get("balances") or {})
+        if store_name == "planning":
+            payload = legacy_payload if isinstance(legacy_payload, dict) else {}
+            assignments = payload.get("assignments") if isinstance(payload.get("assignments"), dict) else {}
+            return sum(
+                len(employee_assignments)
+                for employee_assignments in assignments.values()
+                if isinstance(employee_assignments, dict)
+            )
+        if store_name == "work_cards":
+            payload = legacy_payload if isinstance(legacy_payload, dict) else {}
+            cards = payload.get("cards") if isinstance(payload.get("cards"), list) else []
+            return len(cards)
+        return 0

@@ -50,7 +50,7 @@ export function VacationsRequestPanel({
   const formDisabled = !canWrite || isSubmittingRequest;
 
   return (
-    <Panel title={editingRequest ? "Edytuj wniosek" : "Nowy wniosek / nieobecnosc"}>
+    <Panel title={editingRequest ? "Edytuj wniosek" : "Nowy wniosek / nieobecność"}>
       <form className="vacations-form" onSubmit={onSubmitRequest}>
         <FormGrid columns={1}>
           <label className="form-field">
@@ -72,16 +72,16 @@ export function VacationsRequestPanel({
             <p className="status-message status-message--warning">{editingEmployeeMessage}</p>
           ) : null}
           <label className="form-field">
-            <span>Typ nieobecnosci</span>
+            <span>Typ nieobecności</span>
             <select
               value={requestValues.type}
               onChange={(event) => onRequestFieldChange("type", event.target.value)}
               disabled={formDisabled}
             >
               <option value="vacation">Urlop wypoczynkowy</option>
-              <option value="on_demand">Urlop na zadanie</option>
+              <option value="on_demand">Urlop na żądanie</option>
               <option value="sick_leave">L4</option>
-              <option value="other">Inna nieobecnosc</option>
+              <option value="other">Inna nieobecność</option>
             </select>
           </label>
           <label className="form-field">
@@ -145,7 +145,7 @@ export function VacationsRequestPanel({
         </FormGrid>
 
         {!canWrite ? (
-          <p className="status-message">Masz dostep tylko do podgladu wnioskow urlopowych.</p>
+          <p className="status-message">Masz dostęp tylko do podglądu wniosków urlopowych.</p>
         ) : null}
         {approvalMessage ? <p className="status-message">{approvalMessage}</p> : null}
         {formError ? <p className="status-message status-message--error">{formError}</p> : null}
@@ -166,7 +166,7 @@ export function VacationsRequestPanel({
                 ? "Zapisywanie..."
                 : editingRequest
                   ? "Zapisz zmiany"
-                  : "Dodaj nieobecnosc"}
+                  : "Dodaj nieobecność"}
             </ActionButton>
           ) : null}
         </div>

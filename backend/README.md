@@ -6,7 +6,7 @@ Backend odpowiada za model `frontend -> API -> SQL` z warstwa:
 - `services`
 - `repositories`
 
-Aktualny stan nie opiera juz krytycznych domen runtime na generycznym `store_documents` jako source of truth. `employees`, `settings`, `workwear`, `planning`, `vacations` i `work_cards` sa bootstrapowane z legacy store tylko jawnie przy starcie albo migracji, a biezacy runtime czyta i zapisuje do docelowych tabel / repozytoriow domenowych.
+Aktualny stan nie opiera juz krytycznych domen runtime na generycznym `store_documents` jako source of truth. `employees`, `settings`, `workwear`, `planning`, `vacations` i `work_cards` korzystaja z legacy store tylko przy jawnie uruchamianym bootstrapie / migracji, a biezacy runtime czyta i zapisuje do docelowych tabel / repozytoriow domenowych.
 
 ## Uruchomienie lokalne
 
@@ -39,10 +39,24 @@ Production / preview runtime:
 - `DATABASE_URL` albo `CLODE_DATABASE_URL` jest wymagane
 - `CLODE_SESSION_SECRET` jest wymagane
 - brak tych zmiennych konczy start bledem zamiast fallbacku do slabszego trybu
+- `CLODE_ENABLE_DEMO_SEED_IMPORT` nie moze byc wlaczone w production / preview
 
 Przykladowe zmienne sa w [backend/.env.example](/C:/Users/kubaz/Documents/Codex/clode/backend/.env.example).
 
 ## Legacy bootstrap
+
+Startup backendu nie wykonuje juz automatycznych importow ani repair flow. Jesli potrzebujesz bootstrapu lub naprawy, uruchom je jawnie:
+
+```powershell
+python .\backend\scripts\runtime_maintenance.py --help
+```
+
+Przyklady:
+
+```powershell
+python .\backend\scripts\runtime_maintenance.py --bootstrap-admin --legacy-employees --legacy-settings
+python .\backend\scripts\runtime_maintenance.py --legacy-domains --legacy-workwear --repair-time-entries --purge-imported-legacy
+```
 
 Legacy snapshoty moga byc dalej wykorzystane do pierwszego bootstrapu demo lub naprawy danych:
 

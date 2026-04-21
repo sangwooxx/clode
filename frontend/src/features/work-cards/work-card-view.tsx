@@ -31,7 +31,7 @@ import {
 } from "@/lib/print/print-document";
 import { saveHoursMonth } from "@/features/hours/api";
 import { buildMonthOptions, getSelectedMonth } from "@/features/hours/mappers";
-import type { HoursEmployeeRecord, HoursMonthRecord } from "@/features/hours/types";
+import type { HoursMonthRecord } from "@/features/hours/types";
 import {
   fetchWorkCardBootstrapClient,
   fetchWorkCardCard,
@@ -55,52 +55,22 @@ import {
 import type {
   WorkCardBootstrapData,
   WorkCardDayViewModel,
-  WorkCardHistorySummary,
   WorkCardRecord,
 } from "@/features/work-cards/types";
+import {
+  buildHistoricalWorkCardPreviews,
+  buildWorkCardMonthKey,
+  normalizeEmployeeLookupKey,
+  recalculateWorkCardRow,
+  type WorkCardHistoryPreview,
+} from "@/features/work-cards/work-card-view-helpers";
+import { WorkCardGridPanel } from "@/features/work-cards/work-card-grid-panel";
+import { WorkCardHistoryPanel } from "@/features/work-cards/work-card-history-panel";
 
 type LoadState =
   | { status: "loading" }
   | { status: "success" }
   | { status: "error"; message: string };
-
-type WorkCardHistoryPreview = {
-  cardId: string;
-  summary: WorkCardHistorySummary;
-  employee: HoursEmployeeRecord | null;
-  employeeLabel: string;
-  employeeMeta: string;
-  monthKey: string;
-  monthLabel: string;
-  totalHours: number;
-  filledDays: number;
-};
-
-function recalculateRow(row: WorkCardDayViewModel) {
-  const totalHours = Object.values(row.hoursByContract).reduce(
-    (sum, value) => sum + parseDecimalInput(value),
-    0
-  );
-
-  return {
-    ...row,
-    totalHours,
-  };
-}
-
-function normalizeEmployeeLookupKey(value: string | undefined) {
-  return String(value || "").trim().toLowerCase();
-}
-
-function buildMonthKey(year: string, month: string) {
-  const normalizedYear = String(year || "").trim();
-  const normalizedMonth = String(month || "").trim();
-
-  if (!/^\d{4}$/.test(normalizedYear)) return "";
-  if (!/^(0[1-9]|1[0-2])$/.test(normalizedMonth)) return "";
-
-  return `${normalizedYear}-${normalizedMonth}`;
-}
 
 export function WorkCardView({
   initialBootstrap,
@@ -119,7 +89,7 @@ export function WorkCardView({
   const [historicalEmployees, setHistoricalEmployees] = useState(
     initialBootstrap?.historicalEmployees ?? initialBootstrap?.employees ?? []
   );
-  const [historicalCards, setHistoricalCards] = useState<WorkCardHistorySummary[]>(
+  const [historicalCards, setHistoricalCards] = useState(
     initialBootstrap?.historicalCards ?? []
   );
   const [months, setMonths] = useState<HoursMonthRecord[]>(initialBootstrap?.months ?? []);
@@ -225,58 +195,10 @@ export function WorkCardView({
     [employees]
   );
   const historicalWorkCards = useMemo<WorkCardHistoryPreview[]>(() => {
-    return historicalCards
-      .map((summary) => {
-        const normalizedEmployeeId = String(summary.employee_id || "").trim();
-        const employee =
-          historicalEmployees.find((candidate) => {
-            const candidateId = String(candidate.id || "").trim();
-            if (normalizedEmployeeId && candidateId) {
-              return candidateId === normalizedEmployeeId;
-            }
-
-            return (
-              normalizeEmployeeLookupKey(candidate.name) ===
-              normalizeEmployeeLookupKey(summary.employee_name)
-            );
-          }) ?? null;
-
-        if ((employee?.status ?? "active") !== "inactive") {
-          return null;
-        }
-        const employeeOption = employee
-          ? buildWorkCardEmployeeOptions([employee])[0] ?? null
-          : null;
-
-        return {
-          cardId: summary.card_id,
-          summary,
-          employee,
-          employeeLabel:
-            formatEmployeeDisplayName(
-              employee,
-              String(summary.employee_name || "Nieznany pracownik").trim()
-            ) || "Nieznany pracownik",
-          employeeMeta:
-            employeeOption?.description ||
-            "Pracownik nieaktywny",
-          monthKey: summary.month_key,
-          monthLabel: summary.month_label || formatMonthLabel(summary.month_key),
-          totalHours: Number(summary.total_hours || 0),
-          filledDays: Number(summary.filled_days || 0),
-        } satisfies WorkCardHistoryPreview;
-      })
-      .filter((item): item is WorkCardHistoryPreview => Boolean(item))
-      .sort((left, right) => {
-        if (left.monthKey !== right.monthKey) {
-          return right.monthKey.localeCompare(left.monthKey);
-        }
-
-        return left.employeeLabel.localeCompare(right.employeeLabel, "pl", {
-          sensitivity: "base",
-          numeric: true,
-        });
-      });
+    return buildHistoricalWorkCardPreviews({
+      historicalCards,
+      historicalEmployees,
+    });
   }, [historicalCards, historicalEmployees]);
   const inactiveHistoricalEmployeesCount = useMemo(() => {
     return new Set(
@@ -504,7 +426,7 @@ export function WorkCardView({
     setDraftRows((current) =>
       current.map((row) => {
         if (row.date !== date) return row;
-        return recalculateRow(updater(row));
+        return recalculateWorkCardRow(updater(row));
       })
     );
   }
@@ -528,7 +450,7 @@ export function WorkCardView({
 
   async function handleCreateMonth() {
     if (!canWrite) return;
-    const nextMonthKey = buildMonthKey(newMonthYear, newMonthNumber);
+    const nextMonthKey = buildWorkCardMonthKey(newMonthYear, newMonthNumber);
 
     if (!nextMonthKey) {
       setMonthError("Podaj poprawny rok i miesiąc karty pracy.");
@@ -982,167 +904,37 @@ export function WorkCardView({
           </p>
         </Panel>
       ) : (
-        <Panel title={isHistoricalPreview ? "Historyczna karta pracy" : "Miesięczna karta pracy"}>
-          <div className="work-card-meta">
-            <div className="data-table__stack">
-              <span className="data-table__primary">
-                {displayedEmployeeLabel} | {selectedMonth?.month_label || formatMonthLabel(selectedMonthKey)}
-              </span>
-              {displayedEmployeeMeta ? (
-                <span className="data-table__secondary">{displayedEmployeeMeta}</span>
-              ) : null}
-            </div>
-            <div className="work-card-meta__legend">
-              <span className="work-card-meta__badge">Weekend</span>
-              <span className="work-card-meta__badge work-card-meta__badge--muted">
-                Nieprzypisane
-              </span>
-            </div>
-          </div>
-
-          {isHistoricalPreview ? (
-            <p className="status-message">
-              To jest karta historyczna pracownika nieaktywnego. Ten widok pozostaje tylko do odczytu.
-            </p>
-          ) : null}
-
-          <div className="work-card-grid">
-            <div className="work-card-grid__row work-card-grid__row--head" style={{ gridTemplateColumns: gridTemplate }}>
-              <div className="work-card-grid__cell work-card-grid__cell--date">Dzień</div>
-              {contractOptions.map((option) => (
-                <div
-                  key={`head-${option.id}`}
-                  className={`work-card-grid__cell work-card-grid__cell--contract-head work-card-grid__cell--status-${option.status}`}
-                  title={`${option.code} | ${option.label}`}
-                >
-                  <span className="work-card-grid__contract-code">{option.code}</span>
-                  <span className="work-card-grid__contract-name">{option.label}</span>
-                </div>
-              ))}
-              <div className="work-card-grid__cell work-card-grid__cell--total">Razem</div>
-              <div className="work-card-grid__cell work-card-grid__cell--note">Opis pracy</div>
-            </div>
-
-            {draftRows.map((row) => (
-              <div
-                key={row.date}
-                className={`work-card-grid__row${row.isWeekend ? " work-card-grid__row--weekend" : ""}${row.totalHours > 0 ? " work-card-grid__row--filled" : ""}`}
-                style={{ gridTemplateColumns: gridTemplate }}
-              >
-                <div className="work-card-grid__cell work-card-grid__cell--date">
-                  <div className="work-card-grid__day">
-                    <strong>{row.dayNumber}</strong>
-                    <span>{row.weekdayLabel}</span>
-                    {row.isWeekend ? <em>Weekend</em> : null}
-                  </div>
-                </div>
-
-                {contractOptions.map((option) => {
-                  const isLocked = option.status === "archived" || option.status === "missing";
-                  return (
-                    <div key={`${row.date}-${option.id}`} className="work-card-grid__cell">
-                      <input
-                        className={`text-input work-card-grid__hours-input${isLocked ? " work-card-grid__hours-input--locked" : ""}`}
-                        inputMode="decimal"
-                        value={row.hoursByContract[option.id] || ""}
-                        onChange={(event) => handleHoursChange(row.date, option.id, event.target.value)}
-                        placeholder="0"
-                        disabled={!canWrite || isHistoricalPreview || isLocked}
-                        title={
-                          isLocked
-                            ? `${option.label} jest archiwalny lub niedostępny do nowych wpisów.`
-                            : `${option.label}`
-                        }
-                      />
-                    </div>
-                  );
-                })}
-
-                <div className="work-card-grid__cell work-card-grid__cell--total">
-                  {formatHours(row.totalHours)}
-                </div>
-
-                <div className="work-card-grid__cell work-card-grid__cell--note">
-                  <input
-                    className="text-input work-card-grid__note-input"
-                    value={row.note}
-                    onChange={(event) => handleNoteChange(row.date, event.target.value)}
-                    placeholder={row.isWeekend ? "Opcjonalna adnotacja weekendowa" : "Opcjonalny opis pracy"}
-                    disabled={!canWrite || isHistoricalPreview}
-                  />
-                </div>
-              </div>
-            ))}
-
-            <div className="work-card-grid__row work-card-grid__row--footer" style={{ gridTemplateColumns: gridTemplate }}>
-              <div className="work-card-grid__cell work-card-grid__cell--date">
-                <div className="work-card-grid__day work-card-grid__day--summary">
-                  <strong>Podsumowanie</strong>
-                  <span>{formatNumber(filledDaysCount)} dni z wpisami</span>
-                </div>
-              </div>
-              {contractOptions.map((option) => (
-                <div key={`total-${option.id}`} className="work-card-grid__cell work-card-grid__cell--footer-value">
-                  {formatHours(contractTotals.get(option.id) || 0)}
-                </div>
-              ))}
-              <div className="work-card-grid__cell work-card-grid__cell--total work-card-grid__cell--footer-value">
-                {formatHours(monthTotalHours)}
-              </div>
-              <div className="work-card-grid__cell work-card-grid__cell--note work-card-grid__cell--footer-note">
-                {isHistoricalPreview
-                  ? "Historia pracownika nieaktywnego zostaje zachowana tylko do odczytu."
-                  : "Zapis tej karty aktualizuje miesięczną ewidencję czasu pracy bez podwójnego wprowadzania danych."}
-              </div>
-            </div>
-          </div>
-        </Panel>
+        <WorkCardGridPanel
+          title={isHistoricalPreview ? "Historyczna karta pracy" : "Miesięczna karta pracy"}
+          isHistoricalPreview={isHistoricalPreview}
+          displayedEmployeeLabel={displayedEmployeeLabel}
+          displayedEmployeeMeta={displayedEmployeeMeta}
+          selectedMonthKey={selectedMonthKey}
+          selectedMonthLabel={selectedMonth?.month_label}
+          contractOptions={contractOptions}
+          gridTemplate={gridTemplate}
+          draftRows={draftRows}
+          canWrite={canWrite}
+          monthTotalHours={monthTotalHours}
+          filledDaysCount={filledDaysCount}
+          contractTotals={contractTotals}
+          onHoursChange={handleHoursChange}
+          onNoteChange={handleNoteChange}
+        />
       )}
 
-      {historicalWorkCards.length > 0 ? (
-        <Panel title="Historia pracowników nieaktywnych">
-          <div className="work-card-history">
-            {isHistoricalPreview ? (
-              <div className="contracts-form__actions">
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setSelectedHistoricalCardId(null)}
-                >
-                  Wróć do aktywnej karty
-                </ActionButton>
-              </div>
-            ) : null}
-
-            <div className="work-card-history__list">
-              {historicalWorkCards.map((item) => (
-                <button
-                  key={item.cardId}
-                  type="button"
-                  className={`work-card-history__item${selectedHistoricalCardId === item.cardId ? " work-card-history__item--active" : ""}`}
-                  onClick={() => {
-                    setSelectedHistoricalCardId(item.cardId);
-                    setSelectedMonthKey(item.monthKey);
-                    setSaveError(null);
-                    setSaveStatus(null);
-                  }}
-                >
-                  <span className="work-card-history__item-main">
-                    <strong>{item.employeeLabel}</strong>
-                    <span>{item.employeeMeta}</span>
-                  </span>
-                  <span className="work-card-history__item-side">
-                    <strong>{item.monthLabel}</strong>
-                    <span>
-                      {formatHours(item.totalHours)} | {formatNumber(item.filledDays)} dni
-                    </span>
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Panel>
-      ) : null}
+      <WorkCardHistoryPanel
+        items={historicalWorkCards}
+        selectedHistoricalCardId={selectedHistoricalCardId}
+        isHistoricalPreview={isHistoricalPreview}
+        onClearSelection={() => setSelectedHistoricalCardId(null)}
+        onSelectHistoricalCard={(cardId, monthKey) => {
+          setSelectedHistoricalCardId(cardId);
+          setSelectedMonthKey(monthKey);
+          setSaveError(null);
+          setSaveStatus(null);
+        }}
+      />
 
       <PdfExportDialog
         open={isPdfDialogOpen}

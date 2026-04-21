@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-from urllib.parse import parse_qs, urlparse
 
+from clode_backend.api.transport import ApiRequest, coerce_api_request
 from clode_backend.auth.sessions import (
     LEGACY_SESSION_HEADER_NAME,
     SESSION_HEADER_NAME,
@@ -35,7 +35,7 @@ class ApiServices:
 
 @dataclass(frozen=True)
 class RequestContext:
-    handler: Any
+    request: ApiRequest
     services: ApiServices
     method: str
     path: str
@@ -44,23 +44,20 @@ class RequestContext:
     current_user: dict[str, Any] | None
 
 
-def build_request_context(handler, services: ApiServices) -> RequestContext:
-    parsed = urlparse(handler.path)
-    query = parse_qs(parsed.query or "")
-    method = handler.command.upper()
-    path = parsed.path.rstrip("/") or "/"
+def build_request_context(source, services: ApiServices) -> RequestContext:
+    request = coerce_api_request(source)
     session_token = read_session_token_from_headers(
-        handler.headers.get("Cookie"),
-        handler.headers.get(SESSION_HEADER_NAME)
-        or handler.headers.get(LEGACY_SESSION_HEADER_NAME),
+        request.get_header("Cookie"),
+        request.get_header(SESSION_HEADER_NAME)
+        or request.get_header(LEGACY_SESSION_HEADER_NAME),
     )
     current_user = services.auth_service.get_current_user(session_token)
     return RequestContext(
-        handler=handler,
+        request=request,
         services=services,
-        method=method,
-        path=path,
-        query=query,
+        method=request.method,
+        path=request.path,
+        query=request.query,
         session_token=session_token,
         current_user=current_user,
     )

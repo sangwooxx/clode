@@ -179,19 +179,17 @@ class EmployeeRepository(RepositoryBase):
             connection.commit()
         return self.list_all()
 
-    def import_legacy_store(self) -> int:
+    def import_legacy_store(self, *, purge_legacy: bool = False) -> int:
         legacy_rows = self._list_from_store()
         if not legacy_rows:
             return 0
         if self.list_all():
+            return 0
+        self.save_all(legacy_rows)
+        if purge_legacy:
             with self.connect() as connection:
                 connection.execute("DELETE FROM store_documents WHERE store_name = ?", ("employees",))
                 connection.commit()
-            return 0
-        self.save_all(legacy_rows)
-        with self.connect() as connection:
-            connection.execute("DELETE FROM store_documents WHERE store_name = ?", ("employees",))
-            connection.commit()
         return len(legacy_rows)
 
     def _list_from_store(self) -> list[dict[str, Any]]:

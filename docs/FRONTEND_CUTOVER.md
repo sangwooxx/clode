@@ -13,7 +13,8 @@ Cutover jest wykonany.
 - osobny projekt Vercel `clode` dla glownego frontendu
 - `rootDirectory=frontend`
 - framework: Next.js
-- backend origin ustawiony przez `CLODE_BACKEND_ORIGIN`
+- backend origin ustawiony jawnie przez `CLODE_BACKEND_ORIGIN`
+- brak hardcoded production fallbacku dla backend hosta
 
 ### Backend i routing
 - osobny projekt Vercel `backend` utrzymuje backend API

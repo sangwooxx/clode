@@ -1,5 +1,9 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass, field
+import threading
+import time
 from typing import Any
 from uuid import uuid4
 
@@ -34,6 +38,104 @@ class AuthServiceError(RuntimeError):
         self.status_code = status_code
 
 
+@dataclass
+class _LoginAttemptBucket:
+    failures: list[float] = field(default_factory=list)
+    blocked_until: float = 0.0
+
+
+class LoginRateLimiter:
+    def __init__(
+        self,
+        *,
+        max_failures: int = 5,
+        window_seconds: int = 300,
+        block_seconds: int = 300,
+        clock: Callable[[], float] | None = None,
+    ) -> None:
+        self.max_failures = max(1, int(max_failures))
+        self.window_seconds = max(1, int(window_seconds))
+        self.block_seconds = max(1, int(block_seconds))
+        self._clock = clock or time.monotonic
+        self._buckets: dict[str, _LoginAttemptBucket] = {}
+        self._lock = threading.Lock()
+
+    def ensure_allowed(self, identifiers: list[str]) -> None:
+        now = self._clock()
+        blocked_until = 0.0
+        with self._lock:
+            for identifier in identifiers:
+                bucket = self._buckets.get(identifier)
+                if bucket is None:
+                    continue
+                self._prune_bucket(bucket, now)
+                if bucket.blocked_until > now:
+                    blocked_until = max(blocked_until, bucket.blocked_until)
+                elif not bucket.failures:
+                    self._buckets.pop(identifier, None)
+
+        if blocked_until > now:
+            raise AuthServiceError(
+                "Zbyt wiele nieudanych prob logowania. Sprobuj ponownie za chwile.",
+                status_code=429,
+            )
+
+    def record_failure(self, identifiers: list[str]) -> None:
+        now = self._clock()
+        with self._lock:
+            for identifier in identifiers:
+                bucket = self._buckets.setdefault(identifier, _LoginAttemptBucket())
+                self._prune_bucket(bucket, now)
+                if bucket.blocked_until > now:
+                    continue
+                bucket.failures.append(now)
+                if len(bucket.failures) >= self.max_failures:
+                    bucket.failures.clear()
+                    bucket.blocked_until = now + self.block_seconds
+
+    def record_success(self, identifiers: list[str]) -> None:
+        with self._lock:
+            for identifier in identifiers:
+                self._buckets.pop(identifier, None)
+
+    def _prune_bucket(self, bucket: _LoginAttemptBucket, now: float) -> None:
+        if bucket.blocked_until and bucket.blocked_until <= now:
+            bucket.blocked_until = 0.0
+            bucket.failures.clear()
+            return
+        cutoff = now - self.window_seconds
+        bucket.failures = [timestamp for timestamp in bucket.failures if timestamp > cutoff]
+
+
+def extract_client_fingerprint(headers: Mapping[str, str] | None) -> str | None:
+    normalized_headers = {
+        str(key or "").strip().lower(): str(value or "").strip()
+        for key, value in (headers or {}).items()
+    }
+
+    forwarded_for = normalized_headers.get("x-forwarded-for", "")
+    if forwarded_for:
+        candidate = forwarded_for.split(",", 1)[0].strip()
+        if candidate:
+            return candidate.lower()
+
+    real_ip = normalized_headers.get("x-real-ip", "")
+    if real_ip:
+        return real_ip.lower()
+
+    forwarded = normalized_headers.get("forwarded", "")
+    if forwarded:
+        for fragment in forwarded.split(";"):
+            key, _, value = fragment.partition("=")
+            if key.strip().lower() != "for":
+                continue
+            candidate = value.strip().strip('"').strip("[]")
+            if candidate:
+                return candidate.lower()
+
+    return None
+
+
 class AuthService:
     def __init__(
         self,
@@ -44,6 +146,7 @@ class AuthService:
         secure_cookies: bool = False,
         session_secret: str = "",
         use_stateless_sessions: bool = False,
+        login_rate_limit: LoginRateLimiter | None = None,
     ) -> None:
         self.user_repository = user_repository
         self.session_repository = session_repository
@@ -51,16 +154,31 @@ class AuthService:
         self.secure_cookies = secure_cookies
         self.session_secret = session_secret
         self.use_stateless_sessions = use_stateless_sessions
+        self.login_rate_limit = login_rate_limit or LoginRateLimiter()
 
-    def login(self, username: str, password: str) -> dict[str, Any]:
+    def login(
+        self,
+        username: str,
+        password: str,
+        *,
+        client_fingerprint: str | None = None,
+    ) -> dict[str, Any]:
         normalized_login = str(username or "").strip().lower()
         if not normalized_login or not str(password or "").strip():
             raise AuthServiceError("Wpisz uzytkownika i haslo.", status_code=400)
 
+        login_attempt_identifiers = [f"login:{normalized_login}"]
+        normalized_client_fingerprint = str(client_fingerprint or "").strip().lower()
+        if normalized_client_fingerprint:
+            login_attempt_identifiers.append(f"client:{normalized_client_fingerprint}")
+        self.login_rate_limit.ensure_allowed(login_attempt_identifiers)
+
         user = self.user_repository.find_for_login(normalized_login)
         if not user or not bool(user.get("is_active")):
+            self.login_rate_limit.record_failure(login_attempt_identifiers)
             raise AuthServiceError("Nieprawidlowy uzytkownik lub haslo.", status_code=401)
         if not verify_password(password, user.get("password_hash", "")):
+            self.login_rate_limit.record_failure(login_attempt_identifiers)
             raise AuthServiceError("Nieprawidlowy uzytkownik lub haslo.", status_code=401)
 
         now_iso = utc_now_iso()
@@ -86,6 +204,7 @@ class AuthService:
                 }
             )
         self.user_repository.touch_last_login(user["id"], now_iso)
+        self.login_rate_limit.record_success(login_attempt_identifiers)
         refreshed = self.user_repository.get_by_id(user["id"]) or user
         return {
             "token": token,
@@ -190,4 +309,3 @@ class AuthService:
     @staticmethod
     def to_public_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
         return build_public_user(user)
-

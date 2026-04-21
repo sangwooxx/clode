@@ -19,11 +19,11 @@ describe("resolveBackendOrigin", () => {
     expect(resolveBackendOrigin()).toBe("https://api.example.com");
   });
 
-  it("uses the canonical production backend when Vercel production has no explicit override", () => {
+  it("accepts NEXT_PUBLIC fallback when the server-side origin is not set", () => {
     vi.stubEnv("NODE_ENV", "production");
-    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_CLODE_BACKEND_ORIGIN", "https://preview.example.com/");
 
-    expect(resolveBackendOrigin()).toBe("https://clode-iota.vercel.app");
+    expect(resolveBackendOrigin()).toBe("https://preview.example.com");
   });
 
   it("rejects malformed configured origins instead of silently accepting them", () => {

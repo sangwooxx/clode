@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 
+from clode_backend.api.transport import coerce_api_request
+
 
 def json_response(status: int, payload: dict, headers: dict | None = None) -> tuple[int, dict, dict]:
     return status, payload, headers or {}
@@ -16,8 +18,9 @@ class RequestPayloadError(RuntimeError):
 MAX_JSON_BODY_BYTES = 1_048_576
 
 
-def parse_json_body(handler) -> dict:
-    raw_content_length = str(handler.headers.get("Content-Length", "0") or "0").strip()
+def parse_json_body(source) -> dict:
+    request = coerce_api_request(source)
+    raw_content_length = str(request.get_header("Content-Length", "0") or "0").strip()
     try:
         content_length = int(raw_content_length)
     except ValueError as error:
@@ -33,7 +36,7 @@ def parse_json_body(handler) -> dict:
             status_code=413,
         )
 
-    raw = handler.rfile.read(content_length)
+    raw = request.read_body(content_length)
     try:
         return json.loads(raw.decode("utf-8"))
     except UnicodeDecodeError as error:

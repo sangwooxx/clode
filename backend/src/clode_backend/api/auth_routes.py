@@ -7,14 +7,19 @@ from clode_backend.auth.sessions import (
     build_logout_cookies,
     build_session_cookie,
 )
+from clode_backend.services.auth_service import extract_client_fingerprint
 
 
 def handle_auth_route(context: RequestContext):
     auth_service = context.services.auth_service
 
     if context.method == "POST" and context.path == "/api/v1/auth/login":
-        body = parse_json_body(context.handler)
-        result = auth_service.login(body.get("username"), body.get("password"))
+        body = parse_json_body(context.request)
+        result = auth_service.login(
+            body.get("username"),
+            body.get("password"),
+            client_fingerprint=extract_client_fingerprint(context.request.headers),
+        )
         return json_response(
             200,
             {"ok": True, "user": result["user"]},
@@ -49,7 +54,7 @@ def handle_auth_route(context: RequestContext):
         return json_response(200, {"ok": True, "user": context.current_user})
 
     if context.method == "POST" and context.path == "/api/v1/auth/password-reset-request":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         result = auth_service.request_password_reset(body.get("username"))
         return json_response(200, {"ok": True, **result})
 

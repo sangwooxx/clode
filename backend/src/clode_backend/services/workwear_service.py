@@ -40,22 +40,33 @@ class WorkwearService:
         self.legacy_store_repository.delete("workwear_issues")
         return saved
 
-    def bootstrap_legacy_store(self) -> None:
+    def bootstrap_legacy_store(self, *, purge_legacy: bool = False) -> dict[str, int]:
+        imported_catalog = 0
         if not self.repository.list_catalog():
             legacy_catalog = self.legacy_store_repository.get("workwear_catalog")
             normalized_catalog = legacy_catalog if isinstance(legacy_catalog, list) else []
             self._validate_catalog(normalized_catalog)
             if normalized_catalog:
                 self.repository.replace_catalog(normalized_catalog)
-                self.legacy_store_repository.delete("workwear_catalog")
+                imported_catalog = len(normalized_catalog)
+                if purge_legacy:
+                    self.legacy_store_repository.delete("workwear_catalog")
 
+        imported_issues = 0
         if not self.repository.list_issues():
             legacy_issues = self.legacy_store_repository.get("workwear_issues")
             normalized_issues = legacy_issues if isinstance(legacy_issues, list) else []
             self._validate_issues(normalized_issues)
             if normalized_issues:
                 self.repository.replace_issues(normalized_issues)
-                self.legacy_store_repository.delete("workwear_issues")
+                imported_issues = len(normalized_issues)
+                if purge_legacy:
+                    self.legacy_store_repository.delete("workwear_issues")
+
+        return {
+            "catalog_imported": imported_catalog,
+            "issues_imported": imported_issues,
+        }
 
     @staticmethod
     def _validate_catalog(payload: list[dict[str, Any]]) -> None:
