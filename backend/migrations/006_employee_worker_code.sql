@@ -1,1 +1,1 @@
-CREATE INDEX IF NOT EXISTS employees_worker_code_idx ON employees(worker_code);
+-- Worker code schema is ensured by bootstrap to stay compatible with legacy SQLite databases.
