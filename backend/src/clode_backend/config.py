@@ -64,6 +64,11 @@ def load_settings() -> Settings:
         or os.getenv("AGENT_ENABLE_DEMO_SEED_IMPORT")
         or ""
     ).strip().lower() in {"1", "true", "yes", "on"}
+    force_stateful_sessions = read_env_flag(
+        "CLODE_FORCE_STATEFUL_SESSIONS",
+        "AGENT_FORCE_STATEFUL_SESSIONS",
+        False,
+    )
     configured_session_secret = str(
         os.getenv("CLODE_SESSION_SECRET")
         or os.getenv("AGENT_SESSION_SECRET")
@@ -108,7 +113,7 @@ def load_settings() -> Settings:
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
         session_secret=configured_session_secret or "clode-session",
-        use_stateless_sessions=is_vercel and not configured_database_url,
+        use_stateless_sessions=is_vercel and not force_stateful_sessions,
         secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_vercel),
         is_vercel=is_vercel,
     )
