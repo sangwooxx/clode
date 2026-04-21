@@ -11,6 +11,7 @@ def handle_store_domain_route(context: RequestContext):
     current_user = context.current_user
     auth_service = context.services.auth_service
     store_service = context.services.store_service
+    time_entry_service = context.services.time_entry_service
     user_service = context.services.user_service
     settings_service = context.services.settings_service
     workwear_service = context.services.workwear_service
@@ -110,9 +111,19 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "card": card})
         if method == "PUT":
             body = parse_json_body(context.handler)
+            saved_card = store_service.save_work_card(body.get("card"))
+            sync_error = None
+            try:
+                time_entry_service.sync_work_card_entries(saved_card, current_user)
+            except (RuntimeError, ValueError) as error:
+                sync_error = str(error) or "Nie udalo sie zsynchronizowac ewidencji czasu pracy."
             return json_response(
                 200,
-                {"ok": True, "card": store_service.save_work_card(body.get("card"))},
+                {
+                    "ok": True,
+                    "card": saved_card,
+                    **({"sync_error": sync_error} if sync_error else {}),
+                },
             )
 
     if path == "/api/v1/workwear/catalog":

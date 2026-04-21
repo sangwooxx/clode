@@ -107,6 +107,22 @@ export function getSelectedMonth(
   return months.find((month) => month.month_key === selectedMonthKey) ?? null;
 }
 
+export function resolveHoursMonthSwitch(args: {
+  months: HoursMonthRecord[];
+  currentMonthKey: string;
+  nextMonthKey: string;
+}) {
+  const currentMonth = getSelectedMonth(args.months, args.currentMonthKey);
+  const nextMonth = getSelectedMonth(args.months, args.nextMonthKey);
+
+  return {
+    currentMonth,
+    nextMonth,
+    isSameMonth:
+      String(args.currentMonthKey || "").trim() === String(args.nextMonthKey || "").trim(),
+  };
+}
+
 export function buildMonthOptions(months: HoursMonthRecord[]): HoursMonthOption[] {
   return months.map((month) => ({
     value: month.month_key,

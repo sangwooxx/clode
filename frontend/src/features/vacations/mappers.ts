@@ -68,6 +68,12 @@ export function canApproveVacationWorkflow(args: {
   return Boolean(args.canApproveVacations);
 }
 
+export function resolveVacationApprovalMode(
+  workflow: VacationsBootstrapData["workflow"] | null | undefined
+) {
+  return workflow?.vacationApprovalMode ?? "permission";
+}
+
 export function buildVacationApprovalMessage(args: {
   canApprove: boolean;
   approvalMode: VacationsBootstrapData["workflow"]["vacationApprovalMode"];

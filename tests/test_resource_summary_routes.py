@@ -208,13 +208,129 @@ class ResourceSummaryRoutesTestCase(unittest.TestCase):
         return route_request(handler, self.services)
 
     def test_employees_summary_route_returns_lightweight_relation_payload(self) -> None:
+        with connect(self.settings) as connection:
+            connection.execute(
+                """
+                INSERT INTO employees
+                (id, name, first_name, last_name, worker_code, position, status, employment_date, employment_end_date, street, city, phone, medical_exam_valid_until)
+                VALUES
+                ('emp-2', 'Kowalski Adam', 'Adam', 'Kowalski', 'WK-2', 'Monter', 'inactive', '2026-01-15', '2026-04-01', '', '', '', '')
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO time_entries
+                (id, month_id, employee_id, employee_name, contract_id, contract_name, hours, cost_amount)
+                VALUES
+                ('te-2', 'hm-2026-04', 'emp-2', 'Kowalski Adam', 'c-1', 'Kontrakt 1', 4, 160)
+                """
+            )
+            connection.commit()
+
+        self.store_service.save_store(
+            "work_cards",
+            {
+                "version": 1,
+                "cards": [
+                    {
+                        "id": "wc-1",
+                        "employee_id": "emp-1",
+                        "employee_name": "Nowak Jan",
+                        "month_key": "2026-04",
+                        "month_label": "kwiecien 2026",
+                        "updated_at": "2026-04-20T10:00:00Z",
+                        "rows": [
+                            {
+                                "date": "2026-04-20",
+                                "note": "",
+                                "entries": [
+                                    {
+                                        "id": "wce-1",
+                                        "contract_id": "c-1",
+                                        "contract_name": "Kontrakt 1",
+                                        "hours": 8,
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "id": "wc-2",
+                        "employee_id": "emp-2",
+                        "employee_name": "Kowalski Adam",
+                        "month_key": "2026-04",
+                        "month_label": "kwiecien 2026",
+                        "updated_at": "2026-04-20T11:00:00Z",
+                        "rows": [
+                            {
+                                "date": "2026-04-19",
+                                "note": "",
+                                "entries": [
+                                    {
+                                        "id": "wce-2",
+                                        "contract_id": "c-1",
+                                        "contract_name": "Kontrakt 1",
+                                        "hours": 4,
+                                    }
+                                ],
+                            }
+                        ],
+                    },
+                    {
+                        "id": "wc-legacy",
+                        "employee_id": "ghost-emp",
+                        "employee_name": "Kowalski Adam",
+                        "month_key": "2026-04",
+                        "month_label": "kwiecien 2026",
+                        "updated_at": "2026-04-20T12:30:00Z",
+                        "rows": [],
+                    },
+                    {
+                        "id": "wc-legacy-empty",
+                        "employee_id": "",
+                        "employee_name": "Legacy Worker",
+                        "month_key": "2026-04",
+                        "month_label": "kwiecien 2026",
+                        "updated_at": "2026-04-20T12:00:00Z",
+                        "rows": [],
+                    },
+                ],
+            },
+        )
+
         status, payload, _ = self._route(method="GET", path="/api/v1/employees/summary")
 
         self.assertEqual(status, 200)
-        self.assertEqual(payload["employees"][0]["id"], "emp-1")
-        self.assertEqual(payload["operational_employees"][0]["id"], "emp-1")
-        self.assertEqual(payload["relation_summaries"][0]["hours_entries"], 1)
-        self.assertEqual(payload["relation_summaries"][0]["work_cards"], 1)
+        employees_by_id = {
+            employee["id"]: employee
+            for employee in payload["employees"]
+            if employee.get("id")
+        }
+        self.assertEqual(employees_by_id["emp-1"]["status"], "active")
+        self.assertEqual(employees_by_id["emp-2"]["status"], "inactive")
+        operational_by_id = {
+            employee.get("id"): employee
+            for employee in payload["operational_employees"]
+            if employee.get("id")
+        }
+        self.assertEqual(operational_by_id["emp-1"]["status"], "active")
+        self.assertEqual(operational_by_id["emp-2"]["status"], "inactive")
+        self.assertEqual(operational_by_id["ghost-emp"]["status"], "inactive")
+        legacy_employee = next(
+            employee
+            for employee in payload["operational_employees"]
+            if employee.get("name") == "Legacy Worker"
+        )
+        self.assertEqual(legacy_employee["status"], "inactive")
+        relation_by_id = {
+            summary.get("employee_id"): summary
+            for summary in payload["relation_summaries"]
+            if summary.get("employee_id")
+        }
+        self.assertEqual(relation_by_id["emp-1"]["hours_entries"], 1)
+        self.assertEqual(relation_by_id["emp-1"]["work_cards"], 1)
+        self.assertEqual(relation_by_id["emp-2"]["hours_entries"], 1)
+        self.assertEqual(relation_by_id["emp-2"]["work_cards"], 1)
         self.assertNotIn("timeEntries", payload)
         self.assertNotIn("workCardStore", payload)
 

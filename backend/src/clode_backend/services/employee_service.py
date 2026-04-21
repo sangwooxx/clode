@@ -58,13 +58,20 @@ class EmployeeService:
         self.ensure_read_access(current_user)
         directory_employees = self.repository.list_all()
         relation_summaries = self._build_relation_summaries()
+        directory_by_id = {
+            _normalize_text(employee.get("id")): employee
+            for employee in directory_employees
+            if _normalize_text(employee.get("id"))
+        }
+        directory_by_name: dict[str, list[dict[str, Any]]] = {}
+        for employee in directory_employees:
+            normalized_name = _normalize_text(employee.get("name")).casefold()
+            if not normalized_name:
+                continue
+            directory_by_name.setdefault(normalized_name, []).append(employee)
 
         operational_employees = [
-            {
-                "id": summary["employee_id"] or None,
-                "name": summary["employee_name"],
-                "status": "active",
-            }
+            self._build_operational_employee(summary, directory_by_id, directory_by_name)
             for summary in relation_summaries
             if _normalize_text(summary.get("employee_id")) or _normalize_text(summary.get("employee_name"))
         ]
@@ -240,6 +247,41 @@ class EmployeeService:
     @staticmethod
     def _relation_key(employee_id: str, employee_name: str) -> str:
         return f"id:{employee_id}" if employee_id else f"name:{employee_name.casefold()}"
+
+    def _build_operational_employee(
+        self,
+        summary: dict[str, Any],
+        directory_by_id: dict[str, dict[str, Any]],
+        directory_by_name: dict[str, list[dict[str, Any]]],
+    ) -> dict[str, Any]:
+        summary_employee_id = _normalize_text(summary.get("employee_id"))
+        summary_employee_name = _normalize_text(summary.get("employee_name"))
+
+        matched_directory_employee = directory_by_id.get(summary_employee_id)
+        if (
+            not matched_directory_employee
+            and not summary_employee_id
+            and summary_employee_name
+        ):
+            same_name_matches = directory_by_name.get(summary_employee_name.casefold(), [])
+            if len(same_name_matches) == 1:
+                matched_directory_employee = same_name_matches[0]
+
+        if matched_directory_employee:
+            return {
+                **matched_directory_employee,
+                "id": _normalize_text(matched_directory_employee.get("id")) or summary_employee_id or None,
+                "name": _normalize_text(matched_directory_employee.get("name")) or summary_employee_name,
+                "status": normalize_employee_status(
+                    matched_directory_employee.get("status") or "active"
+                ),
+            }
+
+        return {
+            "id": summary_employee_id or None,
+            "name": summary_employee_name,
+            "status": "inactive",
+        }
 
     def _synchronize_operational_references(
         self,

@@ -17,7 +17,6 @@ from clode_backend.validation.time_entries import (
     validate_month_key,
 )
 
-
 class TimeEntryServiceError(RuntimeError):
     def __init__(self, message: str, *, status_code: int = 400) -> None:
         super().__init__(message)
@@ -72,6 +71,74 @@ class TimeEntryService:
             "months": months,
             "selected_month_key": selected_month_key,
         }
+
+    def sync_work_card_entries(self, card: dict[str, Any], current_user: dict[str, Any] | None) -> None:
+        self.ensure_write_access(current_user)
+        if not isinstance(card, dict):
+            return
+
+        month_key = validate_month_key(text(card.get("month_key")))
+        employee_name = normalize_employee_name(card.get("employee_name"))
+        employee_id = text(card.get("employee_id")) or None
+
+        if not month_key or not employee_name:
+            return
+
+        allow_name_fallback = self._allow_name_fallback(employee_name, employee_id)
+        sync_payloads = self._build_work_card_sync_payloads(
+            card,
+            month_key=month_key,
+            employee_id=employee_id,
+            employee_name=employee_name,
+        )
+        existing_entries = self._list_work_card_entries(
+            month_key,
+            employee_id=employee_id,
+            employee_name=employee_name,
+            allow_name_fallback=allow_name_fallback,
+        )
+        existing_by_contract = self._group_entries_by_contract(existing_entries)
+        month: dict[str, Any] | None = None
+        changed = False
+
+        for payload in sync_payloads:
+            contract_key = self._entry_contract_key(payload.get("contract_id"))
+            candidates = existing_by_contract.pop(contract_key, [])
+            canonical_entry, duplicate_entries = self._pick_canonical_entry(candidates)
+            normalized_payload = {
+                "month_key": month_key,
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "contract_id": payload.get("contract_id") or None,
+                "contract_name": payload.get("contract_name") or "Nieprzypisane",
+                "hours": payload.get("hours") or 0,
+                "cost_amount": 0.0,
+            }
+
+            if canonical_entry:
+                normalized_payload["id"] = canonical_entry["id"]
+                normalized_payload["month_id"] = canonical_entry["month_id"]
+                self.repository.update_entry(canonical_entry["id"], normalized_payload)
+            else:
+                month = month or self._ensure_month(month_key)
+                normalized_payload["id"] = f"time-entry-{uuid4().hex}"
+                normalized_payload["month_id"] = month["id"]
+                self.repository.insert_entry(normalized_payload)
+
+            for duplicate_entry in duplicate_entries:
+                self.repository.delete_entry(duplicate_entry["id"])
+            changed = True
+
+        for stale_entries in existing_by_contract.values():
+            for stale_entry in stale_entries:
+                self.repository.delete_entry(stale_entry["id"])
+                changed = True
+
+        if changed:
+            self._recalculate_month_costs(month_key)
+
+    def sync_work_card(self, card: dict[str, Any], current_user: dict[str, Any] | None) -> None:
+        self.sync_work_card_entries(card, current_user)
 
     def list_employees(self, current_user: dict[str, Any] | None) -> list[dict[str, Any]]:
         self.ensure_read_access(current_user)
@@ -342,4 +409,127 @@ class TimeEntryService:
             for contract in self.contract_repository.list_all(include_archived=False)
             if text(contract.get("id"))
         ]
+
+    def _build_work_card_sync_payloads(
+        self,
+        card: dict[str, Any],
+        *,
+        month_key: str,
+        employee_id: str | None,
+        employee_name: str,
+    ) -> list[dict[str, Any]]:
+        active_contract_ids = set(self._list_active_contract_ids())
+        aggregates: dict[str, dict[str, Any]] = {}
+
+        for row in card.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            for entry in row.get("entries") or []:
+                if not isinstance(entry, dict):
+                    continue
+
+                contract_id = text(entry.get("contract_id"))
+                contract_key = contract_id or "unassigned"
+                if contract_key != "unassigned" and contract_key not in active_contract_ids:
+                    continue
+
+                hours = normalize_hours(entry.get("hours"))
+                if hours <= 0:
+                    continue
+
+                aggregate = aggregates.setdefault(
+                    contract_key,
+                    {
+                        "contract_id": contract_id,
+                        "contract_name": text(entry.get("contract_name")) or "Nieprzypisane",
+                        "hours": 0.0,
+                    },
+                )
+                aggregate["hours"] += hours
+                if not aggregate["contract_name"] or aggregate["contract_name"] == "Nieprzypisane":
+                    aggregate["contract_name"] = text(entry.get("contract_name")) or "Nieprzypisane"
+
+        return [
+            {
+                "month_key": month_key,
+                "employee_id": employee_id,
+                "employee_name": employee_name,
+                "contract_id": payload["contract_id"] or "",
+                "contract_name": payload["contract_name"],
+                "hours": round(float(payload["hours"] or 0), 2),
+            }
+            for payload in aggregates.values()
+            if float(payload["hours"] or 0) > 0
+        ]
+
+    def _list_work_card_entries(
+        self,
+        month_key: str,
+        *,
+        employee_id: str | None,
+        employee_name: str,
+        allow_name_fallback: bool,
+    ) -> list[dict[str, Any]]:
+        candidates: dict[str, dict[str, Any]] = {}
+
+        if employee_id:
+            for entry in self.repository.list_entries({"month": month_key, "employee_id": employee_id}):
+                candidates[entry["id"]] = entry
+
+        if allow_name_fallback and employee_name:
+            for entry in self.repository.list_entries({"month": month_key, "employee_name": employee_name}):
+                candidates[entry["id"]] = entry
+
+        return sorted(
+            candidates.values(),
+            key=lambda entry: (
+                self._entry_contract_key(entry.get("contract_id")),
+                text(entry.get("employee_id")),
+                text(entry.get("id")),
+            ),
+        )
+
+    def _allow_name_fallback(self, employee_name: str, employee_id: str | None) -> bool:
+        if not employee_name:
+            return False
+        if not employee_id:
+            return True
+        if not self.employee_repository:
+            return False
+
+        normalized_name = employee_name.casefold()
+        same_name_count = sum(
+            1
+            for employee in self.employee_repository.list_all()
+            if text(employee.get("name")).casefold() == normalized_name
+        )
+        return same_name_count <= 1
+
+    @staticmethod
+    def _entry_contract_key(contract_id: Any) -> str:
+        normalized_contract_id = text(contract_id)
+        return normalized_contract_id or "unassigned"
+
+    def _group_entries_by_contract(
+        self,
+        entries: list[dict[str, Any]],
+    ) -> dict[str, list[dict[str, Any]]]:
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for entry in entries:
+            grouped.setdefault(self._entry_contract_key(entry.get("contract_id")), []).append(entry)
+        return grouped
+
+    @staticmethod
+    def _pick_canonical_entry(entries: list[dict[str, Any]]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+        if not entries:
+            return None, []
+
+        ordered_entries = sorted(
+            entries,
+            key=lambda entry: (
+                0 if text(entry.get("employee_id")) else 1,
+                text(entry.get("id")),
+            ),
+        )
+        return ordered_entries[0], ordered_entries[1:]
 

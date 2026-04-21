@@ -46,6 +46,7 @@ import {
   findVacationRequestById,
   normalizeVacationStore,
   resolveVacationEditingEmployee,
+  resolveVacationApprovalMode,
 } from "@/features/vacations/mappers";
 import type {
   VacationApprovalRow,
@@ -405,7 +406,9 @@ export function VacationsView({
   const [isSavingBalance, setIsSavingBalance] = useState(false);
 
   const approvalMode =
-    state.status === "success" ? state.data.workflow.vacationApprovalMode : "permission";
+    state.status === "success"
+      ? resolveVacationApprovalMode(state.data.workflow)
+      : "permission";
   const canApprove = canApproveVacationWorkflow({
     role: user?.role,
     canApproveVacations: user?.canApproveVacations,

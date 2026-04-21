@@ -555,10 +555,6 @@ export function WorkCardView({
       const result = await saveWorkCardAndSync({
         card: nextCard,
         employee: selectedEmployee,
-        employees,
-        syncableContractIds: contractOptions
-          .filter((option) => option.status === "active")
-          .map((option) => option.id),
       });
 
       setLoadedCard(result.card);

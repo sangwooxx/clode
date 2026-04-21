@@ -33,6 +33,7 @@ import {
   getMonthEntries,
   getSelectedMonth,
   normalizeFinanceDraft,
+  resolveHoursMonthSwitch,
 } from "@/features/hours/mappers";
 import type {
   HoursBootstrapData,
@@ -725,26 +726,34 @@ export function HoursView({
   }
 
   async function handleSelectMonth(nextMonthKey: string) {
-    setSelectedMonthKey(nextMonthKey);
     setMonthError(null);
     setMonthStatus(null);
     setFormError(null);
     setFormStatus(null);
 
-    await reloadHours({ preserveState: true, preferredMonthKey: nextMonthKey });
-
-    if (!canWrite || state.status !== "success") {
+    if (state.status !== "success") {
       return;
     }
 
-    const currentMonth = selectedMonth;
-    const nextMonth = state.data.months.find((month) => month.month_key === nextMonthKey) ?? null;
+    const monthSwitch = resolveHoursMonthSwitch({
+      months: state.data.months,
+      currentMonthKey: selectedMonthKey,
+      nextMonthKey,
+    });
 
-    if (!nextMonth || currentMonth?.month_key === nextMonthKey) {
+    if (!monthSwitch.nextMonth || monthSwitch.isSameMonth) {
+      return;
+    }
+
+    setSelectedMonthKey(nextMonthKey);
+
+    if (!canWrite) {
+      await reloadHours({ preserveState: true, preferredMonthKey: nextMonthKey });
       return;
     }
 
     try {
+      const { currentMonth, nextMonth } = monthSwitch;
       const requests = [];
 
       if (currentMonth) {

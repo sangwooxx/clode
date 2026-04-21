@@ -19,6 +19,7 @@ from clode_backend.api.routes import route_request  # noqa: E402
 from clode_backend.api.context import ApiServices  # noqa: E402
 from clode_backend.config import load_settings  # noqa: E402
 from clode_backend.db.bootstrap import ensure_database  # noqa: E402
+from clode_backend.db.connection import connect  # noqa: E402
 from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
 from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
 from clode_backend.repositories.employee_repository import EmployeeRepository  # noqa: E402
@@ -205,6 +206,50 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         self.assertEqual(read_payload["store"]["cards"][0]["employee_name"], "Jan Nowak")
 
     def test_work_card_card_and_history_routes_use_lightweight_domain_contract(self) -> None:
+        with connect(self.settings) as connection:
+            connection.execute(
+                """
+                INSERT INTO employees
+                (id, name, first_name, last_name, worker_code, position, status, employment_date, employment_end_date, street, city, phone, medical_exam_valid_until)
+                VALUES
+                ('emp-1', 'Jan Nowak', 'Jan', 'Nowak', 'WK-1', 'Brygadzista', 'active', '2026-01-10', '', '', '', '', ''),
+                ('emp-2', 'Adam Lis', 'Adam', 'Lis', 'WK-2', 'Monter', 'active', '2026-01-10', '', '', '', '', '')
+                """
+            )
+            connection.execute(
+                """
+                INSERT OR IGNORE INTO contracts
+                (id, contract_number, name, investor, signed_date, end_date, contract_value, status, created_at, updated_at, deleted_at)
+                VALUES
+                ('c-1', '001', 'Kontrakt 1', 'Inwestor A', '2026-01-01', '', 1000, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL)
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO contracts
+                (id, contract_number, name, investor, signed_date, end_date, contract_value, status, created_at, updated_at, deleted_at)
+                VALUES
+                ('c-2', '002', 'Kontrakt 2', 'Inwestor B', '2026-01-01', '', 1000, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL)
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO hours_months
+                (id, month_key, month_label, selected, visible_investments_json, finance_json)
+                VALUES
+                ('hm-2026-04', '2026-04', 'kwiecien 2026', 1, '["c-1"]', '{}')
+                """
+            )
+            connection.execute(
+                """
+                INSERT INTO time_entries
+                (id, month_id, employee_id, employee_name, contract_id, contract_name, hours, cost_amount)
+                VALUES
+                ('te-stale-1', 'hm-2026-04', 'emp-1', 'Jan Nowak', NULL, 'Nieprzypisane', 3, 120)
+                """
+            )
+            connection.commit()
+
         self._route(
             method="PUT",
             path="/api/v1/work-cards/state",
@@ -244,6 +289,16 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
         )
         self.assertEqual(save_status, 200)
         self.assertEqual(save_payload["card"]["rows"][0]["entries"][0]["hours"], 6)
+        self.assertNotIn("sync_error", save_payload)
+
+        time_entries_status, time_entries_payload, _ = self._route(
+            method="GET",
+            path="/api/v1/time-entries?month=2026-04&employee_id=emp-1",
+        )
+        self.assertEqual(time_entries_status, 200)
+        self.assertEqual(len(time_entries_payload["entries"]), 1)
+        self.assertEqual(time_entries_payload["entries"][0]["contract_id"], "c-1")
+        self.assertEqual(time_entries_payload["entries"][0]["hours"], 6.0)
 
         state_status, state_payload, _ = self._route(method="GET", path="/api/v1/work-cards/state")
         self.assertEqual(state_status, 200)
