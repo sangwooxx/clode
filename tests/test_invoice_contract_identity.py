@@ -23,7 +23,10 @@ from clode_backend.config import load_settings  # noqa: E402
 from clode_backend.db.bootstrap import ensure_database  # noqa: E402
 from clode_backend.db.connection import connect  # noqa: E402
 from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
-from clode_backend.repositories.invoice_repository import InvoiceRepository  # noqa: E402
+from clode_backend.repositories.invoice_repository import (  # noqa: E402
+    InvoiceRepository,
+    _effective_payment_status_sql,
+)
 from clode_backend.services.invoice_service import InvoiceService  # noqa: E402
 from import_legacy_snapshot import insert_normalized_data  # noqa: E402
 
@@ -212,6 +215,12 @@ class InvoiceContractIdentityTestCase(unittest.TestCase):
         self.assertEqual(len(overdue_items["items"]), 1)
         self.assertEqual(overdue_items["items"][0]["id"], created["id"])
         self.assertEqual(overdue_items["items"][0]["payment_status"], "overdue")
+
+    def test_effective_payment_status_sql_uses_text_safe_current_date_comparison(self) -> None:
+        sql = _effective_payment_status_sql()
+
+        self.assertIn("CAST(CURRENT_DATE AS TEXT)", sql)
+        self.assertNotIn("due_date < CURRENT_DATE", sql)
 
     def test_legacy_import_is_deterministic_and_materializes_only_unique_matches(self) -> None:
         stores = {

@@ -7,11 +7,12 @@ from clode_backend.repositories.base import RepositoryBase
 
 def _effective_payment_status_sql(*, table_alias: str = "") -> str:
     prefix = f"{table_alias}." if table_alias else ""
+    due_date_value = f"trim(COALESCE({prefix}due_date, ''))"
     return (
         "CASE "
         f"WHEN trim(COALESCE({prefix}payment_date, '')) <> '' THEN 'paid' "
         f"WHEN lower(trim(COALESCE({prefix}payment_status, ''))) = 'paid' THEN 'paid' "
-        f"WHEN trim(COALESCE({prefix}due_date, '')) <> '' AND {prefix}due_date < CURRENT_DATE THEN 'overdue' "
+        f"WHEN {due_date_value} <> '' AND {due_date_value} < CAST(CURRENT_DATE AS TEXT) THEN 'overdue' "
         "ELSE 'unpaid' "
         "END"
     )
