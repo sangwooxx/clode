@@ -46,6 +46,8 @@ def create_runtime_context():
         SessionRepository(settings),
         settings.session_ttl_hours,
         secure_cookies=settings.secure_cookies,
+        session_secret=settings.session_secret,
+        use_stateless_sessions=settings.use_stateless_sessions,
     )
     contract_repository = ContractRepository(settings)
     invoice_service = InvoiceService(InvoiceRepository(settings), contract_repository)

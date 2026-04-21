@@ -191,6 +191,22 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
         self.assertEqual(valid_status, 204)
         self.assertEqual(valid_payload, {})
 
+    def test_stateless_sessions_survive_without_session_repository_storage(self) -> None:
+        stateless_auth = AuthService(
+            self.user_service.repository,
+            SessionRepository(self.settings),
+            self.settings.session_ttl_hours,
+            secure_cookies=self.settings.secure_cookies,
+            session_secret="test-session-secret",
+            use_stateless_sessions=True,
+        )
+
+        login_payload = stateless_auth.login("admin", "admin")
+        current_user = stateless_auth.get_current_user(login_payload["token"])
+
+        self.assertIsNotNone(current_user)
+        self.assertEqual(current_user["username"], "admin")
+
 
 if __name__ == "__main__":
     unittest.main()

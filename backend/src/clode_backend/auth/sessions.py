@@ -1,7 +1,10 @@
 ﻿from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+import base64
 import hashlib
+import hmac
+import json
 import secrets
 from http.cookies import SimpleCookie
 
@@ -36,6 +39,95 @@ def generate_session_token() -> str:
 
 def hash_session_token(token: str) -> str:
     return hashlib.sha256(str(token or "").encode("utf-8")).hexdigest()
+
+
+def _urlsafe_b64encode(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
+
+
+def _urlsafe_b64decode(value: str) -> bytes:
+    padding = "=" * (-len(value) % 4)
+    return base64.urlsafe_b64decode(f"{value}{padding}".encode("ascii"))
+
+
+def _session_signing_key(password_hash: str, session_secret: str) -> bytes:
+    return hashlib.sha256(
+        f"{session_secret}:{password_hash}".encode("utf-8")
+    ).digest()
+
+
+def build_stateless_session_token(
+    *,
+    user_id: str,
+    password_hash: str,
+    ttl_hours: int,
+    session_secret: str,
+) -> str:
+    expires_at = int((utc_now() + timedelta(hours=ttl_hours)).timestamp())
+    payload = {
+        "sub": str(user_id),
+        "exp": expires_at,
+    }
+    payload_bytes = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    payload_token = _urlsafe_b64encode(payload_bytes)
+    signature = hmac.new(
+        _session_signing_key(password_hash, session_secret),
+        payload_token.encode("ascii"),
+        hashlib.sha256,
+    ).digest()
+    return f"{payload_token}.{_urlsafe_b64encode(signature)}"
+
+
+def read_stateless_session_subject(token: str) -> str:
+    try:
+        payload_token, _ = str(token or "").split(".", 1)
+        payload = json.loads(_urlsafe_b64decode(payload_token).decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError, base64.binascii.Error):
+        return ""
+
+    subject = str((payload or {}).get("sub") or "").strip()
+    return subject
+
+
+def verify_stateless_session_token(
+    token: str,
+    *,
+    password_hash: str,
+    session_secret: str,
+) -> dict[str, str | int] | None:
+    try:
+        payload_token, signature_token = str(token or "").split(".", 1)
+        expected_signature = hmac.new(
+            _session_signing_key(password_hash, session_secret),
+            payload_token.encode("ascii"),
+            hashlib.sha256,
+        ).digest()
+        actual_signature = _urlsafe_b64decode(signature_token)
+        if not hmac.compare_digest(actual_signature, expected_signature):
+            return None
+        payload = json.loads(_urlsafe_b64decode(payload_token).decode("utf-8"))
+    except (ValueError, json.JSONDecodeError, UnicodeDecodeError, base64.binascii.Error):
+        return None
+
+    if not isinstance(payload, dict):
+        return None
+
+    try:
+        expires_at = int(payload.get("exp") or 0)
+    except (TypeError, ValueError):
+        return None
+
+    if expires_at <= int(utc_now().timestamp()):
+        return None
+
+    subject = str(payload.get("sub") or "").strip()
+    if not subject:
+        return None
+
+    return {
+        "sub": subject,
+        "exp": expires_at,
+    }
 
 
 def _apply_cookie_security(cookie, cookie_name: str, secure: bool) -> None:

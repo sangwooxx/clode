@@ -16,6 +16,8 @@ class Settings:
     project_root: Path
     allowed_origins: tuple[str, ...]
     session_ttl_hours: int
+    session_secret: str
+    use_stateless_sessions: bool
     secure_cookies: bool
     is_vercel: bool
 
@@ -62,6 +64,11 @@ def load_settings() -> Settings:
         or os.getenv("AGENT_ENABLE_DEMO_SEED_IMPORT")
         or ""
     ).strip().lower() in {"1", "true", "yes", "on"}
+    configured_session_secret = str(
+        os.getenv("CLODE_SESSION_SECRET")
+        or os.getenv("AGENT_SESSION_SECRET")
+        or ""
+    ).strip()
     local_seed_bootstrap = False
 
     if configured_database_url:
@@ -100,6 +107,8 @@ def load_settings() -> Settings:
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
+        session_secret=configured_session_secret or "clode-session",
+        use_stateless_sessions=is_vercel and not configured_database_url,
         secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_vercel),
         is_vercel=is_vercel,
     )
