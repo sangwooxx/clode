@@ -31,9 +31,15 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthenticatedUser | null>(null);
-  const [initialized, setInitialized] = useState(false);
+export function AuthProvider({
+  children,
+  initialUser,
+}: {
+  children: ReactNode;
+  initialUser: AuthenticatedUser | null;
+}) {
+  const [user, setUser] = useState<AuthenticatedUser | null>(initialUser);
+  const [initialized, setInitialized] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const bootstrap = useCallback(async () => {
@@ -50,8 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    void bootstrap();
-  }, [bootstrap]);
+    setUser(initialUser);
+    setInitialized(true);
+    setIsLoading(false);
+  }, [initialUser]);
 
   const refresh = useCallback(async () => {
     await bootstrap();

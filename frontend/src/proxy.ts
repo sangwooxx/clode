@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildLoginRedirectPath } from "@/lib/auth/login-redirect";
-import { PRIMARY_SESSION_COOKIE_NAME } from "@/lib/auth/session-keys";
+import { SESSION_COOKIE_NAMES } from "@/lib/auth/session-keys";
 
 const protectedPrefixes = [
   "/dashboard",
@@ -16,7 +16,7 @@ const protectedPrefixes = [
 ];
 
 function hasSessionCookie(request: NextRequest) {
-  return request.cookies.has(PRIMARY_SESSION_COOKIE_NAME);
+  return SESSION_COOKIE_NAMES.some((name) => request.cookies.has(name));
 }
 
 function isProtectedPath(pathname: string) {

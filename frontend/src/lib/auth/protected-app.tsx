@@ -18,11 +18,7 @@ export function ProtectedApp({ children }: { children: ReactNode }) {
     }
   }, [initialized, isLoading, pathname, router, user]);
 
-  if (!initialized || isLoading) {
-    return <div className="screen-state">Trwa bootstrap sesji...</div>;
-  }
-
-  if (!user) {
+  if (initialized && !isLoading && !user) {
     return <div className="screen-state">Przekierowanie do logowania...</div>;
   }
 

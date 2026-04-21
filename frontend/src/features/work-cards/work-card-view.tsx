@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
@@ -108,9 +108,11 @@ function buildMonthKey(year: string, month: string) {
 
 export function WorkCardView({
   initialBootstrap,
+  initialCard,
   initialError,
 }: {
   initialBootstrap?: WorkCardBootstrapData | null;
+  initialCard?: WorkCardRecord | null;
   initialError?: string | null;
 }) {
   const { user } = useAuth();
@@ -125,7 +127,7 @@ export function WorkCardView({
     initialBootstrap?.historicalCards ?? []
   );
   const [months, setMonths] = useState<HoursMonthRecord[]>(initialBootstrap?.months ?? []);
-  const [loadedCard, setLoadedCard] = useState<WorkCardRecord | null>(null);
+  const [loadedCard, setLoadedCard] = useState<WorkCardRecord | null>(initialCard ?? null);
   const [loadState, setLoadState] = useState<LoadState>(() => {
     if (initialBootstrap) return { status: "success" };
     if (initialError) return { status: "error", message: initialError };
@@ -152,6 +154,11 @@ export function WorkCardView({
   const [selectedHistoricalCardId, setSelectedHistoricalCardId] = useState<string | null>(null);
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [workCardPdfConfig, setWorkCardPdfConfig] = useState<PdfConfigState>({});
+  const initialCardRequestKeyRef = useRef<string | null>(
+    initialBootstrap?.selectedMonthKey && initialBootstrap?.selectedEmployeeKey
+      ? `${initialBootstrap.selectedMonthKey}|${initialBootstrap.selectedEmployeeKey}`
+      : null
+  );
 
   async function reloadWorkCards(options?: { preserveSelection?: boolean }) {
     if (options?.preserveSelection) {
@@ -359,6 +366,23 @@ export function WorkCardView({
       },
     };
   }, [selectedEmployee, selectedHistoricalCard, selectedMonthKey]);
+  const selectedCardRequestKey = useMemo(() => {
+    if (selectedHistoricalCard) {
+      return `${selectedHistoricalCard.monthKey}|${
+        String(selectedHistoricalCard.employee?.id || "").trim() ||
+        normalizeEmployeeLookupKey(selectedHistoricalCard.summary.employee_name)
+      }`;
+    }
+
+    if (!selectedEmployee || !selectedMonthKey) {
+      return null;
+    }
+
+    return `${selectedMonthKey}|${
+      String(selectedEmployee.id || "").trim() ||
+      normalizeEmployeeLookupKey(selectedEmployee.name)
+    }`;
+  }, [selectedEmployee, selectedHistoricalCard, selectedMonthKey]);
   const previewCard = loadedCard;
   const activeCard = selectedHistoricalCard ? null : loadedCard;
 
@@ -370,10 +394,20 @@ export function WorkCardView({
       return;
     }
 
+    if (
+      initialCardRequestKeyRef.current &&
+      selectedCardRequestKey &&
+      selectedCardRequestKey === initialCardRequestKeyRef.current
+    ) {
+      initialCardRequestKeyRef.current = null;
+      setCardError(null);
+      setIsCardLoading(false);
+      return;
+    }
+
     let cancelled = false;
     setIsCardLoading(true);
     setCardError(null);
-    setLoadedCard(null);
 
     void fetchWorkCardCard(selectedCardRequest)
       .then((card) => {
@@ -397,7 +431,7 @@ export function WorkCardView({
     return () => {
       cancelled = true;
     };
-  }, [selectedCardRequest]);
+  }, [selectedCardRequest, selectedCardRequestKey]);
 
   const contractOptions = useMemo(
     () =>

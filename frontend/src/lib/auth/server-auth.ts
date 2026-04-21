@@ -1,15 +1,25 @@
 import { redirect } from "next/navigation";
 import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
-import type { ApiUserRecord } from "@/lib/api/user-record";
+import {
+  toAuthenticatedUser,
+  type ApiUserRecord,
+  type AuthenticatedUser,
+} from "@/lib/api/user-record";
 
-export async function requireServerSession(nextPath: string) {
+export async function readOptionalServerSession(): Promise<AuthenticatedUser | null> {
   const { payload } = await fetchBackendJsonServer<{ user?: ApiUserRecord }>("/auth/me", {
-    nextPath,
+    allowStatuses: [401],
   });
 
-  if (!payload?.user) {
+  return toAuthenticatedUser(payload?.user);
+}
+
+export async function requireServerSession(nextPath: string) {
+  const user = await readOptionalServerSession();
+
+  if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
 
-  return payload.user;
+  return user;
 }

@@ -18,6 +18,16 @@ describe("proxy auth boundary", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
+  it("allows protected routes when only the legacy session cookie exists", async () => {
+    const response = await proxy(
+      new NextRequest("https://clode-next.vercel.app/employees", {
+        headers: { cookie: "agent_session=legacy-session" },
+      })
+    );
+
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
   it("redirects protected routes to login when the session cookie is missing", async () => {
     const response = await proxy(
       new NextRequest("https://clode-next.vercel.app/employees")
