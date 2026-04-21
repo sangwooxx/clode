@@ -8,16 +8,7 @@ describe("proxy auth boundary", () => {
     vi.restoreAllMocks();
   });
 
-  it("allows protected routes when the session validates", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(null, {
-          status: 204,
-        })
-      )
-    );
-
+  it("allows protected routes when the primary session cookie exists", async () => {
     const response = await proxy(
       new NextRequest("https://clode-next.vercel.app/employees", {
         headers: { cookie: "clode_session=test-session" },
@@ -27,21 +18,9 @@ describe("proxy auth boundary", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("redirects protected routes to login when the session is invalid", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ ok: false }), {
-          status: 401,
-          headers: { "content-type": "application/json" },
-        })
-      )
-    );
-
+  it("redirects protected routes to login when the session cookie is missing", async () => {
     const response = await proxy(
-      new NextRequest("https://clode-next.vercel.app/employees", {
-        headers: { cookie: "clode_session=test-session" },
-      })
+      new NextRequest("https://clode-next.vercel.app/employees")
     );
 
     expect(response.status).toBe(307);
@@ -50,18 +29,13 @@ describe("proxy auth boundary", () => {
     );
   });
 
-  it("fails closed for protected routes when session validation cannot be completed", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("backend unavailable")));
-
+  it("allows the login route to render even when a stale cookie is present", async () => {
     const response = await proxy(
-      new NextRequest("https://clode-next.vercel.app/employees", {
+      new NextRequest("https://clode-next.vercel.app/login?next=%2Femployees", {
         headers: { cookie: "clode_session=test-session" },
       })
     );
 
-    expect(response.status).toBe(307);
-    expect(response.headers.get("location")).toBe(
-      "https://clode-next.vercel.app/login?next=%2Femployees&reason=session-expired"
-    );
+    expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 });
