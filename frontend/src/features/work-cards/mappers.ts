@@ -23,6 +23,7 @@ import type {
   WorkCardDayViewModel,
   WorkCardEmployeeOption,
   WorkCardEntryRecord,
+  WorkCardHistorySummary,
   WorkCardRecord,
   WorkCardStore,
   WorkCardSummaryCard,
@@ -34,6 +35,41 @@ function normalizeName(value: string) {
 
 function normalizeEmployeeStatus(status: HoursEmployeeRecord["status"]) {
   return status === "inactive" ? "inactive" : "active";
+}
+
+export function mergeWorkCardEmployeeDirectory(args: {
+  employeeDirectory: HoursEmployeeRecord[];
+  historicalCards: WorkCardHistorySummary[];
+}) {
+  const employeesByKey = new Map<string, HoursEmployeeRecord>();
+
+  args.employeeDirectory.forEach((employee, index) => {
+    employeesByKey.set(buildWorkCardEmployeeKey(employee, index), employee);
+  });
+
+  args.historicalCards.forEach((card, index) => {
+    const employeeName = String(card.employee_name || "").trim();
+    const employeeId = String(card.employee_id || "").trim();
+    if (!employeeName && !employeeId) {
+      return;
+    }
+
+    const fallbackEmployee = {
+      id: employeeId || undefined,
+      name: employeeName,
+      status: "active" as const,
+    } satisfies HoursEmployeeRecord;
+    const key = buildWorkCardEmployeeKey(
+      fallbackEmployee,
+      args.employeeDirectory.length + index
+    );
+
+    if (!employeesByKey.has(key)) {
+      employeesByKey.set(key, fallbackEmployee);
+    }
+  });
+
+  return [...employeesByKey.values()];
 }
 
 export function buildWorkCardEmployeeKey(

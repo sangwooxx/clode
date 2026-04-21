@@ -51,11 +51,11 @@ async function fetchEmployeesDirectoryServer() {
     "/employees",
     {
       nextPath: "/hours",
-      allowStatuses: [404],
+      allowStatuses: [403, 404],
     }
   );
 
-  if (status === 404) {
+  if (status === 403 || status === 404) {
     return [];
   }
 

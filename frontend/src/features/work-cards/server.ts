@@ -1,6 +1,9 @@
 import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
 import { fetchContractsServer } from "@/features/contracts/server";
-import { buildWorkCardEmployeeOptions } from "@/features/work-cards/mappers";
+import {
+  buildWorkCardEmployeeOptions,
+  mergeWorkCardEmployeeDirectory,
+} from "@/features/work-cards/mappers";
 import type {
   WorkCardBootstrapData,
   WorkCardHistorySummary,
@@ -18,11 +21,11 @@ async function fetchEmployeesDirectoryServer() {
     "/employees",
     {
       nextPath: "/work-cards",
-      allowStatuses: [404],
+      allowStatuses: [403, 404],
     }
   );
 
-  if (status === 404) {
+  if (status === 403 || status === 404) {
     return [];
   }
 
@@ -107,7 +110,11 @@ export async function fetchWorkCardBootstrapServer(): Promise<{
     fetchWorkCardBootstrapPayloadServer(),
     fetchWorkCardHistoryServer(),
   ]);
-  const employees = employeeDirectory.filter((employee) => employee.status !== "inactive");
+  const mergedEmployeeDirectory = mergeWorkCardEmployeeDirectory({
+    employeeDirectory,
+    historicalCards,
+  });
+  const employees = mergedEmployeeDirectory.filter((employee) => employee.status !== "inactive");
   const employeeOptions = buildWorkCardEmployeeOptions(employees);
   const selectedEmployeeKey =
     employeeOptions.find((option) => option.status !== "inactive")?.key ||
@@ -120,7 +127,7 @@ export async function fetchWorkCardBootstrapServer(): Promise<{
     bootstrap: {
       contracts,
       employees,
-      historicalEmployees: employeeDirectory,
+      historicalEmployees: mergedEmployeeDirectory,
       months: bootstrapPayload.months,
       selectedMonthKey: bootstrapPayload.selectedMonthKey,
       selectedEmployeeKey,

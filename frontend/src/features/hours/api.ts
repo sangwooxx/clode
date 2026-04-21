@@ -1,5 +1,6 @@
 import { listContracts } from "@/lib/api/contracts";
 import { listEmployees } from "@/lib/api/employees";
+import { ApiError } from "@/lib/api/http";
 import {
   createTimeEntry,
   createTimeMonth,
@@ -45,10 +46,20 @@ export async function fetchHoursContracts() {
 }
 
 export async function fetchHoursEmployeeDirectory() {
-  const directoryResponse = (await listEmployees()) as {
-    employees?: HoursEmployeeRecord[];
-  };
-  return Array.isArray(directoryResponse.employees) ? directoryResponse.employees || [] : [];
+  try {
+    const directoryResponse = (await listEmployees()) as {
+      employees?: HoursEmployeeRecord[];
+    };
+    return Array.isArray(directoryResponse.employees) ? directoryResponse.employees || [] : [];
+  } catch (error) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 403 || error.status === 404)
+    ) {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export async function fetchHoursEmployees() {

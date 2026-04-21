@@ -98,7 +98,10 @@ async function fetchWorkflowSettings() {
     });
     return createDefaultWorkflowValues(response.workflow);
   } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
+    if (
+      error instanceof ApiError &&
+      (error.status === 401 || error.status === 403 || error.status === 404)
+    ) {
       return createDefaultWorkflowValues();
     }
     throw error;

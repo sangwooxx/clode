@@ -4,6 +4,7 @@
   "functions": {
     "api/index.py": {
       "regions": ["fra1"],
+      "includeFiles": "shared/contracts/**",
       "excludeFiles": "{tmp/**,tests/**,docs/**,.git/**,**/__pycache__/**,backend/var/**,scripts/**,frontend/**,config/**,data/**}"
     }
   },

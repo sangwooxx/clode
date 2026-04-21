@@ -23,8 +23,10 @@ class VercelConfigTestCase(unittest.TestCase):
         config = json.loads((PROJECT_DIR / "vercel.json").read_text(encoding="utf-8"))
         api_function = config["functions"]["api/index.py"]
         excluded = str(api_function.get("excludeFiles") or "")
+        included = str(api_function.get("includeFiles") or "")
 
         self.assertNotIn("shared/**", excluded)
+        self.assertIn("shared/contracts/**", included)
 
     def test_shared_contracts_directory_resolves_to_real_files(self) -> None:
         self.assertTrue((CONTRACTS_DIR / "employee.schema.json").exists())

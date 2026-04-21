@@ -5,7 +5,10 @@ import {
   fetchHoursEmployeeDirectory,
 } from "@/features/hours/api";
 import { ApiError, http } from "@/lib/api/http";
-import { buildWorkCardEmployeeOptions } from "@/features/work-cards/mappers";
+import {
+  buildWorkCardEmployeeOptions,
+  mergeWorkCardEmployeeDirectory,
+} from "@/features/work-cards/mappers";
 import {
   type WorkCardBootstrapData,
   type WorkCardHistorySummary,
@@ -75,7 +78,11 @@ export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapD
     fetchWorkCardHistorySummaries(),
   ]);
 
-  const employees = employeeDirectory.filter((employee) => employee.status !== "inactive");
+  const mergedEmployeeDirectory = mergeWorkCardEmployeeDirectory({
+    employeeDirectory,
+    historicalCards,
+  });
+  const employees = mergedEmployeeDirectory.filter((employee) => employee.status !== "inactive");
   const employeeOptions = buildWorkCardEmployeeOptions(employees);
   const months = bootstrapSummary.months;
   const selectedMonthKey =
@@ -87,7 +94,7 @@ export async function fetchWorkCardBootstrapClient(): Promise<WorkCardBootstrapD
   return {
     contracts,
     employees,
-    historicalEmployees: employeeDirectory,
+    historicalEmployees: mergedEmployeeDirectory,
     months,
     selectedMonthKey,
     selectedEmployeeKey:

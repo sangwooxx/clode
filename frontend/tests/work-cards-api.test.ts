@@ -48,6 +48,23 @@ vi.mock("@/features/work-cards/mappers", () => ({
       status: employee.status ?? "active",
       employee,
     })),
+  mergeWorkCardEmployeeDirectory: ({
+    employeeDirectory,
+    historicalCards,
+  }: {
+    employeeDirectory: Array<{ id?: string; name?: string; status?: string }>;
+    historicalCards: Array<{ employee_id?: string; employee_name?: string }>;
+  }) => {
+    if (employeeDirectory.length > 0) {
+      return employeeDirectory;
+    }
+
+    return historicalCards.map((card) => ({
+      id: card.employee_id,
+      name: card.employee_name,
+      status: "active",
+    }));
+  },
 }));
 
 import {
@@ -88,6 +105,31 @@ describe("work cards api", () => {
     expect(payload.historicalEmployees).toHaveLength(2);
     expect(payload.historicalCards).toHaveLength(1);
     expect(payload.selectedMonthKey).toBe("2026-04");
+  });
+
+  it("rebuilds employee options from history when employee directory is unavailable", async () => {
+    fetchHoursEmployeeDirectoryMock.mockResolvedValueOnce([]);
+    httpMock.mockResolvedValueOnce({
+      cards: [
+        {
+          card_id: "card-9",
+          employee_id: "emp-9",
+          employee_name: "Anna Krol",
+          month_key: "2026-04",
+          month_label: "kwiecien 2026",
+          updated_at: "2026-04-18T10:00:00Z",
+          total_hours: 10,
+          filled_days: 2,
+        },
+      ],
+    });
+
+    const payload = await fetchWorkCardBootstrapClient();
+
+    expect(payload.employees).toEqual([
+      { id: "emp-9", name: "Anna Krol", status: "active" },
+    ]);
+    expect(payload.selectedEmployeeKey).toBe("id:emp-9");
   });
 
   it("requests a single work card by month and employee reference", async () => {
