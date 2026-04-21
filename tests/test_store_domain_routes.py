@@ -342,8 +342,46 @@ class StoreDomainRoutesTestCase(unittest.TestCase):
             ),
         )
         self.assertEqual(append_status, 201)
-        self.assertEqual(append_payload["entry"]["id"], "audit-new-1")
-        self.assertEqual(self.settings_repository.list_audit_logs()[0]["id"], "audit-new-1")
+        self.assertNotEqual(append_payload["entry"]["id"], "audit-new-1")
+        self.assertEqual(append_payload["entry"]["user_id"], "user-admin")
+        self.assertEqual(append_payload["entry"]["user_name"], "Admin ERP")
+        self.assertNotEqual(append_payload["entry"]["timestamp"], "2026-04-20T12:00:00Z")
+        self.assertEqual(
+            self.settings_repository.list_audit_logs()[0]["id"],
+            append_payload["entry"]["id"],
+        )
+
+        replace_status, replace_payload, _ = self._route(
+            method="PUT",
+            path="/api/v1/settings/audit-log",
+            body=b'{"entries":[]}',
+        )
+        self.assertEqual(replace_status, 404)
+        self.assertFalse(replace_payload["ok"])
+
+    def test_work_card_put_rolls_back_store_when_time_entry_sync_fails(self) -> None:
+        save_status, save_payload, _ = self._route(
+            method="PUT",
+            path="/api/v1/work-cards/card",
+            body=(
+                b'{"card":{"id":"card-invalid","employee_id":"emp-1","employee_name":"Jan Nowak",'
+                b'"month_key":"invalid-month","month_label":"bad","updated_at":"2026-04-21T10:00:00Z","rows":[]}}'
+            ),
+        )
+
+        self.assertEqual(save_status, 400)
+        self.assertFalse(save_payload["ok"])
+
+        state_status, state_payload, _ = self._route(method="GET", path="/api/v1/work-cards/state")
+        self.assertEqual(state_status, 200)
+        self.assertEqual(state_payload["store"]["cards"], [])
+
+    def test_legacy_store_routes_are_blocked_for_dedicated_domains(self) -> None:
+        status, payload, _ = self._route(method="GET", path="/api/v1/stores/settings")
+
+        self.assertEqual(status, 410)
+        self.assertFalse(payload["ok"])
+        self.assertIn("dedicated domain endpoint", payload["error"])
 
     def test_workwear_routes_backfill_store_documents_into_sql_tables(self) -> None:
         self.store_service.save_store(

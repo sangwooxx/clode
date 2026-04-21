@@ -14,6 +14,7 @@ if str(BACKEND_SRC) not in sys.path:
     sys.path.insert(0, str(BACKEND_SRC))
 
 from clode_backend.api.routes import route_request
+from clode_backend.api.cors import resolve_cors_origin
 from clode_backend.app import create_runtime_context
 from clode_backend.auth.sessions import LEGACY_SESSION_HEADER_NAME, SESSION_HEADER_NAME
 
@@ -33,20 +34,11 @@ class handler(BaseHTTPRequestHandler):
         return self._runtime()["settings"]
 
     def _cors_origin(self) -> str:
-        origin = str(self.headers.get("Origin") or "").strip()
-        if not origin:
-            allowed_origins = self._settings().allowed_origins
-            return allowed_origins[0] if allowed_origins else "*"
-        host = str(self.headers.get("Host") or "").strip().lower()
-        origin_host = urlparse(origin).netloc.lower()
-        if (
-            origin in self._settings().allowed_origins
-            or origin.endswith(".vercel.app")
-            or (host and origin_host == host)
-        ):
-            return origin
-        allowed_origins = self._settings().allowed_origins
-        return allowed_origins[0] if allowed_origins else origin
+        return resolve_cors_origin(
+            self._settings(),
+            request_origin=self.headers.get("Origin"),
+            request_host=self.headers.get("Host"),
+        ) or ""
 
     def _effective_path(self) -> str:
         parsed = urlparse(self.path)
@@ -75,11 +67,16 @@ class handler(BaseHTTPRequestHandler):
         extra_headers: dict[str, str | list[str] | tuple[str, ...]] | None = None,
     ) -> None:
         self.send_response(status)
-        self.send_header("Access-Control-Allow-Origin", self._cors_origin())
-        self.send_header("Access-Control-Allow-Headers", f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}")
-        self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-        self.send_header("Access-Control-Allow-Credentials", "true")
-        self.send_header("Vary", "Origin")
+        cors_origin = self._cors_origin()
+        if cors_origin:
+            self.send_header("Access-Control-Allow-Origin", cors_origin)
+            self.send_header(
+                "Access-Control-Allow-Headers",
+                f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}",
+            )
+            self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+            self.send_header("Access-Control-Allow-Credentials", "true")
+            self.send_header("Vary", "Origin")
         for header_name, header_value in (extra_headers or {}).items():
             values = (
                 header_value

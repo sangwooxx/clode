@@ -143,12 +143,10 @@ class AuthService:
         normalized_login = str(username or "").strip().lower()
         if not normalized_login:
             raise AuthServiceError("Podaj login, aby zarejestrowac prosbe o reset hasla.", status_code=400)
-        user = self.user_repository.find_for_login(normalized_login)
-        if not user:
-            raise AuthServiceError("Nie znaleziono konta o podanym loginie.", status_code=404)
+        self.user_repository.find_for_login(normalized_login)
         return {
             "message": (
-                f"Zarejestrowano prosbe o reset hasla dla konta {user['name']}. "
+                "Jesli konto istnieje, prosba o reset hasla zostala zarejestrowana. "
                 "Wysylka e-mail bedzie dostepna po konfiguracji SMTP."
             )
         }

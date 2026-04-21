@@ -36,6 +36,7 @@ from clode_backend.services.employee_service import EmployeeService  # noqa: E40
 from clode_backend.services.invoice_service import InvoiceService  # noqa: E402
 from clode_backend.services.settings_service import SettingsService  # noqa: E402
 from clode_backend.services.store_service import StoreService  # noqa: E402
+from clode_backend.services.auth_service import AuthServiceError  # noqa: E402
 from clode_backend.services.time_entry_service import TimeEntryService  # noqa: E402
 from clode_backend.services.user_service import UserService  # noqa: E402
 from clode_backend.services.workwear_service import WorkwearService  # noqa: E402
@@ -122,6 +123,18 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
                 "canApproveVacations": True,
             }
         )
+        self.user_service.create_or_update_user(
+            {
+                "id": "user-reader",
+                "name": "Jan Nowak",
+                "username": "jan.nowak",
+                "email": "jan.nowak@example.com",
+                "password": "reader-secret",
+                "role": "read-only",
+                "status": "active",
+                "canApproveVacations": False,
+            }
+        )
 
     def tearDown(self) -> None:
         if self.previous_database_url is None:
@@ -206,6 +219,45 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
 
         self.assertIsNotNone(current_user)
         self.assertEqual(current_user["username"], "admin")
+
+    def test_password_reset_request_is_generic_for_known_and_unknown_accounts(self) -> None:
+        known_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/password-reset-request",
+            body=b'{"username":"admin"}',
+            headers={"Content-Type": "application/json"},
+        )
+        unknown_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/password-reset-request",
+            body=b'{"username":"missing-user"}',
+            headers={"Content-Type": "application/json"},
+        )
+
+        known_status, known_payload, _ = route_request(known_handler, self.services)
+        unknown_status, unknown_payload, _ = route_request(unknown_handler, self.services)
+
+        self.assertEqual(known_status, 200)
+        self.assertEqual(unknown_status, 200)
+        self.assertEqual(known_payload["message"], unknown_payload["message"])
+        self.assertNotIn("Admin", known_payload["message"])
+
+    def test_login_does_not_accept_display_name_alias(self) -> None:
+        with self.assertRaises(AuthServiceError):
+            self.auth_service.login("jan nowak", "reader-secret")
+
+    def test_read_only_without_hours_permission_cannot_read_time_entries(self) -> None:
+        reader_token = self.auth_service.login("jan.nowak", "reader-secret")["token"]
+        reader_handler = _FakeHandler(
+            method="GET",
+            path="/api/v1/time-entries",
+            headers={"Cookie": f"clode_session={reader_token}"},
+        )
+
+        status, payload, _ = route_request(reader_handler, self.services)
+
+        self.assertEqual(status, 403)
+        self.assertFalse(payload["ok"])
 
 
 if __name__ == "__main__":

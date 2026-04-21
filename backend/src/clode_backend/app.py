@@ -4,6 +4,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from clode_backend.api.context import ApiServices
+from clode_backend.api.cors import resolve_cors_origin
 from clode_backend.auth.sessions import LEGACY_SESSION_HEADER_NAME, SESSION_HEADER_NAME
 from clode_backend.api.routes import route_request
 from clode_backend.config import load_settings
@@ -93,10 +94,11 @@ def create_server():
         server_version = "ClodeBackend/0.1"
 
         def _cors_origin(self) -> str:
-            origin = self.headers.get("Origin", "")
-            if origin in settings.allowed_origins:
-                return origin
-            return settings.allowed_origins[0] if settings.allowed_origins else "*"
+            return resolve_cors_origin(
+                settings,
+                request_origin=self.headers.get("Origin"),
+                request_host=self.headers.get("Host"),
+            ) or ""
 
         def _send(
             self,
@@ -105,11 +107,16 @@ def create_server():
             extra_headers: dict[str, str | list[str] | tuple[str, ...]] | None = None,
         ) -> None:
             self.send_response(status)
-            self.send_header("Access-Control-Allow-Origin", self._cors_origin())
-            self.send_header("Access-Control-Allow-Headers", f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}")
-            self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-            self.send_header("Access-Control-Allow-Credentials", "true")
-            self.send_header("Vary", "Origin")
+            cors_origin = self._cors_origin()
+            if cors_origin:
+                self.send_header("Access-Control-Allow-Origin", cors_origin)
+                self.send_header(
+                    "Access-Control-Allow-Headers",
+                    f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}",
+                )
+                self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+                self.send_header("Access-Control-Allow-Credentials", "true")
+                self.send_header("Vary", "Origin")
             for header_name, header_value in (extra_headers or {}).items():
                 values = (
                     header_value

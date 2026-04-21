@@ -3,7 +3,7 @@
 from typing import Any
 from uuid import uuid4
 
-from clode_backend.auth.rbac import normalize_role
+from clode_backend.auth.rbac import can_access_view, normalize_role
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.employee_repository import EmployeeRepository
 from clode_backend.repositories.time_entry_repository import TimeEntryRepository
@@ -37,7 +37,7 @@ class TimeEntryService:
     def ensure_read_access(self, current_user: dict[str, Any] | None) -> None:
         if not current_user:
             raise TimeEntryServiceError("Brak aktywnej sesji.", status_code=401)
-        if normalize_role(current_user.get("role")) not in {"admin", normalize_role("ksiegowosc"), "kierownik", "read-only"}:
+        if not can_access_view(current_user.get("role"), current_user.get("permissions"), "hoursView"):
             raise TimeEntryServiceError("Brak uprawnień do podglądu ewidencji czasu pracy.", status_code=403)
 
     def ensure_write_access(self, current_user: dict[str, Any] | None) -> None:
@@ -72,7 +72,13 @@ class TimeEntryService:
             "selected_month_key": selected_month_key,
         }
 
-    def sync_work_card_entries(self, card: dict[str, Any], current_user: dict[str, Any] | None) -> None:
+    def sync_work_card_entries(
+        self,
+        card: dict[str, Any],
+        current_user: dict[str, Any] | None,
+        *,
+        connection=None,
+    ) -> None:
         self.ensure_write_access(current_user)
         if not isinstance(card, dict):
             return
@@ -96,6 +102,7 @@ class TimeEntryService:
             employee_id=employee_id,
             employee_name=employee_name,
             allow_name_fallback=allow_name_fallback,
+            connection=connection,
         )
         existing_by_contract = self._group_entries_by_contract(existing_entries)
         month: dict[str, Any] | None = None
@@ -118,24 +125,24 @@ class TimeEntryService:
             if canonical_entry:
                 normalized_payload["id"] = canonical_entry["id"]
                 normalized_payload["month_id"] = canonical_entry["month_id"]
-                self.repository.update_entry(canonical_entry["id"], normalized_payload)
+                self.repository.update_entry(canonical_entry["id"], normalized_payload, connection=connection)
             else:
-                month = month or self._ensure_month(month_key)
+                month = month or self._ensure_month(month_key, connection=connection)
                 normalized_payload["id"] = f"time-entry-{uuid4().hex}"
                 normalized_payload["month_id"] = month["id"]
-                self.repository.insert_entry(normalized_payload)
+                self.repository.insert_entry(normalized_payload, connection=connection)
 
             for duplicate_entry in duplicate_entries:
-                self.repository.delete_entry(duplicate_entry["id"])
+                self.repository.delete_entry(duplicate_entry["id"], connection=connection)
             changed = True
 
         for stale_entries in existing_by_contract.values():
             for stale_entry in stale_entries:
-                self.repository.delete_entry(stale_entry["id"])
+                self.repository.delete_entry(stale_entry["id"], connection=connection)
                 changed = True
 
         if changed:
-            self._recalculate_month_costs(month_key)
+            self._recalculate_month_costs(month_key, connection=connection)
 
     def sync_work_card(self, card: dict[str, Any], current_user: dict[str, Any] | None) -> None:
         self.sync_work_card_entries(card, current_user)
@@ -284,8 +291,8 @@ class TimeEntryService:
             "finance": normalize_finance(payload.get("finance") if payload.get("finance") is not None else existing.get("finance") if existing else {}),
         }
 
-    def _ensure_month(self, month_key: str) -> dict[str, Any]:
-        existing = self.repository.get_month_by_key(month_key)
+    def _ensure_month(self, month_key: str, *, connection=None) -> dict[str, Any]:
+        existing = self.repository.get_month_by_key(month_key, connection=connection)
         if existing:
             return existing
         return self.repository.upsert_month(
@@ -295,11 +302,12 @@ class TimeEntryService:
                 "selected": False,
                 "visible_investments": self._list_active_contract_ids(),
                 "finance": normalize_finance({}),
-            }
+            },
+            connection=connection,
         )
 
-    def _recalculate_month_costs(self, month_key: str) -> None:
-        self.repository.recalculate_month_costs(month_key)
+    def _recalculate_month_costs(self, month_key: str, *, connection=None) -> None:
+        self.repository.recalculate_month_costs(month_key, connection=connection)
 
     def _normalize_legacy_employee_duplicates(self) -> None:
         for month_key in self.repository.normalize_legacy_employee_duplicates():
@@ -469,15 +477,22 @@ class TimeEntryService:
         employee_id: str | None,
         employee_name: str,
         allow_name_fallback: bool,
+        connection=None,
     ) -> list[dict[str, Any]]:
         candidates: dict[str, dict[str, Any]] = {}
 
         if employee_id:
-            for entry in self.repository.list_entries({"month": month_key, "employee_id": employee_id}):
+            for entry in self.repository.list_entries(
+                {"month": month_key, "employee_id": employee_id},
+                connection=connection,
+            ):
                 candidates[entry["id"]] = entry
 
         if allow_name_fallback and employee_name:
-            for entry in self.repository.list_entries({"month": month_key, "employee_name": employee_name}):
+            for entry in self.repository.list_entries(
+                {"month": month_key, "employee_name": employee_name},
+                connection=connection,
+            ):
                 candidates[entry["id"]] = entry
 
         return sorted(

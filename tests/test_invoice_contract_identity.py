@@ -1,5 +1,6 @@
 ﻿from __future__ import annotations
 
+from datetime import date, timedelta
 import json
 import os
 import sys
@@ -181,6 +182,36 @@ class InvoiceContractIdentityTestCase(unittest.TestCase):
         unique = self.invoice_repository.get_by_id("legacy-unique")
         self.assertEqual(ambiguous["contract_id"], "")
         self.assertEqual(unique["contract_id"], "c-unique-1")
+
+    def test_payment_status_is_derived_on_read_and_filtering(self) -> None:
+        overdue_due_date = (date.today() - timedelta(days=7)).isoformat()
+        created = self.service.create_invoice(
+            {
+                "contract_id": "c-other",
+                "contract_name": "Inny",
+                "type": "cost",
+                "issue_date": (date.today() - timedelta(days=14)).isoformat(),
+                "invoice_number": "KOS/OVERDUE",
+                "counterparty_name": "Dostawca X",
+                "category_or_description": "Termin minął",
+                "amount_net": 100,
+                "vat_rate": 23,
+                "amount_vat": 23,
+                "amount_gross": 123,
+                "due_date": overdue_due_date,
+                "payment_status": "unpaid",
+            },
+            self.current_user,
+        )
+
+        overdue_items = self.service.list_invoices(
+            {"contract_id": "c-other", "scope": "all", "type": "cost", "payment_status": "overdue"},
+            self.current_user,
+        )
+
+        self.assertEqual(len(overdue_items["items"]), 1)
+        self.assertEqual(overdue_items["items"][0]["id"], created["id"])
+        self.assertEqual(overdue_items["items"][0]["payment_status"], "overdue")
 
     def test_legacy_import_is_deterministic_and_materializes_only_unique_matches(self) -> None:
         stores = {

@@ -5,6 +5,18 @@ from typing import Any
 from clode_backend.repositories.base import RepositoryBase
 
 
+def _effective_payment_status_sql(*, table_alias: str = "") -> str:
+    prefix = f"{table_alias}." if table_alias else ""
+    return (
+        "CASE "
+        f"WHEN trim(COALESCE({prefix}payment_date, '')) <> '' THEN 'paid' "
+        f"WHEN lower(trim(COALESCE({prefix}payment_status, ''))) = 'paid' THEN 'paid' "
+        f"WHEN trim(COALESCE({prefix}due_date, '')) <> '' AND {prefix}due_date < CURRENT_DATE THEN 'overdue' "
+        "ELSE 'unpaid' "
+        "END"
+    )
+
+
 def _orphan_contract_condition(column_name: str) -> str:
     return (
         f"({column_name} IS NOT NULL AND trim({column_name}) <> '' "
@@ -34,7 +46,7 @@ def _apply_invoice_filters(filters: dict[str, Any], params: list[Any]) -> str:
         params.append(invoice_type)
 
     if payment_status:
-        conditions.append("payment_status = ?")
+        conditions.append(f"{_effective_payment_status_sql()} = ?")
         params.append(payment_status)
 
     if scope == "year" and year:
@@ -58,7 +70,8 @@ class InvoiceRepository(RepositoryBase):
                 SELECT id, contract_id, contract_name, type, issue_date, invoice_number,
                        counterparty_name, category_or_description, cost_category, amount_net, vat_rate,
                        amount_vat, amount_gross, due_date, payment_date, payment_status,
-                       notes, created_at, updated_at, created_by, updated_by, is_deleted
+                       notes, created_at, updated_at, created_by, updated_by, is_deleted,
+                       {_effective_payment_status_sql()} AS effective_payment_status
                 FROM invoices
                 {where_clause}
                 ORDER BY issue_date DESC, LOWER(invoice_number) ASC, updated_at DESC
@@ -68,11 +81,12 @@ class InvoiceRepository(RepositoryBase):
         return [self._serialize(row) for row in rows]
 
     def get_by_id(self, invoice_id: str, *, include_deleted: bool = False) -> dict[str, Any] | None:
-        query = """
+        query = f"""
             SELECT id, contract_id, contract_name, type, issue_date, invoice_number,
                    counterparty_name, category_or_description, cost_category, amount_net, vat_rate,
                    amount_vat, amount_gross, due_date, payment_date, payment_status,
-                   notes, created_at, updated_at, created_by, updated_by, is_deleted
+                   notes, created_at, updated_at, created_by, updated_by, is_deleted,
+                   {_effective_payment_status_sql()} AS effective_payment_status
             FROM invoices
             WHERE id = ?
         """
@@ -320,7 +334,7 @@ class InvoiceRepository(RepositoryBase):
             "amount_gross": float(row["amount_gross"] or 0),
             "due_date": row["due_date"] or "",
             "payment_date": row["payment_date"] or "",
-            "payment_status": row["payment_status"] or "unpaid",
+            "payment_status": row["effective_payment_status"] or row["payment_status"] or "unpaid",
             "notes": row["notes"] or "",
             "created_at": row["created_at"] or "",
             "updated_at": row["updated_at"] or "",

@@ -114,6 +114,63 @@ class EmployeeRoundTripTestCase(unittest.TestCase):
                 self.current_user,
             )
 
+    def test_sql_employee_row_wins_over_legacy_store_shadow(self) -> None:
+        with connect(self.settings) as connection:
+            connection.execute(
+                """
+                INSERT INTO employees (
+                    id,
+                    name,
+                    first_name,
+                    last_name,
+                    worker_code,
+                    position,
+                    status,
+                    employment_date,
+                    employment_end_date,
+                    street,
+                    city,
+                    phone,
+                    medical_exam_valid_until
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "emp-shadow",
+                    "Nowak Jan",
+                    "Jan",
+                    "Nowak",
+                    "WK-55",
+                    "Brygadzista",
+                    "active",
+                    "2026-01-10",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                ),
+            )
+            connection.execute(
+                """
+                INSERT INTO store_documents (store_name, payload_json, updated_at)
+                VALUES ('employees', ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(store_name) DO UPDATE SET
+                    payload_json = excluded.payload_json,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    '[{"id":"emp-shadow","name":"Shadow User","first_name":"Shadow","last_name":"User","worker_code":"LEG-1","position":"Legacy","status":"inactive"}]',
+                ),
+            )
+            connection.commit()
+
+        employees = self.service.list_employees(self.current_user)
+        employee = next(item for item in employees if item["id"] == "emp-shadow")
+
+        self.assertEqual(employee["name"], "Nowak Jan")
+        self.assertEqual(employee["worker_code"], "WK-55")
+        self.assertEqual(employee["status"], "active")
+
 
 if __name__ == "__main__":
     unittest.main()

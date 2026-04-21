@@ -93,9 +93,10 @@ class SettingsRepository(RepositoryBase):
             connection.commit()
         return payload
 
-    def replace_audit_logs(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def import_audit_logs(self, entries: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        if not entries:
+            return []
         with self.connect() as connection:
-            connection.execute("DELETE FROM audit_logs")
             for entry in entries:
                 connection.execute(
                     """
@@ -109,6 +110,7 @@ class SettingsRepository(RepositoryBase):
                         user_id,
                         user_name
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT (id) DO NOTHING
                     """,
                     (
                         entry["id"],
@@ -123,6 +125,22 @@ class SettingsRepository(RepositoryBase):
                 )
             connection.commit()
         return self.list_audit_logs(limit=max(len(entries), 1500))
+
+    def prune_audit_logs(self, *, limit: int = 1500) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                """
+                DELETE FROM audit_logs
+                WHERE id NOT IN (
+                    SELECT id
+                    FROM audit_logs
+                    ORDER BY timestamp DESC, id DESC
+                    LIMIT ?
+                )
+                """,
+                (int(limit),),
+            )
+            connection.commit()
 
     @staticmethod
     def _serialize_workflow(row) -> dict[str, Any]:

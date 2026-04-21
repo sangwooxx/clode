@@ -7,8 +7,17 @@ from clode_backend.repositories.base import RepositoryBase
 
 
 class TimeEntryRepository(RepositoryBase):
-    def list_months(self) -> list[dict[str, Any]]:
-        with self.connect() as connection:
+    def list_months(self, *, connection=None) -> list[dict[str, Any]]:
+        if connection is None:
+            with self.connect() as local_connection:
+                rows = local_connection.execute(
+                    """
+                    SELECT id, month_key, month_label, selected, visible_investments_json, finance_json
+                    FROM hours_months
+                    ORDER BY month_key DESC
+                    """
+                ).fetchall()
+        else:
             rows = connection.execute(
                 """
                 SELECT id, month_key, month_label, selected, visible_investments_json, finance_json
@@ -18,8 +27,18 @@ class TimeEntryRepository(RepositoryBase):
             ).fetchall()
         return [self._serialize_month(row) for row in rows]
 
-    def get_month_by_key(self, month_key: str) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def get_month_by_key(self, month_key: str, *, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                row = local_connection.execute(
+                    """
+                    SELECT id, month_key, month_label, selected, visible_investments_json, finance_json
+                    FROM hours_months
+                    WHERE month_key = ?
+                    """,
+                    (month_key,),
+                ).fetchone()
+        else:
             row = connection.execute(
                 """
                 SELECT id, month_key, month_label, selected, visible_investments_json, finance_json
@@ -30,10 +49,44 @@ class TimeEntryRepository(RepositoryBase):
             ).fetchone()
         return self._serialize_month(row) if row else None
 
-    def upsert_month(self, payload: dict[str, Any]) -> dict[str, Any]:
-        existing = self.get_month_by_key(payload["month_key"])
+    def upsert_month(self, payload: dict[str, Any], *, connection=None) -> dict[str, Any]:
+        existing = self.get_month_by_key(payload["month_key"], connection=connection)
         month_id = existing["id"] if existing else payload.get("id") or f"hours-month-{payload['month_key']}"
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                if existing:
+                    local_connection.execute(
+                        """
+                        UPDATE hours_months
+                        SET month_label = ?, selected = ?, visible_investments_json = ?, finance_json = ?
+                        WHERE month_key = ?
+                        """,
+                        (
+                            payload["month_label"],
+                            1 if payload.get("selected") else 0,
+                            json.dumps(payload.get("visible_investments") or [], ensure_ascii=False),
+                            json.dumps(payload.get("finance") or {}, ensure_ascii=False),
+                            payload["month_key"],
+                        ),
+                    )
+                else:
+                    local_connection.execute(
+                        """
+                        INSERT INTO hours_months
+                        (id, month_key, month_label, selected, visible_investments_json, finance_json)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            month_id,
+                            payload["month_key"],
+                            payload["month_label"],
+                            1 if payload.get("selected") else 0,
+                            json.dumps(payload.get("visible_investments") or [], ensure_ascii=False),
+                            json.dumps(payload.get("finance") or {}, ensure_ascii=False),
+                        ),
+                    )
+                local_connection.commit()
+        else:
             if existing:
                 connection.execute(
                     """
@@ -65,8 +118,7 @@ class TimeEntryRepository(RepositoryBase):
                         json.dumps(payload.get("finance") or {}, ensure_ascii=False),
                     ),
                 )
-            connection.commit()
-        return self.get_month_by_key(payload["month_key"]) or {
+        return self.get_month_by_key(payload["month_key"], connection=connection) or {
             **payload,
             "id": month_id,
         }
@@ -80,7 +132,7 @@ class TimeEntryRepository(RepositoryBase):
             connection.commit()
         return int(cursor.rowcount or 0)
 
-    def list_entries(self, filters: dict[str, Any]) -> list[dict[str, Any]]:
+    def list_entries(self, filters: dict[str, Any], *, connection=None) -> list[dict[str, Any]]:
         params: list[Any] = []
         conditions = ["1 = 1"]
 
@@ -116,7 +168,29 @@ class TimeEntryRepository(RepositoryBase):
             params.extend([user_value, user_value])
 
         where_clause = " WHERE " + " AND ".join(conditions)
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                rows = local_connection.execute(
+                    f"""
+                    SELECT
+                        te.id,
+                        te.month_id,
+                        hm.month_key,
+                        hm.month_label,
+                        te.employee_id,
+                        te.employee_name,
+                        te.contract_id,
+                        te.contract_name,
+                        te.hours,
+                        te.cost_amount
+                    FROM time_entries te
+                    JOIN hours_months hm ON hm.id = te.month_id
+                    {where_clause}
+                    ORDER BY hm.month_key DESC, LOWER(te.employee_name) ASC, LOWER(te.contract_name) ASC
+                    """,
+                    tuple(params),
+                ).fetchall()
+        else:
             rows = connection.execute(
                 f"""
                 SELECT
@@ -139,8 +213,8 @@ class TimeEntryRepository(RepositoryBase):
             ).fetchall()
         return [self._serialize_entry(row) for row in rows]
 
-    def list_entries_for_month(self, month_key: str) -> list[dict[str, Any]]:
-        return self.list_entries({"month": month_key})
+    def list_entries_for_month(self, month_key: str, *, connection=None) -> list[dict[str, Any]]:
+        return self.list_entries({"month": month_key}, connection=connection)
 
     def list_employee_relation_summaries(self) -> list[dict[str, Any]]:
         with self.connect() as connection:
@@ -175,8 +249,29 @@ class TimeEntryRepository(RepositoryBase):
             if str(row["employee_id"] or "").strip() or str(row["employee_name"] or "").strip()
         ]
 
-    def get_entry(self, entry_id: str) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def get_entry(self, entry_id: str, *, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                row = local_connection.execute(
+                    """
+                    SELECT
+                        te.id,
+                        te.month_id,
+                        hm.month_key,
+                        hm.month_label,
+                        te.employee_id,
+                        te.employee_name,
+                        te.contract_id,
+                        te.contract_name,
+                        te.hours,
+                        te.cost_amount
+                    FROM time_entries te
+                    JOIN hours_months hm ON hm.id = te.month_id
+                    WHERE te.id = ?
+                    """,
+                    (entry_id,),
+                ).fetchone()
+        else:
             row = connection.execute(
                 """
                 SELECT
@@ -247,8 +342,28 @@ class TimeEntryRepository(RepositoryBase):
             ).fetchone()
         return self._serialize_entry(row) if row else None
 
-    def insert_entry(self, payload: dict[str, Any]) -> dict[str, Any]:
-        with self.connect() as connection:
+    def insert_entry(self, payload: dict[str, Any], *, connection=None) -> dict[str, Any]:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    INSERT INTO time_entries
+                    (id, month_id, employee_id, employee_name, contract_id, contract_name, hours, cost_amount)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        payload["id"],
+                        payload["month_id"],
+                        payload.get("employee_id"),
+                        payload["employee_name"],
+                        payload.get("contract_id"),
+                        payload.get("contract_name", ""),
+                        payload.get("hours", 0),
+                        payload.get("cost_amount", 0),
+                    ),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 INSERT INTO time_entries
@@ -266,11 +381,36 @@ class TimeEntryRepository(RepositoryBase):
                     payload.get("cost_amount", 0),
                 ),
             )
-            connection.commit()
-        return self.get_entry(payload["id"]) or payload
+        return self.get_entry(payload["id"], connection=connection) or payload
 
-    def update_entry(self, entry_id: str, payload: dict[str, Any]) -> dict[str, Any] | None:
-        with self.connect() as connection:
+    def update_entry(self, entry_id: str, payload: dict[str, Any], *, connection=None) -> dict[str, Any] | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    UPDATE time_entries
+                    SET month_id = ?,
+                        employee_id = ?,
+                        employee_name = ?,
+                        contract_id = ?,
+                        contract_name = ?,
+                        hours = ?,
+                        cost_amount = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        payload["month_id"],
+                        payload.get("employee_id"),
+                        payload["employee_name"],
+                        payload.get("contract_id"),
+                        payload.get("contract_name", ""),
+                        payload.get("hours", 0),
+                        payload.get("cost_amount", 0),
+                        entry_id,
+                    ),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 UPDATE time_entries
@@ -294,8 +434,7 @@ class TimeEntryRepository(RepositoryBase):
                     entry_id,
                 ),
             )
-            connection.commit()
-        return self.get_entry(entry_id)
+        return self.get_entry(entry_id, connection=connection)
 
     def update_entry_cost_amount(self, entry_id: str, cost_amount: float) -> None:
         with self.connect() as connection:
@@ -305,18 +444,21 @@ class TimeEntryRepository(RepositoryBase):
             )
             connection.commit()
 
-    def delete_entry(self, entry_id: str) -> int:
-        with self.connect() as connection:
+    def delete_entry(self, entry_id: str, *, connection=None) -> int:
+        if connection is None:
+            with self.connect() as local_connection:
+                cursor = local_connection.execute("DELETE FROM time_entries WHERE id = ?", (entry_id,))
+                local_connection.commit()
+        else:
             cursor = connection.execute("DELETE FROM time_entries WHERE id = ?", (entry_id,))
-            connection.commit()
         return int(cursor.rowcount or 0)
 
-    def recalculate_month_costs(self, month_key: str) -> bool:
-        month = self.get_month_by_key(month_key)
+    def recalculate_month_costs(self, month_key: str, *, connection=None) -> bool:
+        month = self.get_month_by_key(month_key, connection=connection)
         if not month:
             return False
 
-        entries = self.list_entries_for_month(month_key)
+        entries = self.list_entries_for_month(month_key, connection=connection)
         total_hours = sum(float(entry.get("hours") or 0) for entry in entries)
         finance = month.get("finance") or {}
         total_cost_pool = (
@@ -329,13 +471,20 @@ class TimeEntryRepository(RepositoryBase):
             + float(finance.get("pit4_company_3") or 0)
         )
         hourly_cost = (total_cost_pool / total_hours) if total_hours else 0.0
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                for entry in entries:
+                    local_connection.execute(
+                        "UPDATE time_entries SET cost_amount = ? WHERE id = ?",
+                        (round(float(entry.get("hours") or 0) * hourly_cost, 2), entry["id"]),
+                    )
+                local_connection.commit()
+        else:
             for entry in entries:
                 connection.execute(
                     "UPDATE time_entries SET cost_amount = ? WHERE id = ?",
                     (round(float(entry.get("hours") or 0) * hourly_cost, 2), entry["id"]),
                 )
-            connection.commit()
         return True
 
     def normalize_month_visible_investments(self, rows: list[dict[str, Any]]) -> None:

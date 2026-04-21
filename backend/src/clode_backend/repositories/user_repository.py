@@ -77,10 +77,9 @@ class UserRepository(RepositoryBase):
                 FROM users
                 WHERE lower(username) = lower(?)
                    OR lower(email) = lower(?)
-                   OR lower(name) = lower(?)
                 LIMIT 1
                 """,
-                (login_value, login_value, login_value),
+                (login_value, login_value),
             ).fetchone()
         return self._serialize(row) if row else None
 

@@ -101,6 +101,8 @@ def _validate_node(schema: dict[str, Any], value: Any, *, path: str) -> None:
             if field_name in properties:
                 _validate_node(properties[field_name], field_value, path=field_path)
                 continue
+            if additional_properties is False:
+                raise ContractValidationError(f"{path}: pole {field_name} nie jest dozwolone.")
             if isinstance(additional_properties, dict):
                 _validate_node(additional_properties, field_value, path=field_path)
 

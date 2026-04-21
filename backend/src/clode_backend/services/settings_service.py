@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
+from clode_backend.auth.sessions import utc_now_iso
 from clode_backend.repositories.settings_repository import SettingsRepository
 from clode_backend.repositories.store_repository import StoreRepository
 from clode_backend.shared_contracts import ContractValidationError, validate_shared_contract
@@ -38,11 +40,30 @@ class SettingsService:
         self._drop_legacy_workflow()
         return normalized
 
-    def save_workflow(self, payload: Any) -> dict[str, Any]:
+    def save_workflow(
+        self,
+        payload: Any,
+        *,
+        current_user: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         normalized = self._normalize_workflow(payload)
         self._validate_workflow(normalized)
         saved = self.repository.save_workflow(normalized)
         self._drop_legacy_workflow()
+        if current_user:
+            self.append_audit_log(
+                {
+                    "module": "settings.workflow",
+                    "action": "workflow.updated",
+                    "subject": "vacations",
+                    "details": (
+                        "Updated workflow: "
+                        f"vacationApprovalMode={normalized['vacationApprovalMode']}, "
+                        f"vacationNotifications={normalized['vacationNotifications']}"
+                    ),
+                },
+                current_user=current_user,
+            )
         return self._normalize_workflow(saved)
 
     def list_audit_logs(self) -> list[dict[str, Any]]:
@@ -55,32 +76,23 @@ class SettingsService:
         legacy_entries = legacy_payload if isinstance(legacy_payload, list) else []
         normalized = self._normalize_audit_entries(legacy_entries)
         if normalized:
-            self.repository.replace_audit_logs(normalized)
+            self.repository.import_audit_logs(normalized)
+            self.repository.prune_audit_logs(limit=self.AUDIT_LOG_LIMIT)
             self.legacy_store_repository.delete("audit_logs")
             return self.repository.list_audit_logs(limit=self.AUDIT_LOG_LIMIT)
         return []
 
-    def append_audit_log(self, payload: Any) -> dict[str, Any]:
-        normalized = self._normalize_audit_entry(payload)
-        self._validate_audit_entries([normalized])
+    def append_audit_log(
+        self,
+        payload: Any,
+        *,
+        current_user: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        normalized = self._build_audit_entry(payload, current_user=current_user)
         self.repository.append_audit_log(normalized)
-        self._prune_audit_log_limit()
+        self.repository.prune_audit_logs(limit=self.AUDIT_LOG_LIMIT)
         self.legacy_store_repository.delete("audit_logs")
         return normalized
-
-    def replace_audit_logs(self, payload: Any) -> list[dict[str, Any]]:
-        normalized = self._normalize_audit_entries(payload if isinstance(payload, list) else [])
-        self._validate_audit_entries(normalized)
-        saved = self.repository.replace_audit_logs(normalized)
-        self._prune_audit_log_limit()
-        self.legacy_store_repository.delete("audit_logs")
-        return saved[: self.AUDIT_LOG_LIMIT]
-
-    def _prune_audit_log_limit(self) -> None:
-        current = self.repository.list_audit_logs(limit=self.AUDIT_LOG_LIMIT + 500)
-        if len(current) <= self.AUDIT_LOG_LIMIT:
-            return
-        self.repository.replace_audit_logs(current[: self.AUDIT_LOG_LIMIT])
 
     def _drop_legacy_workflow(self) -> None:
         legacy_store = self.legacy_store_repository.get("settings")
@@ -115,21 +127,48 @@ class SettingsService:
         }
 
     @staticmethod
-    def _normalize_audit_entry(payload: Any) -> dict[str, Any]:
+    def _build_audit_entry(
+        payload: Any,
+        *,
+        current_user: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         entry = payload if isinstance(payload, dict) else {}
-        return {
-            "id": str(entry.get("id") or "").strip(),
-            "timestamp": str(entry.get("timestamp") or "").strip(),
+        normalized = {
+            "id": f"audit-{uuid4().hex}",
+            "timestamp": utc_now_iso(),
             "module": str(entry.get("module") or "").strip(),
             "action": str(entry.get("action") or "").strip(),
             "subject": str(entry.get("subject") or "").strip(),
             "details": str(entry.get("details") or "").strip(),
-            "user_id": str(entry.get("user_id") or "").strip(),
-            "user_name": str(entry.get("user_name") or "").strip(),
+            "user_id": str((current_user or {}).get("id") or "").strip(),
+            "user_name": str(
+                (current_user or {}).get("displayName")
+                or (current_user or {}).get("name")
+                or ""
+            ).strip(),
         }
+        SettingsService._validate_audit_entries([normalized])
+        return normalized
 
     def _normalize_audit_entries(self, payload: list[Any]) -> list[dict[str, Any]]:
-        return [self._normalize_audit_entry(entry) for entry in payload if isinstance(entry, dict)]
+        normalized_entries = []
+        for entry in payload:
+            if not isinstance(entry, dict):
+                continue
+            normalized_entries.append(
+                {
+                    "id": str(entry.get("id") or "").strip() or f"audit-{uuid4().hex}",
+                    "timestamp": str(entry.get("timestamp") or "").strip() or utc_now_iso(),
+                    "module": str(entry.get("module") or "").strip(),
+                    "action": str(entry.get("action") or "").strip(),
+                    "subject": str(entry.get("subject") or "").strip(),
+                    "details": str(entry.get("details") or "").strip(),
+                    "user_id": str(entry.get("user_id") or "").strip(),
+                    "user_name": str(entry.get("user_name") or "").strip(),
+                }
+            )
+        self._validate_audit_entries(normalized_entries)
+        return normalized_entries
 
     @staticmethod
     def _validate_workflow(payload: dict[str, Any]) -> None:

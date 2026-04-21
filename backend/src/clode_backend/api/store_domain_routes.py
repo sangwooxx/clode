@@ -4,6 +4,17 @@ from clode_backend.api.context import RequestContext
 from clode_backend.api.http import json_response, parse_json_body
 
 
+BLOCKED_LEGACY_STORE_ROUTES = {
+    "audit_logs",
+    "planning",
+    "settings",
+    "vacations",
+    "work_cards",
+    "workwear_catalog",
+    "workwear_issues",
+}
+
+
 def handle_store_domain_route(context: RequestContext):
     method = context.method
     path = context.path
@@ -30,14 +41,14 @@ def handle_store_domain_route(context: RequestContext):
 
     if path == "/api/v1/settings/workflow":
         if method == "GET":
-            auth_service.ensure_view_access(current_user, "vacationsView")
+            auth_service.ensure_view_access(current_user, "settingsView")
             return json_response(200, {"ok": True, "workflow": settings_service.get_workflow()})
         if method == "PUT":
             auth_service.ensure_store_write_access(current_user, "settings")
             body = parse_json_body(context.handler)
             return json_response(
                 200,
-                {"ok": True, "workflow": settings_service.save_workflow(body)},
+                {"ok": True, "workflow": settings_service.save_workflow(body, current_user=current_user)},
             )
 
     if path == "/api/v1/settings/audit-log":
@@ -48,13 +59,13 @@ def handle_store_domain_route(context: RequestContext):
             body = parse_json_body(context.handler)
             return json_response(
                 201,
-                {"ok": True, "entry": settings_service.append_audit_log(body.get("entry"))},
-            )
-        if method == "PUT":
-            body = parse_json_body(context.handler)
-            return json_response(
-                200,
-                {"ok": True, "entries": settings_service.replace_audit_logs(body.get("entries"))},
+                {
+                    "ok": True,
+                    "entry": settings_service.append_audit_log(
+                        body.get("entry"),
+                        current_user=current_user,
+                    ),
+                },
             )
 
     if path == "/api/v1/vacations/state":
@@ -111,18 +122,15 @@ def handle_store_domain_route(context: RequestContext):
             return json_response(200, {"ok": True, "card": card})
         if method == "PUT":
             body = parse_json_body(context.handler)
-            saved_card = store_service.save_work_card(body.get("card"))
-            sync_error = None
-            try:
-                time_entry_service.sync_work_card_entries(saved_card, current_user)
-            except (RuntimeError, ValueError) as error:
-                sync_error = str(error) or "Nie udalo sie zsynchronizowac ewidencji czasu pracy."
+            with store_service.repository.connect() as connection:
+                saved_card = store_service.save_work_card(body.get("card"), connection=connection)
+                time_entry_service.sync_work_card_entries(saved_card, current_user, connection=connection)
+                connection.commit()
             return json_response(
                 200,
                 {
                     "ok": True,
                     "card": saved_card,
-                    **({"sync_error": sync_error} if sync_error else {}),
                 },
             )
 
@@ -152,6 +160,11 @@ def handle_store_domain_route(context: RequestContext):
         store_name = path.split("/api/v1/stores/", 1)[1]
         if not store_name:
             return json_response(400, {"ok": False, "error": "Missing store name."})
+        if store_name in BLOCKED_LEGACY_STORE_ROUTES:
+            return json_response(
+                410,
+                {"ok": False, "error": "This store is available only through its dedicated domain endpoint."},
+            )
 
         if method == "GET":
             auth_service.ensure_store_read_access(current_user, store_name)

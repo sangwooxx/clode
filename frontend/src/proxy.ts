@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { buildLoginRedirectPath } from "@/lib/auth/login-redirect";
 import { SESSION_COOKIE_NAMES } from "@/lib/auth/session-keys";
 
+const SESSION_VALIDATION_PATH = "/api/v1/auth/session";
+const SESSION_VALIDATION_TIMEOUT_MS = 5_000;
+
 const protectedPrefixes = [
   "/dashboard",
   "/contracts",
@@ -36,6 +39,60 @@ function buildProtectedLoginRedirect(request: NextRequest) {
   return loginUrl;
 }
 
+function buildSessionExpiredRedirectResponse(request: NextRequest) {
+  const response = NextResponse.redirect(buildProtectedLoginRedirect(request));
+  const secure = request.nextUrl.protocol === "https:";
+
+  for (const name of SESSION_COOKIE_NAMES) {
+    response.cookies.set({
+      name,
+      value: "",
+      httpOnly: true,
+      maxAge: 0,
+      path: "/",
+      sameSite: "lax",
+      secure,
+    });
+  }
+
+  return response;
+}
+
+async function validateProtectedSession(
+  request: NextRequest
+): Promise<"valid" | "invalid"> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), SESSION_VALIDATION_TIMEOUT_MS);
+  const cookie = request.headers.get("cookie");
+
+  try {
+    const response = await fetch(new URL(SESSION_VALIDATION_PATH, request.nextUrl.origin), {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+      cache: "no-store",
+      redirect: "manual",
+      signal: controller.signal,
+    });
+
+    if (response.status === 401) {
+      return "invalid";
+    }
+
+    if (response.ok || response.status === 204) {
+      return "valid";
+    }
+
+    return "invalid";
+  } catch {
+    return "invalid";
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const protectedPath = isProtectedPath(pathname);
@@ -55,6 +112,11 @@ export async function proxy(request: NextRequest) {
 
   if (loginPath) {
     return NextResponse.next();
+  }
+
+  const sessionValidation = await validateProtectedSession(request);
+  if (sessionValidation !== "valid") {
+    return buildSessionExpiredRedirectResponse(request);
   }
 
   return NextResponse.next();

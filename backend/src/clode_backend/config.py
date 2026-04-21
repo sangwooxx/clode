@@ -20,6 +20,7 @@ class Settings:
     use_stateless_sessions: bool
     secure_cookies: bool
     is_vercel: bool
+    is_production: bool
 
     @property
     def sqlite_path(self) -> Path:
@@ -52,6 +53,7 @@ def load_settings() -> Settings:
         return raw in {"1", "true", "yes", "on"}
 
     is_vercel = bool(str(os.getenv("VERCEL") or os.getenv("VERCEL_ENV") or "").strip())
+    is_production = is_vercel or str(os.getenv("NODE_ENV") or "").strip().lower() == "production"
     configured_database_url = str(
         os.getenv("CLODE_DATABASE_URL")
         or os.getenv("AGENT_DATABASE_URL")
@@ -94,15 +96,30 @@ def load_settings() -> Settings:
     elif is_vercel and allow_demo_seed_import and default_db.exists():
         database_seed_path = default_db
 
-    allowed_origins = tuple(
-        origin.strip()
-        for origin in read_env(
-            "CLODE_ALLOWED_ORIGINS",
-            "AGENT_ALLOWED_ORIGINS",
-            "http://127.0.0.1:8082,http://localhost:8082,http://127.0.0.1:8080,http://localhost:8080,null",
-        ).split(",")
-        if origin.strip()
-    )
+    configured_allowed_origins = str(
+        os.getenv("CLODE_ALLOWED_ORIGINS")
+        or os.getenv("AGENT_ALLOWED_ORIGINS")
+        or ""
+    ).strip()
+    if configured_allowed_origins:
+        allowed_origins = tuple(
+            origin.strip()
+            for origin in configured_allowed_origins.split(",")
+            if origin.strip()
+        )
+    elif is_production:
+        allowed_origins = ()
+    else:
+        allowed_origins = (
+            "http://127.0.0.1:8082",
+            "http://localhost:8082",
+            "http://127.0.0.1:8080",
+            "http://localhost:8080",
+        )
+
+    if is_production and not configured_session_secret:
+        raise RuntimeError("CLODE_SESSION_SECRET must be configured in production.")
+
     return Settings(
         host=read_env("CLODE_BACKEND_HOST", "AGENT_BACKEND_HOST", "127.0.0.1"),
         port=int(read_env("CLODE_BACKEND_PORT", "AGENT_BACKEND_PORT", "8787")),
@@ -112,9 +129,10 @@ def load_settings() -> Settings:
         project_root=project_root,
         allowed_origins=allowed_origins,
         session_ttl_hours=int(read_env("CLODE_SESSION_TTL_HOURS", "AGENT_SESSION_TTL_HOURS", "168")),
-        session_secret=configured_session_secret or "clode-session",
+        session_secret=configured_session_secret or "clode-session-dev",
         use_stateless_sessions=is_vercel and not force_stateful_sessions,
-        secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_vercel),
+        secure_cookies=read_env_flag("CLODE_SECURE_COOKIES", "AGENT_SECURE_COOKIES", is_production),
         is_vercel=is_vercel,
+        is_production=is_production,
     )
 

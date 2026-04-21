@@ -80,7 +80,7 @@ class EmployeeRepository(RepositoryBase):
         for index, employee in enumerate(table_rows):
             merged[_employee_merge_key(employee, index)] = employee
         for index, employee in enumerate(store_rows):
-            merged[_employee_merge_key(employee, index)] = employee
+            merged.setdefault(_employee_merge_key(employee, index), employee)
 
         return sorted(
             merged.values(),

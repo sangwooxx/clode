@@ -88,7 +88,7 @@ if (-not (Test-Path -LiteralPath $serverScript)) {
 }
 
 Stop-PortListeners -TargetPort $Port
-$allowedOrigins = "http://127.0.0.1:8082,http://localhost:8082,http://127.0.0.1:8080,http://localhost:8080,null"
+$allowedOrigins = "http://127.0.0.1:8082,http://localhost:8082,http://127.0.0.1:8080,http://localhost:8080"
 $backendEnv = @"
 `$env:CLODE_ALLOWED_ORIGINS = '$allowedOrigins'
 & '$python' '$serverScript'

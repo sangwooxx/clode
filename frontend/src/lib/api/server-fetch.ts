@@ -14,27 +14,75 @@ type ServerFetchOptions = {
 
 const DEFAULT_SERVER_FETCH_TIMEOUT_MS = 10_000;
 
-export function resolveServerApiOrigin(headerStore: Awaited<ReturnType<typeof headers>>) {
-  const forwardedHost = headerStore.get("x-forwarded-host");
-  const host = forwardedHost || headerStore.get("host");
-  const forwardedProto = headerStore.get("x-forwarded-proto");
-  const localHost = (host || "").toLowerCase();
-  const protocol =
-    forwardedProto ||
-    (localHost.startsWith("127.0.0.1") ||
-    localHost.startsWith("localhost") ||
-    localHost.endsWith(".local")
-      ? "http"
-      : undefined) ||
-    (process.env.NODE_ENV === "development" ? "http" : "https");
+type ServerHeaderStore = Awaited<ReturnType<typeof headers>>;
 
-  if (host) {
-    return `${protocol}://${host}`;
+function getSingleHeaderValue(value: string | null) {
+  const normalized = value?.split(",")[0]?.trim();
+  return normalized ? normalized : null;
+}
+
+function normalizeHostHeader(value: string | null) {
+  const candidate = getSingleHeaderValue(value);
+  if (!candidate || candidate.includes("://")) {
+    return null;
   }
 
-  return process.env.NODE_ENV === "development"
-    ? "http://127.0.0.1:3000"
-    : "https://clode-next.vercel.app";
+  try {
+    const parsed = new URL(`http://${candidate}`);
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      parsed.hash
+    ) {
+      return null;
+    }
+
+    return {
+      host: parsed.host,
+      hostname: parsed.hostname,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function normalizeForwardedProto(value: string | null) {
+  const candidate = getSingleHeaderValue(value)?.toLowerCase();
+  return candidate === "http" || candidate === "https" ? candidate : null;
+}
+
+function isLocalHostname(hostname: string) {
+  const normalized = hostname.toLowerCase();
+  return (
+    normalized === "127.0.0.1" ||
+    normalized === "::1" ||
+    normalized === "[::1]" ||
+    normalized === "localhost" ||
+    normalized.endsWith(".local")
+  );
+}
+
+export function resolveServerApiOrigin(headerStore: ServerHeaderStore) {
+  const forwardedHost = normalizeHostHeader(headerStore.get("x-forwarded-host"));
+  const directHost = normalizeHostHeader(headerStore.get("host"));
+  const requestHost = forwardedHost || directHost;
+
+  if (!requestHost) {
+    if (process.env.NODE_ENV === "development") {
+      return "http://127.0.0.1:3000";
+    }
+
+    throw new Error("Cannot resolve server API origin without a valid request host.");
+  }
+
+  const protocol =
+    normalizeForwardedProto(headerStore.get("x-forwarded-proto")) ||
+    (isLocalHostname(requestHost.hostname) ? "http" : undefined) ||
+    (process.env.NODE_ENV === "development" ? "http" : "https");
+
+  return `${protocol}://${requestHost.host}`;
 }
 
 export async function fetchBackendJsonServer<T>(
@@ -53,7 +101,7 @@ export async function fetchBackendJsonServer<T>(
   let response: Response;
 
   try {
-    response = await fetch(`${resolveServerApiOrigin(headerStore)}/api/v1${path}`, {
+    response = await fetch(new URL(`/api/v1${path}`, resolveServerApiOrigin(headerStore)), {
       method: options.method ?? "GET",
       headers: {
         Accept: "application/json",

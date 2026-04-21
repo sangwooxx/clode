@@ -14,8 +14,14 @@ class StoreRepository(RepositoryBase):
             ).fetchall()
         return [row["store_name"] for row in rows]
 
-    def get(self, store_name: str) -> Any | None:
-        with self.connect() as connection:
+    def get(self, store_name: str, *, connection=None) -> Any | None:
+        if connection is None:
+            with self.connect() as local_connection:
+                row = local_connection.execute(
+                    "SELECT payload_json FROM store_documents WHERE store_name = ?",
+                    (store_name,),
+                ).fetchone()
+        else:
             row = connection.execute(
                 "SELECT payload_json FROM store_documents WHERE store_name = ?",
                 (store_name,),
@@ -24,9 +30,22 @@ class StoreRepository(RepositoryBase):
             return None
         return json.loads(row["payload_json"])
 
-    def save(self, store_name: str, payload: Any) -> Any:
+    def save(self, store_name: str, payload: Any, *, connection=None) -> Any:
         payload_json = json.dumps(payload, ensure_ascii=False)
-        with self.connect() as connection:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute(
+                    """
+                    INSERT INTO store_documents (store_name, payload_json, updated_at)
+                    VALUES (?, ?, CURRENT_TIMESTAMP)
+                    ON CONFLICT(store_name) DO UPDATE SET
+                        payload_json = excluded.payload_json,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (store_name, payload_json),
+                )
+                local_connection.commit()
+        else:
             connection.execute(
                 """
                 INSERT INTO store_documents (store_name, payload_json, updated_at)
@@ -37,11 +56,13 @@ class StoreRepository(RepositoryBase):
                 """,
                 (store_name, payload_json),
             )
-            connection.commit()
         return payload
 
-    def delete(self, store_name: str) -> None:
-        with self.connect() as connection:
-            connection.execute("DELETE FROM store_documents WHERE store_name = ?", (store_name,))
-            connection.commit()
+    def delete(self, store_name: str, *, connection=None) -> None:
+        if connection is None:
+            with self.connect() as local_connection:
+                local_connection.execute("DELETE FROM store_documents WHERE store_name = ?", (store_name,))
+                local_connection.commit()
+            return
+        connection.execute("DELETE FROM store_documents WHERE store_name = ?", (store_name,))
 

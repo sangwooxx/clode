@@ -13,17 +13,17 @@ class StoreService:
     def list_stores(self) -> list[str]:
         return self.repository.list_names()
 
-    def get_store(self, store_name: str) -> Any | None:
-        return self.repository.get(store_name)
+    def get_store(self, store_name: str, *, connection=None) -> Any | None:
+        return self.repository.get(store_name, connection=connection)
 
-    def save_store(self, store_name: str, payload: Any) -> Any:
-        return self.repository.save(store_name, payload)
+    def save_store(self, store_name: str, payload: Any, *, connection=None) -> Any:
+        return self.repository.save(store_name, payload, connection=connection)
 
-    def delete_store(self, store_name: str) -> None:
-        self.repository.delete(store_name)
+    def delete_store(self, store_name: str, *, connection=None) -> None:
+        self.repository.delete(store_name, connection=connection)
 
-    def get_vacation_store(self) -> dict[str, Any]:
-        payload = self.repository.get("vacations")
+    def get_vacation_store(self, *, connection=None) -> dict[str, Any]:
+        payload = self.repository.get("vacations", connection=connection)
         if not isinstance(payload, dict):
             payload = {"version": 1, "balances": {}, "requests": []}
         payload.setdefault("version", 1)
@@ -32,30 +32,30 @@ class StoreService:
         self._validate("vacation_store", payload)
         return payload
 
-    def save_vacation_store(self, payload: Any) -> dict[str, Any]:
+    def save_vacation_store(self, payload: Any, *, connection=None) -> dict[str, Any]:
         normalized = dict(payload or {})
         normalized.setdefault("version", 1)
         normalized.setdefault("balances", {})
         normalized.setdefault("requests", [])
         self._validate("vacation_store", normalized)
-        return self.repository.save("vacations", normalized)
+        return self.repository.save("vacations", normalized, connection=connection)
 
-    def get_planning_store(self) -> dict[str, Any]:
-        payload = self.repository.get("planning")
+    def get_planning_store(self, *, connection=None) -> dict[str, Any]:
+        payload = self.repository.get("planning", connection=connection)
         if not isinstance(payload, dict):
             payload = {"assignments": {}}
         payload.setdefault("assignments", {})
         self._validate("planning_store", payload)
         return payload
 
-    def save_planning_store(self, payload: Any) -> dict[str, Any]:
+    def save_planning_store(self, payload: Any, *, connection=None) -> dict[str, Any]:
         normalized = dict(payload or {})
         normalized.setdefault("assignments", {})
         self._validate("planning_store", normalized)
-        return self.repository.save("planning", normalized)
+        return self.repository.save("planning", normalized, connection=connection)
 
-    def get_work_card_store(self) -> dict[str, Any]:
-        payload = self.repository.get("work_cards")
+    def get_work_card_store(self, *, connection=None) -> dict[str, Any]:
+        payload = self.repository.get("work_cards", connection=connection)
         if not isinstance(payload, dict):
             payload = {"version": 1, "cards": []}
         payload.setdefault("version", 1)
@@ -63,12 +63,12 @@ class StoreService:
         self._validate("work_card_store", payload)
         return payload
 
-    def save_work_card_store(self, payload: Any) -> dict[str, Any]:
+    def save_work_card_store(self, payload: Any, *, connection=None) -> dict[str, Any]:
         normalized = dict(payload or {})
         normalized.setdefault("version", 1)
         normalized.setdefault("cards", [])
         self._validate("work_card_store", normalized)
-        return self.repository.save("work_cards", normalized)
+        return self.repository.save("work_cards", normalized, connection=connection)
 
     def get_work_card(
         self,
@@ -102,9 +102,14 @@ class StoreService:
 
         return None
 
-    def save_work_card(self, payload: Any) -> dict[str, Any]:
+    def save_work_card(self, payload: Any, *, connection=None) -> dict[str, Any]:
+        normalized_card, next_store = self._build_work_card_store(payload, connection=connection)
+        self.repository.save("work_cards", next_store, connection=connection)
+        return normalized_card
+
+    def _build_work_card_store(self, payload: Any, *, connection=None) -> tuple[dict[str, Any], dict[str, Any]]:
         normalized_card = dict(payload or {})
-        normalized_store = self.get_work_card_store()
+        normalized_store = self.get_work_card_store(connection=connection)
         next_cards = list(normalized_store.get("cards") or [])
         existing_index = next(
             (
@@ -133,8 +138,7 @@ class StoreService:
             "cards": next_cards,
         }
         self._validate("work_card_store", next_store)
-        self.repository.save("work_cards", next_store)
-        return normalized_card
+        return normalized_card, next_store
 
     def list_work_card_history_summaries(self) -> list[dict[str, Any]]:
         summaries: list[dict[str, Any]] = []
