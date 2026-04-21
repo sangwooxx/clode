@@ -26,6 +26,13 @@ describe("resolveBackendOrigin", () => {
     expect(resolveBackendOrigin()).toBe("https://clode-iota.vercel.app");
   });
 
+  it("normalizes the legacy production backend alias to the canonical production alias", () => {
+    process.env.VERCEL_ENV = "production";
+    process.env.CLODE_BACKEND_ORIGIN = "https://clode-api.vercel.app///";
+
+    expect(resolveBackendOrigin()).toBe("https://clode-iota.vercel.app");
+  });
+
   it("keeps explicit non-Vercel origins unchanged", () => {
     process.env.VERCEL_ENV = "production";
     process.env.CLODE_BACKEND_ORIGIN = "https://api.example.com///";

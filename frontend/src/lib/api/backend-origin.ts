@@ -1,4 +1,7 @@
 const PRODUCTION_BACKEND_ORIGIN = "https://clode-iota.vercel.app";
+const LEGACY_PRODUCTION_BACKEND_HOSTS = new Set([
+  "clode-api.vercel.app",
+]);
 
 function normalizeConfiguredOrigin(configured: string | undefined) {
   const trimmed = configured?.trim().replace(/\/+$/, "");
@@ -13,9 +16,12 @@ function normalizeConfiguredOrigin(configured: string | undefined) {
   try {
     const hostname = new URL(trimmed).hostname;
     if (
-      hostname.endsWith(".vercel.app") &&
-      hostname.startsWith("backend-") &&
-      hostname !== "backend-sangwooxxs-projects.vercel.app"
+      LEGACY_PRODUCTION_BACKEND_HOSTS.has(hostname) ||
+      (
+        hostname.endsWith(".vercel.app") &&
+        hostname.startsWith("backend-") &&
+        hostname !== "backend-sangwooxxs-projects.vercel.app"
+      )
     ) {
       return PRODUCTION_BACKEND_ORIGIN;
     }
