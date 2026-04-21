@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { resolveBackendOrigin } from "@/lib/api/backend-origin";
 import { buildLoginRedirectPath } from "@/lib/auth/login-redirect";
 import {
   buildExpiredSessionCookieHeaders,
@@ -66,7 +65,7 @@ async function validateSession(request: NextRequest): Promise<SessionValidationR
   }
 
   try {
-    const response = await fetch(`${resolveBackendOrigin()}/api/v1/auth/session`, {
+    const response = await fetch(`${request.nextUrl.origin}/api/v1/auth/session`, {
       method: "GET",
       headers: {
         Accept: "application/json",
@@ -125,7 +124,11 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  return NextResponse.next();
+  if (loginPath) {
+    return NextResponse.next();
+  }
+
+  return NextResponse.redirect(buildProtectedLoginRedirect(request));
 }
 
 export const config = {

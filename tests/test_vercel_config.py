@@ -27,6 +27,20 @@ class VercelConfigTestCase(unittest.TestCase):
         self.assertTrue((CONTRACTS_DIR / "employee.schema.json").exists())
         self.assertIn("type", load_shared_contract("employee"))
 
+    def test_vercel_config_does_not_rewrite_all_pages_to_legacy_frontend(self) -> None:
+        config = json.loads((PROJECT_DIR / "vercel.json").read_text(encoding="utf-8"))
+        routes = config.get("routes") or []
+
+        legacy_rewrites = [
+            route
+            for route in routes
+            if isinstance(route, dict)
+            and isinstance(route.get("dest"), str)
+            and "clode-web.vercel.app" in route["dest"]
+        ]
+
+        self.assertEqual(legacy_rewrites, [])
+
 
 if __name__ == "__main__":
     unittest.main()

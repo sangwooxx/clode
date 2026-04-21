@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { resolveBackendOrigin } from "@/lib/api/backend-origin";
 import { buildLoginRedirectPath } from "@/lib/auth/login-redirect";
 import { buildBackendCookieHeader } from "@/lib/auth/server-session";
 
@@ -11,13 +11,37 @@ type ServerFetchOptions = {
   cache?: RequestCache;
 };
 
+export function resolveServerApiOrigin(headerStore: Awaited<ReturnType<typeof headers>>) {
+  const forwardedHost = headerStore.get("x-forwarded-host");
+  const host = forwardedHost || headerStore.get("host");
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const localHost = (host || "").toLowerCase();
+  const protocol =
+    forwardedProto ||
+    (localHost.startsWith("127.0.0.1") ||
+    localHost.startsWith("localhost") ||
+    localHost.endsWith(".local")
+      ? "http"
+      : undefined) ||
+    (process.env.NODE_ENV === "development" ? "http" : "https");
+
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+
+  return process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:3000"
+    : "https://clode-next.vercel.app";
+}
+
 export async function fetchBackendJsonServer<T>(
   path: string,
   options: ServerFetchOptions = {}
 ) {
   const cookieStore = await cookies();
+  const headerStore = await headers();
   const cookieHeader = buildBackendCookieHeader(cookieStore);
-  const response = await fetch(`${resolveBackendOrigin()}/api/v1${path}`, {
+  const response = await fetch(`${resolveServerApiOrigin(headerStore)}/api/v1${path}`, {
     method: options.method ?? "GET",
     headers: {
       Accept: "application/json",

@@ -11,14 +11,6 @@
     {
       "src": "^/api/(.*)$",
       "dest": "/api/index.py?__clode_path=$1"
-    },
-    {
-      "src": "^/$",
-      "dest": "https://clode-web.vercel.app/"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "https://clode-web.vercel.app/$1"
     }
   ]
 }
