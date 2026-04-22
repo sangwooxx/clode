@@ -14,7 +14,12 @@ export type ContractRecord = {
   deleted_at?: string | null;
 };
 
-export type ContractMetrics = {
+export type ContractAlertLevel = "info" | "warning" | "critical";
+export type ContractHealthLevel = "good" | "attention" | "critical";
+export type ContractVarianceStatus = "missing" | "on_track" | "warning" | "critical";
+export type ContractRevenueSource = "manual" | "contract_value" | "planned_revenue" | "missing";
+
+export type ContractSnapshotMetrics = {
   contract_id: string;
   revenue_total: number;
   invoice_cost_total: number;
@@ -26,6 +31,7 @@ export type ContractMetrics = {
   cost_invoice_count: number;
   sales_invoice_count: number;
   margin: number;
+  margin_percent?: number | null;
 };
 
 export type ContractActivity = {
@@ -51,11 +57,92 @@ export type ContractMonthlyBreakdown = {
   sales_invoice_count: number;
 };
 
+export type ContractControlState = {
+  contract_id: string;
+  planned_revenue_total: number | null;
+  planned_invoice_cost_total: number | null;
+  planned_labor_cost_total: number | null;
+  forecast_revenue_total: number | null;
+  forecast_invoice_cost_total: number | null;
+  forecast_labor_cost_total: number | null;
+  note: string;
+  updated_at: string;
+  updated_by: string;
+};
+
+export type ContractPlanOverview = {
+  is_configured: boolean;
+  revenue_total: number | null;
+  invoice_cost_total: number | null;
+  labor_cost_total: number | null;
+  total_cost: number | null;
+  margin: number | null;
+  margin_percent: number | null;
+  revenue_source: ContractRevenueSource;
+};
+
+export type ContractForecastOverview = ContractPlanOverview & {
+  is_manual: boolean;
+};
+
+export type ContractActualOverview = {
+  revenue_total: number;
+  invoice_cost_total: number;
+  labor_cost_total: number;
+  total_cost: number;
+  margin: number;
+  margin_percent: number | null;
+  labor_hours_total: number;
+  invoice_count: number;
+};
+
+export type ContractVarianceOverview = {
+  status: ContractVarianceStatus;
+  label: string;
+  cost_total: number | null;
+  margin: number | null;
+  margin_percent: number | null;
+};
+
+export type ContractFreshness = {
+  snapshot_generated_at: string;
+  last_invoice_date: string | null;
+  last_financial_activity_at: string | null;
+  last_time_entry_month: string | null;
+  last_planning_date: string | null;
+  last_operational_activity_at: string | null;
+  days_since_financial_activity: number | null;
+  days_since_operational_activity: number | null;
+};
+
+export type ContractHealth = {
+  level: ContractHealthLevel;
+  summary: string;
+  reasons: string[];
+};
+
+export type ContractAlert = {
+  level: ContractAlertLevel;
+  code: string;
+  title: string;
+  description: string;
+  context?: string | null;
+};
+
 export type ContractSnapshot = {
   contract: ContractRecord;
-  metrics: ContractMetrics;
+  metrics: ContractSnapshotMetrics;
   activity: ContractActivity;
   monthly_breakdown: ContractMonthlyBreakdown[];
+  control: ContractControlState;
+  plan: ContractPlanOverview;
+  actual: ContractActualOverview;
+  forecast: ContractForecastOverview;
+  variance: ContractVarianceOverview;
+  freshness: ContractFreshness;
+  health: ContractHealth;
+  alerts: ContractAlert[];
+  snapshot_generated_at: string;
 };
 
 export type ContractsListResponse = {
@@ -68,10 +155,41 @@ export type ContractResponse = {
   contract: ContractRecord;
 };
 
-export type ContractSummaryItem = {
+export type ContractSnapshotResponse = ContractSnapshot & {
+  ok?: boolean;
+};
+
+export type ContractSummaryCard = {
   id: string;
   label: string;
   value: string;
+  accent?: boolean;
+  hint?: string;
+};
+
+export type ContractsViewModel = {
+  contracts: ContractRecord[];
+  summary: ContractSummaryCard[];
+};
+
+export type ContractFormValues = {
+  contract_number: string;
+  name: string;
+  investor: string;
+  signed_date: string;
+  end_date: string;
+  contract_value: string;
+  status: ContractStatus;
+};
+
+export type ContractControlFormValues = {
+  planned_revenue_total: string;
+  planned_invoice_cost_total: string;
+  planned_labor_cost_total: string;
+  forecast_revenue_total: string;
+  forecast_invoice_cost_total: string;
+  forecast_labor_cost_total: string;
+  note: string;
 };
 
 export type ContractKpiItem = {
@@ -81,10 +199,45 @@ export type ContractKpiItem = {
   accent?: boolean;
 };
 
+export type ContractHeaderDetail = {
+  id: string;
+  label: string;
+  value: string;
+};
+
+export type ContractFreshnessItem = {
+  id: string;
+  label: string;
+  value: string;
+  hint?: string;
+};
+
+export type ContractPlanComparisonRow = {
+  id: string;
+  label: string;
+  planValue: string;
+  actualValue: string;
+  varianceValue: string;
+};
+
+export type ContractForecastItem = {
+  id: string;
+  label: string;
+  value: string;
+};
+
 export type ContractActivityItem = {
   id: string;
   label: string;
   value: string;
+};
+
+export type ContractAlertView = {
+  id: string;
+  level: ContractAlertLevel;
+  title: string;
+  description: string;
+  context?: string | null;
 };
 
 export type ContractMonthlyRowView = {
@@ -101,31 +254,25 @@ export type ContractMonthlyRowView = {
 };
 
 export type ContractCenterViewModel = {
+  contractName: string;
+  contractNumber: string;
+  contractStatus: string;
+  investor: string;
+  healthLevel: ContractHealthLevel;
+  healthLabel: string;
+  healthSummary: string;
+  headerDetails: ContractHeaderDetail[];
   heroKpiItems: ContractKpiItem[];
-  secondaryKpiItems: ContractKpiItem[];
+  freshnessItems: ContractFreshnessItem[];
+  planComparisonRows: ContractPlanComparisonRow[];
+  planStatusLabel: string;
+  forecastItems: ContractForecastItem[];
+  forecastSummary: string;
+  controlNote: string | null;
+  controlUpdatedAtLabel: string | null;
+  alerts: ContractAlertView[];
   activityItems: ContractActivityItem[];
   operationalStatus: string;
   emptyMessage: string | null;
   monthlyRows: ContractMonthlyRowView[];
-};
-
-export type ContractsViewModel = {
-  contracts: ContractRecord[];
-  summary: Array<{
-    id: string;
-    label: string;
-    value: string;
-    accent?: boolean;
-    hint?: string;
-  }>;
-};
-
-export type ContractFormValues = {
-  contract_number: string;
-  name: string;
-  investor: string;
-  signed_date: string;
-  end_date: string;
-  contract_value: string;
-  status: ContractStatus;
 };

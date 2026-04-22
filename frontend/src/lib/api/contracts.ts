@@ -10,6 +10,16 @@ export type ContractPayload = {
   status?: "active" | "archived";
 };
 
+export type ContractControlPayload = {
+  planned_revenue_total?: number | null;
+  planned_invoice_cost_total?: number | null;
+  planned_labor_cost_total?: number | null;
+  forecast_revenue_total?: number | null;
+  forecast_invoice_cost_total?: number | null;
+  forecast_labor_cost_total?: number | null;
+  note?: string;
+};
+
 export function listContracts(includeArchived = false) {
   const params = includeArchived ? "?include_archived=1" : "";
   return http(`/contracts${params}`, { method: "GET" });
@@ -43,8 +53,19 @@ export function deleteContractPermanently(contractId: string) {
   });
 }
 
+export function getContractUsage(contractId: string) {
+  return http(`/contracts/${encodeURIComponent(contractId)}/usage`, { method: "GET" });
+}
+
 export function getContractSnapshot(contractId: string) {
   return http(`/contracts/${encodeURIComponent(contractId)}/snapshot`, { method: "GET" });
+}
+
+export function updateContractControl(contractId: string, payload: ContractControlPayload) {
+  return http(`/contracts/${encodeURIComponent(contractId)}/control`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
 }
 
 export function getDashboardSnapshot() {

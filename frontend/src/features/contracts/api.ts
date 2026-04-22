@@ -5,14 +5,17 @@ import {
   getContract,
   getContractSnapshot,
   listContracts,
+  updateContractControl,
   updateContract,
+  type ContractControlPayload,
   type ContractPayload
 } from "@/lib/api/contracts";
 import type {
   ContractRecord,
   ContractResponse,
-  ContractSnapshot,
   ContractsListResponse,
+  ContractSnapshot,
+  ContractSnapshotResponse
 } from "@/features/contracts/types";
 
 export async function fetchContracts(includeArchived = true) {
@@ -45,6 +48,10 @@ export async function fetchContractSnapshot(contractId: string) {
   return (await getContractSnapshot(contractId)) as ContractSnapshot;
 }
 
+export async function saveContractControl(contractId: string, payload: ContractControlPayload) {
+  return (await updateContractControl(contractId, payload)) as ContractSnapshotResponse;
+}
+
 export function normalizeContractPayload(contract: {
   contract_number: string;
   name: string;
@@ -68,4 +75,31 @@ export function normalizeContractPayload(contract: {
 export function findContractById(contracts: ContractRecord[], contractId: string | null) {
   if (!contractId) return null;
   return contracts.find((contract) => contract.id === contractId) ?? null;
+}
+
+export function normalizeContractControlPayload(values: {
+  planned_revenue_total: string;
+  planned_invoice_cost_total: string;
+  planned_labor_cost_total: string;
+  forecast_revenue_total: string;
+  forecast_invoice_cost_total: string;
+  forecast_labor_cost_total: string;
+  note: string;
+}): ContractControlPayload {
+  function toOptionalNumber(value: string) {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    const parsed = Number(normalized.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return {
+    planned_revenue_total: toOptionalNumber(values.planned_revenue_total),
+    planned_invoice_cost_total: toOptionalNumber(values.planned_invoice_cost_total),
+    planned_labor_cost_total: toOptionalNumber(values.planned_labor_cost_total),
+    forecast_revenue_total: toOptionalNumber(values.forecast_revenue_total),
+    forecast_invoice_cost_total: toOptionalNumber(values.forecast_invoice_cost_total),
+    forecast_labor_cost_total: toOptionalNumber(values.forecast_labor_cost_total),
+    note: values.note.trim()
+  };
 }

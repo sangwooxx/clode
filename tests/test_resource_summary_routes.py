@@ -20,6 +20,7 @@ from clode_backend.api.routes import route_request  # noqa: E402
 from clode_backend.config import load_settings  # noqa: E402
 from clode_backend.db.bootstrap import ensure_database  # noqa: E402
 from clode_backend.db.connection import connect  # noqa: E402
+from clode_backend.repositories.contract_control_repository import ContractControlRepository  # noqa: E402
 from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository  # noqa: E402
 from clode_backend.repositories.contract_repository import ContractRepository  # noqa: E402
 from clode_backend.repositories.employee_repository import EmployeeRepository  # noqa: E402
@@ -86,6 +87,7 @@ class ResourceSummaryRoutesTestCase(unittest.TestCase):
             contract_repository,
             ContractMetricsRepository(self.settings),
             time_entry_repository,
+            ContractControlRepository(self.settings),
         )
         self.employee_service = EmployeeService(
             EmployeeRepository(self.settings),
@@ -343,21 +345,20 @@ class ResourceSummaryRoutesTestCase(unittest.TestCase):
         self.assertNotIn("entries", payload)
         self.assertNotIn("aggregates", payload)
 
-    def test_contract_snapshot_route_returns_backend_first_payload(self) -> None:
+    def test_contract_snapshot_route_returns_control_health_and_freshness(self) -> None:
         status, payload, _ = self._route(method="GET", path="/api/v1/contracts/c-1/snapshot")
 
         self.assertEqual(status, 200)
         self.assertEqual(payload["contract"]["id"], "c-1")
-        self.assertEqual(payload["contract"]["status"], "active")
-        self.assertEqual(payload["metrics"]["labor_hours_total"], 8.0)
-        self.assertEqual(payload["metrics"]["labor_cost_total"], 320.0)
-        self.assertEqual(payload["activity"]["invoice_count"], 0)
-        self.assertEqual(payload["activity"]["time_entry_count"], 1)
-        self.assertEqual(payload["activity"]["planning_assignment_count"], 0)
-        self.assertFalse(payload["activity"]["has_financial_data"])
+        self.assertIn("actual", payload)
+        self.assertIn("plan", payload)
+        self.assertIn("forecast", payload)
+        self.assertIn("freshness", payload)
+        self.assertIn("health", payload)
+        self.assertIn("alerts", payload)
+        self.assertEqual(payload["health"]["level"], "critical")
         self.assertTrue(payload["activity"]["has_operational_data"])
-        self.assertTrue(payload["activity"]["has_data"])
-        self.assertEqual(payload["monthly_breakdown"][0]["month_key"], "2026-04")
+        self.assertFalse(payload["activity"]["has_financial_data"])
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
+import { StatCard } from "@/components/ui/stat-card";
 import { ContractCenterPanel } from "@/features/contracts/contract-center-panel";
 import {
   archiveContractRecord,
@@ -15,18 +16,25 @@ import {
   fetchContractSnapshot,
   fetchContracts,
   findContractById,
+  normalizeContractControlPayload,
   normalizeContractPayload,
-  saveContract
+  saveContract,
+  saveContractControl
 } from "@/features/contracts/api";
-import { formatMoney, formatStatus } from "@/features/contracts/formatters";
 import {
-  buildContractHistoricalDataLines,
-  buildContractSummaryItems,
+  formatHealthLevel,
+  formatMoney,
+  formatStaleness,
+  formatStatus
+} from "@/features/contracts/formatters";
+import {
   mapContractsViewModel,
   resolveNextSelectedContractId,
+  toContractControlFormValues,
   toContractFormValues
 } from "@/features/contracts/mappers";
 import type {
+  ContractControlFormValues,
   ContractFormValues,
   ContractRecord,
   ContractSnapshot,
@@ -34,7 +42,6 @@ import type {
 } from "@/features/contracts/types";
 
 type ContractsFilter = "all" | "active" | "archived";
-type ContractEditorMode = "closed" | "create" | "edit";
 
 type ContractsScreenState =
   | { status: "loading" }
@@ -42,58 +49,85 @@ type ContractsScreenState =
   | { status: "success"; data: ContractsViewModel };
 
 type SnapshotState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "error"; message: string }
-  | { status: "success"; data: ContractSnapshot };
+  | { status: "idle"; contractId: string | null }
+  | { status: "loading"; contractId: string }
+  | { status: "error"; contractId: string; message: string }
+  | { status: "success"; contractId: string; data: ContractSnapshot };
 
-function areContractFormValuesEqual(left: ContractFormValues, right: ContractFormValues) {
-  return (
-    left.contract_number === right.contract_number &&
-    left.name === right.name &&
-    left.investor === right.investor &&
-    left.signed_date === right.signed_date &&
-    left.end_date === right.end_date &&
-    left.contract_value === right.contract_value &&
-    left.status === right.status
-  );
-}
+type DrawerState =
+  | { kind: "none" }
+  | { kind: "contract"; mode: "create" | "edit" }
+  | { kind: "control" };
 
-const emptyFormValues = toContractFormValues();
+const emptyContractFormValues = toContractFormValues();
+const emptyControlFormValues = toContractControlFormValues();
 
 export function ContractsView({
   initialContracts,
+  initialSnapshot,
   initialError
 }: {
   initialContracts?: ContractRecord[] | null;
+  initialSnapshot?: ContractSnapshot | null;
   initialError?: string | null;
 }) {
+  const initialSelectedContractId = resolveNextSelectedContractId(initialContracts ?? [], null);
+
   const [state, setState] = useState<ContractsScreenState>(() => {
     if (initialContracts) {
       return { status: "success", data: mapContractsViewModel(initialContracts) };
     }
-
     if (initialError) {
       return { status: "error", message: initialError };
     }
-
     return { status: "loading" };
   });
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ContractsFilter>("all");
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(
-    initialContracts?.[0]?.id ?? null
-  );
-  const [editorMode, setEditorMode] = useState<ContractEditorMode>("closed");
-  const [editingContractId, setEditingContractId] = useState<string | null>(null);
-  const [formValues, setFormValues] = useState<ContractFormValues>(() => emptyFormValues);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formStatus, setFormStatus] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(initialSelectedContractId);
+  const [snapshotState, setSnapshotState] = useState<SnapshotState>(() => {
+    if (initialSnapshot && initialSelectedContractId === initialSnapshot.contract.id) {
+      return {
+        status: "success",
+        contractId: initialSnapshot.contract.id,
+        data: initialSnapshot
+      };
+    }
+    return { status: "idle", contractId: initialSelectedContractId };
+  });
+  const [drawerState, setDrawerState] = useState<DrawerState>({ kind: "none" });
+  const [contractFormValues, setContractFormValues] = useState<ContractFormValues>(emptyContractFormValues);
+  const [controlFormValues, setControlFormValues] = useState<ContractControlFormValues>(emptyControlFormValues);
+  const [feedback, setFeedback] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [drawerFeedback, setDrawerFeedback] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const [isSubmittingContract, setIsSubmittingContract] = useState(false);
+  const [isSubmittingControl, setIsSubmittingControl] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [snapshotState, setSnapshotState] = useState<SnapshotState>({ status: "idle" });
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [selectedContractIds, setSelectedContractIds] = useState<string[]>([]);
+
+  async function loadSnapshot(contractId: string, options?: { force?: boolean }) {
+    if (
+      !options?.force &&
+      snapshotState.status === "success" &&
+      snapshotState.contractId === contractId
+    ) {
+      return;
+    }
+
+    setSnapshotState({ status: "loading", contractId });
+    try {
+      const snapshot = await fetchContractSnapshot(contractId);
+      setSnapshotState({ status: "success", contractId, data: snapshot });
+    } catch (error) {
+      setSnapshotState({
+        status: "error",
+        contractId,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się pobrać obrazu kontrolnego kontraktu."
+      });
+    }
+  }
 
   async function reloadContracts(options?: { preserveState?: boolean; selectId?: string | null }) {
     if (options?.preserveState) {
@@ -105,16 +139,27 @@ export function ContractsView({
     try {
       const contracts = await fetchContracts(true);
       const mapped = mapContractsViewModel(contracts);
+      const nextSelectedContractId = resolveNextSelectedContractId(
+        contracts,
+        selectedContractId,
+        options?.selectId
+      );
 
       setState({ status: "success", data: mapped });
-      setSelectedContractId((current) =>
-        resolveNextSelectedContractId(contracts, current, options?.selectId)
-      );
+      setSelectedContractId(nextSelectedContractId);
+
+      if (nextSelectedContractId) {
+        await loadSnapshot(nextSelectedContractId, { force: true });
+      } else {
+        setSnapshotState({ status: "idle", contractId: null });
+      }
     } catch (error) {
       setState({
         status: "error",
         message:
-          error instanceof Error ? error.message : "Nie udało się pobrać listy kontraktów."
+          error instanceof Error
+            ? error.message
+            : "Nie udało się pobrać rejestru kontraktów."
       });
     } finally {
       setIsRefreshing(false);
@@ -122,20 +167,17 @@ export function ContractsView({
   }
 
   useEffect(() => {
-    const shouldUseInitialData = Boolean(initialContracts) || Boolean(initialError);
-    if (shouldUseInitialData) {
+    if (initialContracts || initialError) {
       return;
     }
-
     void reloadContracts();
   }, [initialContracts, initialError]);
 
+  const contracts = state.status === "success" ? state.data.contracts : [];
+
   const filteredContracts = useMemo(() => {
-    if (state.status !== "success") return [];
-
     const term = search.trim().toLowerCase();
-
-    return state.data.contracts.filter((contract) => {
+    return contracts.filter((contract) => {
       const matchesFilter =
         filter === "all"
           ? true
@@ -143,9 +185,7 @@ export function ContractsView({
             ? contract.status === "archived"
             : contract.status !== "archived";
       if (!matchesFilter) return false;
-
       if (!term) return true;
-
       return [
         contract.contract_number,
         contract.name,
@@ -156,220 +196,86 @@ export function ContractsView({
         .toLowerCase()
         .includes(term);
     });
-  }, [filter, search, state]);
+  }, [contracts, filter, search]);
 
-  const selectedContract = useMemo(() => {
-    if (state.status !== "success") return null;
-    return findContractById(state.data.contracts, selectedContractId);
-  }, [selectedContractId, state]);
+  const selectedContract = useMemo(
+    () => findContractById(contracts, selectedContractId),
+    [contracts, selectedContractId]
+  );
 
-  const editingContract = useMemo(() => {
-    if (state.status !== "success") return null;
-    return findContractById(state.data.contracts, editingContractId);
-  }, [editingContractId, state]);
+  const selectedSnapshot =
+    snapshotState.status === "success" && snapshotState.contractId === selectedContractId
+      ? snapshotState.data
+      : null;
 
-  const selectedContractMeta = useMemo(() => {
-    if (!selectedContract) return [];
+  const selectedSnapshotError =
+    snapshotState.status === "error" && snapshotState.contractId === selectedContractId
+      ? snapshotState.message
+      : null;
 
-    return buildContractSummaryItems(selectedContract).filter((item) =>
-      ["contract_number", "investor", "end_date"].includes(item.id)
-    );
-  }, [selectedContract]);
-
-  const contractsRegistry = state.status === "success" ? state.data.contracts : [];
-  const editorBaseline =
-    editorMode === "edit" && editingContract ? toContractFormValues(editingContract) : emptyFormValues;
-  const hasEditorChanges =
-    editorMode !== "closed" && !areContractFormValuesEqual(formValues, editorBaseline);
-
-  const allVisibleSelected =
-    filteredContracts.length > 0 &&
-    filteredContracts.every((contract) => selectedContractIds.includes(contract.id));
-
-  const bulkActionLabel =
-    selectedContractIds.length > 0 &&
-    selectedContractIds.every((id) =>
-      contractsRegistry.find((contract) => contract.id === id)?.status === "archived"
-    )
-      ? "Usuń zaznaczone"
-      : "Archiwizuj zaznaczone";
+  const isSnapshotLoading =
+    snapshotState.status === "loading" && snapshotState.contractId === selectedContractId;
 
   useEffect(() => {
-    if (!selectedContract) {
-      setSnapshotState({ status: "idle" });
+    if (!selectedContractId) {
+      setSnapshotState({ status: "idle", contractId: null });
       return;
     }
 
-    let active = true;
-    setSnapshotState({ status: "loading" });
+    if (snapshotState.status === "success" && snapshotState.contractId === selectedContractId) {
+      return;
+    }
 
-    void fetchContractSnapshot(selectedContract.id)
-      .then((snapshot) => {
-        if (!active) return;
-        setSnapshotState({ status: "success", data: snapshot });
-      })
-      .catch((error) => {
-        if (!active) return;
-        setSnapshotState({
-          status: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Nie udało się pobrać Centrum kontraktu."
-        });
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedContract]);
+    void loadSnapshot(selectedContractId);
+  }, [selectedContractId]);
 
   useEffect(() => {
-    if (editorMode === "edit" && editingContractId && selectedContractId !== editingContractId) {
-      setEditorMode("closed");
-      setEditingContractId(null);
-      setFormValues(emptyFormValues);
+    if (drawerState.kind !== "contract") {
+      return;
     }
-  }, [editingContractId, editorMode, selectedContractId]);
+    if (drawerState.mode === "edit" && selectedContract) {
+      setContractFormValues(toContractFormValues(selectedContract));
+    }
+    if (drawerState.mode === "create") {
+      setContractFormValues(emptyContractFormValues);
+    }
+    setDrawerFeedback(null);
+  }, [drawerState, selectedContract]);
 
   useEffect(() => {
-    if (editorMode === "edit" && editingContractId && !editingContract) {
-      setEditorMode("closed");
-      setEditingContractId(null);
-      setFormValues(emptyFormValues);
-    }
-  }, [editingContract, editingContractId, editorMode]);
-
-  function clearFeedback() {
-    setFormError(null);
-    setFormStatus(null);
-  }
-
-  function confirmDiscardEditor() {
-    if (!hasEditorChanges) {
-      return true;
-    }
-
-    return window.confirm("Masz niezapisane zmiany. Czy chcesz je odrzucić?");
-  }
-
-  function discardEditor() {
-    if (!confirmDiscardEditor()) {
-      return false;
-    }
-
-    setEditorMode("closed");
-    setEditingContractId(null);
-    setFormValues(emptyFormValues);
-    clearFeedback();
-    return true;
-  }
-
-  function toggleSelectionMode() {
-    if (editorMode !== "closed" && !discardEditor()) {
+    if (drawerState.kind !== "control") {
       return;
     }
+    setControlFormValues(toContractControlFormValues(selectedSnapshot));
+    setDrawerFeedback(null);
+  }, [drawerState, selectedSnapshot]);
 
-    setIsSelectionMode((current) => !current);
-    setSelectedContractIds([]);
-    clearFeedback();
+  function openCreateDrawer() {
+    setDrawerState({ kind: "contract", mode: "create" });
   }
 
-  function selectContract(contract: ContractRecord) {
-    if (editorMode !== "closed" && !discardEditor()) {
-      return;
-    }
-
-    setSelectedContractId(contract.id);
-    clearFeedback();
+  function openEditDrawer() {
+    if (!selectedContract) return;
+    setDrawerState({ kind: "contract", mode: "edit" });
   }
 
-  function beginCreating() {
-    if (editorMode === "create") {
-      return;
-    }
-
-    if (editorMode !== "closed" && !discardEditor()) {
-      return;
-    }
-
-    setEditorMode("create");
-    setEditingContractId(null);
-    setFormValues(emptyFormValues);
-    clearFeedback();
+  function openControlDrawer() {
+    if (!selectedContract) return;
+    setDrawerState({ kind: "control" });
   }
 
-  function beginEditing(contract: ContractRecord) {
-    if (editorMode === "edit" && editingContractId === contract.id) {
-      return;
-    }
-
-    if (
-      editorMode !== "closed" &&
-      (editorMode !== "edit" || editingContractId !== contract.id) &&
-      !discardEditor()
-    ) {
-      return;
-    }
-
-    setSelectedContractId(contract.id);
-    setEditingContractId(contract.id);
-    setEditorMode("edit");
-    setFormValues(toContractFormValues(contract));
-    clearFeedback();
+  function closeDrawer() {
+    setDrawerState({ kind: "none" });
+    setDrawerFeedback(null);
   }
 
-  function isSelected(contractId: string) {
-    return selectedContractIds.includes(contractId);
-  }
-
-  function toggleSelected(contractId: string, checked: boolean) {
-    setSelectedContractIds((current) => {
-      const next = new Set(current);
-      if (checked) next.add(contractId);
-      else next.delete(contractId);
-      return [...next];
-    });
-  }
-
-  function toggleAllVisible(checked: boolean) {
-    setSelectedContractIds((current) => {
-      const next = new Set(current);
-      filteredContracts.forEach((contract) => {
-        if (checked) next.add(contract.id);
-        else next.delete(contract.id);
-      });
-      return [...next];
-    });
-  }
-
-  function handleListItemClick(contract: ContractRecord) {
-    if (isSelectionMode) {
-      toggleSelected(contract.id, !isSelected(contract.id));
-      return;
-    }
-
-    selectContract(contract);
-  }
-
-  async function handleAction(contract: ContractRecord) {
-    clearFeedback();
+  async function handleContractAction(contract: ContractRecord) {
+    setFeedback(null);
 
     if (contract.status === "archived") {
-      try {
-        const snapshot = await fetchContractSnapshot(contract.id);
-        if (snapshot.activity.has_data) {
-          const parts = buildContractHistoricalDataLines(snapshot);
-          window.alert(
-            `Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi.\n\n${parts.join("\n")}`
-          );
-          return;
-        }
-      } catch (error) {
+      if (selectedSnapshot?.activity.has_data) {
         window.alert(
-          error instanceof Error
-            ? error.message
-            : "Nie udało się sprawdzić danych kontraktu przed usunięciem."
+          "Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuń najpierw powiązane dane."
         );
         return;
       }
@@ -380,17 +286,19 @@ export function ContractsView({
 
       try {
         await deleteContractRecord(contract.id);
-        if (selectedContractId === contract.id) {
-          setEditorMode("closed");
-          setEditingContractId(null);
-          setFormValues(emptyFormValues);
-        }
         await reloadContracts({ preserveState: true });
-        setFormStatus(`Kontrakt "${contract.name}" został usunięty.`);
+        setFeedback({
+          tone: "success",
+          text: `Kontrakt "${contract.name}" został usunięty.`
+        });
       } catch (error) {
-        setFormError(
-          error instanceof Error ? error.message : "Nie udało się usunąć kontraktu."
-        );
+        setFeedback({
+          tone: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Nie udało się usunąć kontraktu."
+        });
       }
       return;
     }
@@ -402,164 +310,122 @@ export function ContractsView({
     try {
       await archiveContractRecord(contract.id);
       await reloadContracts({ preserveState: true, selectId: contract.id });
-      setFormStatus(`Kontrakt "${contract.name}" został zarchiwizowany.`);
+      setFeedback({
+        tone: "success",
+        text: `Kontrakt "${contract.name}" został zarchiwizowany.`
+      });
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się zarchiwizować kontraktu."
-      );
+      setFeedback({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zarchiwizować kontraktu."
+      });
     }
   }
 
-  async function handleBulkAction() {
-    if (!selectedContractIds.length) {
-      window.alert("Zaznacz kontrakty do archiwizacji lub usunięcia.");
-      return;
-    }
-
-    const contractsById = new Map(contractsRegistry.map((item) => [item.id, item]));
-    const archivedIds = selectedContractIds.filter(
-      (id) => contractsById.get(id)?.status === "archived"
-    );
-    const activeIds = selectedContractIds.filter(
-      (id) => contractsById.get(id)?.status !== "archived"
-    );
-
-    const archivedSnapshots = await Promise.all(
-      archivedIds.map(async (id) => ({
-        id,
-        contract: contractsById.get(id) || null,
-        snapshot: await fetchContractSnapshot(id)
-      }))
-    );
-
-    const archivedWithUsage = archivedSnapshots.filter(({ snapshot }) => snapshot.activity.has_data);
-    const archivedDeletableIds = archivedIds.filter(
-      (id) => !archivedWithUsage.some((entry) => entry.id === id)
-    );
-
-    const promptParts: string[] = [];
-    if (activeIds.length === selectedContractIds.length) {
-      promptParts.push(
-        selectedContractIds.length === 1
-          ? `Czy na pewno chcesz zarchiwizować kontrakt "${contractsById.get(selectedContractIds[0])?.name || ""}"?`
-          : `Czy na pewno chcesz zarchiwizować ${selectedContractIds.length} zaznaczonych kontraktów?`
-      );
-    } else if (archivedIds.length === selectedContractIds.length) {
-      promptParts.push(
-        archivedDeletableIds.length === selectedContractIds.length
-          ? `Czy na pewno chcesz trwale usunąć ${selectedContractIds.length} zarchiwizowanych kontraktów?`
-          : "Część zaznaczonych kontraktów ma dane historyczne i pozostanie zarchiwizowana."
-      );
-    } else {
-      promptParts.push(
-        `Czy na pewno chcesz zarchiwizować ${activeIds.length} kontrakty i usunąć ${archivedDeletableIds.length} zarchiwizowane pozycje bez danych historycznych?`
-      );
-    }
-
-    if (archivedWithUsage.length) {
-      promptParts.push(
-        `Kontrakty z danymi historycznymi pozostaną zarchiwizowane:\n${archivedWithUsage
-          .map(({ contract, snapshot }) => {
-            const details = buildContractHistoricalDataLines(snapshot);
-            return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
-          })
-          .join("\n")}`
-      );
-    }
-
-    if (!window.confirm(promptParts.join("\n\n"))) {
-      return;
-    }
-
-    clearFeedback();
-
-    try {
-      if (activeIds.length) {
-        await Promise.all(activeIds.map((id) => archiveContractRecord(id)));
-      }
-
-      if (archivedDeletableIds.length) {
-        await Promise.all(archivedDeletableIds.map((id) => deleteContractRecord(id)));
-      }
-
-      setSelectedContractIds([]);
-      setIsSelectionMode(false);
-      await reloadContracts({ preserveState: true });
-      setFormStatus(
-        activeIds.length && archivedDeletableIds.length
-          ? "Zaznaczone kontrakty zostały zarchiwizowane lub usunięte."
-          : activeIds.length
-            ? "Zaznaczone kontrakty zostały zarchiwizowane."
-            : "Zaznaczone zarchiwizowane kontrakty zostały usunięte."
-      );
-    } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się wykonać akcji zbiorczej."
-      );
-    }
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleContractSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    clearFeedback();
+    setDrawerFeedback(null);
 
-    if (!formValues.name.trim()) {
-      setFormError("Podaj nazwę kontraktu.");
+    if (!contractFormValues.name.trim()) {
+      setDrawerFeedback({ tone: "error", text: "Podaj nazwę kontraktu." });
       return;
     }
 
-    const contractValue = Number(formValues.contract_value || 0);
+    const contractValue = Number(contractFormValues.contract_value || 0);
     if (!Number.isFinite(contractValue) || contractValue < 0) {
-      setFormError("Wartość kontraktu nie może być ujemna.");
+      setDrawerFeedback({ tone: "error", text: "Wartość kontraktu nie może być ujemna." });
       return;
     }
 
     if (
-      formValues.signed_date &&
-      formValues.end_date &&
-      new Date(formValues.end_date).getTime() < new Date(formValues.signed_date).getTime()
+      contractFormValues.signed_date &&
+      contractFormValues.end_date &&
+      new Date(contractFormValues.end_date).getTime() <
+        new Date(contractFormValues.signed_date).getTime()
     ) {
-      setFormError("Termin zakończenia nie może być wcześniejszy niż data podpisania.");
+      setDrawerFeedback({
+        tone: "error",
+        text: "Termin zakończenia nie może być wcześniejszy niż data podpisania."
+      });
       return;
     }
 
-    setIsSubmitting(true);
-
+    setIsSubmittingContract(true);
     try {
       const saved = await saveContract(
-        editorMode === "edit" ? editingContractId : null,
-        normalizeContractPayload(formValues)
+        drawerState.kind === "contract" && drawerState.mode === "edit" && selectedContract
+          ? selectedContract.id
+          : null,
+        normalizeContractPayload(contractFormValues)
       );
-
-      await reloadContracts({
-        preserveState: true,
-        selectId: saved.id
+      await reloadContracts({ preserveState: true, selectId: saved.id });
+      closeDrawer();
+      setFeedback({
+        tone: "success",
+        text:
+          drawerState.kind === "contract" && drawerState.mode === "edit"
+            ? `Dane kontraktu "${saved.name}" zostały zaktualizowane.`
+            : `Kontrakt "${saved.name}" został dodany.`
       });
-
-      setSelectedContractId(saved.id);
-      setEditorMode("closed");
-      setEditingContractId(null);
-      setFormValues(emptyFormValues);
-      setFormStatus(
-        editorMode === "edit"
-          ? `Kontrakt "${saved.name}" został zaktualizowany.`
-          : `Kontrakt "${saved.name}" został dodany.`
-      );
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się zapisać kontraktu."
-      );
+      setDrawerFeedback({
+        tone: "error",
+        text:
+          error instanceof Error ? error.message : "Nie udało się zapisać kontraktu."
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsSubmittingContract(false);
+    }
+  }
+
+  async function handleControlSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedContract) return;
+    setDrawerFeedback(null);
+    setIsSubmittingControl(true);
+
+    try {
+      const snapshot = await saveContractControl(
+        selectedContract.id,
+        normalizeContractControlPayload(controlFormValues)
+      );
+      setSnapshotState({
+        status: "success",
+        contractId: selectedContract.id,
+        data: snapshot
+      });
+      closeDrawer();
+      setFeedback({
+        tone: "success",
+        text: `Plan i forecast kontraktu "${selectedContract.name}" zostały zapisane.`
+      });
+    } catch (error) {
+      setDrawerFeedback({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Nie udało się zapisać planu i forecastu."
+      });
+    } finally {
+      setIsSubmittingControl(false);
     }
   }
 
   if (state.status === "loading") {
     return (
       <div className="module-page">
-        <SectionHeader eyebrow="Kontrakty" title="Kontrakty" />
-        <Panel title="Wybierz kontrakt">
-          <p className="status-message">Trwa odczyt listy kontraktów.</p>
+        <SectionHeader eyebrow="Kontrakty" title="Centrum kontraktów" />
+        <div className="module-page__stats">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <StatCard key={index} label="Ładowanie" value="..." />
+          ))}
+        </div>
+        <Panel title="Ładowanie kontraktów">
+          <p className="status-message">Trwa odczyt listy kontraktów i widoku zarządczego.</p>
         </Panel>
       </div>
     );
@@ -570,7 +436,7 @@ export function ContractsView({
       <div className="module-page">
         <SectionHeader
           eyebrow="Kontrakty"
-          title="Kontrakty"
+          title="Centrum kontraktów"
           actions={
             <ActionButton type="button" onClick={() => void reloadContracts()}>
               Spróbuj ponownie
@@ -586,49 +452,41 @@ export function ContractsView({
     );
   }
 
-  const isEditing = editorMode === "edit";
-  const editorTitle = isEditing ? "Edycja kontraktu" : "Nowy kontrakt";
-  const pageFeedback =
-    editorMode === "closed"
-      ? [
-          formError ? { tone: "error" as const, text: formError } : null,
-          formStatus ? { tone: "success" as const, text: formStatus } : null
-        ]
-      : [formStatus ? { tone: "success" as const, text: formStatus } : null];
-  const drawerFeedback = [formError ? { tone: "error" as const, text: formError } : null];
-
   return (
-    <div className="module-page">
+    <div className="module-page contracts-control-page">
       <SectionHeader
         eyebrow="Kontrakty"
-        title="Kontrakty"
+        title="Centrum kontraktów"
+        description="Widok zarządczy kontraktu: wynik, plan, forecast i ryzyka w jednym miejscu."
         actions={
           <div className="module-actions">
-            <div className="module-actions__primary">
-              <ActionButton type="button" onClick={beginCreating}>
-                Dodaj kontrakt
-              </ActionButton>
-            </div>
-            <div className="module-actions__secondary">
-              <ActionButton
-                type="button"
-                variant="secondary"
-                onClick={() => void reloadContracts({ preserveState: true })}
-                disabled={isRefreshing}
-              >
-                {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-              </ActionButton>
-            </div>
+            <ActionButton type="button" onClick={openCreateDrawer}>
+              Dodaj kontrakt
+            </ActionButton>
+            <ActionButton
+              type="button"
+              variant="secondary"
+              onClick={() => void reloadContracts({ preserveState: true, selectId: selectedContractId })}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+            </ActionButton>
           </div>
         }
       />
 
-      <FormFeedback items={pageFeedback} />
+      <div className="module-page__stats module-page__stats--compact">
+        {state.data.summary.map((item) => (
+          <StatCard key={item.id} label={item.label} value={item.value} accent={item.accent} />
+        ))}
+      </div>
 
-      <div className="contracts-layout">
-        <Panel className="contracts-selection-panel" title="Wybierz kontrakt">
-          <div className="contracts-selection-toolbar">
-            <div className="dashboard-toolbar__tabs">
+      <FormFeedback items={[feedback]} />
+
+      <div className="contracts-workspace">
+        <Panel className="contracts-picker" title="Wybierz kontrakt">
+          <div className="contracts-picker__toolbar">
+            <div className="toolbar-tabs">
               <ActionButton
                 type="button"
                 variant={filter === "all" ? "primary" : "secondary"}
@@ -651,210 +509,162 @@ export function ContractsView({
                 Zarchiwizowane
               </ActionButton>
             </div>
-
             <SearchField
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Szukaj kontraktu"
             />
-
-            <div className="contracts-selection-toolbar__actions">
-              <ActionButton
-                type="button"
-                variant={isSelectionMode ? "primary" : "secondary"}
-                onClick={toggleSelectionMode}
-              >
-                {isSelectionMode ? "Zakończ zaznaczanie" : "Zaznacz wiele"}
-              </ActionButton>
-              {isSelectionMode ? (
-                <ActionButton
-                  type="button"
-                  variant="ghost"
-                  onClick={() => toggleAllVisible(!allVisibleSelected)}
-                  disabled={!filteredContracts.length}
-                >
-                  {allVisibleSelected ? "Odznacz widoczne" : "Zaznacz widoczne"}
-                </ActionButton>
-              ) : null}
-            </div>
           </div>
 
-          {isSelectionMode ? (
-            <div className="contracts-selection-bulk">
-              <span className="contracts-selection-bulk__meta">
-                {selectedContractIds.length
-                  ? `Zaznaczone: ${selectedContractIds.length}`
-                  : "Zaznacz kontrakty do akcji zbiorczej"}
-              </span>
-              <ActionButton
-                type="button"
-                variant="secondary"
-                onClick={() => void handleBulkAction()}
-                disabled={!selectedContractIds.length}
-              >
-                {bulkActionLabel}
-              </ActionButton>
-            </div>
-          ) : null}
-
-          {filteredContracts.length ? (
-            <ul className="contracts-picker" aria-label="Lista kontraktów">
-              {filteredContracts.map((contract) => {
+          <div className="contracts-picker__list" data-testid="contracts-picker">
+            {filteredContracts.length ? (
+              filteredContracts.map((contract) => {
                 const isActive = contract.id === selectedContractId;
-                const checked = isSelected(contract.id);
-
                 return (
-                  <li key={contract.id} className="contracts-picker__item">
-                    <button
-                      type="button"
-                      className={[
-                        "contracts-picker__button",
-                        isActive ? "contracts-picker__button--active" : "",
-                        checked ? "contracts-picker__button--checked" : ""
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onClick={() => handleListItemClick(contract)}
-                      aria-pressed={isSelectionMode ? checked : isActive}
-                    >
-                      {isSelectionMode ? (
-                        <span
-                          className={[
-                            "contracts-picker__checkbox",
-                            checked ? "contracts-picker__checkbox--checked" : ""
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                          aria-hidden="true"
-                        />
-                      ) : null}
-
-                      <span className="contracts-picker__content">
-                        <span className="contracts-picker__top">
-                          <span className="contracts-picker__number">
-                            {contract.contract_number || "Brak numeru"}
-                          </span>
-                          <span
-                            className={[
-                              "contracts-picker__status",
-                              `contracts-picker__status--${contract.status}`
-                            ].join(" ")}
-                          >
-                            {formatStatus(contract.status)}
-                          </span>
-                        </span>
-                        <span className="contracts-picker__name">{contract.name || "-"}</span>
-                        <span className="contracts-picker__investor">
-                          {contract.investor || "Brak inwestora"}
-                        </span>
-                        <span className="contracts-picker__meta">
-                          Wartość kontraktu: {formatMoney(contract.contract_value)}
-                        </span>
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <div className="contracts-selection-empty">
-              <p className="status-message">
-                {state.data.contracts.length === 0
-                  ? "Brak kontraktów w rejestrze."
-                  : "Brak kontraktów dla wybranego filtra lub wyszukiwania."}
-              </p>
-            </div>
-          )}
-        </Panel>
-
-        <Panel className="contracts-center-panel" title="Centrum kontraktu">
-          {selectedContract ? (
-            <div className="contracts-focus-header">
-              <div className="contracts-focus-header__main">
-                <div className="contracts-focus-header__top">
-                  <h2 className="contracts-focus-header__title">{selectedContract.name}</h2>
-                  <span
-                    className={[
-                      "contracts-picker__status",
-                      `contracts-picker__status--${selectedContract.status}`
-                    ].join(" ")}
+                  <button
+                    key={contract.id}
+                    type="button"
+                    className={`contracts-picker__item${isActive ? " contracts-picker__item--active" : ""}`}
+                    onClick={() => setSelectedContractId(contract.id)}
                   >
-                    {formatStatus(selectedContract.status)}
-                  </span>
-                </div>
-                <div className="contracts-focus-header__meta">
-                  {selectedContractMeta.map((item) => (
-                    <span key={item.id} className="contracts-focus-header__meta-item">
-                      <span className="contracts-focus-header__meta-label">{item.label}</span>
-                      <strong>{item.value}</strong>
+                    <div className="contracts-picker__item-top">
+                      <span className="contracts-picker__number">
+                        {contract.contract_number || "Bez numeru"}
+                      </span>
+                      <span className={`contracts-chip contracts-chip--status-${contract.status}`}>
+                        {formatStatus(contract.status)}
+                      </span>
+                    </div>
+                    <strong className="contracts-picker__name">{contract.name}</strong>
+                    <span className="contracts-picker__meta">
+                      {contract.investor || "Bez inwestora"}
                     </span>
-                  ))}
+                    <span className="contracts-picker__meta contracts-picker__meta--value">
+                      {formatMoney(contract.contract_value)}
+                    </span>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="contracts-empty-note">
+                <p className="status-message">
+                  {contracts.length
+                    ? "Brak kontraktów dla wybranego filtra."
+                    : "Brak kontraktów w rejestrze. Dodaj pierwszy kontrakt."}
+                </p>
+              </div>
+            )}
+          </div>
+        </Panel>
+
+        <div className="contracts-main-panel">
+          {selectedContract ? (
+            <Panel className="contracts-overview-panel">
+              <div className="contracts-overview-header">
+                <div className="contracts-overview-header__primary">
+                  <p className="section-header__eyebrow">
+                    {selectedContract.contract_number || "Bez numeru"}
+                  </p>
+                  <h2 className="contracts-overview-header__title">{selectedContract.name}</h2>
+                  <p className="contracts-overview-header__subtitle">
+                    {selectedContract.investor || "Bez inwestora"} • {formatStatus(selectedContract.status)}
+                  </p>
+                </div>
+
+                <div className="contracts-overview-header__side">
+                  <div className="contracts-overview-health">
+                    <span
+                      className={`contracts-chip contracts-chip--${
+                        selectedSnapshot?.health.level ?? "attention"
+                      }`}
+                    >
+                      {selectedSnapshot
+                        ? formatHealthLevel(selectedSnapshot.health.level)
+                        : "Ładowanie"}
+                    </span>
+                    <span className="contracts-overview-health__meta">
+                      Finansowo:{" "}
+                      {selectedSnapshot
+                        ? formatStaleness(selectedSnapshot.freshness.days_since_financial_activity)
+                        : "ładowanie"}
+                    </span>
+                    <span className="contracts-overview-health__meta">
+                      Operacyjnie:{" "}
+                      {selectedSnapshot
+                        ? formatStaleness(selectedSnapshot.freshness.days_since_operational_activity)
+                        : "ładowanie"}
+                    </span>
+                  </div>
+                  <div className="module-actions">
+                    <ActionButton type="button" variant="secondary" onClick={openEditDrawer}>
+                      Edytuj dane kontraktu
+                    </ActionButton>
+                    <ActionButton type="button" variant="secondary" onClick={openControlDrawer}>
+                      Plan i forecast
+                    </ActionButton>
+                    <ActionButton
+                      type="button"
+                      variant={selectedContract.status === "archived" ? "ghost" : "secondary"}
+                      onClick={() => void handleContractAction(selectedContract)}
+                    >
+                      {selectedContract.status === "archived" ? "Usuń" : "Archiwizuj"}
+                    </ActionButton>
+                  </div>
                 </div>
               </div>
-              <div className="contracts-focus-header__actions">
-                <ActionButton type="button" onClick={() => beginEditing(selectedContract)}>
-                  Edytuj
-                </ActionButton>
-                <ActionButton
-                  type="button"
-                  variant={selectedContract.status === "archived" ? "ghost" : "secondary"}
-                  onClick={() => void handleAction(selectedContract)}
-                >
-                  {selectedContract.status === "archived" ? "Usuń" : "Archiwizuj"}
-                </ActionButton>
-              </div>
-            </div>
-          ) : null}
 
-          <ContractCenterPanel
-            contract={selectedContract}
-            snapshot={snapshotState.status === "success" ? snapshotState.data : null}
-            isLoading={snapshotState.status === "loading"}
-            errorMessage={snapshotState.status === "error" ? snapshotState.message : null}
-          />
-        </Panel>
+              <ContractCenterPanel
+                contract={selectedContract}
+                snapshot={selectedSnapshot}
+                isLoading={isSnapshotLoading}
+                errorMessage={selectedSnapshotError}
+              />
+            </Panel>
+          ) : (
+            <Panel title="Centrum kontraktu">
+              <p className="status-message">Wybierz kontrakt, aby zobaczyć jego wynik, plan, forecast i alerty.</p>
+            </Panel>
+          )}
+        </div>
       </div>
 
-      {editorMode !== "closed" ? (
-        <div className="contracts-editor-drawer-shell" role="presentation">
+      {drawerState.kind !== "none" ? (
+        <div className="contracts-drawer-shell" role="dialog" aria-modal="true">
           <button
             type="button"
-            className="contracts-editor-drawer__backdrop"
-            aria-label="Zamknij panel edycji kontraktu"
-            onClick={() => {
-              discardEditor();
-            }}
+            className="contracts-drawer-shell__backdrop"
+            aria-label="Zamknij panel"
+            onClick={closeDrawer}
           />
-          <aside
-            className="contracts-editor-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="contracts-editor-title"
-          >
-            <Panel className="contracts-editor-panel">
-              <div className="contracts-editor-panel__header">
-                <div>
-                  <p className="contracts-editor-panel__eyebrow">Edycja danych</p>
-                  <h2 id="contracts-editor-title" className="contracts-editor-panel__title">
-                    {editorTitle}
-                  </h2>
-                </div>
-                <ActionButton type="button" variant="ghost" onClick={discardEditor}>
-                  Zamknij
-                </ActionButton>
+          <aside className="contracts-drawer">
+            <div className="contracts-drawer__header">
+              <div>
+                <p className="section-header__eyebrow">
+                  {drawerState.kind === "control" ? "Kontrola kontraktu" : "Dane kontraktu"}
+                </p>
+                <h2 className="contracts-drawer__title">
+                  {drawerState.kind === "control"
+                    ? "Plan i forecast"
+                    : drawerState.mode === "edit"
+                      ? "Edytuj dane kontraktu"
+                      : "Dodaj kontrakt"}
+                </h2>
               </div>
+              <ActionButton type="button" variant="ghost" onClick={closeDrawer}>
+                Zamknij
+              </ActionButton>
+            </div>
 
-              <FormFeedback items={drawerFeedback} />
-
-              <form className="contracts-form" onSubmit={handleSubmit}>
+            {drawerState.kind === "contract" ? (
+              <form className="contracts-drawer__form" onSubmit={handleContractSubmit}>
                 <FormGrid columns={1}>
                   <label className="field-card">
                     <span className="field-card__label">Numer kontraktu</span>
                     <input
                       className="text-input field-card__control"
-                      value={formValues.contract_number}
+                      value={contractFormValues.contract_number}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           contract_number: event.target.value
                         }))
@@ -863,28 +673,12 @@ export function ContractsView({
                     />
                   </label>
                   <label className="field-card">
-                    <span className="field-card__label">Status</span>
-                    <select
-                      className="text-input field-card__control"
-                      value={formValues.status}
-                      onChange={(event) =>
-                        setFormValues((current) => ({
-                          ...current,
-                          status: event.target.value as ContractFormValues["status"]
-                        }))
-                      }
-                    >
-                      <option value="active">W realizacji</option>
-                      <option value="archived">Zarchiwizowany</option>
-                    </select>
-                  </label>
-                  <label className="field-card">
                     <span className="field-card__label">Nazwa kontraktu</span>
                     <input
                       className="text-input field-card__control"
-                      value={formValues.name}
+                      value={contractFormValues.name}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           name: event.target.value
                         }))
@@ -896,9 +690,9 @@ export function ContractsView({
                     <span className="field-card__label">Inwestor</span>
                     <input
                       className="text-input field-card__control"
-                      value={formValues.investor}
+                      value={contractFormValues.investor}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           investor: event.target.value
                         }))
@@ -907,13 +701,29 @@ export function ContractsView({
                     />
                   </label>
                   <label className="field-card">
+                    <span className="field-card__label">Status</span>
+                    <select
+                      className="text-input field-card__control"
+                      value={contractFormValues.status}
+                      onChange={(event) =>
+                        setContractFormValues((current) => ({
+                          ...current,
+                          status: event.target.value as ContractFormValues["status"]
+                        }))
+                      }
+                    >
+                      <option value="active">W realizacji</option>
+                      <option value="archived">Zarchiwizowany</option>
+                    </select>
+                  </label>
+                  <label className="field-card">
                     <span className="field-card__label">Data podpisania</span>
                     <input
                       className="text-input field-card__control"
                       type="date"
-                      value={formValues.signed_date}
+                      value={contractFormValues.signed_date}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           signed_date: event.target.value
                         }))
@@ -925,25 +735,25 @@ export function ContractsView({
                     <input
                       className="text-input field-card__control"
                       type="date"
-                      value={formValues.end_date}
+                      value={contractFormValues.end_date}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           end_date: event.target.value
                         }))
                       }
                     />
                   </label>
-                  <label className="field-card contracts-form__full">
+                  <label className="field-card">
                     <span className="field-card__label">Wartość kontraktu</span>
                     <input
                       className="text-input field-card__control"
                       type="number"
                       min="0"
                       step="0.01"
-                      value={formValues.contract_value}
+                      value={contractFormValues.contract_value}
                       onChange={(event) =>
-                        setFormValues((current) => ({
+                        setContractFormValues((current) => ({
                           ...current,
                           contract_value: event.target.value
                         }))
@@ -953,24 +763,155 @@ export function ContractsView({
                   </label>
                 </FormGrid>
 
+                <FormFeedback items={[drawerFeedback]} />
+
                 <FormActions
                   leading={
-                    <ActionButton type="button" variant="ghost" onClick={discardEditor}>
-                      {isEditing ? "Anuluj edycję" : "Anuluj dodawanie"}
+                    <ActionButton type="button" variant="ghost" onClick={closeDrawer}>
+                      Anuluj
                     </ActionButton>
                   }
                   trailing={
-                    <ActionButton type="submit" disabled={isSubmitting}>
-                      {isSubmitting
-                        ? "Zapisywanie..."
-                        : isEditing
-                          ? "Zapisz zmiany"
-                          : "Dodaj kontrakt"}
+                    <ActionButton type="submit" disabled={isSubmittingContract}>
+                      {isSubmittingContract ? "Zapisywanie..." : "Zapisz"}
                     </ActionButton>
                   }
                 />
               </form>
-            </Panel>
+            ) : (
+              <form className="contracts-drawer__form" onSubmit={handleControlSubmit}>
+                <FormGrid columns={1}>
+                  <label className="field-card">
+                    <span className="field-card__label">Planowany przychód</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.planned_revenue_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          planned_revenue_total: event.target.value
+                        }))
+                      }
+                      placeholder="Pozostaw puste, aby użyć wartości kontraktu"
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Planowany koszt fakturowy</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.planned_invoice_cost_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          planned_invoice_cost_total: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Planowany koszt pracy</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.planned_labor_cost_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          planned_labor_cost_total: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Forecast przychodu</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.forecast_revenue_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          forecast_revenue_total: event.target.value
+                        }))
+                      }
+                      placeholder="Pozostaw puste, aby użyć wartości kontraktu"
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Forecast kosztu fakturowego</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.forecast_invoice_cost_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          forecast_invoice_cost_total: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Forecast kosztu pracy</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={controlFormValues.forecast_labor_cost_total}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          forecast_labor_cost_total: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card contracts-drawer__full">
+                    <span className="field-card__label">Notatka kontrolna</span>
+                    <textarea
+                      className="text-input field-card__control"
+                      value={controlFormValues.note}
+                      onChange={(event) =>
+                        setControlFormValues((current) => ({
+                          ...current,
+                          note: event.target.value
+                        }))
+                      }
+                      rows={4}
+                      placeholder="Uzasadnienie forecastu, decyzje kosztowe, ryzyka do obserwacji."
+                    />
+                  </label>
+                </FormGrid>
+
+                <FormFeedback items={[drawerFeedback]} />
+
+                <FormActions
+                  leading={
+                    <ActionButton type="button" variant="ghost" onClick={closeDrawer}>
+                      Anuluj
+                    </ActionButton>
+                  }
+                  trailing={
+                    <ActionButton type="submit" disabled={isSubmittingControl}>
+                      {isSubmittingControl ? "Zapisywanie..." : "Zapisz plan i forecast"}
+                    </ActionButton>
+                  }
+                />
+              </form>
+            )}
           </aside>
         </div>
       ) : null}

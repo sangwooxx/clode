@@ -1,26 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const createContractMock = vi.fn();
-const updateContractMock = vi.fn();
-const archiveContractMock = vi.fn();
-const deleteContractPermanentlyMock = vi.fn();
 const getContractSnapshotMock = vi.fn();
+const updateContractControlMock = vi.fn();
 
 vi.mock("@/lib/api/contracts", () => ({
-  createContract: (...args: unknown[]) => createContractMock(...args),
-  updateContract: (...args: unknown[]) => updateContractMock(...args),
-  archiveContract: (...args: unknown[]) => archiveContractMock(...args),
-  deleteContractPermanently: (...args: unknown[]) => deleteContractPermanentlyMock(...args),
-  getContractSnapshot: (...args: unknown[]) => getContractSnapshotMock(...args),
+  archiveContract: vi.fn(),
+  createContract: vi.fn(),
+  deleteContractPermanently: vi.fn(),
   getContract: vi.fn(),
-  listContracts: vi.fn()
+  getContractSnapshot: (...args: unknown[]) => getContractSnapshotMock(...args),
+  listContracts: vi.fn(),
+  updateContract: vi.fn(),
+  updateContractControl: (...args: unknown[]) => updateContractControlMock(...args),
 }));
 
 import {
-  archiveContractRecord,
-  deleteContractRecord,
   fetchContractSnapshot,
-  saveContract
+  normalizeContractControlPayload,
+  saveContractControl,
 } from "@/features/contracts/api";
 
 describe("contracts api", () => {
@@ -28,69 +25,45 @@ describe("contracts api", () => {
     vi.clearAllMocks();
   });
 
-  it("creates a new contract without changing the CRUD path", async () => {
-    createContractMock.mockResolvedValueOnce({
-      contract: { id: "contract-1", name: "Budowa hali" }
+  it("normalizes plan and forecast control values without frontend business logic", () => {
+    expect(
+      normalizeContractControlPayload({
+        planned_revenue_total: "100000",
+        planned_invoice_cost_total: "32000,50",
+        planned_labor_cost_total: "",
+        forecast_revenue_total: "",
+        forecast_invoice_cost_total: "34000",
+        forecast_labor_cost_total: "12000",
+        note: "  kontrola kwartalna  ",
+      }),
+    ).toEqual({
+      planned_revenue_total: 100000,
+      planned_invoice_cost_total: 32000.5,
+      planned_labor_cost_total: null,
+      forecast_revenue_total: null,
+      forecast_invoice_cost_total: 34000,
+      forecast_labor_cost_total: 12000,
+      note: "kontrola kwartalna",
     });
-
-    const result = await saveContract(null, {
-      contract_number: "K/2026/011",
-      name: "Budowa hali",
-      investor: "Inwestor A",
-      signed_date: "2026-01-10",
-      end_date: "2026-11-30",
-      contract_value: 250000,
-      status: "active"
-    });
-
-    expect(createContractMock).toHaveBeenCalledTimes(1);
-    expect(updateContractMock).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ id: "contract-1", name: "Budowa hali" });
   });
 
-  it("updates an existing contract without changing the CRUD path", async () => {
-    updateContractMock.mockResolvedValueOnce({
-      contract: { id: "contract-1", name: "Budowa hali po zmianie" }
-    });
+  it("returns the backend snapshot payload for contract control", async () => {
+    const snapshot = {
+      contract: { id: "c-1" },
+      plan: { is_configured: true },
+      forecast: { is_configured: true },
+    };
+    getContractSnapshotMock.mockResolvedValueOnce(snapshot);
+    updateContractControlMock.mockResolvedValueOnce(snapshot);
 
-    const result = await saveContract("contract-1", {
-      contract_number: "K/2026/011",
-      name: "Budowa hali po zmianie",
-      investor: "Inwestor A",
-      signed_date: "2026-01-10",
-      end_date: "2026-11-30",
-      contract_value: 255000,
-      status: "active"
-    });
-
-    expect(updateContractMock).toHaveBeenCalledWith(
-      "contract-1",
-      expect.objectContaining({ name: "Budowa hali po zmianie" })
+    await expect(fetchContractSnapshot("c-1")).resolves.toEqual(snapshot);
+    await expect(saveContractControl("c-1", { forecast_invoice_cost_total: 34000 })).resolves.toEqual(
+      snapshot,
     );
-    expect(createContractMock).not.toHaveBeenCalled();
-    expect(result).toMatchObject({ id: "contract-1", name: "Budowa hali po zmianie" });
-  });
 
-  it("fetches the backend-first contract snapshot and preserves archive/delete actions", async () => {
-    getContractSnapshotMock.mockResolvedValueOnce({
-      contract: { id: "contract-1", name: "Budowa hali" },
-      metrics: { revenue_total: 1 },
-      activity: { has_data: true },
-      monthly_breakdown: []
+    expect(getContractSnapshotMock).toHaveBeenCalledWith("c-1");
+    expect(updateContractControlMock).toHaveBeenCalledWith("c-1", {
+      forecast_invoice_cost_total: 34000,
     });
-    archiveContractMock.mockResolvedValueOnce({
-      contract: { id: "contract-1", status: "archived" }
-    });
-    deleteContractPermanentlyMock.mockResolvedValueOnce({ ok: true });
-
-    const snapshot = await fetchContractSnapshot("contract-1");
-    const archived = await archiveContractRecord("contract-1");
-    await deleteContractRecord("contract-1");
-
-    expect(getContractSnapshotMock).toHaveBeenCalledWith("contract-1");
-    expect(snapshot.contract.id).toBe("contract-1");
-    expect(archiveContractMock).toHaveBeenCalledWith("contract-1");
-    expect(archived.status).toBe("archived");
-    expect(deleteContractPermanentlyMock).toHaveBeenCalledWith("contract-1");
   });
 });

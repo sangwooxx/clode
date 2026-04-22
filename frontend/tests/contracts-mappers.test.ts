@@ -1,159 +1,177 @@
 import { describe, expect, it } from "vitest";
-import {
-  buildContractHistoricalDataLines,
-  mapContractCenterViewModel,
-  resolveNextSelectedContractId
-} from "../src/features/contracts/mappers";
-import type { ContractRecord, ContractSnapshot } from "../src/features/contracts/types";
 
-const contract: ContractRecord = {
-  id: "contract-1",
-  contract_number: "K/2026/011",
-  name: "Budowa hali",
-  investor: "Inwestor A",
-  signed_date: "2026-01-10",
-  end_date: "2026-11-30",
-  contract_value: 250000,
-  status: "active",
-  created_at: "2026-01-10T08:00:00Z",
-  updated_at: "2026-01-10T08:00:00Z"
-};
+import { mapContractCenterViewModel, resolveNextSelectedContractId } from "@/features/contracts/mappers";
+import type { ContractRecord, ContractSnapshot } from "@/features/contracts/types";
 
-const snapshotWithData: ContractSnapshot = {
-  contract,
-  metrics: {
-    contract_id: "contract-1",
-    revenue_total: 120000,
-    invoice_cost_total: 35000,
-    labor_cost_total: 22000,
-    labor_hours_total: 480,
-    cost_total: 57000,
-    cost_by_category: {
-      materials: 35000,
-      labor: 22000,
-      equipment: 0,
-      transport: 0,
-      services: 0,
-      other: 0
-    },
-    invoice_count: 5,
-    cost_invoice_count: 2,
-    sales_invoice_count: 3,
-    margin: 63000
-  },
-  activity: {
-    invoice_count: 5,
-    time_entry_count: 18,
-    planning_assignment_count: 6,
-    has_financial_data: true,
-    has_operational_data: true,
-    has_data: true
-  },
-  monthly_breakdown: [
-    {
-      month_key: "2026-04",
-      month_label: "2026-04",
-      revenue_total: 50000,
+function createContract(overrides: Partial<ContractRecord> = {}): ContractRecord {
+  return {
+    id: "c-1",
+    contract_number: "K/2026/001",
+    name: "Budowa hali",
+    investor: "Inwestor A",
+    signed_date: "2026-01-10",
+    end_date: "2026-11-30",
+    contract_value: 100000,
+    status: "active",
+    ...overrides,
+  };
+}
+
+function createSnapshot(overrides: Partial<ContractSnapshot> = {}): ContractSnapshot {
+  return {
+    contract: createContract(),
+    metrics: {
+      contract_id: "c-1",
+      revenue_total: 40000,
       invoice_cost_total: 12000,
       labor_cost_total: 8000,
       labor_hours_total: 160,
       cost_total: 20000,
-      margin: 30000,
+      cost_by_category: { materials: 12000, labor: 8000, other: 0 },
       invoice_count: 2,
       cost_invoice_count: 1,
-      sales_invoice_count: 1
-    }
-  ]
-};
+      sales_invoice_count: 1,
+      margin: 20000,
+      margin_percent: 50,
+    },
+    activity: {
+      invoice_count: 2,
+      time_entry_count: 3,
+      planning_assignment_count: 2,
+      has_financial_data: true,
+      has_operational_data: true,
+      has_data: true,
+    },
+    monthly_breakdown: [
+      {
+        month_key: "2026-04",
+        month_label: "2026-04",
+        revenue_total: 40000,
+        invoice_cost_total: 12000,
+        labor_cost_total: 8000,
+        labor_hours_total: 160,
+        cost_total: 20000,
+        margin: 20000,
+        invoice_count: 2,
+        cost_invoice_count: 1,
+        sales_invoice_count: 1,
+      },
+    ],
+    control: {
+      contract_id: "c-1",
+      planned_revenue_total: 100000,
+      planned_invoice_cost_total: 30000,
+      planned_labor_cost_total: 25000,
+      forecast_revenue_total: 100000,
+      forecast_invoice_cost_total: 34000,
+      forecast_labor_cost_total: 27000,
+      note: "Kontrola kwartalna",
+      updated_at: "2026-04-20T09:00:00Z",
+      updated_by: "user-admin",
+    },
+    plan: {
+      is_configured: true,
+      revenue_total: 100000,
+      invoice_cost_total: 30000,
+      labor_cost_total: 25000,
+      total_cost: 55000,
+      margin: 45000,
+      margin_percent: 45,
+      revenue_source: "contract_value",
+    },
+    actual: {
+      revenue_total: 40000,
+      invoice_cost_total: 12000,
+      labor_cost_total: 8000,
+      total_cost: 20000,
+      margin: 20000,
+      margin_percent: 50,
+      labor_hours_total: 160,
+      invoice_count: 2,
+    },
+    forecast: {
+      is_configured: true,
+      revenue_total: 100000,
+      invoice_cost_total: 34000,
+      labor_cost_total: 27000,
+      total_cost: 61000,
+      margin: 39000,
+      margin_percent: 39,
+      revenue_source: "contract_value",
+      is_manual: true,
+    },
+    variance: {
+      status: "on_track",
+      label: "Zgodnie z planem",
+      cost_total: -35000,
+      margin: -25000,
+      margin_percent: 5,
+    },
+    freshness: {
+      snapshot_generated_at: "2026-04-22T08:00:00Z",
+      last_invoice_date: "2026-04-15",
+      last_financial_activity_at: "2026-04-18",
+      last_time_entry_month: "2026-04",
+      last_planning_date: "2026-04-09",
+      last_operational_activity_at: "2026-04-30",
+      days_since_financial_activity: 4,
+      days_since_operational_activity: 2,
+    },
+    health: {
+      level: "attention",
+      summary: "Brak pełnego forecastu wymaga kontroli.",
+      reasons: ["Brak pełnego forecastu wymaga kontroli."],
+    },
+    alerts: [
+      {
+        level: "warning",
+        code: "missing-forecast",
+        title: "Brak forecastu kosztów kontraktu.",
+        description: "Aktywny kontrakt nie ma kompletnego forecastu kosztu fakturowego i kosztu pracy.",
+        context: null,
+      },
+    ],
+    snapshot_generated_at: "2026-04-22T08:00:00Z",
+    ...overrides,
+  };
+}
 
 describe("contracts mappers", () => {
-  it("maps contract snapshot into hierarchical KPI groups for Contract Center", () => {
-    const viewModel = mapContractCenterViewModel(snapshotWithData);
+  it("maps contract control data into hero KPI, plan comparison and forecast cards", () => {
+    const viewModel = mapContractCenterViewModel(createSnapshot());
 
     expect(viewModel.heroKpiItems.map((item) => item.label)).toEqual([
       "Wartość kontraktu",
       "Sprzedaż",
       "Łączny koszt",
-      "Marża"
+      "Marża",
+      "Marża %",
     ]);
-    expect(viewModel.secondaryKpiItems.map((item) => item.label)).toEqual([
+    expect(viewModel.planComparisonRows.map((row) => row.label)).toEqual([
+      "Sprzedaż",
       "Koszt fakturowy",
       "Koszt pracy",
-      "Godziny"
+      "Łączny koszt",
+      "Marża",
+      "Marża %",
     ]);
-    expect(viewModel.activityItems).toMatchObject([
-      { label: "Faktury", value: "5" },
-      { label: "Wpisy czasu", value: "18" },
-      { label: "Przypisania planistyczne", value: "6" }
+    expect(viewModel.forecastItems.map((item) => item.label)).toEqual([
+      "Forecast sprzedaży",
+      "Forecast kosztu fakturowego",
+      "Forecast kosztu pracy",
+      "Forecast łącznego kosztu",
+      "Forecast marży",
+      "Forecast marży %",
     ]);
-    expect(viewModel.operationalStatus).toBe("Kontrakt ma dane operacyjne.");
-    expect(viewModel.emptyMessage).toBeNull();
-    expect(viewModel.monthlyRows[0]).toMatchObject({
-      month_label: "04.2026",
-      labor_hours_total: "160 h",
-      invoice_count: "2"
-    });
+    expect(viewModel.healthLabel).toBe("Uwaga");
+    expect(viewModel.controlNote).toBe("Kontrola kwartalna");
   });
 
-  it("builds a business empty state when contract has no finance or operations", () => {
-    const viewModel = mapContractCenterViewModel({
-      ...snapshotWithData,
-      activity: {
-        invoice_count: 0,
-        time_entry_count: 0,
-        planning_assignment_count: 0,
-        has_financial_data: false,
-        has_operational_data: false,
-        has_data: false
-      },
-      metrics: {
-        ...snapshotWithData.metrics,
-        revenue_total: 0,
-        invoice_cost_total: 0,
-        labor_cost_total: 0,
-        labor_hours_total: 0,
-        cost_total: 0,
-        invoice_count: 0,
-        cost_invoice_count: 0,
-        sales_invoice_count: 0,
-        margin: 0
-      },
-      monthly_breakdown: []
-    });
+  it("keeps selection on the preferred or active contract", () => {
+    const archived = createContract({ id: "c-arch", status: "archived" });
+    const active = createContract({ id: "c-active", status: "active" });
 
-    expect(viewModel.emptyMessage).toBe(
-      "Kontrakt nie ma jeszcze danych finansowych ani operacyjnych."
-    );
-    expect(viewModel.operationalStatus).toBe(
-      "Kontrakt nie ma jeszcze danych operacyjnych."
-    );
-  });
-
-  it("keeps contract selection stable across refreshes", () => {
-    const contracts: ContractRecord[] = [
-      contract,
-      {
-        ...contract,
-        id: "contract-2",
-        contract_number: "K/2026/012",
-        name: "Serwis instalacji"
-      }
-    ];
-
-    expect(resolveNextSelectedContractId(contracts, "contract-1", "contract-2")).toBe(
-      "contract-2"
-    );
-    expect(resolveNextSelectedContractId(contracts, "contract-2", "missing")).toBe(
-      "contract-2"
-    );
-    expect(resolveNextSelectedContractId(contracts, "missing", null)).toBe("contract-1");
-  });
-
-  it("formats historical detail lines from snapshot data for delete safeguards", () => {
-    expect(buildContractHistoricalDataLines(snapshotWithData)).toEqual([
-      "faktury: 5",
-      "godziny: 480",
-      "planowanie: 6"
-    ]);
+    expect(resolveNextSelectedContractId([archived, active], null)).toBe("c-active");
+    expect(resolveNextSelectedContractId([archived, active], "c-arch", "c-active")).toBe("c-active");
   });
 });

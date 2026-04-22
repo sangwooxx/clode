@@ -161,6 +161,28 @@ def _ensure_settings_workflow_schema(connection) -> None:
     )
 
 
+def _ensure_contract_control_schema(connection) -> None:
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS contract_controls (
+            contract_id TEXT PRIMARY KEY,
+            planned_revenue_total REAL,
+            planned_invoice_cost_total REAL,
+            planned_labor_cost_total REAL,
+            forecast_revenue_total REAL,
+            forecast_invoice_cost_total REAL,
+            forecast_labor_cost_total REAL,
+            note TEXT NOT NULL DEFAULT '',
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_by TEXT NOT NULL DEFAULT ''
+        )
+        """
+    )
+    connection.execute(
+        "CREATE INDEX IF NOT EXISTS contract_controls_updated_at_idx ON contract_controls(updated_at)"
+    )
+
+
 def _ensure_sqlite_database(settings: Settings) -> None:
     if settings.allow_demo_seed_import and settings.database_seed_path and settings.database_seed_path.exists() and not settings.sqlite_path.exists():
         settings.sqlite_path.parent.mkdir(parents=True, exist_ok=True)
@@ -192,6 +214,7 @@ def _ensure_sqlite_database(settings: Settings) -> None:
         _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=True)
         _ensure_runtime_domain_schema(connection, is_sqlite=True)
         _ensure_settings_workflow_schema(connection)
+        _ensure_contract_control_schema(connection)
         connection.commit()
     finally:
         connection.close()
@@ -335,6 +358,7 @@ def _ensure_postgres_database(settings: Settings) -> None:
         _ensure_workwear_issue_employee_key_schema(connection, is_sqlite=False)
         _ensure_runtime_domain_schema(connection, is_sqlite=False)
         _ensure_settings_workflow_schema(connection)
+        _ensure_contract_control_schema(connection)
         connection.commit()
     finally:
         connection.close()

@@ -4,12 +4,12 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from clode_backend.api.context import ApiServices
-from clode_backend.api.cors import resolve_cors_origin
-from clode_backend.auth.sessions import LEGACY_SESSION_HEADER_NAME, SESSION_HEADER_NAME
 from clode_backend.api.routes import route_request
+from clode_backend.api.transport import coerce_api_request, send_handler_json_response
 from clode_backend.config import load_settings
 from clode_backend.db.bootstrap import ensure_database
 from clode_backend.repositories.contract_metrics_repository import ContractMetricsRepository
+from clode_backend.repositories.contract_control_repository import ContractControlRepository
 from clode_backend.repositories.session_repository import SessionRepository
 from clode_backend.repositories.contract_repository import ContractRepository
 from clode_backend.repositories.employee_repository import EmployeeRepository
@@ -53,11 +53,6 @@ def create_runtime_context():
     settings_service = SettingsService(SettingsRepository(settings), store_repository)
     workwear_service = WorkwearService(WorkwearRepository(settings), store_repository)
     user_service = UserService(user_repository, store_repository, session_repository)
-    user_service.ensure_bootstrap_users()
-    employee_repository.import_legacy_store()
-    store_service.bootstrap_legacy_domain_stores()
-    settings_service.bootstrap_legacy_settings()
-    workwear_service.bootstrap_legacy_store()
     auth_service = AuthService(
         user_repository,
         session_repository,
@@ -72,6 +67,7 @@ def create_runtime_context():
         contract_repository,
         ContractMetricsRepository(settings),
         time_entry_repository,
+        ContractControlRepository(settings),
     )
     employee_service = EmployeeService(
         employee_repository,
@@ -84,7 +80,6 @@ def create_runtime_context():
         contract_repository,
         employee_repository,
     )
-    time_entry_service.repair_legacy_state()
     services = ApiServices(
         store_service=store_service,
         auth_service=auth_service,
@@ -103,6 +98,58 @@ def create_runtime_context():
     }
 
 
+def run_runtime_maintenance(
+    services: ApiServices,
+    *,
+    bootstrap_admin: bool = False,
+    import_legacy_employees: bool = False,
+    import_legacy_domains: bool = False,
+    import_legacy_settings: bool = False,
+    import_legacy_workwear: bool = False,
+    repair_time_entries: bool = False,
+    purge_imported_legacy: bool = False,
+) -> dict[str, object]:
+    report: dict[str, object] = {
+        "bootstrap_admin": False,
+        "legacy_employees_imported": 0,
+        "legacy_domain_imports": {},
+        "legacy_settings_import": {},
+        "legacy_workwear_import": {},
+        "time_entry_repair": {},
+    }
+
+    if bootstrap_admin:
+        before_count = services.user_service.repository.count()
+        services.user_service.ensure_bootstrap_users()
+        after_count = services.user_service.repository.count()
+        report["bootstrap_admin"] = after_count > before_count
+
+    if import_legacy_employees:
+        report["legacy_employees_imported"] = services.employee_service.repository.import_legacy_store(
+            purge_legacy=purge_imported_legacy
+        )
+
+    if import_legacy_domains:
+        report["legacy_domain_imports"] = services.store_service.bootstrap_legacy_domain_stores(
+            purge_legacy=purge_imported_legacy
+        )
+
+    if import_legacy_settings:
+        report["legacy_settings_import"] = services.settings_service.bootstrap_legacy_settings(
+            purge_legacy=purge_imported_legacy
+        )
+
+    if import_legacy_workwear:
+        report["legacy_workwear_import"] = services.workwear_service.bootstrap_legacy_store(
+            purge_legacy=purge_imported_legacy
+        )
+
+    if repair_time_entries:
+        report["time_entry_repair"] = services.time_entry_service.repair_legacy_state()
+
+    return report
+
+
 def create_server():
     runtime = create_runtime_context()
     settings = runtime["settings"]
@@ -111,53 +158,13 @@ def create_server():
     class ClodeRequestHandler(BaseHTTPRequestHandler):
         server_version = "ClodeBackend/0.1"
 
-        def _cors_origin(self) -> str:
-            return resolve_cors_origin(
-                settings,
-                request_origin=self.headers.get("Origin"),
-                request_host=self.headers.get("Host"),
-            ) or ""
-
-        def _send(
-            self,
-            status: int,
-            payload: dict | None = None,
-            extra_headers: dict[str, str | list[str] | tuple[str, ...]] | None = None,
-        ) -> None:
-            self.send_response(status)
-            cors_origin = self._cors_origin()
-            if cors_origin:
-                self.send_header("Access-Control-Allow-Origin", cors_origin)
-                self.send_header(
-                    "Access-Control-Allow-Headers",
-                    f"Content-Type, {SESSION_HEADER_NAME}, {LEGACY_SESSION_HEADER_NAME}",
-                )
-                self.send_header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-                self.send_header("Access-Control-Allow-Credentials", "true")
-                self.send_header("Vary", "Origin")
-            for header_name, header_value in (extra_headers or {}).items():
-                values = (
-                    header_value
-                    if isinstance(header_value, (list, tuple))
-                    else [header_value]
-                )
-                for value in values:
-                    self.send_header(header_name, value)
-            if status != 204:
-                body = json.dumps(payload or {}, ensure_ascii=False).encode("utf-8")
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-                return
-            self.end_headers()
-
         def do_OPTIONS(self) -> None:  # noqa: N802
-            self._send(204)
+            send_handler_json_response(self, settings, 204)
 
         def _dispatch(self) -> None:
-            status, payload, headers = route_request(self, services)
-            self._send(status, payload, headers)
+            request = coerce_api_request(self)
+            status, payload, headers = route_request(request, services)
+            send_handler_json_response(self, settings, status, payload, headers)
 
         def do_GET(self) -> None:  # noqa: N802
             self._dispatch()

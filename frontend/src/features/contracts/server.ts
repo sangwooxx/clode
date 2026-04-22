@@ -1,5 +1,5 @@
 import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
-import type { ContractsListResponse } from "@/features/contracts/types";
+import type { ContractSnapshotResponse, ContractsListResponse } from "@/features/contracts/types";
 
 export async function fetchContractsServer(includeArchived = true) {
   const query = includeArchived ? "?include_archived=1" : "";
@@ -9,4 +9,13 @@ export async function fetchContractsServer(includeArchived = true) {
   );
 
   return Array.isArray(payload?.contracts) ? payload.contracts : [];
+}
+
+export async function fetchContractSnapshotServer(contractId: string) {
+  const { payload } = await fetchBackendJsonServer<ContractSnapshotResponse>(
+    `/contracts/${encodeURIComponent(contractId)}/snapshot`,
+    { nextPath: "/contracts" }
+  );
+
+  return payload ?? null;
 }

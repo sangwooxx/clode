@@ -301,6 +301,65 @@ class ContractMetricsRepository(RepositoryBase):
 
         return self._run_with_connection(connection, query)
 
+    def get_contract_activity_dates(self, contract_id: str, connection=None) -> dict[str, Any]:
+        selector = contract_id or "unassigned"
+
+        def query(active_connection):
+            invoice_params: list[Any] = []
+            invoice_contract_clause = _contract_selector("contract_id", selector, invoice_params)
+            invoice_row = active_connection.execute(
+                f"""
+                SELECT
+                    MAX(CASE WHEN trim(COALESCE(issue_date, '')) <> '' THEN issue_date ELSE NULL END) AS last_invoice_date,
+                    MAX(
+                        CASE
+                            WHEN trim(COALESCE(updated_at, '')) <> '' THEN substr(updated_at, 1, 10)
+                            WHEN trim(COALESCE(created_at, '')) <> '' THEN substr(created_at, 1, 10)
+                            WHEN trim(COALESCE(issue_date, '')) <> '' THEN issue_date
+                            ELSE NULL
+                        END
+                    ) AS last_financial_activity_at
+                FROM invoices
+                WHERE is_deleted = 0
+                  {invoice_contract_clause}
+                """,
+                tuple(invoice_params),
+            ).fetchone()
+
+            time_params: list[Any] = []
+            time_contract_clause = _contract_selector("te.contract_id", selector, time_params)
+            time_row = active_connection.execute(
+                f"""
+                SELECT MAX(hm.month_key) AS last_time_entry_month
+                FROM time_entries te
+                JOIN hours_months hm ON hm.id = te.month_id
+                WHERE 1 = 1
+                  {time_contract_clause}
+                """,
+                tuple(time_params),
+            ).fetchone()
+
+            planning_params: list[Any] = []
+            planning_contract_clause = _contract_selector("contract_id", selector, planning_params)
+            planning_row = active_connection.execute(
+                f"""
+                SELECT MAX(assignment_date) AS last_planning_date
+                FROM planning_assignments
+                WHERE 1 = 1
+                  {planning_contract_clause}
+                """,
+                tuple(planning_params),
+            ).fetchone()
+
+            return {
+                "last_invoice_date": str(invoice_row["last_invoice_date"] or "").strip() or None,
+                "last_financial_activity_at": str(invoice_row["last_financial_activity_at"] or "").strip() or None,
+                "last_time_entry_month": str(time_row["last_time_entry_month"] or "").strip() or None,
+                "last_planning_date": str(planning_row["last_planning_date"] or "").strip() or None,
+            }
+
+        return self._run_with_connection(connection, query)
+
     def _sales_total(self, contract_id: str, time_range: dict[str, Any], connection=None) -> float:
         params: list[Any] = []
         contract_clause = _contract_selector("contract_id", contract_id, params)

@@ -28,7 +28,7 @@ def handle_resource_route(context: RequestContext):
             return json_response(200, {"ok": True, "users": user_service.list_users()})
         if method == "POST":
             require_settings_manage()
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             created = user_service.create_or_update_user(body)
             return json_response(201, {"ok": True, "user": created})
 
@@ -37,7 +37,7 @@ def handle_resource_route(context: RequestContext):
             employees = employee_service.list_employees(current_user)
             return json_response(200, {"ok": True, "employees": employees})
         if method == "POST":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             created = employee_service.create_employee(body, current_user)
             return json_response(201, {"ok": True, "employee": created})
 
@@ -50,7 +50,7 @@ def handle_resource_route(context: RequestContext):
         if not employee_id:
             return json_response(400, {"ok": False, "error": "Missing employee id."})
         if method == "PUT":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             updated = employee_service.update_employee(employee_id, body, current_user)
             return json_response(200, {"ok": True, "employee": updated})
         if method == "DELETE":
@@ -63,7 +63,7 @@ def handle_resource_route(context: RequestContext):
             return json_response(400, {"ok": False, "error": "Missing user id."})
         if method == "PUT":
             require_settings_manage()
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             body["id"] = user_id
             updated = user_service.create_or_update_user(body)
             return json_response(200, {"ok": True, "user": updated})
@@ -84,12 +84,12 @@ def handle_resource_route(context: RequestContext):
         return json_response(200, {"ok": True, "contracts": contracts})
 
     if method == "POST" and path == "/api/v1/contracts":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         created = contract_service.create_contract(body, current_user)
         return json_response(201, {"ok": True, "contract": created})
 
     if method == "POST" and path == "/api/v1/contracts/bulk-archive":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         result = contract_service.bulk_archive_contracts(body.get("ids") or [], current_user)
         return json_response(200, {"ok": True, **result})
 
@@ -121,10 +121,22 @@ def handle_resource_route(context: RequestContext):
             )
             return json_response(200, {"ok": True, **payload})
 
+        if contract_path.endswith("/usage"):
+            contract_id = contract_path.rsplit("/usage", 1)[0]
+            payload = contract_service.get_contract_usage(contract_id, current_user)
+            return json_response(200, {"ok": True, **payload})
+
         if contract_path.endswith("/snapshot"):
             contract_id = contract_path.rsplit("/snapshot", 1)[0]
             payload = contract_service.get_contract_snapshot(contract_id, current_user)
             return json_response(200, {"ok": True, **payload})
+
+        if contract_path.endswith("/control"):
+            contract_id = contract_path.rsplit("/control", 1)[0]
+            if method == "PUT":
+                body = parse_json_body(context.request)
+                payload = contract_service.update_contract_control(contract_id, body, current_user)
+                return json_response(200, {"ok": True, **payload})
 
         contract_id = contract_path
         if not contract_id:
@@ -133,7 +145,7 @@ def handle_resource_route(context: RequestContext):
             contract = contract_service.get_contract(contract_id, current_user)
             return json_response(200, {"ok": True, "contract": contract})
         if method == "PUT":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             updated = contract_service.update_contract(contract_id, body, current_user)
             return json_response(200, {"ok": True, "contract": updated})
         if method == "DELETE":
@@ -162,17 +174,17 @@ def handle_resource_route(context: RequestContext):
             payload = invoice_service.list_invoices(filters, current_user)
             return json_response(200, {"ok": True, **payload})
         if method == "POST":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             created = invoice_service.create_invoice(body, current_user)
             return json_response(201, {"ok": True, "invoice": created})
 
     if method == "POST" and path == "/api/v1/invoices/bulk-delete":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         deleted_count = invoice_service.bulk_delete(body.get("ids") or [], current_user)
         return json_response(200, {"ok": True, "deleted_count": deleted_count})
 
     if method == "POST" and path == "/api/v1/invoices/import-legacy":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         result = invoice_service.import_legacy_entries(body.get("entries") or [], current_user)
         return json_response(200, {"ok": True, **result})
 
@@ -184,7 +196,7 @@ def handle_resource_route(context: RequestContext):
             invoice = invoice_service.get_invoice(invoice_id, current_user)
             return json_response(200, {"ok": True, "invoice": invoice})
         if method == "PUT":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             updated = invoice_service.update_invoice(invoice_id, body, current_user)
             return json_response(200, {"ok": True, "invoice": updated})
         if method == "DELETE":
@@ -203,7 +215,7 @@ def handle_resource_route(context: RequestContext):
             payload = time_entry_service.list_time_entries(filters, current_user)
             return json_response(200, {"ok": True, **payload})
         if method == "POST":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             created = time_entry_service.create_time_entry(body, current_user)
             return json_response(201, {"ok": True, "time_entry": created})
 
@@ -212,7 +224,7 @@ def handle_resource_route(context: RequestContext):
         return json_response(200, {"ok": True, **payload})
 
     if path == "/api/v1/time-months" and method == "POST":
-        body = parse_json_body(context.handler)
+        body = parse_json_body(context.request)
         created = time_entry_service.create_month(body, current_user)
         return json_response(201, {"ok": True, "month": created})
 
@@ -221,7 +233,7 @@ def handle_resource_route(context: RequestContext):
         if not month_key:
             return json_response(400, {"ok": False, "error": "Missing month key."})
         if method == "PUT":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             updated = time_entry_service.update_month(month_key, body, current_user)
             return json_response(200, {"ok": True, "month": updated})
         if method == "DELETE":
@@ -233,7 +245,7 @@ def handle_resource_route(context: RequestContext):
         if not entry_id:
             return json_response(400, {"ok": False, "error": "Missing time entry id."})
         if method == "PUT":
-            body = parse_json_body(context.handler)
+            body = parse_json_body(context.request)
             updated = time_entry_service.update_time_entry(entry_id, body, current_user)
             return json_response(200, {"ok": True, "time_entry": updated})
         if method == "DELETE":
