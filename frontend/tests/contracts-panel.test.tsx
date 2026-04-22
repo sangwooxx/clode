@@ -81,7 +81,10 @@ describe("contract center panel", () => {
     expect(html).toContain("Kontrakt ma dane operacyjne.");
     expect(html).toContain("04.2026");
     expect(html).toContain("Sprzedaż");
+    expect(html).toContain("Lp.");
+    expect(html).toContain("Miesiąc prac");
     expect(html).toContain("contracts-monthly__month");
+    expect(html).toContain("contracts-monthly__ordinal");
     expect(html).toContain("contracts-monthly__invoice-cost");
   });
 

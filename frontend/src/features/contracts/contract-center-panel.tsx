@@ -10,8 +10,15 @@ import type {
 
 const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = [
   {
+    key: "ordinal",
+    header: "Lp.",
+    className: "contracts-monthly__ordinal",
+    sortable: false,
+    render: (_row, index) => <span className="data-table__text">{index + 1}</span>
+  },
+  {
     key: "month_label",
-    header: "Miesiąc",
+    header: "Miesiąc prac",
     className: "contracts-monthly__month",
     sortValue: (row) => row.month_key,
     render: (row) => <span className="data-table__primary">{row.month_label}</span>
