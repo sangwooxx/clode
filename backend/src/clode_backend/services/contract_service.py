@@ -466,7 +466,12 @@ class ContractService:
             ),
             "note": text(payload.get("note") if payload.get("note") is not None else current.get("note")),
             "updated_at": utc_now_iso(),
-            "updated_by": text(current_user.get("id") if current_user else ""),
+            "updated_by": text(
+                (current_user or {}).get("displayName")
+                or (current_user or {}).get("name")
+                or (current_user or {}).get("username")
+                or (current_user or {}).get("id")
+            ),
         }
 
     def _build_control_state(self, contract: dict[str, Any], control: dict[str, Any] | None) -> dict[str, Any]:

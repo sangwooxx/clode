@@ -8,6 +8,7 @@ import { BrandMark } from "@/components/ui/brand-mark";
 import { getModuleNavigation } from "@/features/navigation/module-nav";
 import { useAuth } from "@/lib/auth/auth-context";
 import { canAccessView } from "@/lib/auth/permissions";
+import { useTheme } from "@/lib/theme/theme-context";
 import { cn } from "@/lib/utils/cn";
 
 export function AppShell({
@@ -20,6 +21,7 @@ export function AppShell({
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigationItems = getModuleNavigation(user);
   const canAccessSettings = canAccessView(user, "settingsView");
@@ -56,6 +58,10 @@ export function AppShell({
         </nav>
 
         <div className="app-shell__sidebar-footer">
+          <ActionButton type="button" variant="secondary" fullWidth onClick={toggleTheme}>
+            {theme === "light" ? "Motyw ciemny" : "Motyw jasny"}
+          </ActionButton>
+
           {canAccessSettings ? (
             <Link
               href="/settings"

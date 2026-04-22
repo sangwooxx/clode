@@ -40,6 +40,7 @@ import {
 } from "@/features/settings/types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { canManageView, isAdminRole } from "@/lib/auth/permissions";
+import { useTheme } from "@/lib/theme/theme-context";
 import type { ManagedUserRecord } from "@/lib/api/users";
 
 type AdminState =
@@ -54,6 +55,7 @@ const EMPTY_AUDIT_LOG: SettingsAuditLogEntry[] = [];
 export function SettingsView() {
   const router = useRouter();
   const { user, initialized, isLoading, refresh, remindPassword, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [adminState, setAdminState] = useState<AdminState>({ status: "idle" });
   const [isRefreshingAdmin, setIsRefreshingAdmin] = useState(false);
   const [isRefreshingAccount, setIsRefreshingAccount] = useState(false);
@@ -520,6 +522,28 @@ export function SettingsView() {
             currentUser={currentUser}
             currentUserPermissions={currentUserPermissions}
           />
+
+          <Panel
+            title="Motyw aplikacji"
+            description="Wybierz tryb pracy dla całego systemu. Preferencja zostaje zapamiętana na tym urządzeniu."
+          >
+            <div className="theme-choice-group" data-testid="theme-choice-group">
+              <ActionButton
+                type="button"
+                variant={theme === "light" ? "primary" : "secondary"}
+                onClick={() => setTheme("light")}
+              >
+                Motyw jasny
+              </ActionButton>
+              <ActionButton
+                type="button"
+                variant={theme === "dark" ? "primary" : "secondary"}
+                onClick={() => setTheme("dark")}
+              >
+                Motyw ciemny
+              </ActionButton>
+            </div>
+          </Panel>
 
           {hasAdminAccess && adminData ? (
             <>

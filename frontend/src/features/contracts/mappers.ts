@@ -22,6 +22,32 @@ import type {
   ContractsViewModel
 } from "@/features/contracts/types";
 
+function buildVariancePresentation(
+  kind: "revenue" | "cost" | "margin",
+  value: number | null | undefined
+) {
+  const numeric = Number(value ?? 0);
+  if (value == null || Number.isNaN(value)) {
+    return { tone: "missing" as const, hint: "Brak planu" };
+  }
+  if (Math.abs(numeric) < 0.005) {
+    return { tone: "neutral" as const, hint: "Zgodnie z planem" };
+  }
+  if (kind === "revenue") {
+    return numeric > 0
+      ? { tone: "positive" as const, hint: "Sprzedaż powyżej planu" }
+      : { tone: "negative" as const, hint: "Sprzedaż poniżej planu" };
+  }
+  if (kind === "cost") {
+    return numeric > 0
+      ? { tone: "negative" as const, hint: "Koszt powyżej planu" }
+      : { tone: "positive" as const, hint: "Koszt poniżej planu" };
+  }
+  return numeric > 0
+    ? { tone: "positive" as const, hint: "Wynik lepszy od planu" }
+    : { tone: "negative" as const, hint: "Wynik poniżej planu" };
+}
+
 export function mapContractsViewModel(contracts: ContractRecord[]): ContractsViewModel {
   const activeContracts = contracts.filter((contract) => contract.status !== "archived");
   const archivedContracts = contracts.filter((contract) => contract.status === "archived");
@@ -105,12 +131,32 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
   const { activity, contract, control, forecast, freshness, health, plan, actual, variance } = snapshot;
   const forecastRevenueSourceLabel =
     forecast.revenue_source === "manual"
-      ? "zadanym przychodzie"
+      ? "ręcznie utrzymywanym przychodzie"
       : forecast.revenue_source === "planned_revenue"
-        ? "planowanym przychodzie"
+        ? "planowanym przychodzie kontrolnym"
         : forecast.revenue_source === "contract_value"
           ? "wartości kontraktu"
           : "dostępnych danych";
+
+  const revenueVarianceValue =
+    plan.is_configured && plan.revenue_total != null
+      ? actual.revenue_total - plan.revenue_total
+      : null;
+  const invoiceCostVarianceValue =
+    plan.is_configured && plan.invoice_cost_total != null
+      ? actual.invoice_cost_total - plan.invoice_cost_total
+      : null;
+  const laborCostVarianceValue =
+    plan.is_configured && plan.labor_cost_total != null
+      ? actual.labor_cost_total - plan.labor_cost_total
+      : null;
+
+  const revenueVariance = buildVariancePresentation("revenue", revenueVarianceValue);
+  const invoiceCostVariance = buildVariancePresentation("cost", invoiceCostVarianceValue);
+  const laborCostVariance = buildVariancePresentation("cost", laborCostVarianceValue);
+  const totalCostVariance = buildVariancePresentation("cost", variance.cost_total);
+  const marginVariance = buildVariancePresentation("margin", variance.margin);
+  const marginPercentVariance = buildVariancePresentation("margin", variance.margin_percent);
 
   return {
     contractName: contract.name,
@@ -176,18 +222,14 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       },
       {
         id: "last_time_entry",
-        label: "Ostatni miesiąc czasu",
+        label: "Ostatni miesiąc czasu pracy",
         value: formatMonthLabel(freshness.last_time_entry_month)
       },
       {
-        id: "last_planning",
-        label: "Ostatnie planowanie",
-        value: formatDate(freshness.last_planning_date)
-      },
-      {
-        id: "snapshot_generated_at",
-        label: "Snapshot wygenerowany",
-        value: formatDateTime(freshness.snapshot_generated_at)
+        id: "control_updated_at",
+        label: "Aktualizacja kontroli",
+        value: control.updated_at ? formatDateTime(control.updated_at) : "Brak aktualizacji",
+        hint: control.updated_by ? `Ostatnio aktualizował: ${control.updated_by}` : undefined
       }
     ],
     planComparisonRows: [
@@ -198,8 +240,10 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
         actualValue: formatMoney(actual.revenue_total),
         varianceValue:
           plan.is_configured && plan.revenue_total != null
-            ? formatVarianceMoney(actual.revenue_total - plan.revenue_total)
-            : "brak planu"
+            ? formatVarianceMoney(revenueVarianceValue)
+            : "brak planu",
+        varianceTone: revenueVariance.tone,
+        varianceHint: revenueVariance.hint
       },
       {
         id: "invoice_cost",
@@ -208,8 +252,10 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
         actualValue: formatMoney(actual.invoice_cost_total),
         varianceValue:
           plan.is_configured && plan.invoice_cost_total != null
-            ? formatVarianceMoney(actual.invoice_cost_total - plan.invoice_cost_total)
-            : "brak planu"
+            ? formatVarianceMoney(invoiceCostVarianceValue)
+            : "brak planu",
+        varianceTone: invoiceCostVariance.tone,
+        varianceHint: invoiceCostVariance.hint
       },
       {
         id: "labor_cost",
@@ -218,29 +264,37 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
         actualValue: formatMoney(actual.labor_cost_total),
         varianceValue:
           plan.is_configured && plan.labor_cost_total != null
-            ? formatVarianceMoney(actual.labor_cost_total - plan.labor_cost_total)
-            : "brak planu"
+            ? formatVarianceMoney(laborCostVarianceValue)
+            : "brak planu",
+        varianceTone: laborCostVariance.tone,
+        varianceHint: laborCostVariance.hint
       },
       {
         id: "total_cost",
         label: "Łączny koszt",
         planValue: plan.is_configured ? formatMoney(plan.total_cost) : "brak planu",
         actualValue: formatMoney(actual.total_cost),
-        varianceValue: formatVarianceMoney(variance.cost_total)
+        varianceValue: formatVarianceMoney(variance.cost_total),
+        varianceTone: totalCostVariance.tone,
+        varianceHint: totalCostVariance.hint
       },
       {
         id: "margin",
         label: "Marża",
         planValue: plan.is_configured ? formatMoney(plan.margin) : "brak planu",
         actualValue: formatMoney(actual.margin),
-        varianceValue: formatVarianceMoney(variance.margin)
+        varianceValue: formatVarianceMoney(variance.margin),
+        varianceTone: marginVariance.tone,
+        varianceHint: marginVariance.hint
       },
       {
         id: "margin_percent",
         label: "Marża %",
         planValue: plan.is_configured ? formatPercent(plan.margin_percent) : "brak planu",
         actualValue: formatPercent(actual.margin_percent),
-        varianceValue: formatVariancePercent(variance.margin_percent)
+        varianceValue: formatVariancePercent(variance.margin_percent),
+        varianceTone: marginPercentVariance.tone,
+        varianceHint: marginPercentVariance.hint
       }
     ],
     planStatusLabel: formatPlanVarianceLabel(variance.status),
@@ -279,10 +333,11 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       }
     ],
     forecastSummary: forecast.is_configured
-      ? `Forecast końcowy opiera się na ${forecastRevenueSourceLabel} oraz utrzymywanych kosztach końcowych kontraktu.`
-      : "Kontrakt nie ma jeszcze kompletnego forecastu końcowego. Uzupełnij forecast kosztu fakturowego i kosztu pracy.",
+      ? `Forecast końcowy opiera się na ręcznie utrzymywanych wartościach kontroli kontraktu. Przychód bazuje na ${forecastRevenueSourceLabel}.`
+      : "Kontrakt nie ma jeszcze kompletnego forecastu końcowego. Uzupełnij ręczne wartości w panelu Plan i forecast.",
     controlNote: control.note ? control.note : null,
     controlUpdatedAtLabel: control.updated_at ? formatDateTime(control.updated_at) : null,
+    controlUpdatedByLabel: control.updated_by ? control.updated_by : null,
     alerts: snapshot.alerts.map((alert) => ({
       id: alert.code,
       level: alert.level,

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { DEFAULT_THEME, getThemeInitScript } from "@/lib/theme/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,8 +14,9 @@ export default async function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="pl">
+    <html lang="pl" data-theme={DEFAULT_THEME} suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: getThemeInitScript() }} />
         {children}
       </body>
     </html>

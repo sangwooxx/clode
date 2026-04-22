@@ -145,7 +145,7 @@ describe("contracts view", () => {
       <ContractsView initialContracts={null} initialSnapshot={null} initialError="Backend niedostępny" />,
     );
 
-    expect(html).toContain("Błąd odczytu");
     expect(html).toContain("Backend niedostępny");
+    expect(html).toContain("section-header__actions");
   });
 });

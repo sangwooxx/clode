@@ -22,6 +22,7 @@ import {
   saveContractControl
 } from "@/features/contracts/api";
 import {
+  formatDateTime,
   formatHealthLevel,
   formatMoney,
   formatStaleness,
@@ -124,7 +125,7 @@ export function ContractsView({
         message:
           error instanceof Error
             ? error.message
-            : "Nie udało się pobrać obrazu kontrolnego kontraktu."
+            : "Nie udaÅ‚o siÄ™ pobraÄ‡ obrazu kontrolnego kontraktu."
       });
     }
   }
@@ -159,7 +160,7 @@ export function ContractsView({
         message:
           error instanceof Error
             ? error.message
-            : "Nie udało się pobrać rejestru kontraktów."
+            : "Nie udaÅ‚o siÄ™ pobraÄ‡ rejestru kontraktÃ³w."
       });
     } finally {
       setIsRefreshing(false);
@@ -275,12 +276,12 @@ export function ContractsView({
     if (contract.status === "archived") {
       if (selectedSnapshot?.activity.has_data) {
         window.alert(
-          "Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuń najpierw powiązane dane."
+          "Nie moÅ¼na trwale usunÄ…Ä‡ zarchiwizowanego kontraktu z danymi historycznymi. Pozostaw go jako zarchiwizowany albo usuÅ„ najpierw powiÄ…zane dane."
         );
         return;
       }
 
-      if (!window.confirm(`Czy na pewno chcesz trwale usunąć kontrakt "${contract.name}"?`)) {
+      if (!window.confirm(`Czy na pewno chcesz trwale usunÄ…Ä‡ kontrakt "${contract.name}"?`)) {
         return;
       }
 
@@ -289,7 +290,7 @@ export function ContractsView({
         await reloadContracts({ preserveState: true });
         setFeedback({
           tone: "success",
-          text: `Kontrakt "${contract.name}" został usunięty.`
+          text: `Kontrakt "${contract.name}" zostaÅ‚ usuniÄ™ty.`
         });
       } catch (error) {
         setFeedback({
@@ -297,13 +298,13 @@ export function ContractsView({
           text:
             error instanceof Error
               ? error.message
-              : "Nie udało się usunąć kontraktu."
+              : "Nie udaÅ‚o siÄ™ usunÄ…Ä‡ kontraktu."
         });
       }
       return;
     }
 
-    if (!window.confirm(`Czy na pewno chcesz zarchiwizować kontrakt "${contract.name}"?`)) {
+    if (!window.confirm(`Czy na pewno chcesz zarchiwizowaÄ‡ kontrakt "${contract.name}"?`)) {
       return;
     }
 
@@ -312,7 +313,7 @@ export function ContractsView({
       await reloadContracts({ preserveState: true, selectId: contract.id });
       setFeedback({
         tone: "success",
-        text: `Kontrakt "${contract.name}" został zarchiwizowany.`
+        text: `Kontrakt "${contract.name}" zostaÅ‚ zarchiwizowany.`
       });
     } catch (error) {
       setFeedback({
@@ -320,7 +321,7 @@ export function ContractsView({
         text:
           error instanceof Error
             ? error.message
-            : "Nie udało się zarchiwizować kontraktu."
+            : "Nie udaÅ‚o siÄ™ zarchiwizowaÄ‡ kontraktu."
       });
     }
   }
@@ -330,13 +331,13 @@ export function ContractsView({
     setDrawerFeedback(null);
 
     if (!contractFormValues.name.trim()) {
-      setDrawerFeedback({ tone: "error", text: "Podaj nazwę kontraktu." });
+      setDrawerFeedback({ tone: "error", text: "Podaj nazwÄ™ kontraktu." });
       return;
     }
 
     const contractValue = Number(contractFormValues.contract_value || 0);
     if (!Number.isFinite(contractValue) || contractValue < 0) {
-      setDrawerFeedback({ tone: "error", text: "Wartość kontraktu nie może być ujemna." });
+      setDrawerFeedback({ tone: "error", text: "WartoÅ›Ä‡ kontraktu nie moÅ¼e byÄ‡ ujemna." });
       return;
     }
 
@@ -348,7 +349,7 @@ export function ContractsView({
     ) {
       setDrawerFeedback({
         tone: "error",
-        text: "Termin zakończenia nie może być wcześniejszy niż data podpisania."
+        text: "Termin zakoÅ„czenia nie moÅ¼e byÄ‡ wczeÅ›niejszy niÅ¼ data podpisania."
       });
       return;
     }
@@ -367,14 +368,14 @@ export function ContractsView({
         tone: "success",
         text:
           drawerState.kind === "contract" && drawerState.mode === "edit"
-            ? `Dane kontraktu "${saved.name}" zostały zaktualizowane.`
-            : `Kontrakt "${saved.name}" został dodany.`
+            ? `Dane kontraktu "${saved.name}" zostaÅ‚y zaktualizowane.`
+            : `Kontrakt "${saved.name}" zostaÅ‚ dodany.`
       });
     } catch (error) {
       setDrawerFeedback({
         tone: "error",
         text:
-          error instanceof Error ? error.message : "Nie udało się zapisać kontraktu."
+          error instanceof Error ? error.message : "Nie udaÅ‚o siÄ™ zapisaÄ‡ kontraktu."
       });
     } finally {
       setIsSubmittingContract(false);
@@ -400,7 +401,7 @@ export function ContractsView({
       closeDrawer();
       setFeedback({
         tone: "success",
-        text: `Plan i forecast kontraktu "${selectedContract.name}" zostały zapisane.`
+        text: `Plan i forecast kontraktu "${selectedContract.name}" zostaÅ‚y zapisane.`
       });
     } catch (error) {
       setDrawerFeedback({
@@ -408,7 +409,7 @@ export function ContractsView({
         text:
           error instanceof Error
             ? error.message
-            : "Nie udało się zapisać planu i forecastu."
+            : "Nie udaÅ‚o siÄ™ zapisaÄ‡ planu i forecastu."
       });
     } finally {
       setIsSubmittingControl(false);
@@ -418,14 +419,14 @@ export function ContractsView({
   if (state.status === "loading") {
     return (
       <div className="module-page">
-        <SectionHeader eyebrow="Kontrakty" title="Centrum kontraktów" />
+        <SectionHeader eyebrow="Kontrakty" title="Centrum kontraktÃ³w" />
         <div className="module-page__stats">
           {Array.from({ length: 3 }).map((_, index) => (
-            <StatCard key={index} label="Ładowanie" value="..." />
+            <StatCard key={index} label="Åadowanie" value="..." />
           ))}
         </div>
-        <Panel title="Ładowanie kontraktów">
-          <p className="status-message">Trwa odczyt listy kontraktów i widoku zarządczego.</p>
+        <Panel title="Åadowanie kontraktÃ³w">
+          <p className="status-message">Trwa odczyt listy kontraktÃ³w i widoku zarzÄ…dczego.</p>
         </Panel>
       </div>
     );
@@ -436,16 +437,16 @@ export function ContractsView({
       <div className="module-page">
         <SectionHeader
           eyebrow="Kontrakty"
-          title="Centrum kontraktów"
+          title="Centrum kontraktÃ³w"
           actions={
             <ActionButton type="button" onClick={() => void reloadContracts()}>
-              Spróbuj ponownie
+              SprÃ³buj ponownie
             </ActionButton>
           }
         />
-        <Panel title="Błąd odczytu" description={state.message}>
+        <Panel title="BÅ‚Ä…d odczytu" description={state.message}>
           <p className="panel__description">
-            Sprawdź dostępność backendu lub sesję użytkownika, a potem odśwież ekran.
+            SprawdÅº dostÄ™pnoÅ›Ä‡ backendu lub sesjÄ™ uÅ¼ytkownika, a potem odÅ›wieÅ¼ ekran.
           </p>
         </Panel>
       </div>
@@ -456,8 +457,8 @@ export function ContractsView({
     <div className="module-page contracts-control-page">
       <SectionHeader
         eyebrow="Kontrakty"
-        title="Centrum kontraktów"
-        description="Widok zarządczy kontraktu: wynik, plan, forecast i ryzyka w jednym miejscu."
+        title="Centrum kontraktÃ³w"
+        description="Widok zarzÄ…dczy kontraktu: wynik, plan, forecast i ryzyka w jednym miejscu."
         actions={
           <div className="module-actions">
             <ActionButton type="button" onClick={openCreateDrawer}>
@@ -469,7 +470,7 @@ export function ContractsView({
               onClick={() => void reloadContracts({ preserveState: true, selectId: selectedContractId })}
               disabled={isRefreshing}
             >
-              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+              {isRefreshing ? "OdÅ›wieÅ¼anie..." : "OdÅ›wieÅ¼ dane"}
             </ActionButton>
           </div>
         }
@@ -549,8 +550,8 @@ export function ContractsView({
               <div className="contracts-empty-note">
                 <p className="status-message">
                   {contracts.length
-                    ? "Brak kontraktów dla wybranego filtra."
-                    : "Brak kontraktów w rejestrze. Dodaj pierwszy kontrakt."}
+                    ? "Brak kontraktÃ³w dla wybranego filtra."
+                    : "Brak kontraktÃ³w w rejestrze. Dodaj pierwszy kontrakt."}
                 </p>
               </div>
             )}
@@ -567,7 +568,7 @@ export function ContractsView({
                   </p>
                   <h2 className="contracts-overview-header__title">{selectedContract.name}</h2>
                   <p className="contracts-overview-header__subtitle">
-                    {selectedContract.investor || "Bez inwestora"} • {formatStatus(selectedContract.status)}
+                    {selectedContract.investor || "Bez inwestora"} â€¢ {formatStatus(selectedContract.status)}
                   </p>
                 </div>
 
@@ -580,19 +581,19 @@ export function ContractsView({
                     >
                       {selectedSnapshot
                         ? formatHealthLevel(selectedSnapshot.health.level)
-                        : "Ładowanie"}
+                        : "Åadowanie"}
                     </span>
                     <span className="contracts-overview-health__meta">
                       Finansowo:{" "}
                       {selectedSnapshot
                         ? formatStaleness(selectedSnapshot.freshness.days_since_financial_activity)
-                        : "ładowanie"}
+                        : "Å‚adowanie"}
                     </span>
                     <span className="contracts-overview-health__meta">
                       Operacyjnie:{" "}
                       {selectedSnapshot
                         ? formatStaleness(selectedSnapshot.freshness.days_since_operational_activity)
-                        : "ładowanie"}
+                        : "Å‚adowanie"}
                     </span>
                   </div>
                   <div className="module-actions">
@@ -607,7 +608,7 @@ export function ContractsView({
                       variant={selectedContract.status === "archived" ? "ghost" : "secondary"}
                       onClick={() => void handleContractAction(selectedContract)}
                     >
-                      {selectedContract.status === "archived" ? "Usuń" : "Archiwizuj"}
+                      {selectedContract.status === "archived" ? "UsuÅ„" : "Archiwizuj"}
                     </ActionButton>
                   </div>
                 </div>
@@ -622,7 +623,7 @@ export function ContractsView({
             </Panel>
           ) : (
             <Panel title="Centrum kontraktu">
-              <p className="status-message">Wybierz kontrakt, aby zobaczyć jego wynik, plan, forecast i alerty.</p>
+              <p className="status-message">Wybierz kontrakt, aby zobaczyÄ‡ jego wynik, plan, forecast i alerty.</p>
             </Panel>
           )}
         </div>
@@ -731,7 +732,7 @@ export function ContractsView({
                     />
                   </label>
                   <label className="field-card">
-                    <span className="field-card__label">Termin zakończenia</span>
+                    <span className="field-card__label">Termin zakoÅ„czenia</span>
                     <input
                       className="text-input field-card__control"
                       type="date"
@@ -745,7 +746,7 @@ export function ContractsView({
                     />
                   </label>
                   <label className="field-card">
-                    <span className="field-card__label">Wartość kontraktu</span>
+                    <span className="field-card__label">WartoÅ›Ä‡ kontraktu</span>
                     <input
                       className="text-input field-card__control"
                       type="number"
@@ -780,120 +781,149 @@ export function ContractsView({
               </form>
             ) : (
               <form className="contracts-drawer__form" onSubmit={handleControlSubmit}>
+                <div className="contracts-drawer__intro">
+                  <p className="contracts-drawer__intro-title">Ręczna kontrola kontraktu</p>
+                  <p className="contracts-drawer__intro-copy">
+                    Actuals system liczy automatycznie z faktur, czasu pracy i aktywności operacyjnej.
+                    W tym panelu utrzymujesz wyłącznie plan oraz forecast końcowy.
+                  </p>
+                  {selectedSnapshot?.control.updated_at ? (
+                    <p className="contracts-drawer__intro-meta">
+                      Ostatnia aktualizacja: {formatDateTime(selectedSnapshot.control.updated_at)}
+                    </p>
+                  ) : null}
+                  {selectedSnapshot?.control.updated_by ? (
+                    <p className="contracts-drawer__intro-meta">
+                      Aktualizował: {selectedSnapshot.control.updated_by}
+                    </p>
+                  ) : null}
+                </div>
                 <FormGrid columns={1}>
-                  <label className="field-card">
-                    <span className="field-card__label">Planowany przychód</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.planned_revenue_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          planned_revenue_total: event.target.value
-                        }))
-                      }
-                      placeholder="Pozostaw puste, aby użyć wartości kontraktu"
-                    />
-                  </label>
-                  <label className="field-card">
-                    <span className="field-card__label">Planowany koszt fakturowy</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.planned_invoice_cost_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          planned_invoice_cost_total: event.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="field-card">
-                    <span className="field-card__label">Planowany koszt pracy</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.planned_labor_cost_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          planned_labor_cost_total: event.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="field-card">
-                    <span className="field-card__label">Forecast przychodu</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.forecast_revenue_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          forecast_revenue_total: event.target.value
-                        }))
-                      }
-                      placeholder="Pozostaw puste, aby użyć wartości kontraktu"
-                    />
-                  </label>
-                  <label className="field-card">
-                    <span className="field-card__label">Forecast kosztu fakturowego</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.forecast_invoice_cost_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          forecast_invoice_cost_total: event.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="field-card">
-                    <span className="field-card__label">Forecast kosztu pracy</span>
-                    <input
-                      className="text-input field-card__control"
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={controlFormValues.forecast_labor_cost_total}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          forecast_labor_cost_total: event.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="field-card contracts-drawer__full">
-                    <span className="field-card__label">Notatka kontrolna</span>
-                    <textarea
-                      className="text-input field-card__control"
-                      value={controlFormValues.note}
-                      onChange={(event) =>
-                        setControlFormValues((current) => ({
-                          ...current,
-                          note: event.target.value
-                        }))
-                      }
-                      rows={4}
-                      placeholder="Uzasadnienie forecastu, decyzje kosztowe, ryzyka do obserwacji."
-                    />
-                  </label>
+                  <div className="contracts-control-form-section">
+                    <div className="contracts-control-form-section__heading">
+                      <h3>Plan kontraktu</h3>
+                      <p>Ręczne wartości kontrolne, do których system porównuje wykonanie.</p>
+                    </div>
+                    <label className="field-card">
+                      <span className="field-card__label">Planowany przychód</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.planned_revenue_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            planned_revenue_total: event.target.value
+                          }))
+                        }
+                        placeholder="Pozostaw puste, aby użyć wartości kontraktu"
+                      />
+                    </label>
+                    <label className="field-card">
+                      <span className="field-card__label">Planowany koszt fakturowy</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.planned_invoice_cost_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            planned_invoice_cost_total: event.target.value
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="field-card">
+                      <span className="field-card__label">Planowany koszt pracy</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.planned_labor_cost_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            planned_labor_cost_total: event.target.value
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="contracts-control-form-section">
+                    <div className="contracts-control-form-section__heading">
+                      <h3>Forecast końcowy</h3>
+                      <p>Ręcznie utrzymywana prognoza wyniku końcowego kontraktu.</p>
+                    </div>
+                    <label className="field-card">
+                      <span className="field-card__label">Forecast przychodu</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.forecast_revenue_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            forecast_revenue_total: event.target.value
+                          }))
+                        }
+                        placeholder="Pozostaw puste, aby użyć planu lub wartości kontraktu"
+                      />
+                    </label>
+                    <label className="field-card">
+                      <span className="field-card__label">Forecast kosztu fakturowego</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.forecast_invoice_cost_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            forecast_invoice_cost_total: event.target.value
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="field-card">
+                      <span className="field-card__label">Forecast kosztu pracy</span>
+                      <input
+                        className="text-input field-card__control"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={controlFormValues.forecast_labor_cost_total}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            forecast_labor_cost_total: event.target.value
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="field-card contracts-drawer__full">
+                      <span className="field-card__label">Notatka kontrolna</span>
+                      <textarea
+                        className="text-input field-card__control"
+                        value={controlFormValues.note}
+                        onChange={(event) =>
+                          setControlFormValues((current) => ({
+                            ...current,
+                            note: event.target.value
+                          }))
+                        }
+                        rows={4}
+                        placeholder="Uzasadnienie forecastu, decyzje kosztowe, ryzyka do obserwacji."
+                      />
+                    </label>
+                  </div>
                 </FormGrid>
 
                 <FormFeedback items={[drawerFeedback]} />

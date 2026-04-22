@@ -95,7 +95,12 @@ const planComparisonColumns: Array<DataTableColumn<ContractPlanComparisonRow>> =
     header: "Odchylenie",
     className: "data-table__numeric contracts-plan__value",
     sortable: false,
-    render: (row) => row.varianceValue
+    render: (row) => (
+      <div className={`contracts-variance contracts-variance--${row.varianceTone}`}>
+        <strong className="contracts-variance__value">{row.varianceValue}</strong>
+        <span className="contracts-variance__hint">{row.varianceHint}</span>
+      </div>
+    )
   }
 ];
 
@@ -115,11 +120,17 @@ function renderKpiCards(items: ContractKpiItem[]) {
   );
 }
 
+function formatAlertLevel(level: ContractAlertView["level"]) {
+  if (level === "critical") return "Krytyczny";
+  if (level === "warning") return "Uwaga";
+  return "Informacja";
+}
+
 function renderAlertItems(alerts: ContractAlertView[]) {
   if (!alerts.length) {
     return (
       <div className="contracts-empty-note">
-        <p className="status-message">Kontrakt nie pokazuje obecnie aktywnych alertów.</p>
+        <p className="status-message">Na teraz kontrakt nie pokazuje aktywnych ryzyk wymagających reakcji.</p>
       </div>
     );
   }
@@ -133,7 +144,7 @@ function renderAlertItems(alerts: ContractAlertView[]) {
         >
           <div className="contracts-alert__header">
             <strong>{alert.title}</strong>
-            <span className="contracts-alert__level">{alert.level}</span>
+            <span className="contracts-alert__level">{formatAlertLevel(alert.level)}</span>
           </div>
           <p>{alert.description}</p>
           {alert.context ? <p className="contracts-alert__context">{alert.context}</p> : null}
@@ -220,6 +231,9 @@ export function ContractCenterPanel({
             </div>
           ))}
         </div>
+        <div className="contracts-section-heading contracts-section-heading--subsection">
+          <h4 className="contracts-detail__subsection-title">Świeżość danych</h4>
+        </div>
         <div className="contracts-freshness-grid">
           {viewModel.freshnessItems.map((item) => (
             <article key={item.id} className="contracts-freshness-card">
@@ -261,6 +275,9 @@ export function ContractCenterPanel({
           <div className="contracts-control-note">
             {viewModel.controlUpdatedAtLabel ? (
               <p>Ostatnia aktualizacja kontroli: {viewModel.controlUpdatedAtLabel}</p>
+            ) : null}
+            {viewModel.controlUpdatedByLabel ? (
+              <p>Aktualizował: {viewModel.controlUpdatedByLabel}</p>
             ) : null}
             {viewModel.controlNote ? <p>Notatka kontrolna: {viewModel.controlNote}</p> : null}
           </div>

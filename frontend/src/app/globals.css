@@ -1,19 +1,100 @@
 :root {
-  --bg: #171717;
-  --bg-elevated: #232323;
-  --bg-panel: #2b2b2b;
-  --border: #3d3d3d;
-  --text: #f5f3f0;
-  --text-muted: #beb6ad;
-  --accent: #2da181;
-  --accent-soft: rgba(45, 161, 129, 0.16);
-  --danger: #c45d5d;
-  --shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  color-scheme: light;
+  --bg: #f3efe7;
+  --bg-elevated: #ffffff;
+  --bg-panel: #fffdfa;
+  --bg-canvas-start: #faf7f1;
+  --bg-canvas-end: #ebe5d9;
+  --bg-accent-glow: rgba(27, 126, 104, 0.12);
+  --border: #d3cbc0;
+  --border-strong: #bfb4a6;
+  --text: #1d2125;
+  --text-muted: #605951;
+  --text-inverse: #f5f3f0;
+  --accent: #1b7e68;
+  --accent-soft: rgba(27, 126, 104, 0.14);
+  --accent-strong: #126452;
+  --danger: #b95252;
+  --warning: #b5811f;
+  --success: #1b7e68;
+  --shadow: 0 12px 32px rgba(16, 24, 32, 0.12);
+  --drawer-shadow: 0 24px 80px rgba(16, 24, 32, 0.22);
+  --drawer-side-shadow: -18px 0 44px rgba(16, 24, 32, 0.18);
+  --line-soft: rgba(23, 33, 41, 0.12);
+  --line-strong: rgba(23, 33, 41, 0.18);
+  --line-muted: rgba(23, 33, 41, 0.08);
+  --line-faint: rgba(23, 33, 41, 0.05);
+  --surface-subtle: rgba(255, 255, 255, 0.84);
+  --surface-muted: rgba(255, 255, 255, 0.68);
+  --surface-soft: rgba(255, 255, 255, 0.92);
+  --surface-hover: rgba(18, 24, 30, 0.05);
+  --surface-selected: rgba(27, 126, 104, 0.12);
+  --surface-emphasis: rgba(27, 126, 104, 0.18);
+  --field-bg: #fffdfa;
+  --sidebar-bg: rgba(255, 255, 255, 0.9);
+  --panel-glass: rgba(255, 255, 255, 0.78);
+  --overlay: rgba(12, 18, 24, 0.34);
+  --danger-text: #b95252;
+  --success-text: #1b7e68;
+  --warning-text: #9a6c19;
+  --chart-material-start: rgba(185, 82, 82, 0.32);
+  --chart-material-end: var(--danger);
+  --chart-labor-start: rgba(181, 129, 31, 0.34);
+  --chart-labor-end: var(--warning);
+  --chart-sales-start: rgba(27, 126, 104, 0.4);
+  --chart-sales-end: var(--accent);
   --radius-xl: 24px;
   --radius-lg: 18px;
   --radius-md: 14px;
   --radius-sm: 10px;
   --content-max: 1920px;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #171717;
+  --bg-elevated: #232323;
+  --bg-panel: #2b2b2b;
+  --bg-canvas-start: #171717;
+  --bg-canvas-end: #131313;
+  --bg-accent-glow: rgba(45, 161, 129, 0.14);
+  --border: #3d3d3d;
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text: #f5f3f0;
+  --text-muted: #beb6ad;
+  --text-inverse: #f5f3f0;
+  --accent: #2da181;
+  --accent-soft: rgba(45, 161, 129, 0.16);
+  --accent-strong: #2da181;
+  --danger: #c45d5d;
+  --warning: #c6974f;
+  --success: #2da181;
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+  --drawer-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  --drawer-side-shadow: -18px 0 44px rgba(0, 0, 0, 0.34);
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --line-muted: rgba(255, 255, 255, 0.06);
+  --line-faint: rgba(255, 255, 255, 0.04);
+  --surface-subtle: rgba(255, 255, 255, 0.02);
+  --surface-muted: rgba(255, 255, 255, 0.03);
+  --surface-soft: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --surface-selected: rgba(45, 161, 129, 0.12);
+  --surface-emphasis: rgba(45, 161, 129, 0.18);
+  --field-bg: #252525;
+  --sidebar-bg: rgba(18, 18, 18, 0.94);
+  --panel-glass: rgba(24, 24, 24, 0.46);
+  --overlay: rgba(5, 10, 18, 0.72);
+  --danger-text: #ffb3b3;
+  --success-text: #9fe5cf;
+  --warning-text: #e8cb88;
+  --chart-material-start: rgba(196, 93, 93, 0.42);
+  --chart-material-end: #c45d5d;
+  --chart-labor-start: rgba(198, 151, 79, 0.45);
+  --chart-labor-end: #c6974f;
+  --chart-sales-start: rgba(45, 161, 129, 0.55);
+  --chart-sales-end: var(--accent);
 }
 
 * {
@@ -25,8 +106,8 @@ body {
   margin: 0;
   min-height: 100%;
   background:
-    radial-gradient(circle at top left, rgba(45, 161, 129, 0.14), transparent 34%),
-    linear-gradient(180deg, #171717 0%, #131313 100%);
+    radial-gradient(circle at top left, var(--bg-accent-glow), transparent 34%),
+    linear-gradient(180deg, var(--bg-canvas-start) 0%, var(--bg-canvas-end) 100%);
   color: var(--text);
   font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
@@ -42,7 +123,8 @@ a {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -167,7 +249,7 @@ select {
 
 .auth-form__error {
   margin: 0;
-  color: #f1aaaa;
+  color: var(--danger-text);
   font-size: 0.92rem;
 }
 
@@ -182,7 +264,7 @@ select {
 .search-field {
   width: 100%;
   border: 1px solid var(--border);
-  background: #252525;
+  background: var(--field-bg);
   color: var(--text);
   border-radius: var(--radius-sm);
   min-height: 40px;
@@ -194,11 +276,11 @@ select {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
   min-height: 38px;
   padding: 0 13px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
   color: var(--text);
   cursor: pointer;
   font-size: 0.88rem;
@@ -231,13 +313,13 @@ select {
 }
 
 .action-button--secondary {
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--surface-muted);
+  border-color: var(--line-soft);
 }
 
 .action-button--secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--surface-soft);
+  border-color: var(--line-strong);
 }
 
 .action-button--ghost {
@@ -247,7 +329,7 @@ select {
 }
 
 .action-button--ghost:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-hover);
   color: var(--text);
 }
 
@@ -267,12 +349,12 @@ select {
   align-self: start;
   height: 100vh;
   overflow-y: auto;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-right: 1px solid var(--line-muted);
   padding: 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: rgba(18, 18, 18, 0.94);
+  background: var(--sidebar-bg);
   backdrop-filter: blur(18px);
 }
 
@@ -307,7 +389,7 @@ select {
   padding: 11px 13px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .app-shell__nav-link--active {
@@ -335,7 +417,7 @@ select {
   padding: 10px 11px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .app-shell__option-link--active {
@@ -378,8 +460,8 @@ select {
   align-items: center;
   justify-content: center;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-hover);
   font-size: 1.05rem;
 }
 
@@ -418,8 +500,8 @@ select {
 }
 
 .stat-card {
-  border: 1px solid rgba(255, 255, 255, 0.035);
-  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--line-faint);
+  background: var(--surface-subtle);
   box-shadow: none;
   border-radius: 10px;
   display: flex;
@@ -466,8 +548,8 @@ select {
 }
 
 .panel {
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  background: rgba(24, 24, 24, 0.46);
+  border: 1px solid var(--surface-hover);
+  background: var(--panel-glass);
   box-shadow: none;
   border-radius: 12px;
   padding: 10px;
@@ -484,7 +566,7 @@ select {
 
 .panel--toolbar {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.03);
+  border-color: var(--surface-muted);
   box-shadow: none;
   padding: 8px 10px;
 }
@@ -566,7 +648,7 @@ select {
 .data-table th,
 .data-table td {
   text-align: left;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--line-soft);
   padding: 10px 8px;
   vertical-align: middle;
   font-size: 0.84rem;
@@ -580,7 +662,7 @@ select {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .data-table__row--active {
@@ -676,7 +758,7 @@ select {
 
 .data-table__status-pill--muted {
   border-color: var(--border);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface-soft);
 }
 
 .data-table__status-pill--warning {
@@ -711,9 +793,9 @@ select {
   width: fit-content;
   max-width: 100%;
   padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-muted);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--surface-subtle);
 }
 
 .contracts-layout {
@@ -795,8 +877,8 @@ select {
 }
 
 .employees-relation-pill--muted {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .employees-spotlight {
@@ -816,8 +898,8 @@ select {
   gap: 4px;
   padding: 10px 11px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-subtle);
   min-width: 0;
 }
 
@@ -907,7 +989,7 @@ select {
   justify-content: center;
   align-items: flex-start;
   padding: 32px 20px;
-  background: rgba(5, 10, 18, 0.72);
+  background: var(--overlay);
   backdrop-filter: blur(10px);
 }
 
@@ -918,10 +1000,10 @@ select {
   display: grid;
   gap: 18px;
   padding: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 20px;
-  background: #171717;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  background: var(--bg-panel);
+  box-shadow: var(--drawer-shadow);
 }
 
 .pdf-dialog__header {
@@ -965,9 +1047,9 @@ select {
   display: grid;
   gap: 6px;
   padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .pdf-dialog__summary-card--wide {
@@ -1003,8 +1085,8 @@ select {
   padding: 0 10px;
   border-radius: 999px;
   font-size: 0.84rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .pdf-dialog__preview-item,
@@ -1026,9 +1108,9 @@ select {
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .pdf-dialog__section--muted {
@@ -1079,9 +1161,9 @@ select {
   gap: 10px;
   min-height: 38px;
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-muted);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .pdf-dialog__checkbox--disabled {
@@ -1098,7 +1180,7 @@ select {
 
 .contracts-bulk-toolbar--active {
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--line-soft);
 }
 
 .contracts-bulk-toolbar__meta {
@@ -1165,9 +1247,9 @@ select {
   display: grid;
   gap: 6px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-muted);
   color: var(--text);
   text-align: left;
   cursor: pointer;
@@ -1279,9 +1361,9 @@ select {
   display: grid;
   gap: 12px;
   padding: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-muted);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.018);
+  background: var(--surface-subtle);
 }
 
 .contracts-section-heading {
@@ -1319,8 +1401,8 @@ select {
   min-height: 30px;
   padding: 0 10px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--line-soft);
+  background: var(--line-faint);
   font-size: 0.78rem;
   line-height: 1.3;
 }
@@ -1355,8 +1437,8 @@ select {
 }
 
 .contracts-chip--status-archived {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--line-strong);
+  background: var(--surface-soft);
   color: var(--text-muted);
 }
 
@@ -1372,9 +1454,9 @@ select {
   gap: 4px;
   min-width: 0;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line-muted);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .contracts-kpi-card--accent {
@@ -1429,9 +1511,9 @@ select {
   display: grid;
   gap: 6px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-muted);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.018);
+  background: var(--surface-subtle);
 }
 
 .contracts-alert-list {
@@ -1443,13 +1525,13 @@ select {
   display: grid;
   gap: 6px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .contracts-alert--info {
-  border-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--line-soft);
 }
 
 .contracts-alert--warning {
@@ -1572,9 +1654,9 @@ select {
   place-items: center;
   min-height: 160px;
   padding: 18px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border: 1px dashed var(--line-strong);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--surface-subtle);
 }
 
 .contracts-drawer-shell {
@@ -1589,7 +1671,7 @@ select {
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(5, 10, 18, 0.7);
+  background: var(--overlay);
   cursor: pointer;
 }
 
@@ -1599,12 +1681,100 @@ select {
   height: 100%;
   overflow-y: auto;
   padding: 18px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  background: #171717;
-  box-shadow: -18px 0 44px rgba(0, 0, 0, 0.34);
+  border-left: 1px solid var(--line-soft);
+  background: var(--bg-panel);
+  box-shadow: var(--drawer-side-shadow);
   display: grid;
   align-content: start;
   gap: 16px;
+}
+
+.contracts-drawer__intro {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+  padding: 14px;
+}
+
+.contracts-drawer__intro-title,
+.contracts-detail__subsection-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.contracts-drawer__intro-copy,
+.contracts-drawer__intro-meta {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-size: 0.88rem;
+}
+
+.contracts-control-form-section {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+}
+
+.contracts-control-form-section__heading {
+  display: grid;
+  gap: 4px;
+}
+
+.contracts-control-form-section__heading h3,
+.contracts-control-form-section__heading p {
+  margin: 0;
+}
+
+.contracts-control-form-section__heading p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.contracts-section-heading--subsection {
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.contracts-variance {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.contracts-variance__value {
+  font-weight: 700;
+}
+
+.contracts-variance__hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.contracts-variance--positive .contracts-variance__value {
+  color: var(--success-text);
+}
+
+.contracts-variance--negative .contracts-variance__value {
+  color: var(--danger-text);
+}
+
+.contracts-variance--neutral .contracts-variance__value,
+.contracts-variance--missing .contracts-variance__value {
+  color: var(--text);
+}
+
+.theme-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .contracts-drawer__header {
@@ -1685,7 +1855,7 @@ select {
   width: 100%;
   height: 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--line-muted);
   overflow: hidden;
 }
 
@@ -1696,17 +1866,17 @@ select {
 
 .contract-chart__bar--material,
 .contract-monthly-chart__bar--material {
-  background: linear-gradient(90deg, rgba(196, 93, 93, 0.42), #c45d5d);
+  background: linear-gradient(90deg, var(--chart-material-start), var(--chart-material-end));
 }
 
 .contract-chart__bar--labor,
 .contract-monthly-chart__bar--labor {
-  background: linear-gradient(90deg, rgba(198, 151, 79, 0.45), #c6974f);
+  background: linear-gradient(90deg, var(--chart-labor-start), var(--chart-labor-end));
 }
 
 .contract-chart__bar--sales,
 .contract-monthly-chart__bar--sales {
-  background: linear-gradient(90deg, rgba(45, 161, 129, 0.55), var(--accent));
+  background: linear-gradient(90deg, var(--chart-sales-start), var(--chart-sales-end));
 }
 
 .contract-monthly-chart {
@@ -1778,8 +1948,8 @@ select {
   width: 100%;
   min-height: 40px;
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 30, 30, 0.92);
+  border: 1px solid var(--line-strong);
+  background: var(--field-bg);
   color: var(--text);
   padding: 0 12px;
   font: inherit;
@@ -1822,15 +1992,15 @@ select {
 }
 
 .status-message--error {
-  color: #ffb3b3;
+  color: var(--danger-text);
 }
 
 .status-message--success {
-  color: #9fe5cf;
+  color: var(--success-text);
 }
 
 .status-message--warning {
-  color: #e8cb88;
+  color: var(--warning-text);
 }
 
 .toolbar-tabs {
@@ -1841,9 +2011,9 @@ select {
   width: fit-content;
   max-width: 100%;
   padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-muted);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--surface-subtle);
 }
 
 .toolbar-tabs .action-button,
@@ -1871,7 +2041,7 @@ select {
 
 .toolbar-tabs .action-button--secondary:hover,
 .dashboard-toolbar__tabs .action-button--secondary:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-hover);
   color: var(--text);
 }
 
@@ -1905,9 +2075,9 @@ select {
   align-items: center;
   min-width: 0;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--surface-hover);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.012);
+  background: var(--surface-subtle);
 }
 
 .summary-strip__primary {
@@ -1954,7 +2124,7 @@ select {
   grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
   gap: 10px;
   padding: 8px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--line-muted);
 }
 
 .info-list__row:first-child {
@@ -2111,9 +2281,9 @@ select {
   gap: 10px;
   padding: 10px 12px;
   margin-bottom: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .hours-selected-entry__meta {
@@ -2153,9 +2323,9 @@ select {
   gap: 10px;
   align-items: start;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .hours-entry-helper {
@@ -2163,9 +2333,9 @@ select {
   gap: 10px;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .hours-entry-helper__header {
@@ -2188,9 +2358,9 @@ select {
   gap: 4px;
   align-content: center;
   padding: 10px 11px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .hours-entry-helper__summary-label {
@@ -2225,9 +2395,9 @@ select {
   gap: 12px;
   align-items: center;
   padding: 11px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
   text-align: left;
   color: var(--text);
   cursor: pointer;
@@ -2371,8 +2541,8 @@ select {
 }
 
 .hours-contract-pill--muted {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .hours-contract-pill__name {
@@ -2400,7 +2570,7 @@ select {
 }
 
 .panel--info {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
   box-shadow: none;
   padding: 10px 12px;
 }
@@ -2431,8 +2601,8 @@ select {
 }
 
 .hours-runtime-legend__item--muted {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .hours-runtime-legend__item strong {
@@ -2450,9 +2620,9 @@ select {
   display: grid;
   gap: 4px;
   padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .work-card-toolbar__title {
@@ -2493,8 +2663,8 @@ select {
   align-items: center;
   padding: 11px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
   color: var(--text);
   text-align: left;
   cursor: pointer;
@@ -2548,8 +2718,8 @@ select {
 }
 
 .work-card-meta__badge--muted {
-  border-color: rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--line-soft);
+  background: var(--surface-hover);
 }
 
 .work-card-grid {
@@ -2573,9 +2743,9 @@ select {
 .work-card-grid__row--footer .work-card-grid__cell {
   min-height: 42px;
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .work-card-grid__row--head .work-card-grid__cell {
@@ -2583,7 +2753,7 @@ select {
 }
 
 .work-card-grid__row--footer .work-card-grid__cell {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .work-card-grid__row:not(.work-card-grid__row--head):not(.work-card-grid__row--footer) .work-card-grid__cell {
@@ -2591,7 +2761,7 @@ select {
 }
 
 .work-card-grid__row--weekend .work-card-grid__cell {
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface-muted);
 }
 
 .work-card-grid__row--filled .work-card-grid__cell--date {
@@ -2603,9 +2773,9 @@ select {
 .work-card-grid__cell--total,
 .work-card-grid__cell--note {
   padding: 0 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface-subtle);
 }
 
 .work-card-grid__cell--contract-head {
@@ -2909,9 +3079,9 @@ select {
   display: grid;
   gap: 4px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .planning-summary-note strong {
@@ -2966,8 +3136,8 @@ select {
   min-height: 92px;
   padding: 10px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
   color: var(--text);
   text-align: left;
 }
@@ -3000,8 +3170,8 @@ select {
   gap: 4px;
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .planning-side-list__item strong {
@@ -3103,9 +3273,9 @@ select {
   display: grid;
   gap: 4px;
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--line-soft);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface-muted);
 }
 
 .vacations-detail-card strong {
@@ -3113,7 +3283,7 @@ select {
 }
 
 .vacations-detail-card small {
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-muted);
 }
 
 .vacations-form {
@@ -3216,8 +3386,8 @@ select {
   gap: 4px;
   padding: 12px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .settings-detail-card strong {
@@ -3225,7 +3395,7 @@ select {
 }
 
 .settings-detail-card small {
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -3244,8 +3414,8 @@ select {
   align-items: start;
   padding: 12px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
 }
 
 .settings-toggle-card input,
@@ -3264,13 +3434,13 @@ select {
 .settings-permission-card small {
   display: block;
   margin-top: 4px;
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-muted);
   line-height: 1.35;
 }
 
 .settings-permission-card--locked {
-  border-color: rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--surface-soft);
+  background: var(--surface-subtle);
 }
 
 .settings-permissions-grid {
@@ -3364,8 +3534,8 @@ select {
   gap: 4px;
   padding: 12px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-muted);
   color: var(--text);
   text-align: left;
 }
@@ -3377,7 +3547,7 @@ select {
 
 .workwear-history-list__item span,
 .workwear-detail-card small {
-  color: rgba(255, 255, 255, 0.64);
+  color: var(--text-muted);
   line-height: 1.4;
 }
 
@@ -3480,7 +3650,7 @@ select {
     position: relative;
     height: auto;
     border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--line-muted);
   }
 
   .contracts-side-stack {

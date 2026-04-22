@@ -17,6 +17,7 @@ export type ContractRecord = {
 export type ContractAlertLevel = "info" | "warning" | "critical";
 export type ContractHealthLevel = "good" | "attention" | "critical";
 export type ContractVarianceStatus = "missing" | "on_track" | "warning" | "critical";
+export type ContractVarianceTone = "positive" | "negative" | "neutral" | "missing";
 export type ContractRevenueSource = "manual" | "contract_value" | "planned_revenue" | "missing";
 
 export type ContractSnapshotMetrics = {
@@ -218,6 +219,8 @@ export type ContractPlanComparisonRow = {
   planValue: string;
   actualValue: string;
   varianceValue: string;
+  varianceTone: ContractVarianceTone;
+  varianceHint: string;
 };
 
 export type ContractForecastItem = {
@@ -270,6 +273,7 @@ export type ContractCenterViewModel = {
   forecastSummary: string;
   controlNote: string | null;
   controlUpdatedAtLabel: string | null;
+  controlUpdatedByLabel: string | null;
   alerts: ContractAlertView[];
   activityItems: ContractActivityItem[];
   operationalStatus: string;

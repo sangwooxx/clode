@@ -38,7 +38,12 @@ class ContractControlSnapshotTestCase(unittest.TestCase):
             self.metrics_repository,
             control_repository=self.control_repository,
         )
-        self.current_user = {"id": "user-admin", "role": "admin"}
+        self.current_user = {
+            "id": "user-admin",
+            "role": "admin",
+            "displayName": "Admin ERP",
+            "username": "admin",
+        }
         self._seed_data()
 
     def tearDown(self) -> None:
@@ -199,6 +204,7 @@ class ContractControlSnapshotTestCase(unittest.TestCase):
 
         self.assertEqual(snapshot["control"]["planned_invoice_cost_total"], 12000.0)
         self.assertEqual(snapshot["control"]["forecast_labor_cost_total"], 11000.0)
+        self.assertEqual(snapshot["control"]["updated_by"], "Admin ERP")
         self.assertTrue(snapshot["plan"]["is_configured"])
         self.assertTrue(snapshot["forecast"]["is_configured"])
         self.assertEqual(snapshot["plan"]["margin"], 59000.0)
