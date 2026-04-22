@@ -76,11 +76,11 @@ describe("contract center panel", () => {
 
     expect(html).toContain("Podsumowanie kontraktu");
     expect(html).toContain("Budowa hali");
-    expect(html).toContain("Aktywnosc operacyjna");
-    expect(html).toContain("Przebieg miesieczny");
+    expect(html).toContain("Aktywność operacyjna");
+    expect(html).toContain("Przebieg miesięczny");
     expect(html).toContain("Kontrakt ma dane operacyjne.");
     expect(html).toContain("04.2026");
-    expect(html).toContain("Sprzedaz");
+    expect(html).toContain("Sprzedaż");
   });
 
   it("renders a business empty state instead of a low-value placeholder", () => {

@@ -18,7 +18,10 @@ import type {
 export function mapContractsViewModel(contracts: ContractRecord[]): ContractsViewModel {
   const activeContracts = contracts.filter((contract) => contract.status !== "archived");
   const archivedContracts = contracts.filter((contract) => contract.status === "archived");
-  const totalValue = activeContracts.reduce((sum, contract) => sum + Number(contract.contract_value || 0), 0);
+  const totalValue = activeContracts.reduce(
+    (sum, contract) => sum + Number(contract.contract_value || 0),
+    0
+  );
 
   return {
     contracts,
@@ -60,10 +63,7 @@ export function resolveNextSelectedContractId(
   currentContractId: string | null,
   preferredContractId?: string | null
 ) {
-  if (
-    preferredContractId &&
-    contracts.some((contract) => contract.id === preferredContractId)
-  ) {
+  if (preferredContractId && contracts.some((contract) => contract.id === preferredContractId)) {
     return preferredContractId;
   }
 
@@ -98,12 +98,12 @@ export function buildContractSummaryItems(contract: ContractRecord) {
     },
     {
       id: "end_date",
-      label: "Termin zakonczenia",
+      label: "Termin zakończenia",
       value: formatDate(contract.end_date)
     },
     {
       id: "contract_value",
-      label: "Wartosc kontraktu",
+      label: "Wartość kontraktu",
       value: formatMoney(contract.contract_value)
     }
   ];
@@ -117,13 +117,13 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
     kpiItems: [
       {
         id: "contract_value",
-        label: "Wartosc kontraktu",
+        label: "Wartość kontraktu",
         value: formatMoney(contract.contract_value),
         accent: true
       },
       {
         id: "sales",
-        label: "Sprzedaz",
+        label: "Sprzedaż",
         value: formatMoney(metrics.revenue_total)
       },
       {
@@ -138,12 +138,12 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       },
       {
         id: "total_cost",
-        label: "Laczny koszt",
+        label: "Łączny koszt",
         value: formatMoney(metrics.cost_total)
       },
       {
         id: "margin",
-        label: "Marza",
+        label: "Marża",
         value: formatMoney(metrics.margin)
       },
       {
@@ -175,7 +175,7 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
     emptyMessage: !activity.has_data
       ? "Kontrakt nie ma jeszcze danych finansowych ani operacyjnych."
       : monthlyBreakdown.length === 0
-        ? "Kontrakt nie ma jeszcze przebiegu miesiecznego do pokazania."
+        ? "Kontrakt nie ma jeszcze przebiegu miesięcznego do pokazania."
         : null,
     monthlyRows: monthlyBreakdown.map((row) => ({
       id: row.month_key,
@@ -204,9 +204,7 @@ export function buildContractHistoricalDataLines(snapshot: ContractSnapshot) {
   }
 
   if (snapshot.activity.planning_assignment_count) {
-    details.push(
-      `planowanie: ${formatInteger(snapshot.activity.planning_assignment_count)}`
-    );
+    details.push(`planowanie: ${formatInteger(snapshot.activity.planning_assignment_count)}`);
   }
 
   return details;

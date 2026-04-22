@@ -75,12 +75,12 @@ describe("contracts mappers", () => {
       value: "K/2026/011"
     });
     expect(viewModel.kpiItems.map((item) => item.label)).toEqual([
-      "Wartosc kontraktu",
-      "Sprzedaz",
+      "Wartość kontraktu",
+      "Sprzedaż",
       "Koszt fakturowy",
       "Koszt pracy",
-      "Laczny koszt",
-      "Marza",
+      "Łączny koszt",
+      "Marża",
       "Godziny"
     ]);
     expect(viewModel.activityItems).toMatchObject([

@@ -20,12 +20,7 @@ import {
   normalizeContractPayload,
   saveContract
 } from "@/features/contracts/api";
-import {
-  formatDate,
-  formatInteger,
-  formatMoney,
-  formatStatus
-} from "@/features/contracts/formatters";
+import { formatDate, formatMoney, formatStatus } from "@/features/contracts/formatters";
 import {
   buildContractHistoricalDataLines,
   mapContractsViewModel,
@@ -40,6 +35,7 @@ import type {
 } from "@/features/contracts/types";
 
 type ContractsFilter = "all" | "active" | "archived";
+type ContractEditorMode = "closed" | "create" | "edit";
 
 type ContractsScreenState =
   | { status: "loading" }
@@ -56,6 +52,21 @@ type ContractTableRow = {
   index: number;
   item: ContractRecord;
 };
+
+function areContractFormValuesEqual(
+  left: ContractFormValues,
+  right: ContractFormValues
+) {
+  return (
+    left.contract_number === right.contract_number &&
+    left.name === right.name &&
+    left.investor === right.investor &&
+    left.signed_date === right.signed_date &&
+    left.end_date === right.end_date &&
+    left.contract_value === right.contract_value &&
+    left.status === right.status
+  );
+}
 
 const contractColumns = (
   handlers: {
@@ -98,7 +109,7 @@ const contractColumns = (
   },
   {
     key: "contract_number",
-    header: "ID",
+    header: "Numer kontraktu",
     className: "contracts-col-id",
     sortValue: (row) => row.item.contract_number,
     render: (row) => row.item.contract_number || "-"
@@ -112,7 +123,7 @@ const contractColumns = (
   },
   {
     key: "investor",
-    header: "Zamawiający / inwestor",
+    header: "Inwestor",
     className: "contracts-col-investor",
     sortValue: (row) => row.item.investor,
     render: (row) => row.item.investor || "-"
@@ -133,7 +144,7 @@ const contractColumns = (
   },
   {
     key: "contract_value",
-    header: "Kwota ryczałtowa",
+    header: "Wartość kontraktu",
     className: "data-table__numeric contracts-col-value",
     sortValue: (row) => row.item.contract_value,
     render: (row) => formatMoney(row.item.contract_value)
@@ -202,6 +213,8 @@ export function ContractsView({
   const [selectedContractId, setSelectedContractId] = useState<string | null>(
     initialContracts?.[0]?.id ?? null
   );
+  const [editorMode, setEditorMode] = useState<ContractEditorMode>("closed");
+  const [editingContractId, setEditingContractId] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<ContractFormValues>(() => emptyFormValues);
   const [formError, setFormError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<string | null>(null);
@@ -239,8 +252,7 @@ export function ContractsView({
   }
 
   useEffect(() => {
-    const shouldUseInitialData =
-      Boolean(initialContracts) || Boolean(initialError);
+    const shouldUseInitialData = Boolean(initialContracts) || Boolean(initialError);
     if (shouldUseInitialData) {
       return;
     }
@@ -255,7 +267,11 @@ export function ContractsView({
 
     return state.data.contracts.filter((contract) => {
       const matchesFilter =
-        filter === "all" ? true : filter === "archived" ? contract.status === "archived" : contract.status !== "archived";
+        filter === "all"
+          ? true
+          : filter === "archived"
+            ? contract.status === "archived"
+            : contract.status !== "archived";
       if (!matchesFilter) return false;
 
       if (!term) return true;
@@ -277,12 +293,21 @@ export function ContractsView({
     return findContractById(state.data.contracts, selectedContractId);
   }, [selectedContractId, state]);
 
+  const editingContract = useMemo(() => {
+    if (state.status !== "success") return null;
+    return findContractById(state.data.contracts, editingContractId);
+  }, [editingContractId, state]);
+
   const contractRows = useMemo(
     () => filteredContracts.map((item, index) => ({ index: index + 1, item })),
     [filteredContracts]
   );
 
   const contractsRegistry = state.status === "success" ? state.data.contracts : [];
+  const editorBaseline =
+    editorMode === "edit" && editingContract ? toContractFormValues(editingContract) : emptyFormValues;
+  const hasEditorChanges =
+    editorMode !== "closed" && !areContractFormValuesEqual(formValues, editorBaseline);
 
   const allVisibleSelected =
     contractRows.length > 0 &&
@@ -317,7 +342,7 @@ export function ContractsView({
           message:
             error instanceof Error
               ? error.message
-              : "Nie udało się pobrać centrum kontraktu."
+              : "Nie udało się pobrać Centrum kontraktu."
         });
       });
 
@@ -327,31 +352,90 @@ export function ContractsView({
   }, [selectedContract]);
 
   useEffect(() => {
-    if (!selectedContract) {
+    if (editorMode === "edit" && editingContractId && selectedContractId !== editingContractId) {
+      setEditorMode("closed");
+      setEditingContractId(null);
       setFormValues(emptyFormValues);
-      return;
     }
+  }, [editingContractId, editorMode, selectedContractId]);
 
-    setFormValues((current) => {
-      if (selectedContract.id !== selectedContractId) {
-        return current;
-      }
-      return toContractFormValues(selectedContract);
-    });
-  }, [selectedContract, selectedContractId]);
+  useEffect(() => {
+    if (editorMode === "edit" && editingContractId && !editingContract) {
+      setEditorMode("closed");
+      setEditingContractId(null);
+      setFormValues(emptyFormValues);
+    }
+  }, [editingContract, editingContractId, editorMode]);
 
-  function beginEditing(contract: ContractRecord) {
-    setSelectedContractId(contract.id);
-    setFormValues(toContractFormValues(contract));
+  function clearFeedback() {
     setFormError(null);
     setFormStatus(null);
   }
 
-  function resetForm() {
-    setSelectedContractId(null);
+  function confirmDiscardEditor() {
+    if (!hasEditorChanges) {
+      return true;
+    }
+
+    return window.confirm(
+      "Masz niezapisane zmiany w danych kontraktu. Czy chcesz je odrzucić?"
+    );
+  }
+
+  function discardEditor() {
+    if (!confirmDiscardEditor()) {
+      return false;
+    }
+
+    setEditorMode("closed");
+    setEditingContractId(null);
     setFormValues(emptyFormValues);
-    setFormError(null);
-    setFormStatus(null);
+    clearFeedback();
+    return true;
+  }
+
+  function selectContract(contract: ContractRecord) {
+    if (editorMode !== "closed" && !discardEditor()) {
+      return;
+    }
+
+    setSelectedContractId(contract.id);
+    clearFeedback();
+  }
+
+  function beginCreating() {
+    if (editorMode === "create") {
+      return;
+    }
+
+    if (editorMode !== "closed" && !discardEditor()) {
+      return;
+    }
+
+    setEditorMode("create");
+    setEditingContractId(null);
+    setFormValues(emptyFormValues);
+    clearFeedback();
+  }
+
+  function beginEditing(contract: ContractRecord) {
+    if (editorMode === "edit" && editingContractId === contract.id) {
+      return;
+    }
+
+    if (
+      editorMode !== "closed" &&
+      (editorMode !== "edit" || editingContractId !== contract.id) &&
+      !discardEditor()
+    ) {
+      return;
+    }
+
+    setSelectedContractId(contract.id);
+    setEditingContractId(contract.id);
+    setEditorMode("edit");
+    setFormValues(toContractFormValues(contract));
+    clearFeedback();
   }
 
   function isSelected(contractId: string) {
@@ -379,8 +463,7 @@ export function ContractsView({
   }
 
   async function handleAction(contract: ContractRecord) {
-    setFormError(null);
-    setFormStatus(null);
+    clearFeedback();
 
     if (contract.status === "archived") {
       try {
@@ -408,7 +491,9 @@ export function ContractsView({
       try {
         await deleteContractRecord(contract.id);
         if (selectedContractId === contract.id) {
-          resetForm();
+          setEditorMode("closed");
+          setEditingContractId(null);
+          setFormValues(emptyFormValues);
         }
         await reloadContracts({ preserveState: true });
         setFormStatus(`Kontrakt "${contract.name}" został usunięty.`);
@@ -496,6 +581,8 @@ export function ContractsView({
       return;
     }
 
+    clearFeedback();
+
     try {
       if (activeIds.length) {
         await Promise.all(activeIds.map((id) => archiveContractRecord(id)));
@@ -506,6 +593,9 @@ export function ContractsView({
       }
 
       setSelectedContractIds([]);
+      setEditorMode("closed");
+      setEditingContractId(null);
+      setFormValues(emptyFormValues);
       await reloadContracts({ preserveState: true });
       setFormStatus(
         activeIds.length && archivedDeletableIds.length
@@ -523,8 +613,7 @@ export function ContractsView({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFormError(null);
-    setFormStatus(null);
+    clearFeedback();
 
     if (!formValues.name.trim()) {
       setFormError("Podaj nazwę kontraktu.");
@@ -533,7 +622,7 @@ export function ContractsView({
 
     const contractValue = Number(formValues.contract_value || 0);
     if (!Number.isFinite(contractValue) || contractValue < 0) {
-      setFormError("Kwota kontraktu nie może być ujemna.");
+      setFormError("Wartość kontraktu nie może być ujemna.");
       return;
     }
 
@@ -550,7 +639,7 @@ export function ContractsView({
 
     try {
       const saved = await saveContract(
-        selectedContractId,
+        editorMode === "edit" ? editingContractId : null,
         normalizeContractPayload(formValues)
       );
 
@@ -560,9 +649,11 @@ export function ContractsView({
       });
 
       setSelectedContractId(saved.id);
-      setFormValues(toContractFormValues(saved));
+      setEditorMode("closed");
+      setEditingContractId(null);
+      setFormValues(emptyFormValues);
       setFormStatus(
-        selectedContractId
+        editorMode === "edit"
           ? `Kontrakt "${saved.name}" został zaktualizowany.`
           : `Kontrakt "${saved.name}" został dodany.`
       );
@@ -578,14 +669,14 @@ export function ContractsView({
   if (state.status === "loading") {
     return (
       <div className="module-page">
-        <SectionHeader eyebrow="Kontrakty" title="Rejestr kontraktów" />
+        <SectionHeader eyebrow="Kontrakty" title="Centrum kontraktów" />
         <div className="module-page__stats">
           {Array.from({ length: 4 }).map((_, index) => (
-            <StatCard key={index} label="Ładowanie" value="..." hint="Trwa pobieranie rejestru" />
+            <StatCard key={index} label="Ładowanie" value="..." />
           ))}
         </div>
-        <Panel title="Rejestr kontraktów">
-          <p className="status-message">Trwa odczyt listy.</p>
+        <Panel title="Lista kontraktów">
+          <p className="status-message">Trwa odczyt listy kontraktów.</p>
         </Panel>
       </div>
     );
@@ -596,7 +687,7 @@ export function ContractsView({
       <div className="module-page">
         <SectionHeader
           eyebrow="Kontrakty"
-          title="Rejestr kontraktów"
+          title="Centrum kontraktów"
           actions={
             <ActionButton type="button" onClick={() => void reloadContracts()}>
               Spróbuj ponownie
@@ -620,29 +711,45 @@ export function ContractsView({
     onEdit: beginEditing,
     onAction: (contract) => void handleAction(contract)
   });
-  const isEditing = Boolean(selectedContractId);
+  const isEditing = editorMode === "edit";
+  const editorTitle = isEditing ? "Edycja kontraktu" : "Nowy kontrakt";
+  const editorDescription = isEditing
+    ? "Zmieniasz dane rejestrowe kontraktu. Podgląd i analiza pozostają oddzielnie powyżej."
+    : "Uzupełnij podstawowe dane nowego kontraktu. Po zapisaniu pojawi się jego Centrum kontraktu.";
+  const workspaceModeLabel =
+    editorMode === "edit"
+      ? "Podgląd kontraktu i edycja"
+      : editorMode === "create"
+        ? "Podgląd kontraktu i nowy wpis"
+        : "Podgląd kontraktu";
+  const workspaceHint = selectedContract
+    ? editorMode === "closed"
+      ? "Najpierw analizujesz kontrakt. Edycję uruchamiasz osobno."
+      : "Centrum kontraktu pozostaje głównym widokiem, a formularz działa jako osobny tryb."
+    : "Wybierz kontrakt z listy albo dodaj nowy wpis.";
 
   return (
     <div className="module-page">
       <SectionHeader
         eyebrow="Kontrakty"
-        title="Rejestr kontraktów"
+        title="Centrum kontraktów"
+        description="Wybierz kontrakt z listy, aby szybko ocenić jego sytuację finansową i operacyjną."
         actions={
           <div className="module-actions">
             <div className="module-actions__primary">
-            <ActionButton type="button" onClick={resetForm}>
-              Dodaj kontrakt
-            </ActionButton>
+              <ActionButton type="button" onClick={beginCreating}>
+                Dodaj kontrakt
+              </ActionButton>
             </div>
             <div className="module-actions__secondary">
-            <ActionButton
-              type="button"
-              variant="secondary"
-              onClick={() => void reloadContracts({ preserveState: true })}
-              disabled={isRefreshing}
-            >
-              {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
-            </ActionButton>
+              <ActionButton
+                type="button"
+                variant="secondary"
+                onClick={() => void reloadContracts({ preserveState: true })}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? "Odświeżanie..." : "Odśwież dane"}
+              </ActionButton>
             </div>
           </div>
         }
@@ -655,7 +762,6 @@ export function ContractsView({
             label={item.label}
             value={item.value}
             accent={item.accent}
-            hint={item.hint}
           />
         ))}
       </div>
@@ -688,8 +794,8 @@ export function ContractsView({
           <SearchField
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-              placeholder="Szukaj kontraktu"
-            />
+            placeholder="Szukaj po numerze, nazwie lub inwestorze"
+          />
         </div>
         {selectedContractIds.length ? (
           <div className="contracts-bulk-toolbar contracts-bulk-toolbar--active">
@@ -707,161 +813,63 @@ export function ContractsView({
         ) : null}
       </Panel>
 
+      <FormFeedback
+        items={[
+          formError ? { tone: "error", text: formError } : null,
+          formStatus ? { tone: "success", text: formStatus } : null
+        ]}
+      />
+
       <div className="contracts-layout">
-        <Panel title="Lista kontraktów">
+        <Panel
+          className="contracts-list-panel"
+          title="Lista kontraktów"
+          description="Kliknięcie wiersza otwiera podgląd kontraktu. Edycję uruchamiasz przyciskiem Edytuj."
+        >
           <DataTable
             columns={columns}
             rows={contractRows}
             rowKey={(row) => row.item.id}
             tableClassName="contracts-table contracts-table--registry"
-            onRowClick={(row) => beginEditing(row.item)}
+            onRowClick={(row) => selectContract(row.item)}
             getRowClassName={(row) =>
               row.item.id === selectedContractId ? "data-table__row--active" : undefined
             }
             emptyMessage={
               state.data.contracts.length === 0
-                ? "Brak kontraktów w rejestrze. Dodaj pierwszy kontrakt formularzem obok."
-                : "Brak kontraktów dla wybranego filtra."
+                ? "Brak kontraktów w rejestrze. Dodaj pierwszy kontrakt przyciskiem Dodaj kontrakt."
+                : "Brak kontraktów dla wybranego filtra lub wyszukiwania."
             }
           />
         </Panel>
 
-        <div className="contracts-side-stack">
-          <Panel title={isEditing ? "Edycja kontraktu" : "Formularz kontraktu"}>
-            <form className="contracts-form" onSubmit={handleSubmit}>
-              <FormGrid columns={1}>
-                <label className="field-card">
-                  <span className="field-card__label">ID kontraktu</span>
-                  <input
-                    className="text-input field-card__control"
-                    value={formValues.contract_number}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        contract_number: event.target.value
-                      }))
-                    }
-                    placeholder="Np. K/2026/011"
-                  />
-                </label>
-                <label className="field-card">
-                  <span className="field-card__label">Status</span>
-                  <select
-                    className="text-input field-card__control"
-                    value={formValues.status}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        status: event.target.value as ContractFormValues["status"]
-                      }))
-                    }
-                  >
-                    <option value="active">W realizacji</option>
-                    <option value="archived">Zarchiwizowany</option>
-                  </select>
-                </label>
-                <label className="field-card">
-                  <span className="field-card__label">Nazwa kontraktu</span>
-                  <input
-                    className="text-input field-card__control"
-                    value={formValues.name}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        name: event.target.value
-                      }))
-                    }
-                    placeholder="Nazwa kontraktu"
-                  />
-                </label>
-                <label className="field-card">
-                  <span className="field-card__label">Zamawiający / inwestor</span>
-                  <input
-                    className="text-input field-card__control"
-                    value={formValues.investor}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        investor: event.target.value
-                      }))
-                    }
-                    placeholder="Nazwa inwestora"
-                  />
-                </label>
-                <label className="field-card">
-                  <span className="field-card__label">Data podpisania</span>
-                  <input
-                    className="text-input field-card__control"
-                    type="date"
-                    value={formValues.signed_date}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        signed_date: event.target.value
-                      }))
-                    }
-                  />
-                </label>
-                <label className="field-card">
-                  <span className="field-card__label">Termin zakończenia</span>
-                  <input
-                    className="text-input field-card__control"
-                    type="date"
-                    value={formValues.end_date}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        end_date: event.target.value
-                      }))
-                    }
-                  />
-                </label>
-                <label className="field-card contracts-form__full">
-                  <span className="field-card__label">Kwota ryczałtowa</span>
-                  <input
-                    className="text-input field-card__control"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formValues.contract_value}
-                    onChange={(event) =>
-                      setFormValues((current) => ({
-                        ...current,
-                        contract_value: event.target.value
-                      }))
-                    }
-                    placeholder="0.00"
-                  />
-                </label>
-              </FormGrid>
-
-              <FormFeedback
-                items={[
-                  formError ? { tone: "error", text: formError } : null,
-                  formStatus ? { tone: "success", text: formStatus } : null,
-                ]}
-              />
-
-              <FormActions
-                leading={
-                  <ActionButton type="button" variant="ghost" onClick={resetForm}>
-                  {isEditing ? "Anuluj" : "Wyczyść"}
+        <div className="contracts-workspace">
+          <Panel
+            className="contracts-center-panel"
+            title="Centrum kontraktu"
+            description="Najważniejsze liczby, aktywność operacyjna i przebieg miesięczny wybranego kontraktu."
+          >
+            <div className="contracts-workspace__toolbar">
+              <div className="contracts-workspace__copy">
+                <p className="contracts-workspace__mode">{workspaceModeLabel}</p>
+                <p className="contracts-workspace__hint">{workspaceHint}</p>
+              </div>
+              <div className="contracts-workspace__actions">
+                {selectedContract ? (
+                  <ActionButton type="button" onClick={() => beginEditing(selectedContract)}>
+                    Edytuj
                   </ActionButton>
-                }
-                trailing={
-                  <ActionButton type="submit" disabled={isSubmitting}>
-                  {isSubmitting
-                    ? "Zapisywanie..."
-                    : isEditing
-                      ? "Zapisz zmiany"
-                      : "Dodaj kontrakt"}
-                  </ActionButton>
-                }
-              />
-            </form>
-          </Panel>
+                ) : null}
+                <ActionButton
+                  type="button"
+                  variant={selectedContract ? "secondary" : "primary"}
+                  onClick={beginCreating}
+                >
+                  Dodaj kontrakt
+                </ActionButton>
+              </div>
+            </div>
 
-          <Panel title="Centrum kontraktu">
             <ContractCenterPanel
               contract={selectedContract}
               snapshot={snapshotState.status === "success" ? snapshotState.data : null}
@@ -869,6 +877,139 @@ export function ContractsView({
               errorMessage={snapshotState.status === "error" ? snapshotState.message : null}
             />
           </Panel>
+
+          {editorMode !== "closed" ? (
+            <Panel
+              className="contracts-editor-panel"
+              title={editorTitle}
+              description={editorDescription}
+            >
+              <form className="contracts-form" onSubmit={handleSubmit}>
+                <FormGrid columns={1}>
+                  <label className="field-card">
+                    <span className="field-card__label">Numer kontraktu</span>
+                    <input
+                      className="text-input field-card__control"
+                      value={formValues.contract_number}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          contract_number: event.target.value
+                        }))
+                      }
+                      placeholder="Np. K/2026/011"
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Status</span>
+                    <select
+                      className="text-input field-card__control"
+                      value={formValues.status}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          status: event.target.value as ContractFormValues["status"]
+                        }))
+                      }
+                    >
+                      <option value="active">W realizacji</option>
+                      <option value="archived">Zarchiwizowany</option>
+                    </select>
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Nazwa kontraktu</span>
+                    <input
+                      className="text-input field-card__control"
+                      value={formValues.name}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          name: event.target.value
+                        }))
+                      }
+                      placeholder="Nazwa kontraktu"
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Inwestor</span>
+                    <input
+                      className="text-input field-card__control"
+                      value={formValues.investor}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          investor: event.target.value
+                        }))
+                      }
+                      placeholder="Nazwa inwestora"
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Data podpisania</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="date"
+                      value={formValues.signed_date}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          signed_date: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card">
+                    <span className="field-card__label">Termin zakończenia</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="date"
+                      value={formValues.end_date}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          end_date: event.target.value
+                        }))
+                      }
+                    />
+                  </label>
+                  <label className="field-card contracts-form__full">
+                    <span className="field-card__label">Wartość kontraktu</span>
+                    <input
+                      className="text-input field-card__control"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formValues.contract_value}
+                      onChange={(event) =>
+                        setFormValues((current) => ({
+                          ...current,
+                          contract_value: event.target.value
+                        }))
+                      }
+                      placeholder="0.00"
+                    />
+                  </label>
+                </FormGrid>
+
+                <FormActions
+                  leading={
+                    <ActionButton type="button" variant="ghost" onClick={discardEditor}>
+                      {isEditing ? "Anuluj edycję" : "Anuluj dodawanie"}
+                    </ActionButton>
+                  }
+                  trailing={
+                    <ActionButton type="submit" disabled={isSubmitting}>
+                      {isSubmitting
+                        ? "Zapisywanie..."
+                        : isEditing
+                          ? "Zapisz zmiany"
+                          : "Dodaj kontrakt"}
+                    </ActionButton>
+                  }
+                />
+              </form>
+            </Panel>
+          ) : null}
         </div>
       </div>
     </div>

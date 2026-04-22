@@ -13,13 +13,13 @@ import type {
 const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = [
   {
     key: "month_label",
-    header: "Miesiac",
+    header: "Miesiąc",
     sortValue: (row) => row.month_key,
     render: (row) => <span className="data-table__primary">{row.month_label}</span>
   },
   {
     key: "revenue_total",
-    header: "Sprzedaz",
+    header: "Sprzedaż",
     className: "data-table__numeric",
     render: (row) => row.revenue_total
   },
@@ -37,13 +37,13 @@ const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = 
   },
   {
     key: "cost_total",
-    header: "Laczny koszt",
+    header: "Łączny koszt",
     className: "data-table__numeric",
     render: (row) => row.cost_total
   },
   {
     key: "margin",
-    header: "Marza",
+    header: "Marża",
     className: "data-table__numeric",
     render: (row) => row.margin
   },
@@ -74,9 +74,16 @@ export function ContractCenterPanel({
 }) {
   if (!contract) {
     return (
-      <p className="status-message">
-        Wybierz kontrakt z tabeli albo dodaj nowy wpis.
-      </p>
+      <div className="contracts-detail contracts-detail--empty-state">
+        <div className="contracts-detail__empty">
+          <p className="status-message">
+            Wybierz kontrakt z listy, aby zobaczyć jego Centrum kontraktu.
+          </p>
+          <p className="contracts-detail__status">
+            Tutaj zobaczysz podsumowanie, KPI, aktywność operacyjną i przebieg miesięczny.
+          </p>
+        </div>
+      </div>
     );
   }
 
@@ -89,6 +96,9 @@ export function ContractCenterPanel({
         <div className="contracts-detail__header">
           <h3 className="contracts-detail__section-title">Podsumowanie kontraktu</h3>
           <p className="contracts-detail__contract-name">{contract.name}</p>
+          <p className="contracts-detail__section-copy">
+            Najważniejsze dane kontraktu i jego wartość umowna.
+          </p>
         </div>
         <div className="contracts-detail__summary-grid">
           {summaryItems.map((item) => (
@@ -101,14 +111,19 @@ export function ContractCenterPanel({
       </section>
 
       {isLoading ? (
-        <p className="status-message">Ladowanie centrum kontraktu...</p>
+        <p className="status-message">Ładowanie Centrum kontraktu...</p>
       ) : errorMessage ? (
         <p className="auth-form__error">{errorMessage}</p>
       ) : viewModel ? (
         <>
           <section className="contracts-detail__section">
-            <h3 className="contracts-detail__section-title">KPI kontraktu</h3>
-            <div className="module-page__stats module-page__stats--compact">
+            <div className="contracts-detail__header">
+              <h3 className="contracts-detail__section-title">KPI kontraktu</h3>
+              <p className="contracts-detail__section-copy">
+                Najważniejsze liczby finansowe i czas pracy widoczne od razu.
+              </p>
+            </div>
+            <div className="contracts-detail__stats">
               {viewModel.kpiItems.map((item) => (
                 <StatCard
                   key={item.id}
@@ -121,8 +136,13 @@ export function ContractCenterPanel({
           </section>
 
           <section className="contracts-detail__section">
-            <h3 className="contracts-detail__section-title">Aktywnosc operacyjna</h3>
-            <div className="module-page__stats module-page__stats--compact">
+            <div className="contracts-detail__header">
+              <h3 className="contracts-detail__section-title">Aktywność operacyjna</h3>
+              <p className="contracts-detail__section-copy">
+                Szybki obraz faktur, czasu pracy i planowania dla tego kontraktu.
+              </p>
+            </div>
+            <div className="contracts-detail__stats">
               {viewModel.activityItems.map((item) => (
                 <StatCard key={item.id} label={item.label} value={item.value} />
               ))}
@@ -131,24 +151,31 @@ export function ContractCenterPanel({
           </section>
 
           <section className="contracts-detail__section">
-            <h3 className="contracts-detail__section-title">Przebieg miesieczny</h3>
+            <div className="contracts-detail__header">
+              <h3 className="contracts-detail__section-title">Przebieg miesięczny</h3>
+              <p className="contracts-detail__section-copy">
+                Miesięczne zestawienie przychodu, kosztów, marży i godzin.
+              </p>
+            </div>
             {viewModel.emptyMessage ? (
               <div className="contracts-detail__empty">
                 <p className="status-message">{viewModel.emptyMessage}</p>
               </div>
             ) : (
-              <DataTable
-                columns={monthlyBreakdownColumns}
-                rows={viewModel.monthlyRows}
-                rowKey={(row) => row.id}
-                tableClassName="contracts-table contracts-table--monthly"
-                emptyMessage="Kontrakt nie ma jeszcze przebiegu miesiecznego do pokazania."
-              />
+              <div className="contracts-detail__table">
+                <DataTable
+                  columns={monthlyBreakdownColumns}
+                  rows={viewModel.monthlyRows}
+                  rowKey={(row) => row.id}
+                  tableClassName="contracts-table contracts-table--monthly"
+                  emptyMessage="Kontrakt nie ma jeszcze przebiegu miesięcznego do pokazania."
+                />
+              </div>
             )}
           </section>
         </>
       ) : (
-        <p className="status-message">Trwa przygotowanie widoku kontraktu.</p>
+        <p className="status-message">Trwa przygotowanie podglądu kontraktu.</p>
       )}
     </div>
   );
