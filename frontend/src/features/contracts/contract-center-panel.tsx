@@ -12,49 +12,50 @@ const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = 
   {
     key: "month_label",
     header: "Miesiąc",
+    className: "contracts-monthly__month",
     sortValue: (row) => row.month_key,
     render: (row) => <span className="data-table__primary">{row.month_label}</span>
   },
   {
     key: "revenue_total",
     header: "Sprzedaż",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__revenue",
     render: (row) => row.revenue_total
   },
   {
     key: "invoice_cost_total",
     header: "Koszt fakturowy",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__invoice-cost",
     render: (row) => row.invoice_cost_total
   },
   {
     key: "labor_cost_total",
     header: "Koszt pracy",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__labor-cost",
     render: (row) => row.labor_cost_total
   },
   {
     key: "cost_total",
     header: "Łączny koszt",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__total-cost",
     render: (row) => row.cost_total
   },
   {
     key: "margin",
     header: "Marża",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__margin",
     render: (row) => row.margin
   },
   {
     key: "labor_hours_total",
     header: "Godziny",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__hours",
     render: (row) => row.labor_hours_total
   },
   {
     key: "invoice_count",
     header: "Faktury",
-    className: "data-table__numeric",
+    className: "data-table__numeric contracts-monthly__invoice-count",
     render: (row) => row.invoice_count
   }
 ];
