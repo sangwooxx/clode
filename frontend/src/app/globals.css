@@ -1461,29 +1461,29 @@ select {
 .contracts-table--monthly {
   width: 100%;
   min-width: 0;
+  table-layout: fixed;
 }
 
 .contracts-table--monthly td {
   white-space: nowrap;
-  padding: 9px 6px;
+  padding: 8px 4px;
+  font-size: 0.8rem;
 }
 
 .contracts-table--monthly th {
   white-space: normal;
   line-height: 1.15;
-  padding: 8px 6px;
+  padding: 8px 4px;
   font-size: 9px;
 }
 
 .contracts-table--monthly .contracts-monthly__ordinal {
-  width: 1%;
-  min-width: 4ch;
+  width: 5%;
   text-align: center;
 }
 
 .contracts-table--monthly .contracts-monthly__month {
-  width: 1%;
-  min-width: 8.5ch;
+  width: 12%;
 }
 
 .contracts-table--monthly .data-table__numeric {
@@ -1493,25 +1493,24 @@ select {
 
 .contracts-table--monthly .contracts-monthly__revenue,
 .contracts-table--monthly .contracts-monthly__margin {
-  min-width: 10.5ch;
+  width: 12%;
 }
 
 .contracts-table--monthly .contracts-monthly__invoice-cost,
 .contracts-table--monthly .contracts-monthly__total-cost {
-  min-width: 12ch;
+  width: 15%;
 }
 
 .contracts-table--monthly .contracts-monthly__labor-cost {
-  min-width: 11ch;
+  width: 14%;
 }
 
-.contracts-table--monthly .contracts-monthly__hours,
-.contracts-table--monthly .contracts-monthly__invoice-count {
-  min-width: 7ch;
+.contracts-table--monthly .contracts-monthly__hours {
+  width: 8%;
 }
 
 .contracts-table--monthly .contracts-monthly__invoice-count {
-  min-width: 6ch;
+  width: 7%;
 }
 
 .contracts-table__actions {
