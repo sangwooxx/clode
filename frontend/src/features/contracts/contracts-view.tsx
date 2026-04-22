@@ -10,10 +10,11 @@ import { Panel } from "@/components/ui/panel";
 import { SearchField } from "@/components/ui/search-field";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { ContractCenterPanel } from "@/features/contracts/contract-center-panel";
 import {
   archiveContractRecord,
   deleteContractRecord,
-  fetchContractUsage,
+  fetchContractSnapshot,
   fetchContracts,
   findContractById,
   normalizeContractPayload,
@@ -21,16 +22,20 @@ import {
 } from "@/features/contracts/api";
 import {
   formatDate,
-  formatHoursValue,
   formatInteger,
   formatMoney,
   formatStatus
 } from "@/features/contracts/formatters";
-import { mapContractsViewModel, toContractFormValues } from "@/features/contracts/mappers";
+import {
+  buildContractHistoricalDataLines,
+  mapContractsViewModel,
+  resolveNextSelectedContractId,
+  toContractFormValues
+} from "@/features/contracts/mappers";
 import type {
   ContractFormValues,
   ContractRecord,
-  ContractUsageSnapshot,
+  ContractSnapshot,
   ContractsViewModel
 } from "@/features/contracts/types";
 
@@ -41,11 +46,11 @@ type ContractsScreenState =
   | { status: "error"; message: string }
   | { status: "success"; data: ContractsViewModel };
 
-type UsageState =
+type SnapshotState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error"; message: string }
-  | { status: "success"; data: ContractUsageSnapshot };
+  | { status: "success"; data: ContractSnapshot };
 
 type ContractTableRow = {
   index: number;
@@ -202,7 +207,7 @@ export function ContractsView({
   const [formStatus, setFormStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [usageState, setUsageState] = useState<UsageState>({ status: "idle" });
+  const [snapshotState, setSnapshotState] = useState<SnapshotState>({ status: "idle" });
   const [selectedContractIds, setSelectedContractIds] = useState<string[]>([]);
 
   async function reloadContracts(options?: { preserveState?: boolean; selectId?: string | null }) {
@@ -217,15 +222,9 @@ export function ContractsView({
       const mapped = mapContractsViewModel(contracts);
 
       setState({ status: "success", data: mapped });
-      setSelectedContractId((current) => {
-        if (options?.selectId && contracts.some((contract) => contract.id === options.selectId)) {
-          return options.selectId;
-        }
-        if (current && contracts.some((contract) => contract.id === current)) {
-          return current;
-        }
-        return contracts[0]?.id ?? null;
-      });
+      setSelectedContractId((current) =>
+        resolveNextSelectedContractId(contracts, current, options?.selectId)
+      );
     } catch (error) {
       setState({
         status: "error",
@@ -299,26 +298,26 @@ export function ContractsView({
 
   useEffect(() => {
     if (!selectedContract) {
-      setUsageState({ status: "idle" });
+      setSnapshotState({ status: "idle" });
       return;
     }
 
     let active = true;
-    setUsageState({ status: "loading" });
+    setSnapshotState({ status: "loading" });
 
-    void fetchContractUsage(selectedContract.id)
-      .then((usage) => {
+    void fetchContractSnapshot(selectedContract.id)
+      .then((snapshot) => {
         if (!active) return;
-        setUsageState({ status: "success", data: usage });
+        setSnapshotState({ status: "success", data: snapshot });
       })
       .catch((error) => {
         if (!active) return;
-        setUsageState({
+        setSnapshotState({
           status: "error",
           message:
             error instanceof Error
               ? error.message
-              : "Nie udało się pobrać użycia kontraktu."
+              : "Nie udało się pobrać centrum kontraktu."
         });
       });
 
@@ -385,12 +384,9 @@ export function ContractsView({
 
     if (contract.status === "archived") {
       try {
-        const usage = await fetchContractUsage(contract.id);
-        if (usage.has_operational_data) {
-          const parts = [];
-          if (usage.usage.invoices) parts.push(`faktury: ${usage.usage.invoices}`);
-          if (usage.usage.hours) parts.push(`godziny: ${formatHoursValue(usage.usage.hours)}`);
-          if (usage.usage.planning) parts.push(`planowanie: ${usage.usage.planning}`);
+        const snapshot = await fetchContractSnapshot(contract.id);
+        if (snapshot.activity.has_data) {
+          const parts = buildContractHistoricalDataLines(snapshot);
           window.alert(
             `Nie można trwale usunąć zarchiwizowanego kontraktu z danymi historycznymi.\n\n${parts.join("\n")}`
           );
@@ -400,7 +396,7 @@ export function ContractsView({
         window.alert(
           error instanceof Error
             ? error.message
-            : "Nie udało się sprawdzić użycia kontraktu przed usunięciem."
+            : "Nie udało się sprawdzić danych kontraktu przed usunięciem."
         );
         return;
       }
@@ -453,22 +449,15 @@ export function ContractsView({
       (id) => contractsById.get(id)?.status !== "archived"
     );
 
-    const usageDetails = (
-      await Promise.all(
-        selectedContractIds.map(async (id) => ({
-          id,
-          contract: contractsById.get(id) || null,
-          usage: await fetchContractUsage(id)
-        }))
-      )
-    ).filter(
-      ({ usage }) =>
-        Number(usage?.usage?.hours || 0) > 0 ||
-        Number(usage?.usage?.invoices || 0) > 0 ||
-        Number(usage?.usage?.planning || 0) > 0
+    const archivedSnapshots = await Promise.all(
+      archivedIds.map(async (id) => ({
+        id,
+        contract: contractsById.get(id) || null,
+        snapshot: await fetchContractSnapshot(id)
+      }))
     );
 
-    const archivedWithUsage = usageDetails.filter(({ id }) => archivedIds.includes(id));
+    const archivedWithUsage = archivedSnapshots.filter(({ snapshot }) => snapshot.activity.has_data);
     const archivedDeletableIds = archivedIds.filter(
       (id) => !archivedWithUsage.some((entry) => entry.id === id)
     );
@@ -495,11 +484,8 @@ export function ContractsView({
     if (archivedWithUsage.length) {
       promptParts.push(
         `Kontrakty z danymi historycznymi pozostaną zarchiwizowane:\n${archivedWithUsage
-          .map(({ contract, usage }) => {
-            const details = [];
-            if (usage.usage.invoices) details.push(`faktury: ${usage.usage.invoices}`);
-            if (usage.usage.hours) details.push(`godziny: ${formatHoursValue(usage.usage.hours)}`);
-            if (usage.usage.planning) details.push(`planowanie: ${usage.usage.planning}`);
+          .map(({ contract, snapshot }) => {
+            const details = buildContractHistoricalDataLines(snapshot);
             return `- ${contract?.name || contract?.id || "Kontrakt"} (${details.join(", ")})`;
           })
           .join("\n")}`
@@ -875,36 +861,13 @@ export function ContractsView({
             </form>
           </Panel>
 
-          <Panel title={selectedContract ? "Szczegóły wybranego kontraktu" : "Szczegóły kontraktu"}>
-            {selectedContract ? (
-              <div className="contracts-detail">
-                <div className="contracts-detail__meta">
-                  <p><strong>ID:</strong> {selectedContract.contract_number || "-"}</p>
-                  <p><strong>Nazwa:</strong> {selectedContract.name}</p>
-                  <p><strong>Inwestor:</strong> {selectedContract.investor || "-"}</p>
-                  <p><strong>Status:</strong> {formatStatus(selectedContract.status)}</p>
-                  <p><strong>Data podpisania:</strong> {formatDate(selectedContract.signed_date)}</p>
-                  <p><strong>Termin zakończenia:</strong> {formatDate(selectedContract.end_date)}</p>
-                  <p><strong>Kwota:</strong> {formatMoney(selectedContract.contract_value)}</p>
-                </div>
-
-                  {usageState.status === "loading" ? (
-                    <p className="status-message">Ładowanie użycia kontraktu...</p>
-                  ) : usageState.status === "error" ? (
-                    <p className="auth-form__error">{usageState.message}</p>
-                  ) : usageState.status === "success" ? (
-                  <div className="contracts-usage-grid">
-                    <StatCard label="Faktury" value={formatInteger(usageState.data.usage.invoices)} />
-                    <StatCard label="Godziny" value={formatHoursValue(usageState.data.usage.hours)} />
-                    <StatCard label="Planowanie" value={formatInteger(usageState.data.usage.planning)} />
-                  </div>
-                  ) : (
-                    <p className="status-message">Brak podglądu użycia.</p>
-                  )}
-                </div>
-              ) : (
-                <p className="status-message">Wybierz kontrakt z tabeli albo dodaj nowy wpis.</p>
-              )}
+          <Panel title="Centrum kontraktu">
+            <ContractCenterPanel
+              contract={selectedContract}
+              snapshot={snapshotState.status === "success" ? snapshotState.data : null}
+              isLoading={snapshotState.status === "loading"}
+              errorMessage={snapshotState.status === "error" ? snapshotState.message : null}
+            />
           </Panel>
         </div>
       </div>

@@ -12,6 +12,8 @@ from clode_backend.shared_contracts import ContractValidationError, validate_sha
 from clode_backend.validation.contracts import normalize_contract_status, normalize_time_scope, number, text
 from clode_backend.validation.invoices import validate_iso_date
 
+CONTRACT_SNAPSHOT_RANGE = {"scope": "all", "year": "", "month": ""}
+
 
 class ContractServiceError(RuntimeError):
     def __init__(self, message: str, *, status_code: int = 400) -> None:
@@ -140,31 +142,45 @@ class ContractService:
         }
 
     def get_contract_usage(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
-        self.ensure_read_access(current_user)
-        contract = self.repository.get_by_id(contract_id)
-        if not contract:
-            raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
-        usage_counts = self.repository.get_usage_counts(contract_id)
-        metrics = self.metrics_repository.calculate_contract_metrics(
-            contract_id,
-            {"scope": "all", "year": "", "month": ""},
-        )
+        snapshot = self.get_contract_snapshot(contract_id, current_user)
+        activity = snapshot["activity"]
+        metrics = snapshot["metrics"]
         usage = {
-            "invoices": int(usage_counts.get("invoices") or 0),
+            "invoices": int(activity.get("invoice_count") or 0),
             "hours": round(float(metrics.get("labor_hours_total") or 0), 2),
-            "hours_entries": int(usage_counts.get("hours_entries") or 0),
-            "planning": int(usage_counts.get("planning") or 0),
+            "hours_entries": int(activity.get("time_entry_count") or 0),
+            "planning": int(activity.get("planning_assignment_count") or 0),
         }
         return {
-            "contract": contract,
+            "contract": snapshot["contract"],
             "usage": usage,
-            "has_operational_data": any(
-                [
-                    usage["invoices"] > 0,
-                    usage["hours_entries"] > 0,
-                    usage["planning"] > 0,
-                ]
-            ),
+            "has_operational_data": bool(activity.get("has_operational_data")),
+        }
+
+    def get_contract_snapshot(self, contract_id: str, current_user: dict[str, Any] | None) -> dict[str, Any]:
+        self.ensure_read_access(current_user)
+        with self.repository.connect() as connection:
+            contract = self.repository.get_by_id(contract_id, connection=connection)
+            if not contract:
+                raise ContractServiceError("Nie znaleziono kontraktu.", status_code=404)
+
+            metrics = self.metrics_repository.calculate_contract_metrics(
+                contract_id,
+                CONTRACT_SNAPSHOT_RANGE,
+                connection,
+            )
+            monthly_breakdown = self.metrics_repository.list_contract_monthly_breakdown(
+                contract_id,
+                CONTRACT_SNAPSHOT_RANGE,
+                connection,
+            )
+            usage_counts = self.repository.get_usage_counts(contract_id, connection=connection)
+
+        return {
+            "contract": contract,
+            "metrics": metrics,
+            "activity": self._build_contract_activity(usage_counts),
+            "monthly_breakdown": monthly_breakdown,
         }
 
     def calculate_contract_metrics(
@@ -290,6 +306,22 @@ class ContractService:
         except ContractValidationError as error:
             raise ContractServiceError(str(error)) from error
         return record
+
+    def _build_contract_activity(self, usage_counts: dict[str, Any]) -> dict[str, Any]:
+        invoice_count = int(usage_counts.get("invoices") or 0)
+        time_entry_count = int(usage_counts.get("hours_entries") or 0)
+        planning_assignment_count = int(usage_counts.get("planning") or 0)
+        has_financial_data = invoice_count > 0
+        has_operational_data = time_entry_count > 0 or planning_assignment_count > 0
+
+        return {
+            "invoice_count": invoice_count,
+            "time_entry_count": time_entry_count,
+            "planning_assignment_count": planning_assignment_count,
+            "has_financial_data": has_financial_data,
+            "has_operational_data": has_operational_data,
+            "has_data": has_financial_data or has_operational_data,
+        }
 
     def _sync_contract_visibility(self, contract_id: str, *, make_visible: bool, connection=None) -> None:
         normalized_contract_id = text(contract_id)

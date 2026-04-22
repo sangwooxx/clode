@@ -177,6 +177,90 @@ class ContractMetricsTestCase(unittest.TestCase):
         self.assertEqual(snapshot["totals"]["cost_total"], 500.0)
         self.assertEqual(snapshot["unassigned"]["margin"], -50.0)
 
+    def test_contract_snapshot_with_data_returns_business_payload(self) -> None:
+        snapshot = self.service.get_contract_snapshot("c1", self.current_user)
+
+        self.assertEqual(snapshot["contract"]["id"], "c1")
+        self.assertEqual(snapshot["contract"]["status"], "active")
+        self.assertEqual(snapshot["metrics"]["revenue_total"], 1200.0)
+        self.assertEqual(snapshot["metrics"]["invoice_cost_total"], 300.0)
+        self.assertEqual(snapshot["metrics"]["labor_cost_total"], 200.0)
+        self.assertEqual(snapshot["metrics"]["cost_total"], 500.0)
+        self.assertEqual(snapshot["metrics"]["margin"], 700.0)
+        self.assertEqual(snapshot["metrics"]["labor_hours_total"], 10.0)
+        self.assertEqual(snapshot["activity"]["invoice_count"], 3)
+        self.assertEqual(snapshot["activity"]["time_entry_count"], 1)
+        self.assertEqual(snapshot["activity"]["planning_assignment_count"], 1)
+        self.assertTrue(snapshot["activity"]["has_financial_data"])
+        self.assertTrue(snapshot["activity"]["has_operational_data"])
+        self.assertTrue(snapshot["activity"]["has_data"])
+        self.assertEqual(
+            [row["month_key"] for row in snapshot["monthly_breakdown"]],
+            ["2025-12", "2026-03"],
+        )
+
+    def test_contract_snapshot_without_data_returns_zeroed_payload(self) -> None:
+        empty_contract = self.service.create_contract(
+            {
+                "name": "Kontrakt pusty",
+                "investor": "Inwestor pusty",
+                "signed_date": "2026-04-01",
+                "end_date": "2026-06-30",
+                "contract_value": 0,
+                "status": "active",
+            },
+            self.current_user,
+        )
+
+        snapshot = self.service.get_contract_snapshot(empty_contract["id"], self.current_user)
+
+        self.assertEqual(snapshot["metrics"]["revenue_total"], 0.0)
+        self.assertEqual(snapshot["metrics"]["invoice_cost_total"], 0.0)
+        self.assertEqual(snapshot["metrics"]["labor_cost_total"], 0.0)
+        self.assertEqual(snapshot["metrics"]["cost_total"], 0.0)
+        self.assertEqual(snapshot["metrics"]["margin"], 0.0)
+        self.assertEqual(snapshot["metrics"]["labor_hours_total"], 0.0)
+        self.assertEqual(snapshot["activity"]["invoice_count"], 0)
+        self.assertEqual(snapshot["activity"]["time_entry_count"], 0)
+        self.assertEqual(snapshot["activity"]["planning_assignment_count"], 0)
+        self.assertFalse(snapshot["activity"]["has_financial_data"])
+        self.assertFalse(snapshot["activity"]["has_operational_data"])
+        self.assertFalse(snapshot["activity"]["has_data"])
+        self.assertEqual(snapshot["monthly_breakdown"], [])
+
+    def test_contract_snapshot_for_archived_contract_keeps_status_and_history(self) -> None:
+        self.service.archive_contract("c1", self.current_user)
+
+        snapshot = self.service.get_contract_snapshot("c1", self.current_user)
+
+        self.assertEqual(snapshot["contract"]["status"], "archived")
+        self.assertEqual(snapshot["metrics"]["revenue_total"], 1200.0)
+        self.assertEqual(snapshot["activity"]["invoice_count"], 3)
+        self.assertEqual(snapshot["activity"]["time_entry_count"], 1)
+        self.assertEqual(len(snapshot["monthly_breakdown"]), 2)
+
+    def test_contract_snapshot_matches_existing_metric_and_usage_sources(self) -> None:
+        snapshot = self.service.get_contract_snapshot("c1", self.current_user)
+        direct_metrics = self.service.calculate_contract_metrics(
+            "c1",
+            {"scope": "all", "year": "", "month": ""},
+            self.current_user,
+        )["metrics"]
+        direct_breakdown = self.metrics_repository.list_contract_monthly_breakdown(
+            "c1",
+            {"scope": "all", "year": "", "month": ""},
+        )
+        usage_counts = self.contract_repository.get_usage_counts("c1")
+
+        self.assertEqual(snapshot["metrics"], direct_metrics)
+        self.assertEqual(snapshot["monthly_breakdown"], direct_breakdown)
+        self.assertEqual(snapshot["activity"]["invoice_count"], usage_counts["invoices"])
+        self.assertEqual(snapshot["activity"]["time_entry_count"], usage_counts["hours_entries"])
+        self.assertEqual(
+            snapshot["activity"]["planning_assignment_count"],
+            usage_counts["planning"],
+        )
+
     def test_archive_contract_preserves_operational_data(self) -> None:
         usage = self.service.get_contract_usage("c1", self.current_user)
         archived = self.service.archive_contract("c1", self.current_user)

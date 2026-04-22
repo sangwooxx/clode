@@ -3,7 +3,7 @@ import {
   createContract,
   deleteContractPermanently,
   getContract,
-  getContractUsage,
+  getContractSnapshot,
   listContracts,
   updateContract,
   type ContractPayload
@@ -11,8 +11,8 @@ import {
 import type {
   ContractRecord,
   ContractResponse,
+  ContractSnapshot,
   ContractsListResponse,
-  ContractUsageSnapshot
 } from "@/features/contracts/types";
 
 export async function fetchContracts(includeArchived = true) {
@@ -41,8 +41,8 @@ export async function deleteContractRecord(contractId: string) {
   return deleteContractPermanently(contractId);
 }
 
-export async function fetchContractUsage(contractId: string) {
-  return (await getContractUsage(contractId)) as ContractUsageSnapshot;
+export async function fetchContractSnapshot(contractId: string) {
+  return (await getContractSnapshot(contractId)) as ContractSnapshot;
 }
 
 export function normalizeContractPayload(contract: {

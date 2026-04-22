@@ -43,8 +43,8 @@ export function deleteContractPermanently(contractId: string) {
   });
 }
 
-export function getContractUsage(contractId: string) {
-  return http(`/contracts/${encodeURIComponent(contractId)}/usage`, { method: "GET" });
+export function getContractSnapshot(contractId: string) {
+  return http(`/contracts/${encodeURIComponent(contractId)}/snapshot`, { method: "GET" });
 }
 
 export function getDashboardSnapshot() {

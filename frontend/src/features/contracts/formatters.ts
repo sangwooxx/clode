@@ -27,10 +27,21 @@ export function formatHoursValue(value: number) {
   return hoursFormatter.format(Number(value || 0));
 }
 
+export function formatHours(value: number) {
+  return `${formatHoursValue(value)} h`;
+}
+
 export function formatDate(value: string) {
   if (!value) return "-";
   const parsed = new Date(value);
   return Number.isFinite(parsed.getTime()) ? parsed.toLocaleDateString("pl-PL") : value;
+}
+
+export function formatMonthLabel(value: string) {
+  if (!value) return "-";
+  const [year, month] = String(value).split("-");
+  if (!year || !month) return value;
+  return `${month}.${year}`;
 }
 
 export function formatStatus(value: ContractStatus) {

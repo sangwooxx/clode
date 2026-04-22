@@ -343,6 +343,22 @@ class ResourceSummaryRoutesTestCase(unittest.TestCase):
         self.assertNotIn("entries", payload)
         self.assertNotIn("aggregates", payload)
 
+    def test_contract_snapshot_route_returns_backend_first_payload(self) -> None:
+        status, payload, _ = self._route(method="GET", path="/api/v1/contracts/c-1/snapshot")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(payload["contract"]["id"], "c-1")
+        self.assertEqual(payload["contract"]["status"], "active")
+        self.assertEqual(payload["metrics"]["labor_hours_total"], 8.0)
+        self.assertEqual(payload["metrics"]["labor_cost_total"], 320.0)
+        self.assertEqual(payload["activity"]["invoice_count"], 0)
+        self.assertEqual(payload["activity"]["time_entry_count"], 1)
+        self.assertEqual(payload["activity"]["planning_assignment_count"], 0)
+        self.assertFalse(payload["activity"]["has_financial_data"])
+        self.assertTrue(payload["activity"]["has_operational_data"])
+        self.assertTrue(payload["activity"]["has_data"])
+        self.assertEqual(payload["monthly_breakdown"][0]["month_key"], "2026-04")
+
 
 if __name__ == "__main__":
     unittest.main()

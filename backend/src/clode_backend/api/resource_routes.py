@@ -121,9 +121,9 @@ def handle_resource_route(context: RequestContext):
             )
             return json_response(200, {"ok": True, **payload})
 
-        if contract_path.endswith("/usage"):
-            contract_id = contract_path.rsplit("/usage", 1)[0]
-            payload = contract_service.get_contract_usage(contract_id, current_user)
+        if contract_path.endswith("/snapshot"):
+            contract_id = contract_path.rsplit("/snapshot", 1)[0]
+            payload = contract_service.get_contract_snapshot(contract_id, current_user)
             return json_response(200, {"ok": True, **payload})
 
         contract_id = contract_path
