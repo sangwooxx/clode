@@ -67,20 +67,18 @@ const snapshotWithData: ContractSnapshot = {
 };
 
 describe("contracts mappers", () => {
-  it("maps contract snapshot into a business-ready contract center view model", () => {
+  it("maps contract snapshot into hierarchical KPI groups for Contract Center", () => {
     const viewModel = mapContractCenterViewModel(snapshotWithData);
 
-    expect(viewModel.summaryItems[0]).toMatchObject({
-      label: "Numer kontraktu",
-      value: "K/2026/011"
-    });
-    expect(viewModel.kpiItems.map((item) => item.label)).toEqual([
+    expect(viewModel.heroKpiItems.map((item) => item.label)).toEqual([
       "Wartość kontraktu",
       "Sprzedaż",
+      "Łączny koszt",
+      "Marża"
+    ]);
+    expect(viewModel.secondaryKpiItems.map((item) => item.label)).toEqual([
       "Koszt fakturowy",
       "Koszt pracy",
-      "Łączny koszt",
-      "Marża",
       "Godziny"
     ]);
     expect(viewModel.activityItems).toMatchObject([

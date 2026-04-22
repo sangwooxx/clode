@@ -64,7 +64,7 @@ const snapshot: ContractSnapshot = {
 };
 
 describe("contract center panel", () => {
-  it("renders the contract center with backend-first metrics and monthly progress", () => {
+  it("renders the contract center with hierarchical KPI sections and monthly progress", () => {
     const html = renderToStaticMarkup(
       <ContractCenterPanel
         contract={contract}
@@ -74,8 +74,8 @@ describe("contract center panel", () => {
       />
     );
 
-    expect(html).toContain("Podsumowanie kontraktu");
-    expect(html).toContain("Budowa hali");
+    expect(html).toContain("Wynik kontraktu");
+    expect(html).toContain("Dodatkowe wskaźniki");
     expect(html).toContain("Aktywność operacyjna");
     expect(html).toContain("Przebieg miesięczny");
     expect(html).toContain("Kontrakt ma dane operacyjne.");

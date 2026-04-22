@@ -101,8 +101,8 @@ export type ContractMonthlyRowView = {
 };
 
 export type ContractCenterViewModel = {
-  summaryItems: ContractSummaryItem[];
-  kpiItems: ContractKpiItem[];
+  heroKpiItems: ContractKpiItem[];
+  secondaryKpiItems: ContractKpiItem[];
   activityItems: ContractActivityItem[];
   operationalStatus: string;
   emptyMessage: string | null;

@@ -113,8 +113,7 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
   const { activity, contract, metrics, monthly_breakdown: monthlyBreakdown } = snapshot;
 
   return {
-    summaryItems: buildContractSummaryItems(contract),
-    kpiItems: [
+    heroKpiItems: [
       {
         id: "contract_value",
         label: "Wartość kontraktu",
@@ -127,16 +126,6 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
         value: formatMoney(metrics.revenue_total)
       },
       {
-        id: "invoice_cost",
-        label: "Koszt fakturowy",
-        value: formatMoney(metrics.invoice_cost_total)
-      },
-      {
-        id: "labor_cost",
-        label: "Koszt pracy",
-        value: formatMoney(metrics.labor_cost_total)
-      },
-      {
         id: "total_cost",
         label: "Łączny koszt",
         value: formatMoney(metrics.cost_total)
@@ -145,6 +134,18 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
         id: "margin",
         label: "Marża",
         value: formatMoney(metrics.margin)
+      }
+    ],
+    secondaryKpiItems: [
+      {
+        id: "invoice_cost",
+        label: "Koszt fakturowy",
+        value: formatMoney(metrics.invoice_cost_total)
+      },
+      {
+        id: "labor_cost",
+        label: "Koszt pracy",
+        value: formatMoney(metrics.labor_cost_total)
       },
       {
         id: "hours",
