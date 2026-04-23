@@ -90,7 +90,8 @@ export function normalizeCapabilities(subject: UserContextSubject | null | undef
   const normalized = deriveCapabilitiesFromLegacyAuthority(subject);
   for (const capabilityId of capabilityDefinitions) {
     if (capabilityId in (subject?.capabilities || {})) {
-      normalized[capabilityId] = Boolean(subject?.capabilities?.[capabilityId]);
+      normalized[capabilityId] =
+        normalized[capabilityId] || Boolean(subject?.capabilities?.[capabilityId]);
     }
   }
   return normalized;

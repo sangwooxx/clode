@@ -508,6 +508,11 @@ textarea {
   gap: 4px;
 }
 
+.app-shell__nav-group {
+  display: grid;
+  gap: 3px;
+}
+
 .app-shell__nav-link {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
@@ -559,6 +564,38 @@ textarea {
   font-size: 0.82rem;
   line-height: 1.2;
   min-width: 0;
+}
+
+.app-shell__nav-children {
+  display: grid;
+  gap: 2px;
+  padding-left: 39px;
+}
+
+.app-shell__nav-child-link {
+  display: block;
+  padding: 5px 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.25;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.app-shell__nav-child-link:hover {
+  border-color: var(--line-soft);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.app-shell__nav-child-link--active {
+  border-color: rgba(20, 106, 87, 0.18);
+  background: rgba(20, 106, 87, 0.08);
+  color: var(--accent-strong);
 }
 
 .app-shell__sidebar-footer {
@@ -699,6 +736,10 @@ textarea {
   grid-template-columns: 1fr;
   justify-items: center;
   padding: 6px 5px;
+}
+
+.app-shell--sidebar-collapsed .app-shell__nav-children {
+  display: none;
 }
 
 .app-shell--sidebar-collapsed .app-shell__nav-label,

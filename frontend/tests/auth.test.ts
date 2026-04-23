@@ -104,6 +104,36 @@ describe("normalizeUser", () => {
     });
   });
 
+  it("nie pozwala backendowym capabilities ukryc legacy-dozwolonego dostepu", () => {
+    const normalized = normalizeUser({
+      id: "user-3",
+      username: "ewa",
+      name: "Ewa Test",
+      displayName: "Ewa Test",
+      email: "ewa@example.com",
+      role: "read-only",
+      status: "active",
+      is_active: true,
+      permissions: {
+        dashboardView: true,
+        contractsView: true,
+        invoicesView: true,
+      },
+      canApproveVacations: false,
+      capabilities: {
+        "dashboard.view": true,
+        "contracts.view": true,
+        "finance.view": false,
+      },
+    });
+
+    expect(normalized?.capabilities).toMatchObject({
+      "dashboard.view": true,
+      "contracts.view": true,
+      "finance.view": true,
+    });
+  });
+
   it("returns null without a username", () => {
     expect(normalizeUser({ name: "Missing username" } as never)).toBeNull();
   });

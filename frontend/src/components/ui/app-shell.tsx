@@ -7,6 +7,7 @@ import { ActionButton } from "@/components/ui/action-button";
 import { BrandMark } from "@/components/ui/brand-mark";
 import {
   getModuleNavigation,
+  isModuleNavigationChildActive,
   isModuleNavigationItemActive,
 } from "@/features/navigation/module-nav";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -172,21 +173,40 @@ export function AppShell({
 
         <nav className="app-shell__nav">
           {navigationItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              aria-label={item.label}
-              title={isRail ? item.label : undefined}
-              className={cn(
-                "app-shell__nav-link",
-                isModuleNavigationItemActive(pathname, item) && "app-shell__nav-link--active",
-              )}
-            >
-              <span className="app-shell__nav-badge" aria-hidden="true">
-                {item.shortLabel}
-              </span>
-              <span className="app-shell__nav-label">{item.label}</span>
-            </Link>
+            <div key={item.label} className="app-shell__nav-group">
+              <Link
+                href={item.href}
+                aria-label={item.label}
+                title={isRail ? item.label : undefined}
+                className={cn(
+                  "app-shell__nav-link",
+                  isModuleNavigationItemActive(pathname, item) && "app-shell__nav-link--active",
+                )}
+              >
+                <span className="app-shell__nav-badge" aria-hidden="true">
+                  {item.shortLabel}
+                </span>
+                <span className="app-shell__nav-label">{item.label}</span>
+              </Link>
+
+              {item.showChildren ? (
+                <div className="app-shell__nav-children" aria-label={`${item.label} moduly`}>
+                  {item.children.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      className={cn(
+                        "app-shell__nav-child-link",
+                        isModuleNavigationChildActive(pathname, child.href) &&
+                          "app-shell__nav-child-link--active",
+                      )}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           ))}
         </nav>
 
