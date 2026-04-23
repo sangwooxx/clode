@@ -216,7 +216,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px 12px;
+  gap: 8px 10px;
   align-items: center;
 }
 
@@ -224,8 +224,49 @@ textarea {
 .module-actions__secondary {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 7px;
   align-items: center;
+}
+
+.module-actions .action-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 11px;
+  font-size: 0.82rem;
+  font-weight: 580;
+  box-shadow: none;
+}
+
+.module-actions .action-button--primary {
+  background: var(--surface-selected);
+  border-color: var(--accent-soft);
+  color: var(--text);
+}
+
+.module-actions .action-button--primary:hover {
+  background: var(--surface-emphasis);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.module-actions .action-button--secondary {
+  background: transparent;
+  border-color: var(--line-soft);
+  color: var(--text);
+}
+
+.module-actions .action-button--secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--line-strong);
+}
+
+.module-actions .action-button--ghost {
+  color: var(--text-muted);
+}
+
+.module-actions .action-button--ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .auth-card {
@@ -678,8 +719,8 @@ textarea {
 }
 
 .stat-card {
-  border: 1px solid rgba(24, 39, 56, 0.08);
-  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--line-soft);
+  background: var(--surface-soft);
   box-shadow: none;
   border-radius: 10px;
   display: flex;
@@ -691,8 +732,8 @@ textarea {
 }
 
 .stat-card--accent {
-  border-color: rgba(20, 106, 87, 0.16);
-  background: rgba(20, 106, 87, 0.04);
+  border-color: var(--accent-soft);
+  background: var(--surface-emphasis);
 }
 
 .stat-card__label,
@@ -1011,23 +1052,23 @@ textarea {
 }
 
 .employees-col-employee {
-  width: auto;
+  width: 24%;
 }
 
 .employees-col-hr {
-  width: 116px;
+  width: 18%;
 }
 
 .employees-col-employment {
-  width: 138px;
+  width: 21%;
 }
 
 .employees-col-medical {
-  width: 120px;
+  width: 19%;
 }
 
 .employees-col-relations {
-  width: 116px;
+  width: 14%;
 }
 
 .employees-relation-list {
