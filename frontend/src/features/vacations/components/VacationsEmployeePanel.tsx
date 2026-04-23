@@ -56,9 +56,9 @@ export function VacationsEmployeePanel({
           {selectedStats ? (
             <div className="vacations-detail-grid">
               <div className="vacations-detail-card">
-                <span className="field-card__label">Pula laczna</span>
+                <span className="field-card__label">Pula łączna</span>
                 <strong>{formatVacationDays(selectedStats.total_pool)} dni</strong>
-                <small>Roczna + zalegle + ekstra</small>
+                <small>Roczna + zaległe + ekstra</small>
               </div>
               <div className="vacations-detail-card">
                 <span className="field-card__label">Wykorzystane</span>
@@ -66,20 +66,20 @@ export function VacationsEmployeePanel({
                 <small>Zatwierdzone wpisy</small>
               </div>
               <div className="vacations-detail-card">
-                <span className="field-card__label">Oczekujace</span>
+                <span className="field-card__label">Oczekujące</span>
                 <strong>{formatVacationDays(selectedStats.pending_days)} dni</strong>
                 <small>Wnioski w toku</small>
               </div>
               <div className="vacations-detail-card">
-                <span className="field-card__label">Pozostalo</span>
+                <span className="field-card__label">Pozostało</span>
                 <strong>{formatVacationDays(selectedStats.remaining_days)} dni</strong>
-                <small>{selectedStats.requests_count} wpisow</small>
+                <small>{selectedStats.requests_count} wpisów</small>
               </div>
             </div>
           ) : null}
         </div>
       ) : (
-        <p className="status-message">Wybierz pracownika z tabeli, aby zobaczyc jego saldo.</p>
+        <p className="status-message">Wybierz pracownika z tabeli, aby zobaczyć jego saldo.</p>
       )}
 
       <form className="vacations-form" onSubmit={onSubmitBalance}>
@@ -94,7 +94,7 @@ export function VacationsEmployeePanel({
             />
           </label>
           <label className="form-field">
-            <span>Urlop zalegly</span>
+            <span>Urlop zaległy</span>
             <input
               value={balanceValues.carryover_days}
               onChange={(event) => onBalanceFieldChange("carryover_days", event.target.value)}
@@ -114,7 +114,7 @@ export function VacationsEmployeePanel({
         </FormGrid>
 
         {!canWrite ? (
-          <p className="status-message">Masz dostep tylko do podgladu sald urlopowych.</p>
+          <p className="status-message">Masz dostęp tylko do podglądu sald urlopowych.</p>
         ) : null}
 
         {selectedEmployeeInactive ? (
@@ -126,7 +126,7 @@ export function VacationsEmployeePanel({
         {selectedBalanceLookup?.status === "ambiguous" ? (
           <p className="status-message status-message--warning">
             W legacy store istnieje niejednoznaczna pula urlopowa po samej nazwie. Ten rekord nie
-            jest juz automatycznie przypisywany do pracownika; zapis stworzy osobne saldo po
+            jest już automatycznie przypisywany do pracownika; zapis stworzy osobne saldo po
             stabilnym identyfikatorze.
           </p>
         ) : null}
@@ -134,7 +134,7 @@ export function VacationsEmployeePanel({
         <div className="vacations-form__actions">
           {canWrite ? (
             <ActionButton type="submit" disabled={inputsDisabled}>
-              {isSavingBalance ? "Zapisywanie..." : "Zapisz pule"}
+              {isSavingBalance ? "Zapisywanie..." : "Zapisz pulę"}
             </ActionButton>
           ) : null}
         </div>

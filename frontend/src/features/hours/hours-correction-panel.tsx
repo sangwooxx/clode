@@ -4,7 +4,12 @@ import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
 import { formatEmployeeCodeLabel, formatEmployeeDisplayName } from "@/features/employees/formatters";
 import { formatHours, formatNumber } from "@/features/hours/formatters";
-import type { HoursContractOption, HoursEntryFormValues, HoursEmployeeRecord, TimeEntryRecord } from "@/features/hours/types";
+import type {
+  HoursContractOption,
+  HoursEntryFormValues,
+  HoursEmployeeRecord,
+  TimeEntryRecord,
+} from "@/features/hours/types";
 import type { HoursEmployeeRow } from "@/features/hours/view-types";
 
 type HoursCorrectionPanelProps = {
@@ -32,6 +37,7 @@ type HoursCorrectionPanelProps = {
   onSetEntryFormValues: Dispatch<SetStateAction<HoursEntryFormValues>>;
   onEditEntry: (entry: TimeEntryRecord) => void;
   onSaveEntry: (event: FormEvent<HTMLFormElement>) => void;
+  embedded?: boolean;
 };
 
 export function HoursCorrectionPanel({
@@ -59,24 +65,18 @@ export function HoursCorrectionPanel({
   onSetEntryFormValues,
   onEditEntry,
   onSaveEntry,
+  embedded = false,
 }: HoursCorrectionPanelProps) {
-  return (
-    <Panel
-      title={
-        showManualCorrection
-          ? editingEntry
-            ? "Korekta wpisu czasu"
-            : "Ręczna korekta wpisów"
-          : "Korekta ręczna"
-      }
-    >
+  const content = (
+    <>
       {selectedEmployeeRow ? (
         <div className="hours-selected-entry">
           <div className="hours-selected-entry__meta">
             <span className="hours-selected-entry__label">Wybrany pracownik</span>
             <strong>{selectedEmployeeRow.employeeLabel}</strong>
             <span>
-              {selectedEmployeeRow.employeePosition} | Kod {formatEmployeeCodeLabel(selectedEmployeeRow.employeeCode, "—")}
+              {selectedEmployeeRow.employeePosition} | Kod{" "}
+              {formatEmployeeCodeLabel(selectedEmployeeRow.employeeCode, "—")}
             </span>
             <span>
               {formatHours(selectedEmployeeRow.totalHours)} • {formatNumber(selectedEmployeeRow.contracts.length)} kontrakty •{" "}
@@ -97,8 +97,8 @@ export function HoursCorrectionPanel({
 
       {selectedEmployeeRow?.employeeStatus === "inactive" ? (
         <p className="status-message">
-          Pracownik jest nieaktywny. W ewidencji zostają jego wpisy historyczne, ale nie można dodać
-          nowego wpisu z tego panelu.
+          Pracownik jest nieaktywny. W ewidencji zostają jego wpisy historyczne, ale z tego panelu
+          nie można dodać nowego wpisu.
         </p>
       ) : null}
 
@@ -163,7 +163,7 @@ export function HoursCorrectionPanel({
                         <div className="hours-entry-helper__summary-card">
                           <span className="hours-entry-helper__summary-label">Kontrakty</span>
                           <strong>{formatNumber(employeeContractsCount)}</strong>
-                          <span>aktywny przekrój</span>
+                          <span>Aktywny przekrój</span>
                         </div>
                         <div className="hours-entry-helper__summary-card">
                           <span className="hours-entry-helper__summary-label">Suma</span>
@@ -201,14 +201,13 @@ export function HoursCorrectionPanel({
                       </div>
                     </>
                   ) : (
-                    <p className="status-message">
-                      Ten pracownik nie ma jeszcze wpisów w wybranym miesiącu.
-                    </p>
+                    <p className="status-message">Ten pracownik nie ma jeszcze wpisów w wybranym miesiącu.</p>
                   )}
+
                   {!selectedEmployeeAllowsNewEntries && activeEmployeeName ? (
                     <p className="status-message">
-                      Ten pracownik jest nieaktywny, więc można przeglądać lub poprawiać historię, ale nie
-                      można zacząć nowego wpisu od zera.
+                      Ten pracownik jest nieaktywny, więc można przeglądać lub poprawiać historię,
+                      ale nie można zacząć nowego wpisu od zera.
                     </p>
                   ) : null}
                 </div>
@@ -277,15 +276,15 @@ export function HoursCorrectionPanel({
             </div>
 
             <p className="status-message">
-              Obsługiwane jest też przypisanie do opcji &quot;Nieprzypisane&quot;. Po zapisie
-              zachowujemy wybranego pracownika, żeby szybciej dodać kolejny wpis na inny kontrakt.
+              Możesz też użyć pozycji „Nieprzypisane”. Po zapisie zachowujemy wybranego
+              pracownika, żeby szybciej dodać kolejny wpis na inny kontrakt.
             </p>
           </form>
         ) : (
           <div className="status-stack">
             <p className="status-message">
-              Główne godziny wpisujemy teraz przez kartę pracy pracownika. Ten panel zostawiamy do
-              korekt, wyjątków i ręcznego dopisania pojedynczego wpisu.
+              Główne godziny wpisujemy przez kartę pracy pracownika. Ten panel zostaje do korekt,
+              wyjątków i ręcznego dopisania pojedynczego wpisu.
             </p>
             <ActionButton
               type="button"
@@ -301,6 +300,24 @@ export function HoursCorrectionPanel({
       ) : (
         <p className="status-message">Masz dostęp tylko do podglądu ewidencji czasu pracy.</p>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <Panel
+      title={
+        showManualCorrection
+          ? editingEntry
+            ? "Korekta wpisu czasu"
+            : "Ręczna korekta wpisów"
+          : "Korekta ręczna"
+      }
+    >
+      {content}
     </Panel>
   );
 }

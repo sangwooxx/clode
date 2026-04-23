@@ -55,7 +55,7 @@ export function HoursToolbar({
 
         <div className="hours-toolbar__actions">
           <ActionButton type="button" variant="secondary" onClick={onToggleMonthSettings}>
-            {showMonthSettings ? "Ukryj ustawienia miesiąca" : "Ustawienia miesiąca"}
+            {showMonthSettings ? "Zamknij ustawienia miesiąca" : "Ustawienia miesiąca"}
           </ActionButton>
         </div>
       </div>

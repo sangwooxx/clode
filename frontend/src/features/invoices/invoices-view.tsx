@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { AppDrawer } from "@/components/ui/app-drawer";
 import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
@@ -14,7 +15,7 @@ import {
   fetchInvoices,
   findInvoiceById,
   normalizeInvoicePayload,
-  saveInvoiceRecord
+  saveInvoiceRecord,
 } from "@/features/invoices/api";
 import { mapInvoicesViewModel, toInvoiceFormValues } from "@/features/invoices/mappers";
 import type {
@@ -24,31 +25,16 @@ import type {
   InvoiceRecord,
   InvoiceScope,
   InvoiceType,
-  InvoicesListResponse
+  InvoicesListResponse,
 } from "@/features/invoices/types";
 import { UNASSIGNED_CONTRACT_ID } from "@/features/invoices/types";
 import type { ContractRecord } from "@/features/contracts/types";
-import {
-  InvoiceEditorPanel
-} from "@/features/invoices/components/invoice-editor-panel";
-import {
-  InvoiceDetailsPanel
-} from "@/features/invoices/components/invoice-details-panel";
-import {
-  InvoicesListPanel
-} from "@/features/invoices/components/invoices-list-panel";
-import {
-  InvoicesToolbar,
-  type InvoiceContractOption
-} from "@/features/invoices/components/invoices-toolbar";
-import {
-  buildInvoiceColumns,
-  type InvoiceTableRow
-} from "@/features/invoices/invoice-columns";
-import {
-  buildInvoiceFilters,
-  reconcileInvoiceFilters
-} from "@/features/invoices/invoice-query";
+import { InvoiceEditorPanel } from "@/features/invoices/components/invoice-editor-panel";
+import { InvoiceDetailsPanel } from "@/features/invoices/components/invoice-details-panel";
+import { InvoicesListPanel } from "@/features/invoices/components/invoices-list-panel";
+import { InvoicesToolbar, type InvoiceContractOption } from "@/features/invoices/components/invoices-toolbar";
+import { buildInvoiceColumns, type InvoiceTableRow } from "@/features/invoices/invoice-columns";
+import { buildInvoiceFilters, reconcileInvoiceFilters } from "@/features/invoices/invoice-query";
 
 type InvoicesState =
   | { status: "loading" }
@@ -59,7 +45,7 @@ const emptyFormValues = toInvoiceFormValues();
 
 export function InvoicesView({
   initialBootstrap,
-  initialError
+  initialError,
 }: {
   initialBootstrap?: InvoiceBootstrapData | null;
   initialError?: string | null;
@@ -81,27 +67,23 @@ export function InvoicesView({
   const [contractSearch, setContractSearch] = useState("");
   const [invoiceSearch, setInvoiceSearch] = useState("");
   const [selectedContractId, setSelectedContractId] = useState(
-    initialBootstrap?.initialContractId ?? UNASSIGNED_CONTRACT_ID
+    initialBootstrap?.initialContractId ?? UNASSIGNED_CONTRACT_ID,
   );
   const [scope, setScope] = useState<InvoiceScope>(initialBootstrap?.payload.filters.scope ?? "all");
   const [selectedYear, setSelectedYear] = useState(
-    initialBootstrap?.payload.filters.year ?? String(new Date().getFullYear())
+    initialBootstrap?.payload.filters.year ?? String(new Date().getFullYear()),
   );
   const [selectedMonth, setSelectedMonth] = useState(
-    initialBootstrap?.payload.filters.month ?? String(new Date().getMonth() + 1).padStart(2, "0")
+    initialBootstrap?.payload.filters.month ?? String(new Date().getMonth() + 1).padStart(2, "0"),
   );
-  const [activeType, setActiveType] = useState<InvoiceType>(
-    initialBootstrap?.payload.filters.type ?? "cost"
-  );
+  const [activeType, setActiveType] = useState<InvoiceType>(initialBootstrap?.payload.filters.type ?? "cost");
   const [paymentStatus, setPaymentStatus] = useState<"" | InvoicePaymentStatus>(
-    (initialBootstrap?.payload.filters.payment_status as "" | InvoicePaymentStatus | undefined) ?? ""
+    (initialBootstrap?.payload.filters.payment_status as "" | InvoicePaymentStatus | undefined) ?? "",
   );
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(
-    initialBootstrap?.payload.items[0]?.id ?? null
-  );
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialBootstrap?.payload.items[0]?.id ?? null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<InvoiceFormValues>(() => emptyFormValues);
-  const [formOpen, setFormOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<string | null>(null);
@@ -113,10 +95,7 @@ export function InvoicesView({
     const filtered = contracts.filter((contract) => {
       if (contract.id === selectedContractId) return true;
       if (!query) return true;
-      return [contract.contract_number, contract.name, contract.investor]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+      return [contract.contract_number, contract.name, contract.investor].join(" ").toLowerCase().includes(query);
     });
 
     return [
@@ -125,8 +104,8 @@ export function InvoicesView({
         id: UNASSIGNED_CONTRACT_ID,
         contract_number: "",
         name: "Nieprzypisane faktury",
-        investor: "Pozycje bez kontraktu"
-      }
+        investor: "Pozycje bez kontraktu",
+      },
     ];
   }, [contractSearch, contracts, selectedContractId]);
 
@@ -159,15 +138,10 @@ export function InvoicesView({
     if (!query) return state.data.items;
 
     return state.data.items.filter((invoice) =>
-      [
-        invoice.invoice_number,
-        invoice.counterparty_name,
-        invoice.category_or_description,
-        invoice.notes
-      ]
+      [invoice.invoice_number, invoice.counterparty_name, invoice.category_or_description, invoice.notes]
         .join(" ")
         .toLowerCase()
-        .includes(query)
+        .includes(query),
     );
   }, [invoiceSearch, state]);
 
@@ -190,7 +164,7 @@ export function InvoicesView({
       type: InvoiceType;
       paymentStatus: "" | InvoicePaymentStatus;
     }> = {},
-    options?: { preserveState?: boolean; refreshContracts?: boolean }
+    options?: { preserveState?: boolean; refreshContracts?: boolean },
   ) {
     const nextSelectedContractId = overrides.selectedContractId ?? selectedContractId;
     const nextScope = overrides.scope ?? scope;
@@ -225,14 +199,11 @@ export function InvoicesView({
           year: nextYear,
           month: nextMonth,
           type: nextType,
-          paymentStatus: nextPaymentStatus
-        })
+          paymentStatus: nextPaymentStatus,
+        }),
       );
 
-      const reconciled = reconcileInvoiceFilters(
-        { scope: nextScope, year: nextYear, month: nextMonth },
-        payload
-      );
+      const reconciled = reconcileInvoiceFilters({ scope: nextScope, year: nextYear, month: nextMonth }, payload);
 
       if (reconciled && (reconciled.year !== nextYear || reconciled.month !== nextMonth)) {
         setSelectedYear(reconciled.year);
@@ -244,9 +215,9 @@ export function InvoicesView({
             year: reconciled.year,
             month: reconciled.month,
             type: nextType,
-            paymentStatus: nextPaymentStatus
+            paymentStatus: nextPaymentStatus,
           },
-          { preserveState: true, refreshContracts: false }
+          { preserveState: true, refreshContracts: false },
         );
         return;
       }
@@ -268,8 +239,7 @@ export function InvoicesView({
     } catch (error) {
       setState({
         status: "error",
-        message:
-          error instanceof Error ? error.message : "Nie udało się pobrać rejestru faktur."
+        message: error instanceof Error ? error.message : "Nie udało się pobrać rejestru faktur.",
       });
     } finally {
       setIsRefreshing(false);
@@ -297,22 +267,22 @@ export function InvoicesView({
   }
 
   function openNewInvoiceForm() {
-    setFormOpen(true);
+    setIsEditorOpen(true);
     resetForm(null);
     setFormValues((current) => ({
       ...current,
-      type: activeType
+      type: activeType,
     }));
   }
 
   function openEditInvoiceForm(invoice: InvoiceRecord) {
-    setFormOpen(true);
+    setIsEditorOpen(true);
     resetForm(invoice);
     setSelectedInvoiceId(invoice.id);
   }
 
   function closeForm() {
-    setFormOpen(false);
+    setIsEditorOpen(false);
     resetForm(null);
   }
 
@@ -336,12 +306,12 @@ export function InvoicesView({
     try {
       const savedInvoice = await saveInvoiceRecord(
         editingInvoiceId,
-        normalizeInvoicePayload(formValues, selectedContract)
+        normalizeInvoicePayload(formValues, selectedContract),
       );
 
       setFormStatus(editingInvoiceId ? "Zapisano zmiany faktury." : "Dodano nową fakturę.");
       setSelectedInvoiceId(savedInvoice.id);
-      setFormOpen(Boolean(editingInvoiceId));
+      setIsEditorOpen(false);
       await reloadInvoices({}, { preserveState: true, refreshContracts: true });
       if (!editingInvoiceId) {
         resetForm(null);
@@ -375,9 +345,7 @@ export function InvoicesView({
 
   async function handleBulkDelete() {
     if (!canWrite || !selectedInvoiceIds.length) return;
-    const confirmed = window.confirm(
-      `Czy na pewno chcesz usunąć ${selectedInvoiceIds.length} zaznaczonych faktur?`
-    );
+    const confirmed = window.confirm(`Czy na pewno chcesz usunąć ${selectedInvoiceIds.length} zaznaczonych faktur?`);
     if (!confirmed) return;
 
     try {
@@ -385,9 +353,7 @@ export function InvoicesView({
       setSelectedInvoiceIds([]);
       await reloadInvoices({}, { preserveState: true, refreshContracts: false });
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się usunąć zaznaczonych faktur."
-      );
+      setFormError(error instanceof Error ? error.message : "Nie udało się usunąć zaznaczonych faktur.");
     }
   }
 
@@ -397,7 +363,7 @@ export function InvoicesView({
 
   const tableRows: InvoiceTableRow[] = filteredInvoices.map((item, index) => ({
     index: index + 1,
-    item
+    item,
   }));
 
   const columns = buildInvoiceColumns({
@@ -409,11 +375,11 @@ export function InvoicesView({
     },
     onToggleSelected: (invoiceId, checked) => {
       setSelectedInvoiceIds((current) =>
-        checked ? Array.from(new Set([...current, invoiceId])) : current.filter((id) => id !== invoiceId)
+        checked ? Array.from(new Set([...current, invoiceId])) : current.filter((id) => id !== invoiceId),
       );
     },
     onEdit: openEditInvoiceForm,
-    onDelete: handleDelete
+    onDelete: handleDelete,
   });
 
   return (
@@ -425,16 +391,17 @@ export function InvoicesView({
           <div className="module-actions">
             <div className="module-actions__primary">
               {canWrite ? (
-                <ActionButton
-                  type="button"
-                  onClick={openNewInvoiceForm}
-                  disabled={selectedContractId === UNASSIGNED_CONTRACT_ID}
-                >
+                <ActionButton type="button" onClick={openNewInvoiceForm} disabled={selectedContractId === UNASSIGNED_CONTRACT_ID}>
                   Dodaj fakturę
                 </ActionButton>
               ) : null}
             </div>
             <div className="module-actions__secondary">
+              {canWrite && selectedInvoice ? (
+                <ActionButton type="button" variant="secondary" onClick={() => openEditInvoiceForm(selectedInvoice)}>
+                  Edytuj fakturę
+                </ActionButton>
+              ) : null}
               <ActionButton
                 type="button"
                 variant="secondary"
@@ -465,9 +432,7 @@ export function InvoicesView({
         selectedMonth={selectedMonth}
         onSelectedMonthChange={(value) => void reloadInvoices({ month: value }, { preserveState: true })}
         paymentStatus={paymentStatus}
-        onPaymentStatusChange={(value) =>
-          void reloadInvoices({ paymentStatus: value }, { preserveState: true })
-        }
+        onPaymentStatusChange={(value) => void reloadInvoices({ paymentStatus: value }, { preserveState: true })}
       />
 
       {state.status === "loading" ? (
@@ -478,10 +443,7 @@ export function InvoicesView({
         <Panel title="Rejestr faktur">
           <div className="status-stack">
             <p className="status-message status-message--error">{state.message}</p>
-            <ActionButton
-              type="button"
-              onClick={() => reloadInvoices({}, { refreshContracts: true })}
-            >
+            <ActionButton type="button" onClick={() => reloadInvoices({}, { refreshContracts: true })}>
               Spróbuj ponownie
             </ActionButton>
           </div>
@@ -502,12 +464,7 @@ export function InvoicesView({
           {viewModel ? (
             <div className="module-page__stats module-page__stats--compact">
               {viewModel.summaryCards.map((card) => (
-                <StatCard
-                  key={card.id}
-                  label={card.label}
-                  value={card.value}
-                  accent={card.accent}
-                />
+                <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
               ))}
             </div>
           ) : null}
@@ -519,9 +476,7 @@ export function InvoicesView({
                 canWrite={canWrite}
                 invoiceSearch={invoiceSearch}
                 onInvoiceSearchChange={setInvoiceSearch}
-                onActiveTypeChange={(value) =>
-                  void reloadInvoices({ type: value }, { preserveState: true })
-                }
+                onActiveTypeChange={(value) => void reloadInvoices({ type: value }, { preserveState: true })}
                 selectedInvoiceIds={selectedInvoiceIds}
                 onBulkDelete={() => void handleBulkDelete()}
                 columns={columns}
@@ -529,33 +484,40 @@ export function InvoicesView({
                 selectedInvoiceId={selectedInvoiceId}
                 onRowClick={(row) => setSelectedInvoiceId(row.item.id)}
               />
-            </div>
 
-            <div className="invoices-side-stack">
               <InvoiceDetailsPanel
                 selectedInvoice={selectedInvoice}
                 canWrite={canWrite}
                 onEdit={openEditInvoiceForm}
               />
-
-              <InvoiceEditorPanel
-                canWrite={canWrite}
-                editingInvoiceId={editingInvoiceId}
-                formOpen={formOpen}
-                selectedContractId={selectedContractId}
-                formValues={formValues}
-                setFormValues={setFormValues}
-                isSubmitting={isSubmitting}
-                formError={formError}
-                formStatus={formStatus}
-                onSubmit={handleSubmit}
-                onClose={closeForm}
-                onOpenNew={openNewInvoiceForm}
-              />
             </div>
           </div>
         </>
       )}
+
+      {isEditorOpen ? (
+        <AppDrawer
+          eyebrow="Rejestr faktur"
+          title={editingInvoiceId ? "Edytuj fakturę" : "Dodaj fakturę"}
+          onClose={closeForm}
+        >
+          <InvoiceEditorPanel
+            canWrite={canWrite}
+            editingInvoiceId={editingInvoiceId}
+            formOpen
+            selectedContractId={selectedContractId}
+            formValues={formValues}
+            setFormValues={setFormValues}
+            isSubmitting={isSubmitting}
+            formError={formError}
+            formStatus={formStatus}
+            onSubmit={handleSubmit}
+            onClose={closeForm}
+            onOpenNew={openNewInvoiceForm}
+            embedded
+          />
+        </AppDrawer>
+      ) : null}
     </div>
   );
 }

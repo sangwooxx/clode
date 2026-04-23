@@ -115,7 +115,7 @@ function createSnapshot(contract: ContractRecord): ContractSnapshot {
 }
 
 describe("contracts view", () => {
-  it("renders the selected contract in control mode without opening edit drawers by default", () => {
+  it("renders the selected contract and keeps edit and control drawers closed by default", () => {
     const contract = createContract();
     const archived = createContract({
       id: "c-arch",
@@ -132,12 +132,13 @@ describe("contracts view", () => {
       />,
     );
 
-    expect(html).toContain("data-testid=\"contracts-picker\"");
+    expect(html).toContain('data-testid="contracts-picker"');
     expect(html).toContain("Budowa hali");
     expect(html).toContain("Plan i prognoza");
     expect(html).toContain("Edytuj dane kontraktu");
     expect(html).toContain("Dodaj kontrakt");
-    expect(html).not.toContain("contracts-drawer-shell");
+    expect(html).not.toContain("Plan i prognoza kontraktu");
+    expect(html).not.toContain("Dane podstawowe kontraktu");
   });
 
   it("renders an error panel when the list cannot be loaded", () => {

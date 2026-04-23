@@ -11,7 +11,7 @@ type InvoiceDetailsPanelProps = {
 
 export function InvoiceDetailsPanel({ selectedInvoice, canWrite, onEdit }: InvoiceDetailsPanelProps) {
   return (
-    <Panel title="Szczegóły wybranej faktury">
+    <Panel title="Szczegóły faktury">
       {selectedInvoice ? (
         <dl className="info-list invoices-detail-list">
           <div className="info-list__row">

@@ -1,7 +1,7 @@
-import type { ContractRecord } from "@/features/contracts/types";
 import { ActionButton } from "@/components/ui/action-button";
 import { FormGrid } from "@/components/ui/form-grid";
 import { Panel } from "@/components/ui/panel";
+import type { ContractRecord } from "@/features/contracts/types";
 import { formatNumber, HOURS_FINANCE_FIELDS } from "@/features/hours/formatters";
 import type { HoursFinanceDraft, HoursMonthRecord } from "@/features/hours/types";
 
@@ -16,10 +16,13 @@ type HoursMonthSettingsPanelProps = {
   onToggleContractId: (contractId: string, checked: boolean) => void;
   onSetNewMonthYear: (year: string) => void;
   onSetNewMonthNumber: (month: string) => void;
-  onSetFinanceDraft: (updater: HoursFinanceDraft | ((current: HoursFinanceDraft) => HoursFinanceDraft)) => void;
+  onSetFinanceDraft: (
+    updater: HoursFinanceDraft | ((current: HoursFinanceDraft) => HoursFinanceDraft)
+  ) => void;
   onCreateMonth: () => void;
   onDeleteMonth: () => void;
   onSaveMonthSettings: () => void;
+  embedded?: boolean;
 };
 
 export function HoursMonthSettingsPanel({
@@ -37,9 +40,10 @@ export function HoursMonthSettingsPanel({
   onCreateMonth,
   onDeleteMonth,
   onSaveMonthSettings,
+  embedded = false,
 }: HoursMonthSettingsPanelProps) {
-  return (
-    <Panel title="Ustawienia miesiąca">
+  const content = (
+    <>
       <div className="hours-month-meta">
         <div className="data-table__stack">
           <span className="data-table__primary">{selectedMonth.month_label}</span>
@@ -74,7 +78,12 @@ export function HoursMonthSettingsPanel({
               onChange={(event) => onSetNewMonthYear(event.target.value)}
               placeholder="Rok"
             />
-            <ActionButton type="button" variant="secondary" onClick={onCreateMonth} disabled={!canWrite}>
+            <ActionButton
+              type="button"
+              variant="secondary"
+              onClick={onCreateMonth}
+              disabled={!canWrite}
+            >
               Dodaj miesiąc
             </ActionButton>
           </div>
@@ -129,6 +138,12 @@ export function HoursMonthSettingsPanel({
           Zapisz ustawienia miesiąca
         </ActionButton>
       </div>
-    </Panel>
+    </>
   );
+
+  if (embedded) {
+    return content;
+  }
+
+  return <Panel title="Ustawienia miesiąca">{content}</Panel>;
 }

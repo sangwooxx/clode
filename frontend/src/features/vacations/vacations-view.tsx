@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { AppDrawer } from "@/components/ui/app-drawer";
 import { DataTable } from "@/components/ui/data-table";
 import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -16,10 +17,7 @@ import {
   updateVacationRequestStatus,
 } from "@/features/vacations/api";
 import { VacationsEmployeePanel } from "@/features/vacations/components/VacationsEmployeePanel";
-import {
-  type VacationEmployeeFilter,
-  VacationsToolbar,
-} from "@/features/vacations/components/VacationsToolbar";
+import { type VacationEmployeeFilter, VacationsToolbar } from "@/features/vacations/components/VacationsToolbar";
 import { VacationsRequestPanel } from "@/features/vacations/components/VacationsRequestPanel";
 import {
   buildVacationBalanceFormValues,
@@ -80,11 +78,10 @@ export function VacationsView({
   const [filter, setFilter] = useState<VacationEmployeeFilter>("all");
   const [selectedEmployeeKey, setSelectedEmployeeKey] = useState<string | null>(null);
   const [editingRequestId, setEditingRequestId] = useState<string | null>(null);
-  const [balanceValues, setBalanceValues] = useState<VacationBalanceFormValues>(() =>
-    buildVacationBalanceFormValues()
-  );
+  const [isRequestDrawerOpen, setIsRequestDrawerOpen] = useState(false);
+  const [balanceValues, setBalanceValues] = useState<VacationBalanceFormValues>(() => buildVacationBalanceFormValues());
   const [requestValues, setRequestValues] = useState<VacationRequestFormValues>(() =>
-    buildVacationRequestFormValues({ employees: [] })
+    buildVacationRequestFormValues({ employees: [] }),
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<string | null>(null);
@@ -93,9 +90,7 @@ export function VacationsView({
   const [isSavingBalance, setIsSavingBalance] = useState(false);
 
   const approvalMode =
-    state.status === "success"
-      ? resolveVacationApprovalMode(state.data.workflow)
-      : "permission";
+    state.status === "success" ? resolveVacationApprovalMode(state.data.workflow) : "permission";
   const canApprove = canApproveVacationWorkflow({
     role: user?.role,
     canApproveVacations: user?.canApproveVacations,
@@ -120,9 +115,7 @@ export function VacationsView({
       setState({
         status: "error",
         message:
-          error instanceof Error
-            ? error.message
-            : "Nie udało się pobrać modułu urlopów i nieobecności.",
+          error instanceof Error ? error.message : "Nie udało się pobrać modułu urlopów i nieobecności.",
       });
     } finally {
       setIsRefreshing(false);
@@ -139,7 +132,7 @@ export function VacationsView({
 
   const vacationStore = useMemo(
     () => (state.status === "success" ? normalizeVacationStore(state.data.vacationStore) : null),
-    [state]
+    [state],
   );
 
   const employeeDirectory = useMemo(() => {
@@ -149,7 +142,7 @@ export function VacationsView({
 
   const activeEmployees = useMemo(
     () => employeeDirectory.filter((employee) => employee.status !== "inactive"),
-    [employeeDirectory]
+    [employeeDirectory],
   );
 
   const summaryCards = useMemo(() => {
@@ -192,7 +185,7 @@ export function VacationsView({
 
   const editingRequest = useMemo(
     () => (vacationStore ? findVacationRequestById(vacationStore, editingRequestId) : null),
-    [editingRequestId, vacationStore]
+    [editingRequestId, vacationStore],
   );
 
   const editingEmployee = useMemo(() => {
@@ -220,7 +213,7 @@ export function VacationsView({
         activeEmployees,
         editingEmployee: editingEmployeeRecord,
       }),
-    [activeEmployees, editingEmployeeRecord]
+    [activeEmployees, editingEmployeeRecord],
   );
 
   const historyRows = useMemo(() => {
@@ -258,22 +251,20 @@ export function VacationsView({
           employees: selectableEmployeeOptions.map((option) => option.employee),
           currentUserDisplayName: user?.displayName,
           resolvedRequestEmployee: editingEmployeeRecord,
-        })
+        }),
       );
       return;
     }
 
     const fallbackEmployeeKey =
-      selectedEmployee && selectedEmployee.status !== "inactive"
-        ? selectedEmployee.key
-        : activeEmployees[0]?.key || "";
+      selectedEmployee && selectedEmployee.status !== "inactive" ? selectedEmployee.key : activeEmployees[0]?.key || "";
 
     setRequestValues(
       buildVacationRequestFormValues({
         employees: selectableEmployeeOptions.map((option) => option.employee),
         selectedEmployeeKey: fallbackEmployeeKey,
         currentUserDisplayName: user?.displayName,
-      })
+      }),
     );
   }, [
     activeEmployees,
@@ -300,19 +291,14 @@ export function VacationsView({
     setEditingRequestId(null);
     setFormError(null);
     setFormStatus(null);
+    setIsRequestDrawerOpen(true);
   }
 
-  function handleBalanceFieldChange(
-    field: keyof VacationBalanceFormValues,
-    value: string
-  ) {
+  function handleBalanceFieldChange(field: keyof VacationBalanceFormValues, value: string) {
     setBalanceValues((current) => ({ ...current, [field]: value }));
   }
 
-  function handleRequestFieldChange(
-    field: keyof VacationRequestFormValues,
-    value: string
-  ) {
+  function handleRequestFieldChange(field: keyof VacationRequestFormValues, value: string) {
     setRequestValues((current) => ({ ...current, [field]: value }));
   }
 
@@ -333,6 +319,7 @@ export function VacationsView({
     setEditingRequestId(requestId);
     setFormError(null);
     setFormStatus(null);
+    setIsRequestDrawerOpen(true);
   }
 
   async function handleSaveBalance(event: FormEvent<HTMLFormElement>) {
@@ -356,9 +343,7 @@ export function VacationsView({
       setState({ status: "success", data: bootstrap });
       setFormStatus("Pula urlopowa została zaktualizowana.");
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się zapisać puli urlopowej."
-      );
+      setFormError(error instanceof Error ? error.message : "Nie udało się zapisać puli urlopowej.");
     } finally {
       setIsSavingBalance(false);
     }
@@ -389,9 +374,8 @@ export function VacationsView({
       setState({ status: "success", data: bootstrap });
       setSelectedEmployeeKey(nextEmployeeKey || null);
       setEditingRequestId(null);
-      setFormStatus(
-        editingRequest ? "Wpis nieobecności został zaktualizowany." : "Dodano nową nieobecność."
-      );
+      setIsRequestDrawerOpen(false);
+      setFormStatus(editingRequest ? "Wpis nieobecności został zaktualizowany." : "Dodano nową nieobecność.");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Nie udało się zapisać wniosku.");
     } finally {
@@ -417,6 +401,7 @@ export function VacationsView({
       setState({ status: "success", data: bootstrap });
       if (editingRequestId === requestId) {
         setEditingRequestId(null);
+        setIsRequestDrawerOpen(false);
       }
       setFormStatus("Wpis nieobecności został usunięty.");
     } catch (error) {
@@ -443,15 +428,9 @@ export function VacationsView({
         currentUserCanApproveVacations: user?.canApproveVacations,
       });
       setState({ status: "success", data: bootstrap });
-      setFormStatus(
-        status === "approved"
-          ? "Wniosek został zatwierdzony."
-          : "Wniosek został odrzucony."
-      );
+      setFormStatus(status === "approved" ? "Wniosek został zatwierdzony." : "Wniosek został odrzucony.");
     } catch (error) {
-      setFormError(
-        error instanceof Error ? error.message : "Nie udało się zmienić statusu wniosku."
-      );
+      setFormError(error instanceof Error ? error.message : "Nie udało się zmienić statusu wniosku.");
     } finally {
       setIsSubmittingRequest(false);
     }
@@ -489,9 +468,7 @@ export function VacationsView({
   const selectedEmployeeInactive = selectedEmployee?.status === "inactive";
   const editingInactiveRequest = editingEmployeeRecord?.status === "inactive";
   const editingEmployeeNeedsManualResolution =
-    Boolean(editingRequest) &&
-    editingEmployee.status !== "resolved" &&
-    !requestValues.employee_key;
+    Boolean(editingRequest) && editingEmployee.status !== "resolved" && !requestValues.employee_key;
 
   return (
     <div className="module-page">
@@ -519,21 +496,11 @@ export function VacationsView({
 
       <div className="module-page__stats module-page__stats--compact">
         {summaryCards.slice(0, 4).map((card) => (
-          <StatCard
-            key={card.id}
-            label={card.label}
-            value={card.value}
-            accent={card.accent}
-          />
+          <StatCard key={card.id} label={card.label} value={card.value} accent={card.accent} />
         ))}
       </div>
 
-      <VacationsToolbar
-        filter={filter}
-        search={search}
-        onFilterChange={setFilter}
-        onSearchChange={setSearch}
-      />
+      <VacationsToolbar filter={filter} search={search} onFilterChange={setFilter} onSearchChange={setSearch} />
 
       <div className="vacations-layout">
         <div className="vacations-main-stack">
@@ -550,6 +517,18 @@ export function VacationsView({
               tableClassName="vacations-table vacations-table--employees"
             />
           </Panel>
+
+          <VacationsEmployeePanel
+            canWrite={canWrite}
+            selectedEmployee={selectedEmployee}
+            selectedStats={selectedStats}
+            selectedEmployeeInactive={selectedEmployeeInactive}
+            selectedBalanceLookup={selectedBalanceLookup}
+            balanceValues={balanceValues}
+            isSavingBalance={isSavingBalance}
+            onBalanceFieldChange={handleBalanceFieldChange}
+            onSubmitBalance={handleSaveBalance}
+          />
 
           <Panel title={selectedEmployee ? `Historia: ${selectedEmployee.name}` : "Historia pracownika"}>
             <DataTable
@@ -582,20 +561,15 @@ export function VacationsView({
             />
           </Panel>
         </div>
+      </div>
 
-        <div className="vacations-side-stack">
-          <VacationsEmployeePanel
-            canWrite={canWrite}
-            selectedEmployee={selectedEmployee}
-            selectedStats={selectedStats}
-            selectedEmployeeInactive={selectedEmployeeInactive}
-            selectedBalanceLookup={selectedBalanceLookup}
-            balanceValues={balanceValues}
-            isSavingBalance={isSavingBalance}
-            onBalanceFieldChange={handleBalanceFieldChange}
-            onSubmitBalance={handleSaveBalance}
-          />
-
+      {isRequestDrawerOpen ? (
+        <AppDrawer
+          eyebrow="Urlopy i nieobecności"
+          title={editingRequest ? "Edytuj wniosek" : "Nowa nieobecność"}
+          onClose={() => setIsRequestDrawerOpen(false)}
+          size="wide"
+        >
           <VacationsRequestPanel
             canWrite={canWrite}
             editingRequest={editingRequest}
@@ -613,9 +587,10 @@ export function VacationsView({
             onCreateNewRequest={handleCreateNewRequest}
             onSubmitRequest={handleSubmitRequest}
             onRequestFieldChange={handleRequestFieldChange}
+            embedded
           />
-        </div>
-      </div>
+        </AppDrawer>
+      ) : null}
     </div>
   );
 }

@@ -4,9 +4,9 @@ export function formatRoleLabel(role: string | null | undefined) {
   const normalized = String(role || "").trim().toLowerCase();
   if (normalized === "admin" || normalized === "administrator") return "Administrator";
   if (normalized === "kierownik") return "Kierownik";
-  if (normalized === "księgowość" || normalized === "ksiegowosc") return "Ksiegowosc";
+  if (normalized === "księgowość" || normalized === "ksiegowosc") return "Księgowość";
   if (normalized === "read-only" || normalized === "readonly") return "Tylko odczyt";
-  if (!normalized) return "Uzytkownik";
+  if (!normalized) return "Użytkownik";
   return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 }
 

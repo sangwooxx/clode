@@ -33,6 +33,7 @@ type EmployeesEditorPanelProps = {
   onDeleteEmployee: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onFieldChange: (field: keyof EmployeeFormValues, value: string) => void;
+  embedded?: boolean;
 };
 
 export function EmployeesEditorPanel({
@@ -50,18 +51,18 @@ export function EmployeesEditorPanel({
   onDeleteEmployee,
   onSubmit,
   onFieldChange,
+  embedded = false,
 }: EmployeesEditorPanelProps) {
   const formDisabled = !canWrite || isSubmitting;
 
-  return (
-    <Panel title={editingEmployee ? "Edycja pracownika" : "Nowy pracownik"}>
+  const content = (
+    <>
       {detailEmployee ? (
         <div className="employees-spotlight">
           <div className="data-table__stack">
             <span className="data-table__primary">{detailEmployee.name}</span>
             <span className="data-table__secondary">
-              {detailEmployee.position || "Bez stanowiska"} |{" "}
-              {formatEmployeeStatus(detailEmployee.status)}
+              {detailEmployee.position || "Bez stanowiska"} | {formatEmployeeStatus(detailEmployee.status)}
             </span>
           </div>
 
@@ -91,18 +92,18 @@ export function EmployeesEditorPanel({
           ) : null}
         </div>
       ) : (
-        <p className="status-message">Wybierz pracownika z tabeli lub dodaj nowy rekord.</p>
+        <p className="status-message">Dodaj nowego pracownika albo wybierz rekord do edycji.</p>
       )}
 
       <form className="employees-form" onSubmit={onSubmit}>
         <FormGrid columns={2}>
           <label className="form-field">
-            <span>Imie</span>
+            <span>Imię</span>
             <input
               value={formValues.first_name}
               disabled={formDisabled}
               onChange={(event) => onFieldChange("first_name", event.target.value)}
-              placeholder="Pawel"
+              placeholder="Paweł"
             />
           </label>
 
@@ -112,7 +113,7 @@ export function EmployeesEditorPanel({
               value={formValues.last_name}
               disabled={formDisabled}
               onChange={(event) => onFieldChange("last_name", event.target.value)}
-              placeholder="Dabrowski"
+              placeholder="Dąbrowski"
             />
           </label>
 
@@ -142,10 +143,7 @@ export function EmployeesEditorPanel({
               value={formValues.status}
               disabled={formDisabled}
               onChange={(event) =>
-                onFieldChange(
-                  "status",
-                  event.target.value === "inactive" ? "inactive" : "active"
-                )
+                onFieldChange("status", event.target.value === "inactive" ? "inactive" : "active")
               }
             >
               <option value="active">Aktywny</option>
@@ -164,7 +162,7 @@ export function EmployeesEditorPanel({
           </label>
 
           <label className="form-field">
-            <span>Data zakonczenia</span>
+            <span>Data zakończenia</span>
             <input
               type="date"
               value={formValues.employment_end_date}
@@ -189,12 +187,12 @@ export function EmployeesEditorPanel({
               value={formValues.street}
               disabled={formDisabled}
               onChange={(event) => onFieldChange("street", event.target.value)}
-              placeholder="ul. Przykladowa 1"
+              placeholder="ul. Przykładowa 1"
             />
           </label>
 
           <label className="form-field">
-            <span>Kod i miejscowosc</span>
+            <span>Kod i miejscowość</span>
             <input
               value={formValues.city}
               disabled={formDisabled}
@@ -204,7 +202,7 @@ export function EmployeesEditorPanel({
           </label>
 
           <label className="form-field">
-            <span>Badania wazne do</span>
+            <span>Badania ważne do</span>
             <input
               type="date"
               value={formValues.medical_exam_valid_until}
@@ -219,7 +217,7 @@ export function EmployeesEditorPanel({
             !canWrite
               ? {
                   tone: "warning",
-                  text: "Masz dostep tylko do odczytu kartoteki pracownikow.",
+                  text: "Masz dostęp tylko do odczytu kartoteki pracowników.",
                 }
               : null,
             formError ? { tone: "error", text: formError } : null,
@@ -228,7 +226,7 @@ export function EmployeesEditorPanel({
               ? {
                   tone: "warning",
                   text:
-                    "Rekord ma powiazane wpisy czasu lub karty pracy. Zmien status na nieaktywny zamiast usuwac pracownika.",
+                    "Rekord ma powiązane wpisy czasu lub karty pracy. Zmień status na nieaktywny zamiast usuwać pracownika.",
                 }
               : null,
           ]}
@@ -238,13 +236,8 @@ export function EmployeesEditorPanel({
           leading={
             <>
               {canWrite ? (
-                <ActionButton
-                  type="button"
-                  variant="secondary"
-                  onClick={onCreateNew}
-                  disabled={isSubmitting}
-                >
-                  {editingEmployee ? "Nowy rekord" : "Wyczysc formularz"}
+                <ActionButton type="button" variant="secondary" onClick={onCreateNew} disabled={isSubmitting}>
+                  {editingEmployee ? "Nowy rekord" : "Wyczyść formularz"}
                 </ActionButton>
               ) : null}
               {editingEmployee && canWrite ? (
@@ -254,7 +247,7 @@ export function EmployeesEditorPanel({
                   onClick={onDeleteEmployee}
                   disabled={isSubmitting || deleteBlocked}
                 >
-                  Usun
+                  Usuń
                 </ActionButton>
               ) : null}
             </>
@@ -262,16 +255,18 @@ export function EmployeesEditorPanel({
           trailing={
             canWrite ? (
               <ActionButton type="submit" disabled={isSubmitting}>
-                {isSubmitting
-                  ? "Zapisywanie..."
-                  : editingEmployee
-                    ? "Zapisz zmiany"
-                    : "Dodaj pracownika"}
+                {isSubmitting ? "Zapisywanie..." : editingEmployee ? "Zapisz zmiany" : "Dodaj pracownika"}
               </ActionButton>
             ) : null
           }
         />
       </form>
-    </Panel>
+    </>
   );
+
+  if (embedded) {
+    return content;
+  }
+
+  return <Panel title={editingEmployee ? "Edycja pracownika" : "Nowy pracownik"}>{content}</Panel>;
 }

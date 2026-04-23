@@ -3,21 +3,21 @@ import type { ContractHealthLevel, ContractStatus } from "@/features/contracts/t
 const moneyFormatter = new Intl.NumberFormat("pl-PL", {
   style: "currency",
   currency: "PLN",
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
 });
 
 const integerFormatter = new Intl.NumberFormat("pl-PL", {
-  maximumFractionDigits: 0
+  maximumFractionDigits: 0,
 });
 
 const hoursFormatter = new Intl.NumberFormat("pl-PL", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
 });
 
 const percentFormatter = new Intl.NumberFormat("pl-PL", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
 });
 
 export function formatMoney(value: number | null | undefined) {
@@ -82,7 +82,7 @@ export function formatDateTime(value: string | null | undefined) {
         month: "2-digit",
         day: "2-digit",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       })
     : value;
 }
@@ -112,8 +112,8 @@ export function formatHealthLevel(value: ContractHealthLevel) {
 }
 
 export function formatPlanVarianceLabel(value: string) {
-  if (value === "critical") return "Przekroczenie";
-  if (value === "warning") return "Ostrzeżenie";
-  if (value === "on_track") return "Zgodnie z planem";
-  return "Brak planu";
+  if (value === "critical") return "Koszt poza planem";
+  if (value === "warning") return "Koszt wymaga uwagi";
+  if (value === "on_track") return "Koszt w planie";
+  return "Brak planu kosztu";
 }

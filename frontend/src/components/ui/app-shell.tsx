@@ -12,7 +12,7 @@ import { useTheme } from "@/lib/theme/theme-context";
 import {
   applySidebarCollapsedToRoot,
   readSidebarCollapsedPreference,
-  persistSidebarCollapsedPreference
+  persistSidebarCollapsedPreference,
 } from "@/lib/ui/app-shell-preferences";
 import { cn } from "@/lib/utils/cn";
 
@@ -129,22 +129,22 @@ export function AppShell({
       : "Zwiń menu główne";
 
   const sidebarToggleText = isCompactViewport
-    ? isMobileNavOpen
-      ? "Zamknij menu"
-      : "Menu"
+    ? "Menu"
     : isSidebarCollapsed
-      ? "Rozwiń menu"
-      : "Zwiń menu";
+      ? "Rozwiń"
+      : "Zwiń";
 
   const shellClassName = cn(
     "app-shell",
     isRail && "app-shell--sidebar-collapsed",
     isCompactViewport && "app-shell--compact",
-    isCompactViewport && isMobileNavOpen && "app-shell--mobile-open"
+    isCompactViewport && isMobileNavOpen && "app-shell--mobile-open",
   );
 
   const themeButtonLabel = theme === "light" ? "Motyw ciemny" : "Motyw jasny";
   const themeButtonIcon = theme === "light" ? "☾" : "☀";
+  const collapseButtonLabel = isSidebarCollapsed ? "Rozwiń menu" : "Zwiń menu";
+  const collapseButtonIcon = isSidebarCollapsed ? "»" : "«";
 
   const settingsLinkLabel = useMemo(() => {
     if (user?.displayName) {
@@ -169,12 +169,11 @@ export function AppShell({
           "app-shell__sidebar",
           isRail && "app-shell__sidebar--collapsed",
           isCompactViewport && "app-shell__sidebar--drawer",
-          isCompactViewport && isMobileNavOpen && "app-shell__sidebar--open"
+          isCompactViewport && isMobileNavOpen && "app-shell__sidebar--open",
         )}
         aria-label="Menu główne"
       >
         <div className="app-shell__sidebar-top">
-          <BrandMark className="app-shell__brand" labelClassName="app-shell__brand-mark" />
           {isCompactViewport ? (
             <ActionButton
               type="button"
@@ -198,7 +197,7 @@ export function AppShell({
               title={isRail ? item.label : undefined}
               className={cn(
                 "app-shell__nav-link",
-                pathname === item.href && "app-shell__nav-link--active"
+                pathname === item.href && "app-shell__nav-link--active",
               )}
             >
               <span className="app-shell__nav-badge" aria-hidden="true">
@@ -210,20 +209,38 @@ export function AppShell({
         </nav>
 
         <div className="app-shell__sidebar-footer">
-          <ActionButton
-            type="button"
-            variant="secondary"
-            fullWidth={!isRail}
-            className="app-shell__footer-button"
-            aria-label={themeButtonLabel}
-            title={isRail ? themeButtonLabel : undefined}
-            onClick={toggleTheme}
-          >
-            <span className="app-shell__footer-icon" aria-hidden="true">
-              {themeButtonIcon}
-            </span>
-            <span className="app-shell__footer-label">{themeButtonLabel}</span>
-          </ActionButton>
+          <div className="app-shell__utility-buttons">
+            {!isCompactViewport ? (
+              <ActionButton
+                type="button"
+                variant="ghost"
+                fullWidth={!isRail}
+                className="app-shell__utility-button"
+                aria-label={collapseButtonLabel}
+                title={isRail ? collapseButtonLabel : undefined}
+                onClick={handleSidebarToggle}
+              >
+                <span className="app-shell__footer-icon" aria-hidden="true">
+                  {collapseButtonIcon}
+                </span>
+                <span className="app-shell__footer-label">{collapseButtonLabel}</span>
+              </ActionButton>
+            ) : null}
+            <ActionButton
+              type="button"
+              variant="ghost"
+              fullWidth={!isRail}
+              className="app-shell__utility-button"
+              aria-label={themeButtonLabel}
+              title={isRail ? themeButtonLabel : undefined}
+              onClick={toggleTheme}
+            >
+              <span className="app-shell__footer-icon" aria-hidden="true">
+                {themeButtonIcon}
+              </span>
+              <span className="app-shell__footer-label">{themeButtonLabel}</span>
+            </ActionButton>
+          </div>
 
           {canAccessSettings ? (
             <Link
@@ -232,14 +249,12 @@ export function AppShell({
               title={isRail ? settingsLinkLabel : undefined}
               className={cn(
                 "app-shell__option-link",
-                pathname === "/settings" && "app-shell__option-link--active"
+                pathname === "/settings" && "app-shell__option-link--active",
               )}
             >
               <div className="app-shell__option-copy">
                 <span className="app-shell__option-label">Ustawienia</span>
-                <strong className="app-shell__option-title">
-                  {user?.displayName ?? "Konto"}
-                </strong>
+                <strong className="app-shell__option-title">{user?.displayName ?? "Konto"}</strong>
               </div>
               <span className="app-shell__option-icon" aria-hidden="true">
                 ⚙
@@ -250,7 +265,7 @@ export function AppShell({
           <ActionButton
             variant="secondary"
             fullWidth={!isRail}
-            className="app-shell__footer-button"
+            className="app-shell__footer-button app-shell__footer-button--logout"
             aria-label="Wyloguj"
             title={isRail ? "Wyloguj" : undefined}
             onClick={() => void handleLogout()}
@@ -285,6 +300,8 @@ export function AppShell({
             <div className="app-shell__title-block">
               {title ? <h1 className="app-shell__title">{title}</h1> : null}
             </div>
+
+            <BrandMark className="app-shell__header-brand" labelClassName="app-shell__header-brand-mark" />
           </div>
         </header>
 

@@ -3,6 +3,7 @@
 import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ActionButton } from "@/components/ui/action-button";
+import { AppDrawer } from "@/components/ui/app-drawer";
 import { FormFeedback } from "@/components/ui/form-feedback";
 import { Panel } from "@/components/ui/panel";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -64,11 +65,15 @@ export function SettingsView() {
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [isSavingWorkflow, setIsSavingWorkflow] = useState(false);
   const [resetTargetUsername, setResetTargetUsername] = useState<string | null>(null);
-  const [pageMessage, setPageMessage] = useState<{ tone: "success" | "error" | "warning"; text: string } | null>(null);
+  const [pageMessage, setPageMessage] = useState<{
+    tone: "success" | "error" | "warning";
+    text: string;
+  } | null>(null);
   const [search, setSearch] = useState("");
   const [auditSearch, setAuditSearch] = useState("");
   const [filter, setFilter] = useState<SettingsUsersFilter>("all");
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [isUserDrawerOpen, setIsUserDrawerOpen] = useState(false);
   const [formValues, setFormValues] = useState<SettingsUserFormValues>(() => createEmptySettingsUserForm());
   const [formError, setFormError] = useState<string | null>(null);
   const [formStatus, setFormStatus] = useState<string | null>(null);
@@ -122,10 +127,7 @@ export function SettingsView() {
   }, [currentUser, hasAdminAccess, initialized]);
 
   const managedUsers = useMemo(() => adminData?.users ?? EMPTY_MANAGED_USERS, [adminData]);
-  const currentAuditLog = useMemo(
-    () => adminData?.auditLog ?? EMPTY_AUDIT_LOG,
-    [adminData]
-  );
+  const currentAuditLog = useMemo(() => adminData?.auditLog ?? EMPTY_AUDIT_LOG, [adminData]);
 
   useEffect(() => {
     if (!adminData) {
@@ -142,12 +144,15 @@ export function SettingsView() {
 
   const editingUser = useMemo(
     () => managedUsers.find((entry) => entry.id === editingUserId) ?? null,
-    [editingUserId, managedUsers]
+    [editingUserId, managedUsers],
   );
 
   useEffect(() => {
+    if (!isUserDrawerOpen) {
+      return;
+    }
     setFormValues(buildSettingsUserFormValues(editingUser));
-  }, [editingUser]);
+  }, [editingUser, isUserDrawerOpen]);
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -170,8 +175,8 @@ export function SettingsView() {
     if (!query) return currentAuditLog;
     return currentAuditLog.filter((entry) =>
       [entry.user_name, entry.module, entry.action, entry.subject, entry.details].some((value) =>
-        String(value || "").toLowerCase().includes(query)
-      )
+        String(value || "").toLowerCase().includes(query),
+      ),
     );
   }, [auditSearch, currentAuditLog]);
 
@@ -271,7 +276,7 @@ export function SettingsView() {
       setFormError(
         error instanceof Error
           ? error.message
-          : "Nie udało się wysłać żądania resetu hasła dla wybranego konta."
+          : "Nie udało się wysłać żądania resetu hasła dla wybranego konta.",
       );
     } finally {
       setResetTargetUsername(null);
@@ -294,6 +299,14 @@ export function SettingsView() {
     setFormValues(createEmptySettingsUserForm());
     setFormError(null);
     setFormStatus(null);
+    setIsUserDrawerOpen(true);
+  }
+
+  function handleOpenUserDrawer(userRecord: ManagedUserRecord) {
+    setEditingUserId(userRecord.id);
+    setFormError(null);
+    setFormStatus(null);
+    setIsUserDrawerOpen(true);
   }
 
   function handleRoleChange(nextRole: string) {
@@ -330,6 +343,7 @@ export function SettingsView() {
         message: editingUser ? "Zapisano zmiany konta użytkownika." : "Dodano nowe konto użytkownika.",
       });
       setEditingUserId(savedUser.id);
+      setIsUserDrawerOpen(false);
       setFormStatus(editingUser ? "Dane konta zostały zaktualizowane." : "Konto użytkownika zostało utworzone.");
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Nie udało się zapisać konta użytkownika.");
@@ -359,6 +373,7 @@ export function SettingsView() {
       });
       setEditingUserId(null);
       setFormValues(createEmptySettingsUserForm());
+      setIsUserDrawerOpen(false);
       await reloadAdminData({ preserveState: true, message: `Usunięto konto ${editingUser.name}.` });
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Nie udało się usunąć konta użytkownika.");
@@ -449,12 +464,7 @@ export function SettingsView() {
 
       <div className="module-page__stats module-page__stats--compact">
         {summaryCards.slice(0, 4).map((card) => (
-          <StatCard
-            key={card.id}
-            label={card.label}
-            value={card.value}
-            accent={"accent" in card ? Boolean(card.accent) : false}
-          />
+          <StatCard key={card.id} label={card.label} value={card.value} accent={"accent" in card ? Boolean(card.accent) : false} />
         ))}
       </div>
 
@@ -477,7 +487,7 @@ export function SettingsView() {
                 search={search}
                 rows={filteredUsers}
                 showTable={Boolean(adminData)}
-                onEdit={handleSelectManagedUser}
+                onEdit={handleOpenUserDrawer}
                 onFilterChange={setFilter}
                 onSearchChange={setSearch}
                 onSelect={handleSelectManagedUser}
@@ -518,10 +528,7 @@ export function SettingsView() {
         </div>
 
         <div className="settings-side-stack">
-          <SettingsCurrentAccountPanel
-            currentUser={currentUser}
-            currentUserPermissions={currentUserPermissions}
-          />
+          <SettingsCurrentAccountPanel currentUser={currentUser} currentUserPermissions={currentUserPermissions} />
 
           <Panel
             title="Motyw aplikacji"
@@ -545,35 +552,74 @@ export function SettingsView() {
             </div>
           </Panel>
 
+          {hasAdminAccess && editingUser ? (
+            <Panel title="Wybrane konto">
+              <div className="settings-user-spotlight">
+                <div className="data-table__stack">
+                  <span className="data-table__primary">{editingUser.name}</span>
+                  <span className="data-table__secondary">
+                    {editingUser.username} | {formatRoleLabel(editingUser.role)}
+                  </span>
+                </div>
+                <div className="settings-detail-grid">
+                  <div className="settings-detail-card">
+                    <span className="field-card__label">Status</span>
+                    <strong>{formatStatusLabel(editingUser.status)}</strong>
+                    <small>{editingUser.email || "Brak adresu e-mail"}</small>
+                  </div>
+                  <div className="settings-detail-card">
+                    <span className="field-card__label">Moduły</span>
+                    <strong>{buildPermissionLabels(editingUser.permissions).length}</strong>
+                    <small>Aktywne uprawnienia</small>
+                  </div>
+                </div>
+                {hasAdminAccess ? (
+                  <ActionButton type="button" variant="secondary" onClick={() => handleOpenUserDrawer(editingUser)}>
+                    Edytuj konto
+                  </ActionButton>
+                ) : null}
+              </div>
+            </Panel>
+          ) : null}
+
           {hasAdminAccess && adminData ? (
-            <>
-              <SettingsUserFormPanel
-                currentUserId={currentUser.id || ""}
-                editingUser={editingUser}
-                formError={formError}
-                formStatus={formStatus}
-                formValues={formValues}
-                isDeletingUser={isDeletingUser}
-                isSubmittingUser={isSubmittingUser}
-                onCreateNewUser={handleCreateNewUser}
-                onDeleteUser={handleDeleteUser}
-                onPasswordReset={handleManagedUserPasswordReset}
-                onRoleChange={handleRoleChange}
-                onSubmit={handleSaveUser}
-                resetTargetUsername={resetTargetUsername}
-                setFormValues={setFormValues}
-              />
-              <SettingsWorkflowPanel
-                isSavingWorkflow={isSavingWorkflow}
-                onSave={handleSaveWorkflow}
-                setWorkflowValues={setWorkflowValues}
-                workflowStatus={workflowStatus}
-                workflowValues={workflowValues}
-              />
-            </>
+            <SettingsWorkflowPanel
+              isSavingWorkflow={isSavingWorkflow}
+              onSave={handleSaveWorkflow}
+              setWorkflowValues={setWorkflowValues}
+              workflowStatus={workflowStatus}
+              workflowValues={workflowValues}
+            />
           ) : null}
         </div>
       </div>
+
+      {hasAdminAccess && isUserDrawerOpen ? (
+        <AppDrawer
+          eyebrow="Ustawienia"
+          title={editingUser ? "Edytuj konto użytkownika" : "Dodaj konto użytkownika"}
+          onClose={() => setIsUserDrawerOpen(false)}
+          size="wide"
+        >
+          <SettingsUserFormPanel
+            currentUserId={currentUser.id || ""}
+            editingUser={editingUser}
+            formError={formError}
+            formStatus={formStatus}
+            formValues={formValues}
+            isDeletingUser={isDeletingUser}
+            isSubmittingUser={isSubmittingUser}
+            onCreateNewUser={handleCreateNewUser}
+            onDeleteUser={handleDeleteUser}
+            onPasswordReset={handleManagedUserPasswordReset}
+            onRoleChange={handleRoleChange}
+            onSubmit={handleSaveUser}
+            resetTargetUsername={resetTargetUsername}
+            setFormValues={setFormValues}
+            embedded
+          />
+        </AppDrawer>
+      ) : null}
     </div>
   );
 }

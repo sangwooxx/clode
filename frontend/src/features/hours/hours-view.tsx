@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useMemo, useState, type FormEvent } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { AppDrawer } from "@/components/ui/app-drawer";
 import { DataTable } from "@/components/ui/data-table";
 import { Panel } from "@/components/ui/panel";
 import { PdfExportDialog } from "@/components/ui/pdf-export-dialog";
@@ -117,6 +118,24 @@ export function HoursView({
   const [newMonthNumber, setNewMonthNumber] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [isPdfDialogOpen, setIsPdfDialogOpen] = useState(false);
   const [hoursPdfConfig, setHoursPdfConfig] = useState<PdfConfigState>({});
+
+  function openMonthSettingsDrawer() {
+    setShowMonthSettings(true);
+    setShowManualCorrection(false);
+  }
+
+  function closeMonthSettingsDrawer() {
+    setShowMonthSettings(false);
+  }
+
+  function openManualCorrectionDrawer() {
+    setShowManualCorrection(true);
+    setShowMonthSettings(false);
+  }
+
+  function closeManualCorrectionDrawer() {
+    setShowManualCorrection(false);
+  }
 
   async function reloadHours(options?: {
     preserveState?: boolean;
@@ -473,7 +492,7 @@ export function HoursView({
       preferredEmployeeName.length > 0 &&
       roster.some((employee) => employee.name === preferredEmployeeName);
 
-    setShowManualCorrection(true);
+    openManualCorrectionDrawer();
     setSelectedEntryId(null);
     resetEntryForm(null, {
       preservedEmployeeName: canPrefillEmployee ? preferredEmployeeName : "",
@@ -481,7 +500,7 @@ export function HoursView({
   }
 
   function handleEditEntry(entry: TimeEntryRecord) {
-    setShowManualCorrection(true);
+    openManualCorrectionDrawer();
     setSelectedEntryId(entry.id);
     const matchingRow =
       hoursRows.find((row) =>
@@ -814,37 +833,19 @@ export function HoursView({
         monthStatus={monthStatus}
         onSelectMonth={(monthKey) => void handleSelectMonth(monthKey)}
         onSearchChange={setSearch}
-        onToggleMonthSettings={() => setShowMonthSettings((current) => !current)}
+        onToggleMonthSettings={() => {
+          if (showMonthSettings) {
+            closeMonthSettingsDrawer();
+            return;
+          }
+          openMonthSettingsDrawer();
+        }}
       />
 
       {selectedMonth ? (
-        <div className="hours-layout">
-          <div className="module-page__stack">
-            {showMonthSettings ? (
-              <HoursMonthSettingsPanel
-                canWrite={canWrite}
-                selectedMonth={selectedMonth}
-                activeContracts={activeContracts}
-                monthContractIds={monthContractIds}
-                newMonthYear={newMonthYear}
-                newMonthNumber={newMonthNumber}
-                financeDraft={financeDraft}
-                onToggleContractId={(contractId, checked) =>
-                  setMonthContractIds((current) =>
-                    checked
-                      ? Array.from(new Set([...current, contractId]))
-                      : current.filter((item) => item !== contractId)
-                  )
-                }
-                onSetNewMonthYear={setNewMonthYear}
-                onSetNewMonthNumber={setNewMonthNumber}
-                onSetFinanceDraft={setFinanceDraft}
-                onCreateMonth={() => void handleCreateMonth()}
-                onDeleteMonth={() => void handleDeleteMonth()}
-                onSaveMonthSettings={() => void handleSaveMonthSettings()}
-              />
-            ) : null}
-
+        <>
+          <div className="hours-layout">
+            <div className="module-page__stack">
             <HoursEmployeeTablePanel
               rows={hoursRows}
               canWrite={canWrite}
@@ -853,7 +854,7 @@ export function HoursView({
               onOpenCorrection={(row) => {
                 setSelectedEmployeeRowKey(row.key);
                 if (row.employeeStatus === "inactive") {
-                  setShowManualCorrection(false);
+                  closeManualCorrectionDrawer();
                   setSelectedEntryId(null);
                   setEditingEntryId(null);
                   setFormError(null);
@@ -878,36 +879,77 @@ export function HoursView({
               />
             </Panel>
           </div>
-
-          <div className="hours-side-stack">
-            <HoursCorrectionPanel
-              canWrite={canWrite}
-              showManualCorrection={showManualCorrection}
-              editingEntry={editingEntry}
-              selectedEmployeeRow={selectedEmployeeRow}
-              selectedEmployeeAllowsNewEntries={selectedEmployeeAllowsNewEntries}
-              activeEmployeeName={activeEmployeeName}
-              activeEmployeeLabel={activeEmployeeLabel}
-              activeEmployeeMeta={activeEmployeeMeta}
-              employeeEntries={employeeEntries}
-              employeeHoursTotal={employeeHoursTotal}
-              employeeContractsCount={employeeContractsCount}
-              roster={roster}
-              contractOptions={contractOptions}
-              entryFormValues={entryFormValues}
-              isSubmitting={isSubmitting}
-              formError={formError}
-              formStatus={formStatus}
-              onStartNewEntryForEmployee={handleStartNewEntryForEmployee}
-              onSetShowManualCorrection={setShowManualCorrection}
-              onSetFormError={setFormError}
-              onSetFormStatus={setFormStatus}
-              onSetEntryFormValues={setEntryFormValues}
-              onEditEntry={handleEditEntry}
-              onSaveEntry={handleSaveEntry}
-            />
           </div>
-        </div>
+          {showMonthSettings ? (
+            <AppDrawer
+              eyebrow="Godziny"
+              title="Ustawienia miesiąca"
+              onClose={closeMonthSettingsDrawer}
+              size="wide"
+            >
+              <HoursMonthSettingsPanel
+                canWrite={canWrite}
+                selectedMonth={selectedMonth}
+                activeContracts={activeContracts}
+                monthContractIds={monthContractIds}
+                newMonthYear={newMonthYear}
+                newMonthNumber={newMonthNumber}
+                financeDraft={financeDraft}
+                onToggleContractId={(contractId, checked) =>
+                  setMonthContractIds((current) =>
+                    checked
+                      ? Array.from(new Set([...current, contractId]))
+                      : current.filter((item) => item !== contractId)
+                  )
+                }
+                onSetNewMonthYear={setNewMonthYear}
+                onSetNewMonthNumber={setNewMonthNumber}
+                onSetFinanceDraft={setFinanceDraft}
+                onCreateMonth={() => void handleCreateMonth()}
+                onDeleteMonth={() => void handleDeleteMonth()}
+                onSaveMonthSettings={() => void handleSaveMonthSettings()}
+                embedded
+              />
+            </AppDrawer>
+          ) : null}
+
+          {showManualCorrection ? (
+            <AppDrawer
+              eyebrow="Godziny"
+              title={editingEntry ? "Korekta wpisu czasu" : "Ręczna korekta wpisów"}
+              onClose={closeManualCorrectionDrawer}
+              size="wide"
+            >
+              <HoursCorrectionPanel
+                canWrite={canWrite}
+                showManualCorrection={showManualCorrection}
+                editingEntry={editingEntry}
+                selectedEmployeeRow={selectedEmployeeRow}
+                selectedEmployeeAllowsNewEntries={selectedEmployeeAllowsNewEntries}
+                activeEmployeeName={activeEmployeeName}
+                activeEmployeeLabel={activeEmployeeLabel}
+                activeEmployeeMeta={activeEmployeeMeta}
+                employeeEntries={employeeEntries}
+                employeeHoursTotal={employeeHoursTotal}
+                employeeContractsCount={employeeContractsCount}
+                roster={roster}
+                contractOptions={contractOptions}
+                entryFormValues={entryFormValues}
+                isSubmitting={isSubmitting}
+                formError={formError}
+                formStatus={formStatus}
+                onStartNewEntryForEmployee={handleStartNewEntryForEmployee}
+                onSetShowManualCorrection={setShowManualCorrection}
+                onSetFormError={setFormError}
+                onSetFormStatus={setFormStatus}
+                onSetEntryFormValues={setEntryFormValues}
+                onEditEntry={handleEditEntry}
+                onSaveEntry={handleSaveEntry}
+                embedded
+              />
+            </AppDrawer>
+          ) : null}
+        </>
       ) : (
         <Panel title="Brak miesięcy w ewidencji">
           <div className="status-stack">

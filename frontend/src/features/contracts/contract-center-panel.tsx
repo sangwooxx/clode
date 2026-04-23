@@ -7,7 +7,7 @@ import type {
   ContractMonthlyRowView,
   ContractPlanComparisonRow,
   ContractRecord,
-  ContractSnapshot
+  ContractSnapshot,
 } from "@/features/contracts/types";
 
 const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = [
@@ -16,57 +16,57 @@ const monthlyBreakdownColumns: Array<DataTableColumn<ContractMonthlyRowView>> = 
     header: "Lp.",
     className: "contracts-monthly__ordinal",
     sortable: false,
-    render: (_row, index) => <span className="data-table__text">{index + 1}</span>
+    render: (_row, index) => <span className="data-table__text">{index + 1}</span>,
   },
   {
     key: "month_label",
     header: "Miesiąc prac",
     className: "contracts-monthly__month",
     sortValue: (row) => row.month_key,
-    render: (row) => <span className="data-table__primary">{row.month_label}</span>
+    render: (row) => <span className="data-table__primary">{row.month_label}</span>,
   },
   {
     key: "revenue_total",
     header: "Sprzedaż",
     className: "data-table__numeric contracts-monthly__revenue",
-    render: (row) => row.revenue_total
+    render: (row) => row.revenue_total,
   },
   {
     key: "invoice_cost_total",
     header: "Koszt fakturowy",
     className: "data-table__numeric contracts-monthly__invoice-cost",
-    render: (row) => row.invoice_cost_total
+    render: (row) => row.invoice_cost_total,
   },
   {
     key: "labor_cost_total",
     header: "Koszt pracy",
     className: "data-table__numeric contracts-monthly__labor-cost",
-    render: (row) => row.labor_cost_total
+    render: (row) => row.labor_cost_total,
   },
   {
     key: "cost_total",
     header: "Łączny koszt",
     className: "data-table__numeric contracts-monthly__total-cost",
-    render: (row) => row.cost_total
+    render: (row) => row.cost_total,
   },
   {
     key: "margin",
     header: "Marża",
     className: "data-table__numeric contracts-monthly__margin",
-    render: (row) => row.margin
+    render: (row) => row.margin,
   },
   {
     key: "labor_hours_total",
     header: "Godziny",
     className: "data-table__numeric contracts-monthly__hours",
-    render: (row) => row.labor_hours_total
+    render: (row) => row.labor_hours_total,
   },
   {
     key: "invoice_count",
     header: "Faktury",
     className: "data-table__numeric contracts-monthly__invoice-count",
-    render: (row) => row.invoice_count
-  }
+    render: (row) => row.invoice_count,
+  },
 ];
 
 const planComparisonColumns: Array<DataTableColumn<ContractPlanComparisonRow>> = [
@@ -74,21 +74,21 @@ const planComparisonColumns: Array<DataTableColumn<ContractPlanComparisonRow>> =
     key: "label",
     header: "Pozycja",
     className: "contracts-plan__label",
-    render: (row) => <span className="data-table__primary">{row.label}</span>
+    render: (row) => <span className="data-table__primary">{row.label}</span>,
   },
   {
     key: "planValue",
     header: "Plan",
     className: "data-table__numeric contracts-plan__value",
     sortable: false,
-    render: (row) => row.planValue
+    render: (row) => row.planValue,
   },
   {
     key: "actualValue",
     header: "Wykonanie",
     className: "data-table__numeric contracts-plan__value",
     sortable: false,
-    render: (row) => row.actualValue
+    render: (row) => row.actualValue,
   },
   {
     key: "varianceValue",
@@ -100,8 +100,8 @@ const planComparisonColumns: Array<DataTableColumn<ContractPlanComparisonRow>> =
         <strong className="contracts-variance__value">{row.varianceValue}</strong>
         <span className="contracts-variance__hint">{row.varianceHint}</span>
       </div>
-    )
-  }
+    ),
+  },
 ];
 
 function renderKpiCards(items: ContractKpiItem[]) {
@@ -155,7 +155,7 @@ export function ContractCenterPanel({
   contract,
   snapshot,
   isLoading,
-  errorMessage
+  errorMessage,
 }: {
   contract: ContractRecord | null;
   snapshot: ContractSnapshot | null;
@@ -166,9 +166,7 @@ export function ContractCenterPanel({
     return (
       <div className="contracts-detail contracts-detail--empty-state">
         <div className="contracts-detail__empty">
-          <p className="status-message">
-            Wybierz kontrakt, aby zobaczyć jego sytuację, ryzyka i prognozę.
-          </p>
+          <p className="status-message">Wybierz kontrakt, aby zobaczyć jego sytuację, ryzyka i prognozę.</p>
         </div>
       </div>
     );
@@ -268,9 +266,7 @@ export function ContractCenterPanel({
             {viewModel.controlUpdatedAtLabel ? (
               <p>Ostatnia aktualizacja planu i prognozy: {viewModel.controlUpdatedAtLabel}</p>
             ) : null}
-            {viewModel.controlUpdatedByLabel ? (
-              <p>Aktualizował: {viewModel.controlUpdatedByLabel}</p>
-            ) : null}
+            {viewModel.controlUpdatedByLabel ? <p>Aktualizował: {viewModel.controlUpdatedByLabel}</p> : null}
             {viewModel.controlNote ? <p>Notatka kontrolna: {viewModel.controlNote}</p> : null}
           </div>
         ) : null}

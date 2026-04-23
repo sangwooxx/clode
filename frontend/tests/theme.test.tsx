@@ -24,7 +24,7 @@ vi.mock("next/link", () => ({
   default: ({
     href,
     className,
-    children
+    children,
   }: {
     href: string;
     className?: string;
@@ -33,19 +33,19 @@ vi.mock("next/link", () => ({
     <a href={href} className={className}>
       {children as never}
     </a>
-  )
+  ),
 }));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/contracts",
   useRouter: () => ({
     replace: vi.fn(),
-    refresh: vi.fn()
-  })
+    refresh: vi.fn(),
+  }),
 }));
 
 vi.mock("@/features/navigation/module-nav", () => ({
-  getModuleNavigation: () => [{ href: "/contracts", label: "Kontrakty", shortLabel: "KT" }]
+  getModuleNavigation: () => [{ href: "/contracts", label: "Kontrakty", shortLabel: "KT" }],
 }));
 
 vi.mock("@/lib/auth/auth-context", () => ({
@@ -53,22 +53,22 @@ vi.mock("@/lib/auth/auth-context", () => ({
     user: {
       displayName: "Admin ERP",
       permissions: {},
-      role: "admin"
+      role: "admin",
     },
-    logout: vi.fn()
-  })
+    logout: vi.fn(),
+  }),
 }));
 
 vi.mock("@/lib/auth/permissions", () => ({
-  canAccessView: () => true
+  canAccessView: () => true,
 }));
 
 vi.mock("@/lib/theme/theme-context", () => ({
   useTheme: () => ({
     theme: "dark",
     setTheme: vi.fn(),
-    toggleTheme: vi.fn()
-  })
+    toggleTheme: vi.fn(),
+  }),
 }));
 
 describe("theme support", () => {
@@ -77,16 +77,18 @@ describe("theme support", () => {
     Reflect.deleteProperty(globalThis, "window");
   });
 
-  it("renders the inverse quick action in the app shell for the active theme", () => {
+  it("renders compact shell controls and the brand mark in the header", () => {
     const html = renderToStaticMarkup(
       <AppShell title="Kontrakty">
         <div>Treść modułu</div>
-      </AppShell>
+      </AppShell>,
     );
 
     expect(html).toContain("Motyw jasny");
     expect(html).not.toContain("Motyw ciemny");
     expect(html).toContain("Zwiń menu");
+    expect(html).toContain("app-shell__header-brand");
+    expect(html).not.toContain("app-shell__brand");
   });
 
   it("renders the collapsed rail state when the persisted sidebar preference is collapsed", () => {
@@ -102,11 +104,12 @@ describe("theme support", () => {
     const html = renderToStaticMarkup(
       <AppShell title="Kontrakty">
         <div>Treść modułu</div>
-      </AppShell>
+      </AppShell>,
     );
 
     expect(html).toContain('data-sidebar-collapsed="true"');
     expect(html).toContain("Rozwiń menu");
+    expect(html).toContain('class="app-shell__nav-link app-shell__nav-link--active"');
   });
 
   it("builds a root init script that restores the persisted theme preference", () => {
@@ -121,7 +124,7 @@ describe("theme support", () => {
     const script = getSidebarInitScript();
 
     expect(script).toContain(APP_SHELL_COLLAPSED_STORAGE_KEY);
-    expect(script).toContain("root.dataset.sidebarCollapsed = isCollapsed ? \"true\" : \"false\"");
+    expect(script).toContain('root.dataset.sidebarCollapsed = isCollapsed ? "true" : "false"');
   });
 
   it("applies the selected theme directly on the root element contract", () => {

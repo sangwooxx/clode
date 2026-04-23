@@ -148,7 +148,7 @@ export function SettingsUsersPanel({
         currentUserId,
         onEdit,
       }),
-    [currentUserId, onEdit]
+    [currentUserId, onEdit],
   );
 
   return (
@@ -159,18 +159,10 @@ export function SettingsUsersPanel({
             <ActionButton type="button" variant={filter === "all" ? "primary" : "secondary"} onClick={() => onFilterChange("all")}>
               Wszystkie
             </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "active" ? "primary" : "secondary"}
-              onClick={() => onFilterChange("active")}
-            >
+            <ActionButton type="button" variant={filter === "active" ? "primary" : "secondary"} onClick={() => onFilterChange("active")}>
               Aktywne
             </ActionButton>
-            <ActionButton
-              type="button"
-              variant={filter === "inactive" ? "primary" : "secondary"}
-              onClick={() => onFilterChange("inactive")}
-            >
+            <ActionButton type="button" variant={filter === "inactive" ? "primary" : "secondary"} onClick={() => onFilterChange("inactive")}>
               Nieaktywne
             </ActionButton>
           </div>
