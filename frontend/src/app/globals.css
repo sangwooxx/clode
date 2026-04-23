@@ -228,7 +228,14 @@ textarea {
   align-items: center;
 }
 
-.module-actions .action-button {
+.module-actions .action-button,
+.app-drawer__header-actions .action-button,
+.form-actions .action-button,
+.employees-form__actions .action-button,
+.contracts-form__actions .action-button,
+.vacations-form__actions .action-button,
+.workwear-form__actions .action-button,
+.contracts-control-helper-actions .action-button {
   min-height: 34px;
   padding: 0 12px;
   border-radius: 11px;
@@ -237,34 +244,76 @@ textarea {
   box-shadow: none;
 }
 
-.module-actions .action-button--primary {
+.module-actions .action-button--primary,
+.app-drawer__header-actions .action-button--primary,
+.form-actions .action-button--primary,
+.employees-form__actions .action-button--primary,
+.contracts-form__actions .action-button--primary,
+.vacations-form__actions .action-button--primary,
+.workwear-form__actions .action-button--primary,
+.contracts-control-helper-actions .action-button--primary {
   background: var(--surface-selected);
   border-color: var(--accent-soft);
   color: var(--text);
 }
 
-.module-actions .action-button--primary:hover {
+.module-actions .action-button--primary:hover,
+.app-drawer__header-actions .action-button--primary:hover,
+.form-actions .action-button--primary:hover,
+.employees-form__actions .action-button--primary:hover,
+.contracts-form__actions .action-button--primary:hover,
+.vacations-form__actions .action-button--primary:hover,
+.workwear-form__actions .action-button--primary:hover,
+.contracts-control-helper-actions .action-button--primary:hover {
   background: var(--surface-emphasis);
   border-color: var(--accent);
   color: var(--text);
 }
 
-.module-actions .action-button--secondary {
+.module-actions .action-button--secondary,
+.app-drawer__header-actions .action-button--secondary,
+.form-actions .action-button--secondary,
+.employees-form__actions .action-button--secondary,
+.contracts-form__actions .action-button--secondary,
+.vacations-form__actions .action-button--secondary,
+.workwear-form__actions .action-button--secondary,
+.contracts-control-helper-actions .action-button--secondary {
   background: transparent;
   border-color: var(--line-soft);
   color: var(--text);
 }
 
-.module-actions .action-button--secondary:hover {
+.module-actions .action-button--secondary:hover,
+.app-drawer__header-actions .action-button--secondary:hover,
+.form-actions .action-button--secondary:hover,
+.employees-form__actions .action-button--secondary:hover,
+.contracts-form__actions .action-button--secondary:hover,
+.vacations-form__actions .action-button--secondary:hover,
+.workwear-form__actions .action-button--secondary:hover,
+.contracts-control-helper-actions .action-button--secondary:hover {
   background: var(--surface-hover);
   border-color: var(--line-strong);
 }
 
-.module-actions .action-button--ghost {
+.module-actions .action-button--ghost,
+.app-drawer__header-actions .action-button--ghost,
+.form-actions .action-button--ghost,
+.employees-form__actions .action-button--ghost,
+.contracts-form__actions .action-button--ghost,
+.vacations-form__actions .action-button--ghost,
+.workwear-form__actions .action-button--ghost,
+.contracts-control-helper-actions .action-button--ghost {
   color: var(--text-muted);
 }
 
-.module-actions .action-button--ghost:hover {
+.module-actions .action-button--ghost:hover,
+.app-drawer__header-actions .action-button--ghost:hover,
+.form-actions .action-button--ghost:hover,
+.employees-form__actions .action-button--ghost:hover,
+.contracts-form__actions .action-button--ghost:hover,
+.vacations-form__actions .action-button--ghost:hover,
+.workwear-form__actions .action-button--ghost:hover,
+.contracts-control-helper-actions .action-button--ghost:hover {
   background: var(--surface-hover);
   color: var(--text);
 }
