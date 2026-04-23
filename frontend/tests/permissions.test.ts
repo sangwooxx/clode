@@ -218,4 +218,61 @@ describe("frontend permission model", () => {
       "Operacje",
     ]);
   });
+
+  it("utrzymuje role matrix dla route access expectations", () => {
+    const routeViewMap = {
+      "/dashboard": "dashboardView",
+      "/contracts": "contractsView",
+      "/invoices": "invoicesView",
+      "/employees": "employeesView",
+      "/hours": "hoursView",
+      "/work-cards": "hoursView",
+      "/planning": "planningView",
+      "/vacations": "vacationsView",
+      "/workwear": "workwearView",
+      "/settings": "settingsView",
+    } as const;
+
+    const expectations = [
+      {
+        role: "ksiegowosc",
+        allowed: ["/dashboard", "/contracts", "/invoices", "/hours", "/work-cards"],
+        denied: ["/employees", "/planning", "/vacations", "/workwear", "/settings"],
+      },
+      {
+        role: "kierownik",
+        allowed: [
+          "/dashboard",
+          "/contracts",
+          "/invoices",
+          "/employees",
+          "/hours",
+          "/work-cards",
+          "/planning",
+          "/vacations",
+          "/workwear",
+        ],
+        denied: ["/settings"],
+      },
+      {
+        role: "read-only",
+        allowed: ["/dashboard", "/contracts", "/invoices"],
+        denied: ["/employees", "/hours", "/work-cards", "/planning", "/vacations", "/workwear", "/settings"],
+      },
+    ] as const;
+
+    for (const expectation of expectations) {
+      const user = {
+        role: expectation.role,
+        permissions: normalizePermissions(expectation.role, {}),
+      };
+
+      for (const route of expectation.allowed) {
+        expect(canAccessView(user as never, routeViewMap[route])).toBe(true);
+      }
+      for (const route of expectation.denied) {
+        expect(canAccessView(user as never, routeViewMap[route])).toBe(false);
+      }
+    }
+  });
 });

@@ -1,10 +1,10 @@
 import { ContractsView } from "@/features/contracts";
 import { resolveNextSelectedContractId } from "@/features/contracts/mappers";
 import { fetchContractsServer, fetchContractSnapshotServer } from "@/features/contracts/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function ContractsPage() {
-  await requireServerSession("/contracts");
+  await requireServerViewAccess("/contracts", "contractsView");
 
   let initialError: string | undefined;
   let initialContracts;

@@ -1,6 +1,8 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { fetchBackendJsonServer } from "@/lib/api/server-fetch";
+import { resolveFirstAccessibleAppPath } from "@/lib/auth/access-routes";
+import { canAccessView, type ViewPermissionId } from "@/lib/auth/permissions";
 import {
   toAuthenticatedUser,
   type ApiUserRecord,
@@ -31,6 +33,20 @@ export async function requireServerSession(nextPath: string) {
 
   if (!user) {
     redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  return user;
+}
+
+export async function requireServerViewAccess(nextPath: string, viewId: ViewPermissionId) {
+  const user = await requireServerSession(nextPath);
+
+  if (!canAccessView(user, viewId)) {
+    const fallbackPath = resolveFirstAccessibleAppPath(user);
+    if (fallbackPath === "/login") {
+      redirect(`/login?next=${encodeURIComponent(nextPath)}`);
+    }
+    redirect(fallbackPath);
   }
 
   return user;

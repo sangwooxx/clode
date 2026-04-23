@@ -1,9 +1,9 @@
 import { WorkwearView } from "@/features/workwear";
 import { fetchWorkwearBootstrapServer } from "@/features/workwear/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function WorkwearPage() {
-  await requireServerSession("/workwear");
+  await requireServerViewAccess("/workwear", "workwearView");
 
   let initialError: string | undefined;
   let initialBootstrap;

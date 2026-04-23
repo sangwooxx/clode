@@ -1,9 +1,9 @@
 import { EmployeesView } from "@/features/employees";
 import { fetchEmployeesBootstrapServer } from "@/features/employees/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function EmployeesPage() {
-  await requireServerSession("/employees");
+  await requireServerViewAccess("/employees", "employeesView");
 
   let initialError: string | undefined;
   let initialBootstrap;

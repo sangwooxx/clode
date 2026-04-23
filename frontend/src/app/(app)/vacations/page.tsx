@@ -1,9 +1,9 @@
 import { VacationsView } from "@/features/vacations";
 import { fetchVacationsBootstrapServer } from "@/features/vacations/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function VacationsPage() {
-  await requireServerSession("/vacations");
+  await requireServerViewAccess("/vacations", "vacationsView");
 
   let initialError: string | undefined;
   let initialBootstrap;

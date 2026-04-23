@@ -1,9 +1,9 @@
 import { HoursView } from "@/features/hours";
 import { fetchHoursBootstrapServer } from "@/features/hours/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function HoursPage() {
-  await requireServerSession("/hours");
+  await requireServerViewAccess("/hours", "hoursView");
 
   let initialError: string | undefined;
   let initialBootstrap;

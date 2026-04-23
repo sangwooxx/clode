@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { resolveFirstAccessibleAppPath } from "../src/lib/auth/access-routes";
 import { buildBackendCookieHeader } from "../src/lib/auth/server-session";
 import { buildLoginRedirectPath } from "../src/lib/auth/login-redirect";
 import {
@@ -134,8 +135,130 @@ describe("normalizeUser", () => {
     });
   });
 
+  it("wyprowadza spójne profile i capabilities dla ról nie-admin", () => {
+    const cases = [
+      {
+        role: "ksiegowosc",
+        expectedProfile: "finance",
+        expectedCapabilities: {
+          "dashboard.view": true,
+          "contracts.view": true,
+          "finance.view": true,
+          "resources.view": false,
+          "operations.view": true,
+          "admin.view": false,
+          "finance.manage": true,
+        },
+      },
+      {
+        role: "kierownik",
+        expectedProfile: "delivery",
+        expectedCapabilities: {
+          "dashboard.view": true,
+          "contracts.view": true,
+          "finance.view": true,
+          "resources.view": true,
+          "operations.view": true,
+          "admin.view": false,
+          "resources.manage": true,
+          "operations.manage": true,
+        },
+      },
+      {
+        role: "read-only",
+        expectedProfile: "viewer",
+        expectedCapabilities: {
+          "dashboard.view": true,
+          "contracts.view": true,
+          "finance.view": true,
+          "resources.view": false,
+          "operations.view": false,
+          "admin.view": false,
+        },
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const normalized = normalizeUser({
+        id: `user-${testCase.role}`,
+        username: testCase.role,
+        name: `User ${testCase.role}`,
+        displayName: `User ${testCase.role}`,
+        email: `${testCase.role}@example.com`,
+        role: testCase.role,
+        status: "active",
+        is_active: true,
+        permissions: {},
+        canApproveVacations: false,
+      });
+
+      expect(normalized?.profile).toBe(testCase.expectedProfile);
+      expect(normalized?.capabilities).toMatchObject(testCase.expectedCapabilities);
+    }
+  });
+
   it("returns null without a username", () => {
     expect(normalizeUser({ name: "Missing username" } as never)).toBeNull();
+  });
+});
+
+describe("resolveFirstAccessibleAppPath", () => {
+  it("zwraca pierwszy dozwolony route dla ról nie-admin", () => {
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "ksiegowosc",
+        permissions: {},
+      })
+    ).toBe("/dashboard");
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "kierownik",
+        permissions: {},
+      })
+    ).toBe("/dashboard");
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "read-only",
+        permissions: {},
+      })
+    ).toBe("/dashboard");
+  });
+
+  it("pomija niedozwolone widoki i znajduje kolejny dostępny route", () => {
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "read-only",
+        permissions: {
+          dashboardView: false,
+          contractsView: true,
+        },
+      })
+    ).toBe("/contracts");
+
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "read-only",
+        permissions: {
+          dashboardView: false,
+          contractsView: false,
+          invoicesView: false,
+          hoursView: true,
+        },
+      })
+    ).toBe("/hours");
+  });
+
+  it("wraca do /login, gdy użytkownik nie ma żadnego dozwolonego route", () => {
+    expect(
+      resolveFirstAccessibleAppPath({
+        role: "read-only",
+        permissions: {
+          dashboardView: false,
+          contractsView: false,
+          invoicesView: false,
+        },
+      })
+    ).toBe("/login");
   });
 });
 

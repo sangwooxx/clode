@@ -1,9 +1,9 @@
 import { PlanningView } from "@/features/planning";
 import { fetchPlanningBootstrapServer } from "@/features/planning/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function PlanningPage() {
-  await requireServerSession("/planning");
+  await requireServerViewAccess("/planning", "planningView");
 
   let initialError: string | undefined;
   let initialBootstrap;

@@ -1,9 +1,9 @@
 import { InvoicesView } from "@/features/invoices";
 import { fetchInvoicesBootstrapServer } from "@/features/invoices/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function InvoicesPage() {
-  await requireServerSession("/invoices");
+  await requireServerViewAccess("/invoices", "invoicesView");
 
   let initialError: string | undefined;
   let initialBootstrap;

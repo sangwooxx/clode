@@ -1,9 +1,9 @@
 import { DashboardView } from "@/features/dashboard";
 import { fetchDashboardSnapshotServer } from "@/features/dashboard/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function DashboardPage() {
-  await requireServerSession("/dashboard");
+  await requireServerViewAccess("/dashboard", "dashboardView");
 
   let initialError: string | undefined;
   let initialSnapshot;

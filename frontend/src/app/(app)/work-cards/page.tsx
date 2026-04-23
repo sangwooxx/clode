@@ -1,9 +1,9 @@
 import { WorkCardView } from "@/features/work-cards";
 import { fetchWorkCardBootstrapServer } from "@/features/work-cards/server";
-import { requireServerSession } from "@/lib/auth/server-auth";
+import { requireServerViewAccess } from "@/lib/auth/server-auth";
 
 export default async function WorkCardsPage() {
-  await requireServerSession("/work-cards");
+  await requireServerViewAccess("/work-cards", "hoursView");
 
   let initialError: string | undefined;
   let initialBootstrap;
