@@ -77,7 +77,7 @@ describe("theme support", () => {
     Reflect.deleteProperty(globalThis, "window");
   });
 
-  it("renders compact shell controls and the brand mark in the header", () => {
+  it("renders compact shell controls and the brand mark in the sidebar", () => {
     const html = renderToStaticMarkup(
       <AppShell title="Kontrakty">
         <div>Treść modułu</div>
@@ -87,8 +87,8 @@ describe("theme support", () => {
     expect(html).toContain("Motyw jasny");
     expect(html).not.toContain("Motyw ciemny");
     expect(html).toContain("Zwiń menu");
-    expect(html).toContain("app-shell__header-brand");
-    expect(html).not.toContain("app-shell__brand");
+    expect(html).toContain("app-shell__sidebar-brand");
+    expect(html).not.toContain("app-shell__header-brand");
   });
 
   it("renders the collapsed rail state when the persisted sidebar preference is collapsed", () => {

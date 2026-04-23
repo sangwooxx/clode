@@ -120,19 +120,7 @@ export function AppShell({
   }
 
   const isRail = !isCompactViewport && isSidebarCollapsed;
-  const sidebarToggleLabel = isCompactViewport
-    ? isMobileNavOpen
-      ? "Zamknij menu główne"
-      : "Otwórz menu główne"
-    : isSidebarCollapsed
-      ? "Rozwiń menu główne"
-      : "Zwiń menu główne";
-
-  const sidebarToggleText = isCompactViewport
-    ? "Menu"
-    : isSidebarCollapsed
-      ? "Rozwiń"
-      : "Zwiń";
+  const sidebarToggleLabel = isMobileNavOpen ? "Zamknij menu główne" : "Otwórz menu główne";
 
   const shellClassName = cn(
     "app-shell",
@@ -242,6 +230,11 @@ export function AppShell({
             </ActionButton>
           </div>
 
+          <BrandMark
+            className="app-shell__sidebar-brand"
+            labelClassName="app-shell__sidebar-brand-mark"
+          />
+
           {canAccessSettings ? (
             <Link
               href="/settings"
@@ -284,24 +277,24 @@ export function AppShell({
       <div className="app-shell__main">
         <header className="app-shell__header">
           <div className="app-shell__header-bar">
-            <ActionButton
-              type="button"
-              variant="secondary"
-              className="app-shell__sidebar-toggle"
-              aria-label={sidebarToggleLabel}
-              onClick={handleSidebarToggle}
-            >
-              <span className="app-shell__sidebar-toggle-icon" aria-hidden="true">
-                {isCompactViewport ? "☰" : isRail ? "»" : "«"}
-              </span>
-              <span className="app-shell__sidebar-toggle-label">{sidebarToggleText}</span>
-            </ActionButton>
+            {isCompactViewport ? (
+              <ActionButton
+                type="button"
+                variant="secondary"
+                className="app-shell__sidebar-toggle"
+                aria-label={sidebarToggleLabel}
+                onClick={handleSidebarToggle}
+              >
+                <span className="app-shell__sidebar-toggle-icon" aria-hidden="true">
+                  ☰
+                </span>
+                <span className="app-shell__sidebar-toggle-label">Menu</span>
+              </ActionButton>
+            ) : null}
 
             <div className="app-shell__title-block">
               {title ? <h1 className="app-shell__title">{title}</h1> : null}
             </div>
-
-            <BrandMark className="app-shell__header-brand" labelClassName="app-shell__header-brand-mark" />
           </div>
         </header>
 

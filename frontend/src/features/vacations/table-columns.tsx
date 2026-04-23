@@ -31,7 +31,7 @@ export function buildVacationEmployeeTableColumns(): Array<DataTableColumn<Vacat
     {
       key: "employee",
       header: "Pracownik",
-      className: "vacations-col-employee",
+      className: "vacations-col-employee-summary",
       sortValue: (row) =>
         `${formatEmployeeDisplayName(row.employee, row.employee.name)} ${row.employee.worker_code}`,
       render: (row) => (
@@ -49,7 +49,7 @@ export function buildVacationEmployeeTableColumns(): Array<DataTableColumn<Vacat
     {
       key: "status",
       header: "Status i wpisy",
-      className: "vacations-col-status",
+      className: "vacations-col-status-summary",
       sortValue: (row) => `${row.employee.status} ${row.stats.requests_count}`,
       render: (row) => (
         <div className="data-table__stack">

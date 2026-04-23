@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export function SectionHeader({
-  eyebrow,
+  eyebrow: _eyebrow,
   title,
   description,
   actions,
@@ -14,7 +14,6 @@ export function SectionHeader({
   return (
     <div className="section-header">
       <div>
-        {eyebrow ? <p className="section-header__eyebrow">{eyebrow}</p> : null}
         <h1 className="section-header__title">{title}</h1>
         {description ? <p className="section-header__description">{description}</p> : null}
       </div>
