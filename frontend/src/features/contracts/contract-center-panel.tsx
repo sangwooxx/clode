@@ -130,7 +130,7 @@ function renderAlertItems(alerts: ContractAlertView[]) {
   if (!alerts.length) {
     return (
       <div className="contracts-empty-note">
-        <p className="status-message">Na teraz kontrakt nie pokazuje aktywnych ryzyk wymagających reakcji.</p>
+        <p className="status-message">Na teraz kontrakt nie pokazuje ryzyk wymagających reakcji.</p>
       </div>
     );
   }
@@ -138,10 +138,7 @@ function renderAlertItems(alerts: ContractAlertView[]) {
   return (
     <div className="contracts-alert-list">
       {alerts.map((alert) => (
-        <article
-          key={alert.id}
-          className={`contracts-alert contracts-alert--${alert.level}`}
-        >
+        <article key={alert.id} className={`contracts-alert contracts-alert--${alert.level}`}>
           <div className="contracts-alert__header">
             <strong>{alert.title}</strong>
             <span className="contracts-alert__level">{formatAlertLevel(alert.level)}</span>
@@ -169,7 +166,9 @@ export function ContractCenterPanel({
     return (
       <div className="contracts-detail contracts-detail--empty-state">
         <div className="contracts-detail__empty">
-          <p className="status-message">Wybierz kontrakt, aby zobaczyć warstwę kontroli kontraktu.</p>
+          <p className="status-message">
+            Wybierz kontrakt, aby zobaczyć jego sytuację, ryzyka i prognozę.
+          </p>
         </div>
       </div>
     );
@@ -178,7 +177,7 @@ export function ContractCenterPanel({
   if (isLoading) {
     return (
       <div className="contracts-detail">
-        <p className="status-message">Ładowanie kontroli kontraktu...</p>
+        <p className="status-message">Ładowanie obrazu kontraktu...</p>
       </div>
     );
   }
@@ -220,7 +219,6 @@ export function ContractCenterPanel({
             ))}
           </div>
         ) : null}
-        {renderKpiCards(viewModel.heroKpiItems)}
         <div className="contracts-header-details">
           {viewModel.headerDetails.map((item) => (
             <div key={item.id} className="summary-strip">
@@ -231,18 +229,12 @@ export function ContractCenterPanel({
             </div>
           ))}
         </div>
-        <div className="contracts-section-heading contracts-section-heading--subsection">
-          <h4 className="contracts-detail__subsection-title">Świeżość danych</h4>
-        </div>
-        <div className="contracts-freshness-grid">
-          {viewModel.freshnessItems.map((item) => (
-            <article key={item.id} className="contracts-freshness-card">
-              <p className="contracts-freshness-card__label">{item.label}</p>
-              <p className="contracts-freshness-card__value">{item.value}</p>
-              {item.hint ? <p className="contracts-freshness-card__hint">{item.hint}</p> : null}
-            </article>
-          ))}
-        </div>
+        {renderKpiCards(viewModel.heroKpiItems)}
+      </section>
+
+      <section className="contracts-detail__section">
+        <h3 className="contracts-detail__section-title">Alerty i ryzyka operacyjne</h3>
+        {renderAlertItems(viewModel.alerts)}
       </section>
 
       <section className="contracts-detail__section">
@@ -264,7 +256,7 @@ export function ContractCenterPanel({
       </section>
 
       <section className="contracts-detail__section">
-        <h3 className="contracts-detail__section-title">Forecast końcowy</h3>
+        <h3 className="contracts-detail__section-title">Prognoza końcowa</h3>
         <p className="contracts-section-summary">{viewModel.forecastSummary}</p>
         <div className="contracts-forecast-grid">
           {viewModel.forecastItems.map((item) => (
@@ -274,7 +266,7 @@ export function ContractCenterPanel({
         {viewModel.controlUpdatedAtLabel || viewModel.controlNote ? (
           <div className="contracts-control-note">
             {viewModel.controlUpdatedAtLabel ? (
-              <p>Ostatnia aktualizacja kontroli: {viewModel.controlUpdatedAtLabel}</p>
+              <p>Ostatnia aktualizacja planu i prognozy: {viewModel.controlUpdatedAtLabel}</p>
             ) : null}
             {viewModel.controlUpdatedByLabel ? (
               <p>Aktualizował: {viewModel.controlUpdatedByLabel}</p>
@@ -285,11 +277,6 @@ export function ContractCenterPanel({
       </section>
 
       <section className="contracts-detail__section">
-        <h3 className="contracts-detail__section-title">Alerty i ryzyka operacyjne</h3>
-        {renderAlertItems(viewModel.alerts)}
-      </section>
-
-      <section className="contracts-detail__section">
         <h3 className="contracts-detail__section-title">Aktywność operacyjna</h3>
         <div className="contracts-detail__stats">
           {viewModel.activityItems.map((item) => (
@@ -297,6 +284,19 @@ export function ContractCenterPanel({
           ))}
         </div>
         <p className="contracts-detail__status">{viewModel.operationalStatus}</p>
+      </section>
+
+      <section className="contracts-detail__section">
+        <h3 className="contracts-detail__section-title">Aktualność danych</h3>
+        <div className="contracts-freshness-grid">
+          {viewModel.freshnessItems.map((item) => (
+            <article key={item.id} className="contracts-freshness-card">
+              <p className="contracts-freshness-card__label">{item.label}</p>
+              <p className="contracts-freshness-card__value">{item.value}</p>
+              {item.hint ? <p className="contracts-freshness-card__hint">{item.hint}</p> : null}
+            </article>
+          ))}
+        </div>
       </section>
 
       <section className="contracts-detail__section">

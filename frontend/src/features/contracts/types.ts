@@ -235,6 +235,13 @@ export type ContractActivityItem = {
   value: string;
 };
 
+export type ContractControlSummaryItem = {
+  id: string;
+  label: string;
+  value: string;
+  hint?: string;
+};
+
 export type ContractAlertView = {
   id: string;
   level: ContractAlertLevel;

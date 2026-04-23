@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { mapContractCenterViewModel, resolveNextSelectedContractId } from "@/features/contracts/mappers";
+import {
+  copyPlanToForecastValues,
+  mapContractCenterViewModel,
+  resolveNextSelectedContractId,
+  toContractControlFormValues,
+  useActualCostsAsStartingPoint,
+  useContractValueAsPlannedRevenue
+} from "@/features/contracts/mappers";
 import type { ContractRecord, ContractSnapshot } from "@/features/contracts/types";
 
 function createContract(overrides: Partial<ContractRecord> = {}): ContractRecord {
@@ -149,10 +156,10 @@ describe("contracts mappers", () => {
     ]);
     expect(viewModel.freshnessItems.map((item) => item.label)).toEqual([
       "Ostatnia aktywność finansowa",
-      "Ostatnia aktywność operacyjna",
+      "Ostatni sygnał operacyjny",
       "Ostatnia faktura",
       "Ostatni miesiąc czasu pracy",
-      "Aktualizacja kontroli"
+      "Ostatnia aktualizacja planu i prognozy"
     ]);
     expect(viewModel.planComparisonRows[0]).toMatchObject({
       label: "Sprzedaż",
@@ -164,7 +171,9 @@ describe("contracts mappers", () => {
       varianceTone: "positive",
       varianceHint: "Koszt poniżej planu"
     });
-    expect(viewModel.forecastSummary).toContain("ręcznie utrzymywanych wartościach kontroli kontraktu");
+    expect(viewModel.forecastSummary).toContain(
+      "ręcznie utrzymywanych danych planu i prognozy"
+    );
     expect(viewModel.controlUpdatedByLabel).toBe("Admin ERP");
     expect(viewModel.controlNote).toBe("Kontrola kwartalna");
   });
@@ -175,5 +184,66 @@ describe("contracts mappers", () => {
 
     expect(resolveNextSelectedContractId([archived, active], null)).toBe("c-active");
     expect(resolveNextSelectedContractId([archived, active], "c-arch", "c-active")).toBe("c-active");
+  });
+
+  it("prefills plan and forecast from contract value and current actuals when manual values are missing", () => {
+    const values = toContractControlFormValues(
+      createSnapshot({
+        control: {
+          contract_id: "c-1",
+          planned_revenue_total: null,
+          planned_invoice_cost_total: null,
+          planned_labor_cost_total: null,
+          forecast_revenue_total: null,
+          forecast_invoice_cost_total: null,
+          forecast_labor_cost_total: null,
+          note: "",
+          updated_at: "",
+          updated_by: ""
+        }
+      })
+    );
+
+    expect(values).toMatchObject({
+      planned_revenue_total: "100000",
+      planned_invoice_cost_total: "12000",
+      planned_labor_cost_total: "8000",
+      forecast_revenue_total: "100000",
+      forecast_invoice_cost_total: "12000",
+      forecast_labor_cost_total: "8000"
+    });
+  });
+
+  it("applies helper actions for plan and forecast without duplicating business logic in the UI", () => {
+    const snapshot = createSnapshot();
+    const baseValues = {
+      planned_revenue_total: "",
+      planned_invoice_cost_total: "",
+      planned_labor_cost_total: "",
+      forecast_revenue_total: "",
+      forecast_invoice_cost_total: "",
+      forecast_labor_cost_total: "",
+      note: ""
+    };
+
+    expect(useContractValueAsPlannedRevenue(baseValues, snapshot).planned_revenue_total).toBe(
+      "100000"
+    );
+    expect(copyPlanToForecastValues({
+      ...baseValues,
+      planned_revenue_total: "110000",
+      planned_invoice_cost_total: "35000",
+      planned_labor_cost_total: "28000"
+    })).toMatchObject({
+      forecast_revenue_total: "110000",
+      forecast_invoice_cost_total: "35000",
+      forecast_labor_cost_total: "28000"
+    });
+    expect(useActualCostsAsStartingPoint(baseValues, snapshot)).toMatchObject({
+      planned_invoice_cost_total: "12000",
+      planned_labor_cost_total: "8000",
+      forecast_invoice_cost_total: "12000",
+      forecast_labor_cost_total: "8000"
+    });
   });
 });

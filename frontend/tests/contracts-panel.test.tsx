@@ -149,13 +149,19 @@ describe("contract center panel", () => {
     );
 
     expect(html).toContain("Sytuacja kontraktu");
-    expect(html).toContain("Świeżość danych");
+    expect(html).toContain("Aktualność danych");
     expect(html).toContain("Plan vs wykonanie");
-    expect(html).toContain("Forecast końcowy");
+    expect(html).toContain("Prognoza końcowa");
     expect(html).toContain("Alerty i ryzyka operacyjne");
     expect(html).toContain("Aktualizował:");
     expect(html).toContain("Admin ERP");
     expect(html).toContain("Brak forecastu kosztów kontraktu.");
+    expect(html.indexOf("Alerty i ryzyka operacyjne")).toBeLessThan(
+      html.indexOf("Plan vs wykonanie")
+    );
+    expect(html.indexOf("Aktywność operacyjna")).toBeLessThan(
+      html.indexOf("Aktualność danych")
+    );
   });
 
   it("renders a business empty state when contract has no financial or operational data", () => {

@@ -16,6 +16,7 @@ import {
 import type {
   ContractCenterViewModel,
   ContractControlFormValues,
+  ContractControlSummaryItem,
   ContractFormValues,
   ContractRecord,
   ContractSnapshot,
@@ -46,6 +47,24 @@ function buildVariancePresentation(
   return numeric > 0
     ? { tone: "positive" as const, hint: "Wynik lepszy od planu" }
     : { tone: "negative" as const, hint: "Wynik poniżej planu" };
+}
+
+function toInputNumber(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) {
+    return "";
+  }
+  const normalized = Number(value);
+  if (Math.abs(normalized) < 0.005) {
+    return "";
+  }
+  return Number.isInteger(normalized) ? String(normalized) : String(Number(normalized.toFixed(2)));
+}
+
+function resolvePositiveValue(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value)) {
+    return null;
+  }
+  return Number(value) > 0 ? Number(value) : null;
 }
 
 export function mapContractsViewModel(contracts: ContractRecord[]): ContractsViewModel {
@@ -93,21 +112,105 @@ export function toContractFormValues(contract?: ContractRecord | null): Contract
 
 export function toContractControlFormValues(snapshot?: ContractSnapshot | null): ContractControlFormValues {
   const control = snapshot?.control;
+  const plannedRevenue =
+    control?.planned_revenue_total ?? resolvePositiveValue(snapshot?.contract.contract_value);
+  const plannedInvoiceCost =
+    control?.planned_invoice_cost_total ?? resolvePositiveValue(snapshot?.actual.invoice_cost_total);
+  const plannedLaborCost =
+    control?.planned_labor_cost_total ?? resolvePositiveValue(snapshot?.actual.labor_cost_total);
+  const forecastRevenue =
+    control?.forecast_revenue_total ?? plannedRevenue;
+  const forecastInvoiceCost =
+    control?.forecast_invoice_cost_total ?? control?.planned_invoice_cost_total ?? plannedInvoiceCost;
+  const forecastLaborCost =
+    control?.forecast_labor_cost_total ?? control?.planned_labor_cost_total ?? plannedLaborCost;
+
   return {
-    planned_revenue_total:
-      control?.planned_revenue_total != null ? String(control.planned_revenue_total) : "",
-    planned_invoice_cost_total:
-      control?.planned_invoice_cost_total != null ? String(control.planned_invoice_cost_total) : "",
-    planned_labor_cost_total:
-      control?.planned_labor_cost_total != null ? String(control.planned_labor_cost_total) : "",
-    forecast_revenue_total:
-      control?.forecast_revenue_total != null ? String(control.forecast_revenue_total) : "",
-    forecast_invoice_cost_total:
-      control?.forecast_invoice_cost_total != null ? String(control.forecast_invoice_cost_total) : "",
-    forecast_labor_cost_total:
-      control?.forecast_labor_cost_total != null ? String(control.forecast_labor_cost_total) : "",
+    planned_revenue_total: toInputNumber(plannedRevenue),
+    planned_invoice_cost_total: toInputNumber(plannedInvoiceCost),
+    planned_labor_cost_total: toInputNumber(plannedLaborCost),
+    forecast_revenue_total: toInputNumber(forecastRevenue),
+    forecast_invoice_cost_total: toInputNumber(forecastInvoiceCost),
+    forecast_labor_cost_total: toInputNumber(forecastLaborCost),
     note: control?.note ?? ""
   };
+}
+
+export function useContractValueAsPlannedRevenue(
+  values: ContractControlFormValues,
+  snapshot?: ContractSnapshot | null
+): ContractControlFormValues {
+  const contractValue = toInputNumber(resolvePositiveValue(snapshot?.contract.contract_value));
+  if (!contractValue) {
+    return values;
+  }
+  return {
+    ...values,
+    planned_revenue_total: contractValue
+  };
+}
+
+export function copyPlanToForecastValues(values: ContractControlFormValues): ContractControlFormValues {
+  return {
+    ...values,
+    forecast_revenue_total: values.planned_revenue_total,
+    forecast_invoice_cost_total: values.planned_invoice_cost_total,
+    forecast_labor_cost_total: values.planned_labor_cost_total
+  };
+}
+
+export function useActualCostsAsStartingPoint(
+  values: ContractControlFormValues,
+  snapshot?: ContractSnapshot | null
+): ContractControlFormValues {
+  const actualInvoiceCost = toInputNumber(resolvePositiveValue(snapshot?.actual.invoice_cost_total));
+  const actualLaborCost = toInputNumber(resolvePositiveValue(snapshot?.actual.labor_cost_total));
+
+  return {
+    ...values,
+    planned_invoice_cost_total: actualInvoiceCost,
+    planned_labor_cost_total: actualLaborCost,
+    forecast_invoice_cost_total: actualInvoiceCost,
+    forecast_labor_cost_total: actualLaborCost
+  };
+}
+
+export function mapContractControlSummaryItems(
+  snapshot?: ContractSnapshot | null
+): ContractControlSummaryItem[] {
+  if (!snapshot) {
+    return [];
+  }
+
+  return [
+    {
+      id: "actual_revenue",
+      label: "Sprzedaż aktualna",
+      value: formatMoney(snapshot.actual.revenue_total)
+    },
+    {
+      id: "actual_total_cost",
+      label: "Koszt aktualny",
+      value: formatMoney(snapshot.actual.total_cost)
+    },
+    {
+      id: "actual_margin",
+      label: "Marża aktualna",
+      value: formatMoney(snapshot.actual.margin)
+    },
+    {
+      id: "planned_margin",
+      label: "Marża planowana",
+      value: snapshot.plan.is_configured ? formatMoney(snapshot.plan.margin) : "Brak pełnego planu"
+    },
+    {
+      id: "forecast_margin",
+      label: "Marża prognozowana",
+      value: snapshot.forecast.is_configured
+        ? formatMoney(snapshot.forecast.margin)
+        : "Brak pełnej prognozy"
+    }
+  ];
 }
 
 export function resolveNextSelectedContractId(
@@ -131,9 +234,9 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
   const { activity, contract, control, forecast, freshness, health, plan, actual, variance } = snapshot;
   const forecastRevenueSourceLabel =
     forecast.revenue_source === "manual"
-      ? "ręcznie utrzymywanym przychodzie"
+      ? "ręcznie ustawionym przychodzie"
       : forecast.revenue_source === "planned_revenue"
-        ? "planowanym przychodzie kontrolnym"
+        ? "planie przychodu"
         : forecast.revenue_source === "contract_value"
           ? "wartości kontraktu"
           : "dostępnych danych";
@@ -211,7 +314,7 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       },
       {
         id: "last_operational",
-        label: "Ostatnia aktywność operacyjna",
+        label: "Ostatni sygnał operacyjny",
         value: formatDate(freshness.last_operational_activity_at),
         hint: formatStaleness(freshness.days_since_operational_activity)
       },
@@ -227,9 +330,9 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       },
       {
         id: "control_updated_at",
-        label: "Aktualizacja kontroli",
+        label: "Ostatnia aktualizacja planu i prognozy",
         value: control.updated_at ? formatDateTime(control.updated_at) : "Brak aktualizacji",
-        hint: control.updated_by ? `Ostatnio aktualizował: ${control.updated_by}` : undefined
+        hint: control.updated_by ? `Aktualizował: ${control.updated_by}` : undefined
       }
     ],
     planComparisonRows: [
@@ -301,40 +404,40 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
     forecastItems: [
       {
         id: "forecast_revenue",
-        label: "Forecast sprzedaży",
-        value: forecast.is_configured ? formatMoney(forecast.revenue_total) : "brak forecastu"
+        label: "Prognoza sprzedaży",
+        value: forecast.is_configured ? formatMoney(forecast.revenue_total) : "brak prognozy"
       },
       {
         id: "forecast_invoice_cost",
-        label: "Forecast kosztu fakturowego",
-        value: forecast.is_configured ? formatMoney(forecast.invoice_cost_total) : "brak forecastu"
+        label: "Prognoza kosztu fakturowego",
+        value: forecast.is_configured ? formatMoney(forecast.invoice_cost_total) : "brak prognozy"
       },
       {
         id: "forecast_labor_cost",
-        label: "Forecast kosztu pracy",
-        value: forecast.is_configured ? formatMoney(forecast.labor_cost_total) : "brak forecastu"
+        label: "Prognoza kosztu pracy",
+        value: forecast.is_configured ? formatMoney(forecast.labor_cost_total) : "brak prognozy"
       },
       {
         id: "forecast_total_cost",
-        label: "Forecast łącznego kosztu",
-        value: forecast.is_configured ? formatMoney(forecast.total_cost) : "brak forecastu"
+        label: "Prognoza łącznego kosztu",
+        value: forecast.is_configured ? formatMoney(forecast.total_cost) : "brak prognozy"
       },
       {
         id: "forecast_margin",
-        label: "Forecast marży",
-        value: forecast.is_configured ? formatMoney(forecast.margin) : "brak forecastu"
+        label: "Prognoza marży",
+        value: forecast.is_configured ? formatMoney(forecast.margin) : "brak prognozy"
       },
       {
         id: "forecast_margin_percent",
-        label: "Forecast marży %",
+        label: "Prognoza marży %",
         value: forecast.is_configured
           ? formatPercent(forecast.margin_percent)
-          : "brak forecastu"
+          : "brak prognozy"
       }
     ],
     forecastSummary: forecast.is_configured
-      ? `Forecast końcowy opiera się na ręcznie utrzymywanych wartościach kontroli kontraktu. Przychód bazuje na ${forecastRevenueSourceLabel}.`
-      : "Kontrakt nie ma jeszcze kompletnego forecastu końcowego. Uzupełnij ręczne wartości w panelu Plan i forecast.",
+      ? `Prognoza końcowa opiera się na ręcznie utrzymywanych danych planu i prognozy. Przychód bazuje na ${forecastRevenueSourceLabel}.`
+      : "Kontrakt nie ma jeszcze kompletnej prognozy końcowej. Uzupełnij dane w panelu Plan i prognoza.",
     controlNote: control.note ? control.note : null,
     controlUpdatedAtLabel: control.updated_at ? formatDateTime(control.updated_at) : null,
     controlUpdatedByLabel: control.updated_by ? control.updated_by : null,
@@ -354,7 +457,7 @@ export function mapContractCenterViewModel(snapshot: ContractSnapshot): Contract
       },
       {
         id: "planning_assignment_count",
-        label: "Przypisania planistyczne",
+        label: "Przypisania w planie",
         value: formatInteger(activity.planning_assignment_count)
       },
       {
