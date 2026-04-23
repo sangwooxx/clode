@@ -502,7 +502,7 @@ export function ContractsView({
           <Panel title="Wybierz kontrakt">
             <div className="contracts-picker__list">
               {filteredContracts.length ? (
-                filteredContracts.map((contract) => {
+                filteredContracts.map((contract, index) => {
                   const isActive = contract.id === selectedContractId;
                   return (
                     <button
@@ -519,9 +519,14 @@ export function ContractsView({
                       }}
                     >
                       <div className="contracts-picker__item-top">
-                        <span className="contracts-picker__number">
-                          {contract.contract_number || "Bez numeru"}
-                        </span>
+                        <div className="contracts-picker__identity">
+                          <span className="contracts-picker__order">
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className="contracts-picker__number">
+                            {contract.contract_number || "Bez numeru"}
+                          </span>
+                        </div>
                         <span className={`contracts-chip contracts-chip--status-${contract.status}`}>
                           {formatStatus(contract.status)}
                         </span>

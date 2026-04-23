@@ -133,6 +133,8 @@ describe("contracts view", () => {
     );
 
     expect(html).toContain('data-testid="contracts-picker"');
+    expect(html).toContain("contracts-picker__order");
+    expect(html).toContain(">01<");
     expect(html).toContain("Budowa hali");
     expect(html).toContain("Plan i prognoza");
     expect(html).toContain("Edytuj dane kontraktu");
