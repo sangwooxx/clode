@@ -9,37 +9,98 @@ import { getLoginStatusMessage } from "../src/lib/auth/login-status";
 import { normalizeUser } from "../src/lib/api/auth";
 
 describe("normalizeUser", () => {
-  it("normalizes legacy and camelCase user payloads", () => {
-    expect(
-      normalizeUser({
-        id: "user-1",
-        username: "maria",
-        name: "Maria Kowalska",
-        displayName: "Maria K.",
-        email: "maria@example.com",
-        role: "admin",
-        status: "inactive",
-        is_active: false,
-        permissions: { invoices: true },
-        canApproveVacations: true,
-        created_at: "2026-04-01T10:00:00Z",
-        updated_at: "2026-04-02T10:00:00Z",
-        last_login_at: "2026-04-03T10:00:00Z",
-      })
-    ).toEqual({
+  it("keeps backend-provided profile, capabilities and scope", () => {
+    const normalized = normalizeUser({
+      id: "user-1",
+      username: "maria",
+      name: "Maria Kowalska",
+      displayName: "Maria K.",
+      email: "maria@example.com",
+      role: "read-only",
+      status: "inactive",
+      is_active: false,
+      permissions: { invoicesView: true },
+      canApproveVacations: false,
+      profile: "delivery",
+      capabilities: {
+        "dashboard.view": true,
+        "contracts.view": false,
+        "finance.view": true,
+        "resources.view": true,
+        "operations.view": false,
+        "admin.view": false,
+      },
+      scope: {
+        contracts: {
+          mode: "all",
+        },
+      },
+      created_at: "2026-04-01T10:00:00Z",
+      updated_at: "2026-04-02T10:00:00Z",
+      last_login_at: "2026-04-03T10:00:00Z",
+    });
+
+    expect(normalized).toMatchObject({
       id: "user-1",
       username: "maria",
       displayName: "Maria K.",
       name: "Maria Kowalska",
       email: "maria@example.com",
-      role: "admin",
+      role: "read-only",
       status: "inactive",
       isActive: false,
-      permissions: { invoices: true },
-      canApproveVacations: true,
+      permissions: { invoicesView: true },
+      canApproveVacations: false,
+      profile: "delivery",
+      scope: {
+        contracts: {
+          mode: "all",
+        },
+      },
       createdAt: "2026-04-01T10:00:00Z",
       updatedAt: "2026-04-02T10:00:00Z",
       lastLoginAt: "2026-04-03T10:00:00Z",
+    });
+    expect(normalized?.capabilities).toMatchObject({
+      "dashboard.view": true,
+      "finance.view": true,
+      "resources.view": true,
+      "operations.view": false,
+    });
+  });
+
+  it("derives profile, capabilities and default scope from legacy payloads", () => {
+    const normalized = normalizeUser({
+      id: "user-2",
+      username: "ania",
+      name: "Anna Test",
+      displayName: "Anna Test",
+      email: "anna@example.com",
+      role: "kierownik",
+      status: "active",
+      is_active: true,
+      permissions: {
+        dashboardView: true,
+        contractsView: true,
+        invoicesView: false,
+        employeesView: false,
+        workwearView: true,
+        hoursView: false,
+        planningView: true,
+        vacationsView: false,
+      },
+      canApproveVacations: false,
+    });
+
+    expect(normalized?.profile).toBe("delivery");
+    expect(normalized?.scope).toEqual({ contracts: { mode: "all" } });
+    expect(normalized?.capabilities).toMatchObject({
+      "dashboard.view": true,
+      "contracts.view": true,
+      "finance.view": false,
+      "resources.view": true,
+      "operations.view": true,
+      "vacations.approve": false,
     });
   });
 

@@ -29,6 +29,28 @@ MANAGE_IDS = (
 
 PERMISSION_IDS = VIEW_IDS + MANAGE_IDS
 
+PROFILE_IDS = (
+    "admin",
+    "finance",
+    "delivery",
+    "viewer",
+)
+
+CAPABILITY_IDS = (
+    "dashboard.view",
+    "contracts.view",
+    "finance.view",
+    "resources.view",
+    "operations.view",
+    "admin.view",
+    "contracts.manage",
+    "finance.manage",
+    "resources.manage",
+    "operations.manage",
+    "admin.manage",
+    "vacations.approve",
+)
+
 VIEW_TO_MANAGE = {
     "contractsView": "contractsManage",
     "hoursView": "hoursManage",
@@ -115,6 +137,13 @@ ROLE_DEFAULT_PERMISSIONS = {
     },
 }
 
+PROFILE_BY_ROLE = {
+    "admin": "admin",
+    "ksiegowosc": "finance",
+    "kierownik": "delivery",
+    "read-only": "viewer",
+}
+
 
 def _canonicalize_role_key(role: str | None) -> str:
     normalized = unicodedata.normalize("NFKD", str(role or "").strip().lower())
@@ -132,6 +161,60 @@ def default_permissions_for_role(role: str | None) -> dict[str, bool]:
     normalized = {permission_id: bool(defaults.get(permission_id, False)) for permission_id in PERMISSION_IDS}
     _promote_manage_permissions(normalized)
     return normalized
+
+
+def derive_profile(role: str | None) -> str:
+    return PROFILE_BY_ROLE.get(normalize_role(role), "viewer")
+
+
+def derive_capabilities(
+    role: str | None,
+    explicit_permissions: dict[str, Any] | None = None,
+    *,
+    can_approve_vacations: bool = False,
+) -> dict[str, bool]:
+    canonical_role = normalize_role(role)
+    permissions = effective_permissions(canonical_role, explicit_permissions)
+    capabilities = {capability_id: False for capability_id in CAPABILITY_IDS}
+
+    capabilities["dashboard.view"] = bool(permissions.get("dashboardView"))
+    capabilities["contracts.view"] = bool(permissions.get("contractsView"))
+    capabilities["finance.view"] = bool(permissions.get("invoicesView"))
+    capabilities["resources.view"] = _any_permission(permissions, ("employeesView", "workwearView"))
+    capabilities["operations.view"] = _any_permission(
+        permissions,
+        ("hoursView", "planningView", "vacationsView"),
+    )
+    capabilities["admin.view"] = bool(permissions.get("settingsView"))
+
+    capabilities["contracts.manage"] = bool(permissions.get("contractsManage"))
+    capabilities["finance.manage"] = bool(permissions.get("invoicesManage"))
+    capabilities["resources.manage"] = _any_permission(
+        permissions,
+        ("employeesManage", "workwearManage"),
+    )
+    capabilities["operations.manage"] = _any_permission(
+        permissions,
+        ("hoursManage", "planningManage", "vacationsManage"),
+    )
+    capabilities["admin.manage"] = bool(permissions.get("settingsManage"))
+    capabilities["vacations.approve"] = bool(can_approve_vacations or canonical_role == "admin")
+
+    return capabilities
+
+
+def derive_scope(scope: dict[str, Any] | None = None) -> dict[str, Any]:
+    contracts_scope = scope.get("contracts") if isinstance(scope, dict) else None
+    mode = "all"
+    if isinstance(contracts_scope, dict):
+        candidate_mode = str(contracts_scope.get("mode") or "").strip()
+        if candidate_mode:
+            mode = candidate_mode
+    return {
+        "contracts": {
+            "mode": mode,
+        }
+    }
 
 
 def effective_permissions(role: str | None, explicit_permissions: dict[str, Any] | None = None) -> dict[str, bool]:
@@ -183,3 +266,7 @@ def _promote_manage_permissions(permissions: dict[str, bool]) -> None:
     for view_id, manage_id in VIEW_TO_MANAGE.items():
         if permissions.get(manage_id):
             permissions[view_id] = True
+
+
+def _any_permission(permissions: dict[str, bool], permission_ids: tuple[str, ...]) -> bool:
+    return any(bool(permissions.get(permission_id)) for permission_id in permission_ids)

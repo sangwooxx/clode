@@ -3,29 +3,86 @@ import { getModuleNavigation } from "../src/features/navigation/module-nav";
 import {
   canAccessView,
   canManageView,
-  normalizeRole,
   normalizePermissions,
+  normalizeRole,
 } from "../src/lib/auth/permissions";
 
 describe("frontend permission model", () => {
-  it("filters module navigation by effective permissions", () => {
+  it("filters grouped navigation from capabilities and child-route visibility", () => {
     const user = {
       role: "read-only",
       permissions: normalizePermissions("read-only", {
         dashboardView: true,
         contractsView: true,
-        invoicesView: true,
-        hoursView: true,
+        invoicesView: false,
+        employeesView: false,
+        workwearView: true,
+        hoursView: false,
+        planningView: false,
+        vacationsView: false,
+        settingsView: true,
       }),
+      capabilities: {
+        "dashboard.view": true,
+        "contracts.view": true,
+        "finance.view": false,
+        "resources.view": true,
+        "operations.view": false,
+        "admin.view": true,
+      },
     };
 
-    expect(getModuleNavigation(user as never).map((item) => item.href)).toEqual([
-      "/dashboard",
-      "/contracts",
-      "/invoices",
-      "/work-cards",
-      "/hours",
+    expect(getModuleNavigation(user as never)).toEqual([
+      {
+        href: "/dashboard",
+        label: "Pulpit",
+        shortLabel: "PU",
+        activeHrefs: ["/dashboard"],
+      },
+      {
+        href: "/contracts",
+        label: "Kontrakty",
+        shortLabel: "KO",
+        activeHrefs: ["/contracts"],
+      },
+      {
+        href: "/workwear",
+        label: "Zasoby",
+        shortLabel: "ZA",
+        activeHrefs: ["/employees", "/workwear"],
+      },
+      {
+        href: "/settings",
+        label: "Administracja",
+        shortLabel: "AD",
+        activeHrefs: ["/settings"],
+      },
     ]);
+  });
+
+  it("uses deterministic first-visible-child ordering inside grouped nav", () => {
+    const user = {
+      role: "kierownik",
+      permissions: normalizePermissions("kierownik", {
+        hoursView: false,
+        hoursManage: false,
+        planningView: true,
+        vacationsView: true,
+        employeesView: true,
+        workwearView: true,
+      }),
+      capabilities: {
+        "resources.view": true,
+        "operations.view": true,
+      },
+    };
+
+    expect(
+      getModuleNavigation(user as never).map((item) => [item.label, item.href])
+    ).toContainEqual(["Zasoby", "/employees"]);
+    expect(
+      getModuleNavigation(user as never).map((item) => [item.label, item.href])
+    ).toContainEqual(["Operacje", "/planning"]);
   });
 
   it("treats manage permissions as the source of truth for write affordances", () => {
@@ -44,20 +101,19 @@ describe("frontend permission model", () => {
     expect(canManageView(user as never, "vacationsView")).toBe(true);
   });
 
-  it("normalizes Polish role names with diacritics before applying defaults", () => {
-    expect(normalizeRole("księgowość")).toBe("ksiegowosc");
-    expect(normalizeRole("użytkownik")).toBe("read-only");
+  it("falls back to grouped navigation derived from legacy role names and permissions", () => {
+    expect(normalizeRole("ksi\u0119gowo\u015b\u0107")).toBe("ksiegowosc");
+    expect(normalizeRole("u\u017cytkownik")).toBe("read-only");
 
     const accountingNavigation = getModuleNavigation({
-      role: "księgowość",
-      permissions: normalizePermissions("księgowość", {}),
+      role: "ksi\u0119gowo\u015b\u0107",
+      permissions: normalizePermissions("ksi\u0119gowo\u015b\u0107", {}),
     } as never).map((item) => item.href);
 
     expect(accountingNavigation).toEqual([
       "/dashboard",
       "/contracts",
       "/invoices",
-      "/work-cards",
       "/hours",
     ]);
   });

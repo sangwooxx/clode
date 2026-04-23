@@ -133,21 +133,7 @@ class UserService:
             "updated_at": timestamp,
             "last_login_at": existing["last_login_at"] if existing else "",
         }
-        contract_payload = {
-            "id": record["id"],
-            "name": record["name"],
-            "displayName": record["name"],
-            "username": record["username"],
-            "email": record["email"],
-            "role": record["role"],
-            "status": record["status"],
-            "is_active": record["is_active"],
-            "permissions": record["permissions"],
-            "canApproveVacations": record["can_approve_vacations"],
-            "created_at": record["created_at"],
-            "updated_at": record["updated_at"],
-            "last_login_at": record["last_login_at"],
-        }
+        contract_payload = build_public_user(record)
         try:
             validate_shared_contract("user", contract_payload)
         except ContractValidationError as error:

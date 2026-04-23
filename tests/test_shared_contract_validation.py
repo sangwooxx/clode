@@ -27,6 +27,40 @@ class SharedContractValidationTestCase(unittest.TestCase):
                 },
             )
 
+    def test_user_contract_accepts_derived_context_fields(self) -> None:
+        payload = validate_shared_contract(
+            "user",
+            {
+                "id": "user-1",
+                "name": "Anna Test",
+                "displayName": "Anna Test",
+                "username": "anna.test",
+                "email": "anna@example.com",
+                "role": "kierownik",
+                "status": "active",
+                "is_active": True,
+                "permissions": {
+                    "employeesView": True,
+                    "employeesManage": True,
+                },
+                "canApproveVacations": True,
+                "profile": "delivery",
+                "capabilities": {
+                    "resources.view": True,
+                    "resources.manage": True,
+                    "vacations.approve": True,
+                },
+                "scope": {
+                    "contracts": {
+                        "mode": "all",
+                    }
+                },
+            },
+        )
+
+        self.assertEqual(payload["profile"], "delivery")
+        self.assertEqual(payload["scope"]["contracts"]["mode"], "all")
+
 
 if __name__ == "__main__":
     unittest.main()

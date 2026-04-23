@@ -17,6 +17,22 @@
       "additionalProperties": { "type": "boolean" }
     },
     "canApproveVacations": { "type": "boolean" },
+    "profile": { "type": "string" },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "scope": {
+      "type": "object",
+      "properties": {
+        "contracts": {
+          "type": "object",
+          "properties": {
+            "mode": { "type": "string" }
+          }
+        }
+      }
+    },
     "created_at": { "type": "string" },
     "updated_at": { "type": "string" },
     "last_login_at": { "type": "string" }

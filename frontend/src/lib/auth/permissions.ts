@@ -1,5 +1,3 @@
-import type { AuthenticatedUser } from "@/lib/api/auth";
-
 export const viewPermissionDefinitions = [
   { id: "dashboardView", label: "Dashboard" },
   { id: "contractsView", label: "Rejestr kontraktow" },
@@ -32,6 +30,10 @@ export type ViewPermissionId = (typeof viewPermissionDefinitions)[number]["id"];
 export type ManagePermissionId = (typeof managePermissionDefinitions)[number]["id"];
 export type PermissionId = (typeof permissionDefinitions)[number]["id"];
 export type PermissionMap = Record<PermissionId, boolean>;
+export type PermissionSubject = {
+  role?: string | null;
+  permissions?: Record<string, boolean> | null;
+};
 
 function canonicalizeRoleKey(role: string | null | undefined) {
   return String(role || "")
@@ -122,14 +124,14 @@ export function normalizePermissions(
 }
 
 export function canAccessView(
-  subject: Pick<AuthenticatedUser, "role" | "permissions"> | null | undefined,
+  subject: PermissionSubject | null | undefined,
   viewId: ViewPermissionId
 ) {
   return Boolean(normalizePermissions(subject?.role, subject?.permissions)[viewId]);
 }
 
 export function canManageView(
-  subject: Pick<AuthenticatedUser, "role" | "permissions"> | null | undefined,
+  subject: PermissionSubject | null | undefined,
   viewId: ViewPermissionId
 ) {
   const manageId = managePermissionByView.get(viewId);

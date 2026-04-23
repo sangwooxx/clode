@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ActionButton } from "@/components/ui/action-button";
 import { BrandMark } from "@/components/ui/brand-mark";
-import { getModuleNavigation } from "@/features/navigation/module-nav";
+import {
+  getModuleNavigation,
+  isModuleNavigationItemActive,
+} from "@/features/navigation/module-nav";
 import { useAuth } from "@/lib/auth/auth-context";
-import { canAccessView } from "@/lib/auth/permissions";
 import { useTheme } from "@/lib/theme/theme-context";
 import {
   applySidebarCollapsedToRoot,
@@ -51,7 +53,6 @@ export function AppShell({
   const [isCompactViewport, setIsCompactViewport] = useState(resolveInitialCompactViewport);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const navigationItems = getModuleNavigation(user);
-  const canAccessSettings = canAccessView(user, "settingsView");
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
@@ -120,7 +121,7 @@ export function AppShell({
   }
 
   const isRail = !isCompactViewport && isSidebarCollapsed;
-  const sidebarToggleLabel = isMobileNavOpen ? "Zamknij menu główne" : "Otwórz menu główne";
+  const sidebarToggleLabel = isMobileNavOpen ? "Zamknij menu glowne" : "Otworz menu glowne";
 
   const shellClassName = cn(
     "app-shell",
@@ -130,16 +131,9 @@ export function AppShell({
   );
 
   const themeButtonLabel = theme === "light" ? "Motyw ciemny" : "Motyw jasny";
-  const themeButtonIcon = theme === "light" ? "☾" : "☀";
-  const collapseButtonLabel = isSidebarCollapsed ? "Rozwiń menu" : "Zwiń menu";
-  const collapseButtonIcon = isSidebarCollapsed ? "»" : "«";
-
-  const settingsLinkLabel = useMemo(() => {
-    if (user?.displayName) {
-      return `Ustawienia i konto: ${user.displayName}`;
-    }
-    return "Ustawienia i konto";
-  }, [user?.displayName]);
+  const themeButtonIcon = theme === "light" ? "D" : "L";
+  const collapseButtonLabel = isSidebarCollapsed ? "Rozwin menu" : "Zwin menu";
+  const collapseButtonIcon = isSidebarCollapsed ? ">>" : "<<";
 
   return (
     <div className={shellClassName} data-sidebar-collapsed={isRail ? "true" : "false"}>
@@ -147,7 +141,7 @@ export function AppShell({
         <button
           type="button"
           className="app-shell__backdrop"
-          aria-label="Zamknij menu główne"
+          aria-label="Zamknij menu glowne"
           onClick={() => setIsMobileNavOpen(false)}
         />
       ) : null}
@@ -159,7 +153,7 @@ export function AppShell({
           isCompactViewport && "app-shell__sidebar--drawer",
           isCompactViewport && isMobileNavOpen && "app-shell__sidebar--open",
         )}
-        aria-label="Menu główne"
+        aria-label="Menu glowne"
       >
         <div className="app-shell__sidebar-top">
           {isCompactViewport ? (
@@ -167,10 +161,10 @@ export function AppShell({
               type="button"
               variant="ghost"
               className="app-shell__sidebar-close"
-              aria-label="Zamknij menu główne"
+              aria-label="Zamknij menu glowne"
               onClick={() => setIsMobileNavOpen(false)}
             >
-              <span aria-hidden="true">×</span>
+              <span aria-hidden="true">X</span>
               <span className="app-shell__sidebar-close-label">Zamknij</span>
             </ActionButton>
           ) : null}
@@ -179,13 +173,13 @@ export function AppShell({
         <nav className="app-shell__nav">
           {navigationItems.map((item) => (
             <Link
-              key={item.href}
+              key={item.label}
               href={item.href}
               aria-label={item.label}
               title={isRail ? item.label : undefined}
               className={cn(
                 "app-shell__nav-link",
-                pathname === item.href && "app-shell__nav-link--active",
+                isModuleNavigationItemActive(pathname, item) && "app-shell__nav-link--active",
               )}
             >
               <span className="app-shell__nav-badge" aria-hidden="true">
@@ -235,26 +229,6 @@ export function AppShell({
             labelClassName="app-shell__sidebar-brand-mark"
           />
 
-          {canAccessSettings ? (
-            <Link
-              href="/settings"
-              aria-label={settingsLinkLabel}
-              title={isRail ? settingsLinkLabel : undefined}
-              className={cn(
-                "app-shell__option-link",
-                pathname === "/settings" && "app-shell__option-link--active",
-              )}
-            >
-              <div className="app-shell__option-copy">
-                <span className="app-shell__option-label">Ustawienia</span>
-                <strong className="app-shell__option-title">{user?.displayName ?? "Konto"}</strong>
-              </div>
-              <span className="app-shell__option-icon" aria-hidden="true">
-                ⚙
-              </span>
-            </Link>
-          ) : null}
-
           <ActionButton
             variant="secondary"
             fullWidth={!isRail}
@@ -265,7 +239,7 @@ export function AppShell({
             disabled={isLoggingOut}
           >
             <span className="app-shell__footer-icon" aria-hidden="true">
-              ⇥
+              {"=>"}
             </span>
             <span className="app-shell__footer-label">
               {isLoggingOut ? "Wylogowywanie..." : "Wyloguj"}
@@ -286,7 +260,7 @@ export function AppShell({
                 onClick={handleSidebarToggle}
               >
                 <span className="app-shell__sidebar-toggle-icon" aria-hidden="true">
-                  ☰
+                  =
                 </span>
                 <span className="app-shell__sidebar-toggle-label">Menu</span>
               </ActionButton>

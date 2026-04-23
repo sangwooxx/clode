@@ -1,3 +1,12 @@
+import {
+  normalizeCapabilities,
+  normalizeProfile,
+  normalizeScope,
+  type CapabilityMap,
+  type UserProfile,
+  type UserScope,
+} from "@/lib/auth/user-context";
+
 export type ApiUserRecord = {
   id: string;
   name: string;
@@ -9,6 +18,13 @@ export type ApiUserRecord = {
   is_active: boolean;
   permissions: Record<string, boolean>;
   canApproveVacations: boolean;
+  profile?: UserProfile | string;
+  capabilities?: Record<string, boolean>;
+  scope?: {
+    contracts?: {
+      mode?: string;
+    };
+  };
   created_at?: string;
   updated_at?: string;
   last_login_at?: string;
@@ -25,6 +41,9 @@ export type AuthenticatedUser = {
   isActive?: boolean;
   permissions?: Record<string, boolean>;
   canApproveVacations?: boolean;
+  profile?: UserProfile;
+  capabilities?: CapabilityMap;
+  scope?: UserScope;
   createdAt?: string;
   updatedAt?: string;
   lastLoginAt?: string;
@@ -46,6 +65,9 @@ export function toAuthenticatedUser(payload: ApiUserRecord | undefined): Authent
     isActive: Boolean(payload.is_active),
     permissions: payload.permissions ?? {},
     canApproveVacations: Boolean(payload.canApproveVacations),
+    profile: normalizeProfile(payload),
+    capabilities: normalizeCapabilities(payload),
+    scope: normalizeScope(payload),
     createdAt: payload.created_at ?? "",
     updatedAt: payload.updated_at ?? "",
     lastLoginAt: payload.last_login_at ?? "",

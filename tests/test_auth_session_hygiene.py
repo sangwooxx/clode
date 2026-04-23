@@ -192,6 +192,43 @@ class AuthSessionHygieneTestCase(unittest.TestCase):
         self.assertEqual(len(logout_cookies), 2)
         self.assertTrue(all("Max-Age=0" in cookie_value for cookie_value in logout_cookies))
 
+    def test_login_and_auth_me_include_derived_user_context_with_legacy_fields(self) -> None:
+        login_handler = _FakeHandler(
+            method="POST",
+            path="/api/v1/auth/login",
+            body=b'{"username":"jan.nowak","password":"reader-secret"}',
+            headers={"Content-Type": "application/json"},
+        )
+
+        status, payload, headers = route_request(login_handler, self.services)
+
+        self.assertEqual(status, 200)
+        user = payload["user"]
+        self.assertEqual(user["role"], "read-only")
+        self.assertIn("permissions", user)
+        self.assertIn("canApproveVacations", user)
+        self.assertEqual(user["profile"], "viewer")
+        self.assertFalse(user["capabilities"]["resources.view"])
+        self.assertFalse(user["capabilities"]["operations.view"])
+        self.assertFalse(user["capabilities"]["vacations.approve"])
+        self.assertEqual(user["scope"], {"contracts": {"mode": "all"}})
+
+        cookie = SimpleCookie()
+        cookie.load(headers["Set-Cookie"][0])
+        session_token = cookie["clode_session"].value
+        me_handler = _FakeHandler(
+            method="GET",
+            path="/api/v1/auth/me",
+            headers={"Cookie": f"clode_session={session_token}"},
+        )
+
+        me_status, me_payload, _ = route_request(me_handler, self.services)
+
+        self.assertEqual(me_status, 200)
+        self.assertEqual(me_payload["user"]["profile"], "viewer")
+        self.assertEqual(me_payload["user"]["scope"]["contracts"]["mode"], "all")
+        self.assertIn("contracts.view", me_payload["user"]["capabilities"])
+
     def test_auth_session_route_rejects_invalid_token_and_accepts_valid_session(self) -> None:
         valid_login = self.auth_service.login("admin", "admin")
         session_cookie = SimpleCookie()
